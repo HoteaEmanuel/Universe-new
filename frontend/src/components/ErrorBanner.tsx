@@ -1,8 +1,13 @@
-import React from "react";
+import type { ReactNode } from "react";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const ErrorBanner = ({ children, id }) => {
+type ErrorBannerProps = {
+  children?: ReactNode;
+  id?: string;
+};
+
+const ErrorBanner = ({ children, id }: ErrorBannerProps) => {
   if (!children) return null;
   return (
     <Alert

@@ -1,5 +1,5 @@
-import React from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "../store/authStore";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -8,6 +8,10 @@ import AuthCard from "../components/AuthCard";
 import FormField from "../components/FormField";
 import ErrorBanner from "../components/ErrorBanner";
 import SubmitButton from "../components/SubmitButton";
+import {
+  resendVerificationSchema,
+  type ResendVerificationFormValues,
+} from "./schemas";
 
 const ResendVerificationEmail = () => {
   const navigate = useNavigate();
@@ -15,10 +19,12 @@ const ResendVerificationEmail = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+  } = useForm<ResendVerificationFormValues>({
+    resolver: zodResolver(resendVerificationSchema),
+  });
   const { sendVerificationEmail, isLoading, error } = useAuthStore();
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: ResendVerificationFormValues) => {
     try {
       await sendVerificationEmail(data.email);
       toast.success("Verification email sent! Check your inbox.", {
@@ -49,13 +55,7 @@ const ResendVerificationEmail = () => {
           placeholder="Email"
           autoComplete="email"
           error={errors.email?.message}
-          registration={register("email", {
-            required: "Email is required",
-            pattern: {
-              value: /^\S+@\S+\.\S+$/,
-              message: "Enter a valid email address",
-            },
-          })}
+          registration={register("email")}
         />
 
         <SubmitButton isLoading={isLoading} loadingText="Sending...">

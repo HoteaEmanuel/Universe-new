@@ -1,8 +1,18 @@
-import React from "react";
+import type { ReactNode } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import "../stars.css";
 
-const AuthCard = ({ title, children, maxWidthClass = "sm:w-2/3 max-w-md" }) => {
+type AuthCardProps = {
+  title?: string;
+  children: ReactNode;
+  maxWidthClass?: string;
+};
+
+const AuthCard = ({
+  title,
+  children,
+  maxWidthClass = "sm:w-2/3 max-w-md",
+}: AuthCardProps) => {
   return (
     <div className="relative flex min-h-screen w-screen flex-col items-center justify-center overflow-hidden px-6 py-12 lg:px-8">
       <div className="dot-pattern" />
@@ -15,7 +25,7 @@ const AuthCard = ({ title, children, maxWidthClass = "sm:w-2/3 max-w-md" }) => {
         <div className="nebula-glow" />
         <Card className="auth-card relative z-10 animate-fade-in-up py-6 sm:py-8">
           {title && (
-            <CardHeader>
+            <CardHeader className="">
               <CardTitle className="text-center text-2xl font-black heading-text-1 sm:text-4xl">
                 {title}
               </CardTitle>

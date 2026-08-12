@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useVerifyEmailMutation } from "../queryAndMutation/mutations/auth-mutation";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import AuthCard from "../components/AuthCard";
 import ErrorBanner from "../components/ErrorBanner";
 import SubmitButton from "../components/SubmitButton";
@@ -15,10 +15,19 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const { isLoading, error } = useAuthStore();
   const [code, setCode] = useState("");
-  const { mutateAsync: verifyEmail, isError } = useVerifyEmailMutation();
-  const [submitError, setSubmitError] = useState(undefined);
+  // useVerifyEmailMutation lives in a plain .js file, so its inferred
+  // mutation-variable type defaults to `void` — cast to the shape it
+  // actually accepts at runtime (out of scope to convert that file here).
+  const { mutateAsync: verifyEmail, isError } =
+    useVerifyEmailMutation() as unknown as {
+      mutateAsync: (code: string) => Promise<unknown>;
+      isError: boolean;
+    };
+  const [submitError, setSubmitError] = useState<string | undefined>(
+    undefined,
+  );
 
-  const onSubmit = async (e) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
@@ -42,8 +51,14 @@ const VerifyEmail = () => {
         <ErrorBanner>{submitError}</ErrorBanner>
         <ErrorBanner>{error}</ErrorBanner>
 
-        <InputOTP maxLength={6} value={code} onChange={setCode}>
-          <InputOTPGroup>
+        <InputOTP
+          maxLength={6}
+          value={code}
+          onChange={setCode}
+          className=""
+          containerClassName=""
+        >
+          <InputOTPGroup className="">
             {Array.from({ length: 6 }).map((_, index) => (
               <InputOTPSlot key={index} index={index} className="size-11 text-lg" />
             ))}

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
+import { useForm, type Resolver } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore.js";
 import { MdEmail } from "react-icons/md";
@@ -11,6 +12,21 @@ import PasswordField from "../components/PasswordField";
 import ErrorBanner from "../components/ErrorBanner";
 import SubmitButton from "../components/SubmitButton";
 import { Button } from "@/components/ui/button";
+import { normalSignupSchema, businessSignupSchema } from "./schemas";
+
+type AccountType = "normal" | "business";
+
+// Superset of both the normal- and business-account schemas so a single
+// form/resolver pair can serve both, switching validation schema by
+// accountType while keeping register()/errors typed against one shape.
+type SignupFormValues = {
+  email: string;
+  password: string;
+  "confirm-password": string;
+  "first-name": string;
+  "last-name": string;
+  name: string;
+};
 
 const SignUpPage = () => {
   useEffect(() => {
@@ -18,22 +34,26 @@ const SignUpPage = () => {
   }, []);
 
   const navigate = useNavigate();
+  const [accountType, setAccountType] = useState<AccountType>("normal");
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
-  const [accountType, setAccountType] = useState("normal");
+  } = useForm<SignupFormValues>({
+    resolver: zodResolver(
+      accountType === "normal" ? normalSignupSchema : businessSignupSchema,
+    ) as unknown as Resolver<SignupFormValues>,
+  });
   const { signUp, isLoading, error } = useAuthStore();
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: SignupFormValues) => {
     const formData = {
       firstName: data["first-name"] || "",
       lastName: data["last-name"] || "",
-      name: data["name"] || "",
-      major: data["major"] || "",
+      name: data.name || "",
+      major: "",
       email: data.email,
       password: data.password,
-      accountType: accountType,
+      accountType,
     };
     try {
       await signUp(formData);
@@ -94,29 +114,30 @@ const SignUpPage = () => {
           placeholder="Email"
           autoComplete="email"
           error={errors.email?.message}
-          registration={register("email", {
-            required: "An university email is required",
-            pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: "Invalid email format",
-            },
-          })}
+          registration={register("email")}
         />
 
-        <FormField
-          id={accountType === "normal" ? "first-name" : "name"}
-          label={accountType === "normal" ? "First Name" : "Name"}
-          icon={FaUser}
-          placeholder={accountType === "normal" ? "First Name" : "Name"}
-          autoComplete={accountType === "normal" ? "given-name" : "organization"}
-          error={errors[accountType === "normal" ? "first-name" : "name"]?.message}
-          registration={register(accountType === "normal" ? "first-name" : "name", {
-            required:
-              accountType === "normal"
-                ? "Enter your first name"
-                : "Enter your company name",
-          })}
-        />
+        {accountType === "normal" ? (
+          <FormField
+            id="first-name"
+            label="First Name"
+            icon={FaUser}
+            placeholder="First Name"
+            autoComplete="given-name"
+            error={errors["first-name"]?.message}
+            registration={register("first-name")}
+          />
+        ) : (
+          <FormField
+            id="name"
+            label="University or Organization Name"
+            icon={FaUser}
+            placeholder="University or Organization Name"
+            autoComplete="organization"
+            error={errors.name?.message}
+            registration={register("name")}
+          />
+        )}
 
         {accountType === "normal" && (
           <FormField
@@ -126,9 +147,7 @@ const SignUpPage = () => {
             placeholder="Last Name"
             autoComplete="family-name"
             error={errors["last-name"]?.message}
-            registration={register("last-name", {
-              required: "Enter your last name",
-            })}
+            registration={register("last-name")}
           />
         )}
 
@@ -137,12 +156,7 @@ const SignUpPage = () => {
           label="Password"
           autoComplete="new-password"
           error={errors.password?.message}
-          registration={register("password", {
-            required: "The password is required",
-            validate: (value) =>
-              value.length >= 8 ||
-              "The password needs to be at least 8 characters long",
-          })}
+          registration={register("password")}
         />
 
         <PasswordField
@@ -151,15 +165,7 @@ const SignUpPage = () => {
           placeholder="Confirm your password"
           autoComplete="new-password"
           error={errors["confirm-password"]?.message}
-          registration={register("confirm-password", {
-            required: "Please confirm your password",
-            validate: (value) => {
-              if (value !== document.getElementById("password").value) {
-                return "Passwords do not match";
-              }
-              return true;
-            },
-          })}
+          registration={register("confirm-password")}
         />
 
         <SubmitButton isLoading={isLoading} loadingText="Signing up...">

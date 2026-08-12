@@ -1,5 +1,5 @@
-import React from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { toast } from "sonner";
@@ -7,16 +7,19 @@ import { MdEmail } from "react-icons/md";
 import AuthCard from "../components/AuthCard";
 import FormField from "../components/FormField";
 import SubmitButton from "../components/SubmitButton";
+import { forgotPasswordSchema, type ForgotPasswordFormValues } from "./schemas";
 
 const ForgotPassword = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+  } = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+  });
   const navigate = useNavigate();
   const { forgotPassword, isLoading } = useAuthStore();
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: ForgotPasswordFormValues) => {
     try {
       await forgotPassword(data.email);
       toast.success("Password reset email sent! Check your inbox.", {
@@ -40,13 +43,7 @@ const ForgotPassword = () => {
           placeholder="Email"
           autoComplete="email"
           error={errors.email?.message}
-          registration={register("email", {
-            required: "Email is required",
-            pattern: {
-              value: /^\S+@\S+\.\S+$/,
-              message: "Enter a valid email address",
-            },
-          })}
+          registration={register("email")}
         />
         <SubmitButton isLoading={isLoading} loadingText="Sending...">
           Change password!

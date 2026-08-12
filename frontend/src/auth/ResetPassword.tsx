@@ -1,10 +1,11 @@
-import React from "react";
-import { useAuthStore } from "../store/authStore";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuthStore } from "../store/authStore";
 import { useNavigate, useParams } from "react-router-dom";
 import AuthCard from "../components/AuthCard";
 import PasswordField from "../components/PasswordField";
 import SubmitButton from "../components/SubmitButton";
+import { resetPasswordSchema, type ResetPasswordFormValues } from "./schemas";
 
 const ResetPassword = () => {
   const { resetPassword, isLoading } = useAuthStore();
@@ -13,9 +14,11 @@ const ResetPassword = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+  } = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+  });
   const { token } = useParams();
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: ResetPasswordFormValues) => {
     try {
       const response = await resetPassword(token, data.password);
       if (response instanceof Error) {
@@ -23,7 +26,7 @@ const ResetPassword = () => {
       }
       navigate("/login");
     } catch (error) {
-      return new Error(error);
+      return new Error(error as string);
     }
   };
   return (
@@ -37,13 +40,7 @@ const ResetPassword = () => {
           label="New password"
           autoComplete="new-password"
           error={errors.password?.message}
-          registration={register("password", {
-            required: "The password is required",
-            minLength: {
-              value: 8,
-              message: "Enter a minimum 8 characters password",
-            },
-          })}
+          registration={register("password")}
         />
         <SubmitButton isLoading={isLoading} loadingText="Resetting...">
           Reset Password

@@ -1,6 +1,18 @@
-import React from "react";
+import type { UseFormRegisterReturn } from "react-hook-form";
+import type { IconType } from "react-icons";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+
+type FormFieldProps = {
+  id: string;
+  label?: string;
+  icon?: IconType;
+  error?: string;
+  registration: UseFormRegisterReturn;
+  type?: string;
+  placeholder?: string;
+  autoComplete?: string;
+};
 
 const FormField = ({
   id,
@@ -11,11 +23,15 @@ const FormField = ({
   type = "text",
   placeholder,
   autoComplete,
-}) => {
+}: FormFieldProps) => {
   const errorId = error ? `${id}-error` : undefined;
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <Label htmlFor={id}>{label}</Label>}
+      {label && (
+        <Label htmlFor={id} className="">
+          {label}
+        </Label>
+      )}
       {error && (
         <p className="error" id={errorId}>
           {error}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { MdEmail } from "react-icons/md";
@@ -11,6 +12,7 @@ import PasswordField from "../components/PasswordField";
 import ErrorBanner from "../components/ErrorBanner";
 import SubmitButton from "../components/SubmitButton";
 import { Button } from "@/components/ui/button";
+import { loginSchema, type LoginFormValues } from "./schemas";
 
 const LoginPage = () => {
   useEffect(() => {
@@ -25,18 +27,18 @@ const LoginPage = () => {
     return () => clearError();
   }, [clearError]);
   useEffect(() => {
-    if (isAuthenticated && !error) return navigate("/home");
+    if (isAuthenticated && !error) navigate("/home");
   }, [error, navigate, isAuthenticated]);
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
-  const onSubmit = async (data) => {
+  } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
+  const onSubmit = async (data: LoginFormValues) => {
     await logIn(data.email, data.password);
     if (error === "Rate limit exceeded") toast.error("Too many requests");
   };
-  const [googleError, setGoogleError] = useState(null);
+  const [googleError, setGoogleError] = useState<string | null>(null);
   useEffect(() => {
     if (url.search === "?error=google_auth_failed") {
       setGoogleError(
@@ -65,12 +67,7 @@ const LoginPage = () => {
           placeholder="University Email"
           autoComplete="email"
           error={errors.email?.message}
-          registration={register("email", {
-            required: "An university email is required",
-            validate: (value) =>
-              /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ||
-              "Email must be a valid email address",
-          })}
+          registration={register("email")}
         />
 
         <PasswordField
@@ -78,12 +75,7 @@ const LoginPage = () => {
           label="Password"
           autoComplete="current-password"
           error={errors.password?.message}
-          registration={register("password", {
-            required: "The password is required",
-            validate: (value) =>
-              value.length >= 8 ||
-              "The password needs to be at least 8 characters long",
-          })}
+          registration={register("password")}
         />
 
         <SubmitButton isLoading={isLoading} loadingText="Logging in...">

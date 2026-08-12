@@ -1,8 +1,18 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import type { UseFormRegisterReturn } from "react-hook-form";
 import { Lock, Eye, EyeOff } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+
+type PasswordFieldProps = {
+  id: string;
+  label?: string;
+  error?: string;
+  registration: UseFormRegisterReturn;
+  placeholder?: string;
+  autoComplete?: string;
+};
 
 const PasswordField = ({
   id,
@@ -11,12 +21,16 @@ const PasswordField = ({
   registration,
   placeholder = "Password",
   autoComplete = "current-password",
-}) => {
+}: PasswordFieldProps) => {
   const [visible, setVisible] = useState(false);
   const errorId = error ? `${id}-error` : undefined;
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <Label htmlFor={id}>{label}</Label>}
+      {label && (
+        <Label htmlFor={id} className="">
+          {label}
+        </Label>
+      )}
       {error && (
         <p className="error" id={errorId}>
           {error}
