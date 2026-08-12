@@ -21,7 +21,7 @@ const HomePage = () => {
     useGetPostsQuery(feedSelector);
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col pb-24 md:pb-10">
+    <div className="mx-auto flex w-full max-w-2xl flex-col pb-24 md:pb-10">
       <div className="sticky top-0 z-10 -mx-4 mb-6 bg-background/80 px-4 pt-2 pb-3 backdrop-blur-md md:mx-0 md:px-0">
         <div className="inline-flex rounded-full bg-muted p-1">
           {FEEDS.map((feed) => (
