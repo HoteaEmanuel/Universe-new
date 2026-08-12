@@ -1,73 +1,68 @@
-import { Post } from "../../../backend/models/post.model";
 import PostCard from "../components/PostCard";
+import PostSkelet from "../skeletons/PostSkelet";
 import { useGetPostsQuery } from "../queryAndMutation/queries/post-queries";
-import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useGetFollowingQuery } from "../queryAndMutation/queries/user-queries";
+import { cn } from "@/lib/utils";
+
+const FEEDS = ["Global", "Following", "University"];
+
 const HomePage = () => {
-  // const { data: posts, isPending } = useGetPostsQuery();
   useEffect(() => {
     document.title = "Home";
   }, []);
   const { user } = useAuthStore();
-  const { data: following, isPending: isPendingFollowing } =
-    useGetFollowingQuery(user._id);
+  const { isPending: isPendingFollowing } = useGetFollowingQuery(user._id);
   const [feedSelector, setFeedSelector] = useState("Global");
-  const [feedHovered, setFeedHovered] = useState(false);
 
   const { data: posts, isPending: isPendingPosts } =
     useGetPostsQuery(feedSelector);
 
-  if (isPendingPosts || isPendingFollowing) return <p>Loading...</p>;
   return (
-    <div className="flex flex-1 w-full flex-col justify-center p-10 md:p-0 pb-50 md:pb-10">
-      <button
-        className="italic md:m-5 mb-10 self-start"
-        onMouseEnter={() => setFeedHovered(true)}
-      >
-        {feedSelector} Feed
-      </button>
-      {feedHovered && (
-        <div
-          className="flex flex-col modalContainer p-5 rounded-md w-40 absolute inset-0 md:left-1/4 h-40 md:top-15"
-          onMouseLeave={() => setFeedHovered(false)}
-        >
-          <button
-            className={` hover:text-violet-300 p-2 rounded-md mb-2 text-left ${feedSelector === "Global" ? "bg-violet-700" : ""}`}
-            onClick={() => {
-              setFeedSelector("Global");
-              setFeedHovered(false);
-            }}
-          >
-            Global
-          </button>
-          <button
-            className={` hover:text-violet-300 p-2 rounded-md text-left ${feedSelector === "Following" ? "bg-violet-700" : ""}`}
-            onClick={() => {
-              setFeedSelector("Following");
-              setFeedHovered(false);
-            }}
-          >
-            Following
-          </button>
-          <button
-            className={` hover:text-violet-300 p-2 rounded-md text-left ${feedSelector === "University" ? "bg-violet-700" : ""}`}
-            onClick={() => {
-              setFeedSelector("University");
-              setFeedHovered(false);
-            }}
-          >
-            University
-          </button>
+    <div className="mx-auto flex w-full max-w-xl flex-col pb-24 md:pb-10">
+      <div className="sticky top-0 z-10 -mx-4 mb-6 bg-background/80 px-4 pt-2 pb-3 backdrop-blur-md md:mx-0 md:px-0">
+        <div className="inline-flex rounded-full bg-muted p-1">
+          {FEEDS.map((feed) => (
+            <button
+              key={feed}
+              onClick={() => setFeedSelector(feed)}
+              className={cn(
+                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                feedSelector === feed
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {feed}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {(isPendingPosts || isPendingFollowing) && (
+        <div className="flex flex-col gap-6">
+          <PostSkelet />
+          <PostSkelet />
         </div>
       )}
 
-      {posts && (
-        <ul className=" w-full flex flex-col justify-center items-center gap-20 overflow-y-auto min-h-screen md:p-10 ">
-          {posts?.map((post) => (
-            <li key={post._id} className="w-full md:w-3/4 flex justify-center">
+      {!isPendingPosts && !isPendingFollowing && posts?.length === 0 && (
+        <div className="flex flex-col items-center gap-1 rounded-2xl border border-dashed border-border py-16 text-center">
+          <p className="font-medium">No posts yet</p>
+          <p className="text-sm text-muted-foreground">
+            {feedSelector === "Following"
+              ? "Follow people to see their posts here."
+              : "Be the first to share something."}
+          </p>
+        </div>
+      )}
+
+      {!isPendingPosts && !isPendingFollowing && posts?.length > 0 && (
+        <ul className="flex flex-col gap-6">
+          {posts.map((post) => (
+            <li key={post._id}>
               <PostCard post={post} />
             </li>
           ))}

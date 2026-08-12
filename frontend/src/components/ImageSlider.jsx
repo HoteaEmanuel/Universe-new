@@ -85,7 +85,7 @@ function ImageSlider({ images }) {
         <img
           src={images[index-1]}
           alt="slider image"
-          className="w-full h-100 rounded-2xl rounded-b-none self-center object-cover border border-gray-700 select-none pointer-events-none"
+          className="aspect-square w-full self-center object-cover select-none pointer-events-none"
         />
         <div className="absolute top-0 right-0 text-xs bg-gray rounded-xl p-1">
           {index} / {images.length}
