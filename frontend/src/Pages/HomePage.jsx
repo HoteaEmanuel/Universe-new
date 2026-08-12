@@ -1,4 +1,3 @@
-import SideSection from "../components/SideSection";
 import { Post } from "../../../backend/models/post.model";
 import PostCard from "../components/PostCard";
 import { useGetPostsQuery } from "../queryAndMutation/queries/post-queries";

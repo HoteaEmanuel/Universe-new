@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Header from "../components/Header";
-import SideSection from "../components/SideSection";
+import SideSection from "../features/navigation/SideSection";
 import TopBar from "../components/TopBar";
 import BottomBar from "../components/BottomBar";
 
