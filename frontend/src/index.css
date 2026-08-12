@@ -586,12 +586,67 @@ input:checked + .slider1:before {
 .stagger-3 { animation-delay: 0.25s; }
 .stagger-4 { animation-delay: 0.35s; }
 
-/*
- * Brand color scale — a semantic alias over Tailwind's built-in violet
- * palette (the same violet-700 already used across the app). Change these
- * to rebrand; everything else (primary, ring, bg-brand-*, text-brand-*,
- * etc.) derives from this scale.
- */
+@keyframes like-pop {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.35);
+  }
+  55% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-like-pop {
+  animation: like-pop 0.4s ease-out;
+}
+
+@keyframes heart-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  30% {
+    transform: scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+.animate-heart-burst {
+  animation: heart-burst 0.9s ease-out forwards;
+}
+
+@keyframes like-celebrate {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+.animate-like-celebrate {
+  animation: like-celebrate 0.5s ease-out forwards;
+}
+
+
 @theme {
   --color-brand-50: var(--color-violet-50);
   --color-brand-100: var(--color-violet-100);
@@ -604,6 +659,8 @@ input:checked + .slider1:before {
   --color-brand-800: var(--color-violet-800);
   --color-brand-900: var(--color-violet-900);
   --color-brand-950: var(--color-violet-950);
+
+  --color-like: #ed4956;
 }
 
 @theme inline {

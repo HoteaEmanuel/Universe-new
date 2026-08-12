@@ -1,10 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useRef } from "react";
-import { FaComments, FaUserCircle } from "react-icons/fa";
-import { MdChatBubble, MdFavorite, MdFavoriteBorder } from "react-icons/md";
-import { LuBookmarkPlus } from "react-icons/lu";
-import { GoBookmarkSlashFill } from "react-icons/go";
+import { FaUserCircle } from "react-icons/fa";
+import { Heart, MessageCircle, Bookmark, BookmarkCheck } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -41,6 +39,9 @@ const PostCard = ({ post }) => {
   const [isSaved, setIsSaved] = useState(post.isSaved);
   const bodyRef = useRef(null);
   const [showLikesModal, setShowLikesModal] = useState(false);
+  const [likePop, setLikePop] = useState(false);
+  const [showCelebrate, setShowCelebrate] = useState(false);
+  const [showHeartBurst, setShowHeartBurst] = useState(false);
   useEffect(() => {
     const body = bodyRef.current;
     if (body) {
@@ -75,7 +76,7 @@ const PostCard = ({ post }) => {
 
   const [showSaveOption, setShowSaveOption] = useState(false);
   const postTime = formatDateDetailed(post.createdAt.toString());
-  const handleLike = async (e) => {
+  const handleLike = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -91,15 +92,21 @@ const PostCard = ({ post }) => {
     );
     queryClient.setQueryData(["userLiked", postId], !prevLiked);
 
-    try {
-      if (!prevLiked) {
-        likeMutation.mutate();
-      } else {
-        unlikeMutation.mutate();
-      }
-    } catch (err) {
+    if (!prevLiked) {
+      setLikePop(true);
+      setShowCelebrate(true);
+      setShowHeartBurst(true);
+    }
+
+    const rollback = () => {
       queryClient.setQueryData(["likes", postId], prevLikes);
       queryClient.setQueryData(["userLiked", postId], prevLiked);
+    };
+
+    if (!prevLiked) {
+      likeMutation.mutate(undefined, { onError: rollback });
+    } else {
+      unlikeMutation.mutate(undefined, { onError: rollback });
     }
   };
   const fullName = urlPathName(creator);
@@ -128,13 +135,10 @@ const PostCard = ({ post }) => {
   const handleSaveClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsSaved(true);
     savePostMutation(undefined, {
-      onSuccess: () => {
-        console.log("SAVED WAS SUCCESSFUL");
-        setIsSaved(true);
-      },
-      onError: (error) => {
-        console.error("Save failed:", error);
+      onError: () => {
+        setIsSaved(false);
       },
     });
   };
@@ -157,10 +161,10 @@ const PostCard = ({ post }) => {
   const handleUnSavePostClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsSaved(false);
     unsavePostMutation(undefined, {
-      onSuccess: () => {
-        console.log("UNSAVED WAS SUCCESSFUL");
-        setIsSaved(false);
+      onError: () => {
+        setIsSaved(true);
       },
     });
   };
@@ -176,7 +180,7 @@ const PostCard = ({ post }) => {
   return (
     <Link
       to={`/post/${postId}`}
-      className="flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card"
+      className="flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow duration-200 hover:shadow-sm"
     >
       <div className="flex items-center gap-3 px-4 py-3">
         {(profilePicture && (
@@ -222,71 +226,85 @@ const PostCard = ({ post }) => {
         </div>
       </div>
 
-      {post.imagesUrls?.length === 1 && (
-        <img
-          src={post.imagesUrls[0]}
-          alt="post image"
-          className="aspect-square w-full self-center object-cover"
-        />
-      )}
-      {post.imagesUrls?.length > 1 && <ImageSlider images={post.imagesUrls} />}
+      <div className="relative">
+        {post.imagesUrls?.length === 1 && (
+          <img
+            src={post.imagesUrls[0]}
+            alt="post image"
+            className="aspect-square w-full self-center object-cover"
+          />
+        )}
+        {post.imagesUrls?.length > 1 && (
+          <ImageSlider images={post.imagesUrls} />
+        )}
+        {showHeartBurst && (
+          <Heart
+            className="pointer-events-none absolute inset-0 m-auto size-24 animate-heart-burst text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]"
+            fill="currentColor"
+            onAnimationEnd={() => setShowHeartBurst(false)}
+          />
+        )}
+      </div>
 
       <div className="flex items-center gap-4 px-4 pt-3">
-        <button className="hover:scale-110" onClick={(e) => handleLike(e)}>
-          {(liked && (
+        <button
+          className="relative inline-flex items-center justify-center transition-transform duration-150 hover:scale-110"
+          onClick={(e) => handleLike(e)}
+          aria-label={liked ? "Unlike post" : "Like post"}
+        >
+          <Heart
+            className={`size-6.5 transition-colors ${
+              liked ? "text-like" : "text-foreground/80 hover:text-foreground"
+            } ${likePop ? "animate-like-pop" : ""}`}
+            fill={liked ? "currentColor" : "none"}
+            onAnimationEnd={() => setLikePop(false)}
+          />
+          {showCelebrate && (
             <svg
-              width="26"
-              height="26"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
+              className="animate-like-celebrate pointer-events-none absolute inset-0 m-auto size-14 text-like"
+              viewBox="0 0 100 100"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="6"
+              strokeLinecap="round"
+              onAnimationEnd={() => setShowCelebrate(false)}
             >
-              <defs>
-                <linearGradient
-                  id="heartGradient"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
-                >
-                  <stop offset="0%" stopColor="#a855f7" />
-                  <stop offset="50%" stopColor="#7c3aed" />
-                  <stop offset="100%" stopColor="#2f0d68" />
-                </linearGradient>
-              </defs>
-              <path
-                fill="url(#heartGradient)"
-                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42
-       4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76
-       3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55
-       11.54L12 21.35z"
-              />
+              <line x1="94" y1="50" x2="82" y2="50" />
+              <line x1="81" y1="81" x2="73" y2="73" />
+              <line x1="50" y1="94" x2="50" y2="82" />
+              <line x1="19" y1="81" x2="27" y2="73" />
+              <line x1="6" y1="50" x2="18" y2="50" />
+              <line x1="19" y1="19" x2="27" y2="27" />
+              <line x1="50" y1="6" x2="50" y2="18" />
+              <line x1="81" y1="19" x2="73" y2="27" />
             </svg>
-          )) || (
-            <MdFavoriteBorder className="size-6.5 text-foreground/80 hover:text-foreground" />
           )}
         </button>
-        <button>
-          <FaComments className="size-6 text-foreground/80 hover:text-foreground" />
+        <button aria-label="Comments">
+          <MessageCircle className="size-6 text-foreground/80 hover:text-foreground" />
         </button>
         <div className="relative ml-auto">
-          {userId !== user._id && !post.isSaved && !isSaved && (
-            <LuBookmarkPlus
-              className="size-6 text-foreground/80 hover:scale-110 hover:text-foreground cursor-pointer"
+          {userId !== user._id && !isSaved && (
+            <Bookmark
+              className="size-6 text-foreground/80 hover:scale-110 hover:text-foreground cursor-pointer transition-transform duration-150"
               onClick={handleSaveClick}
               onMouseEnter={() => setShowSaveOption("Save post")}
               onMouseLeave={() => setShowSaveOption(false)}
+              aria-label="Save post"
             />
           )}
-          {userId !== user._id && post.isSaved && isSaved && (
-            <GoBookmarkSlashFill
-              className="size-6 text-primary hover:scale-110 cursor-pointer"
+          {userId !== user._id && isSaved && (
+            <BookmarkCheck
+              className="size-6 text-foreground hover:scale-110 cursor-pointer transition-transform duration-150"
+              fill="currentColor"
               onClick={handleUnSavePostClick}
               onMouseEnter={() => setShowSaveOption("Unsave post")}
               onMouseLeave={() => setShowSaveOption(false)}
+              aria-label="Unsave post"
             />
           )}
           {showSaveOption && (
-            <span className="absolute right-0 top-8 whitespace-nowrap rounded-md bg-gray-900 p-1 text-[10px] text-white">
+            <span className="absolute right-0 top-8 whitespace-nowrap rounded-md bg-foreground/90 px-2 py-1 text-[10px] font-medium text-background shadow-sm">
               {showSaveOption}
             </span>
           )}

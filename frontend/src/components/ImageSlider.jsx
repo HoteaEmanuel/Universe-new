@@ -1,8 +1,6 @@
-import React from "react";
 import { useRef } from "react";
 import { useState } from "react";
-import { GrPrevious } from "react-icons/gr";
-import { GrNext } from "react-icons/gr";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 function ImageSlider({ images }) {
   const [index, setIndex] = useState(1);
 
@@ -66,7 +64,6 @@ function ImageSlider({ images }) {
     if (newIndex > images.length) newIndex = 1;
     setIndex(newIndex);
   };
-  console.log(index);
   return (
     <div
       className="w-full"
@@ -83,21 +80,31 @@ function ImageSlider({ images }) {
         draggable={false}
       >
         <img
-          src={images[index-1]}
+          src={images[index - 1]}
           alt="slider image"
           className="aspect-square w-full self-center object-cover select-none pointer-events-none"
         />
-        <div className="absolute top-0 right-0 text-xs bg-gray rounded-xl p-1">
+        <div className="glass-effect absolute top-2 right-2 px-2 py-1 text-xs text-white">
           {index} / {images.length}
         </div>
-        <GrPrevious
-          className="absolute top-1/2 left-2 size-7  glass-effect text-white cursor-pointer"
+        <ChevronLeft
+          className="glass-effect absolute top-1/2 left-2 size-7 -translate-y-1/2 cursor-pointer text-white transition-opacity hover:opacity-80"
           onClick={handlePrevious}
         />
-        <GrNext
-          className="absolute top-1/2 right-2 size-7 glass-effect text-white cursor-pointer"
+        <ChevronRight
+          className="glass-effect absolute top-1/2 right-2 size-7 -translate-y-1/2 cursor-pointer text-white transition-opacity hover:opacity-80"
           onClick={handleNext}
         />
+        <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+          {images.map((_, i) => (
+            <span
+              key={i}
+              className={`size-1.5 rounded-full transition-colors ${
+                i === index - 1 ? "bg-white" : "bg-white/40"
+              }`}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
