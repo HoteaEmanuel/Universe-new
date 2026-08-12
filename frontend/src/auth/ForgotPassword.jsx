@@ -1,9 +1,13 @@
 import React from "react";
-import Header from "../components/Header";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { toast } from "sonner";
+import { MdEmail } from "react-icons/md";
+import AuthCard from "../components/AuthCard";
+import FormField from "../components/FormField";
+import SubmitButton from "../components/SubmitButton";
+
 const ForgotPassword = () => {
   const {
     register,
@@ -11,10 +15,9 @@ const ForgotPassword = () => {
     formState: { errors },
   } = useForm();
   const navigate = useNavigate();
-  const { forgotPassword } = useAuthStore();
+  const { forgotPassword, isLoading } = useAuthStore();
   const onSubmit = async (data) => {
     try {
-      console.log(data.email);
       await forgotPassword(data.email);
       toast.success("Password reset email sent! Check your inbox.", {
         duration: 5000,
@@ -25,33 +28,31 @@ const ForgotPassword = () => {
     }
   };
   return (
-    <div className="w-full h-96 flex items-center justify-center">
+    <AuthCard title="Reset your password">
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="container flex flex-col w-1/4 p-6 gap-4 shadow rounded-xl"
+        className="flex w-full flex-col gap-4"
       >
-        <h1 className="text-3xl">Reset your password</h1>
-        <hr className="text-gray-300"></hr>
-        <label htmlFor="email" className="text-lg">
-          Enter your email{" "}
-        </label>
-        {errors.email && <p>{errors.email}</p>}
-        <input
-          {...register("email", {
-            required: true,
-            validate: (value) => {
-              /^\S+@\S+\.\S+$/.test(value) || "Enter a valid email address";
+        <FormField
+          id="email"
+          label="Enter your email"
+          icon={MdEmail}
+          placeholder="Email"
+          autoComplete="email"
+          error={errors.email?.message}
+          registration={register("email", {
+            required: "Email is required",
+            pattern: {
+              value: /^\S+@\S+\.\S+$/,
+              message: "Enter a valid email address",
             },
           })}
-          className="text-xl p-2 border-2 border-neutral-400 rounded-xl"
-          id="email"
-          type="email"
-        ></input>
-        <button className="bg-violet-600 text-gray-200 p-2 rounded-2xl hover:scale-105">
+        />
+        <SubmitButton isLoading={isLoading} loadingText="Sending...">
           Change password!
-        </button>
+        </SubmitButton>
       </form>
-    </div>
+    </AuthCard>
   );
 };
 

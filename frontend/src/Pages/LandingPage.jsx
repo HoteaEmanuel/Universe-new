@@ -1,45 +1,112 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { Users, CalendarDays, Sparkles } from "lucide-react";
 import logo from "../assets/logo_1.png";
 import group_image from "../assets/alta_imagine.png";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import "../stars.css";
+
+const features = [
+  {
+    icon: Users,
+    title: "Find your community",
+    description: "Connect with clubs, classmates and people who share your interests.",
+  },
+  {
+    icon: CalendarDays,
+    title: "Never miss an event",
+    description: "Campus events, meetups and deadlines, all in one place.",
+  },
+  {
+    icon: Sparkles,
+    title: "Share experiences",
+    description: "Post moments from campus life and see what everyone's up to.",
+  },
+];
+
 const LandingPage = () => {
   return (
-    <div className=" w-full h-full max-h-screen overflow-hidden">
-      <img src={logo} className="w-30 h-30 self-end" />
-      <div className="relative">
+    <div className="relative min-h-screen w-full overflow-hidden bg-background">
+      <div className="dot-pattern" />
+      <div className="star-layer absolute inset-0 -z-10">
         <div id="stars" />
         <div id="stars2" />
         <div id="stars3" />
       </div>
+      <div className="nebula-glow" />
 
-      <div className="flex h-screen items-center justify-center gap-10 -mt-10">
-        <div className="w-0 md:w-3/4 flex flex-col justify-center items-center mr-4 -mt-20">
-          <img src={group_image} className="hidden md:block w-screen" />
+      <header className="relative z-10 flex items-center justify-between px-6 py-6 sm:px-10">
+        <div className="flex items-center gap-2">
+          <img src={logo} className="h-10 w-10" alt="Universe logo" />
+          <span className="kaushan text-2xl font-semibold heading-text-1">Universe'</span>
         </div>
+        <Link
+          to={"/login"}
+          className="text-sm font-semibold text-foreground/80 hover:text-foreground hover:underline"
+        >
+          Log in
+        </Link>
+      </header>
 
-        <div className=" flex flex-col justify-center items-center gap-5 h-screen w-full">
-          <h1 className="text-8xl kaushan font-semibold heading-text-1  -translate-y-10">
-            Universe'
+      <main className="relative z-10 mx-auto flex max-w-6xl flex-col items-center gap-16 px-6 pt-10 pb-24 sm:px-10">
+        <div className="flex flex-col items-center gap-6 text-center">
+          <span className="rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-semibold tracking-wide text-primary uppercase">
+            For university students
+          </span>
+
+          <h1 className="max-w-3xl text-5xl font-black heading-text-1 sm:text-6xl">
+            Your campus, all in one place
           </h1>
-          <div className="flex flex-col gap-10 items-center">
-            <h1 className="text-2xl md:text-5xl heading-text-1  italic font-semibold ">
-              Find Your Campus Community
-            </h1>
-            <h1 className="text-2xl heading-text-1 md:text-4xl italic p-2 font-semibold">
-              Never Miss a Uni Event
-            </h1>
-            <h1 className="text-3xl heading-text-1 italic font-semibold">Share experiences</h1>
-          </div>
 
-          <Link
-            to={"/signup"}
-            className="text-lg cursor-pointer font-bold shadow hover:from-violet-50 hover:to-violet-200 hover:text-black text-amber-50 border-violet-950 border-2 bg-linear-to-r from-violet-700 to-violet-900 p-4 rounded-2xl  hover:translate-y-1 duration-300 ease-in"
-          >
-            Get started
-          </Link>
+          <p className="max-w-xl text-lg text-muted-foreground sm:text-xl">
+            Find your community, keep up with every event, and share the
+            experiences that make your university life yours.
+          </p>
+
+          <div className="flex flex-col items-center gap-4 pt-2 sm:flex-row">
+            <Link
+              to={"/signup"}
+              className={cn(buttonVariants({ size: "lg" }), "h-11 px-8 text-base")}
+            >
+              Get started
+            </Link>
+            <Link
+              to={"/login"}
+              className={cn(
+                buttonVariants({ size: "lg", variant: "outline" }),
+                "h-11 px-8 text-base",
+              )}
+            >
+              I already have an account
+            </Link>
+          </div>
         </div>
-      </div>
+
+        <div className="grid w-full gap-4 sm:grid-cols-3">
+          {features.map(({ icon: Icon, title, description }) => (
+            <Card
+              key={title}
+              className="border-border/60 bg-card/60 backdrop-blur-sm transition-colors hover:border-primary/40"
+            >
+              <CardContent className="flex flex-col items-center gap-3 px-6 py-8 text-center">
+                <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Icon className="size-5" />
+                </span>
+                <h3 className="font-semibold text-foreground">{title}</h3>
+                <p className="text-sm text-muted-foreground">{description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <img
+          src={group_image}
+          alt=""
+          className="hidden w-full max-w-3xl rounded-3xl border border-border/60 shadow-lg md:block"
+        />
+      </main>
     </div>
   );
 };

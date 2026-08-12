@@ -1,9 +1,14 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { useAuthStore } from "../store/authStore";
-import { Navigate } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { MdEmail } from "react-icons/md";
+import AuthCard from "../components/AuthCard";
+import FormField from "../components/FormField";
+import ErrorBanner from "../components/ErrorBanner";
+import SubmitButton from "../components/SubmitButton";
+
 const ResendVerificationEmail = () => {
   const navigate = useNavigate();
   const {
@@ -26,37 +31,47 @@ const ResendVerificationEmail = () => {
   };
 
   return (
-    <div className="w-full h-96 flex items-center justify-center">
+    <AuthCard title="Verify your account">
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="container flex flex-col w-1/4 p-6 gap-4 shadow rounded-xl"
+        className="flex w-full flex-col gap-4"
       >
-        <h1 className="text-3xl">Verify your account</h1>
-        <hr className="text-gray-300"></hr>
-        {error && <p className="text-red-500">{error}</p>}
-        <label htmlFor="email" className="text-lg">
-          Enter your email{" "}
-        </label>
-        {errors.email && <p className="text-red-500">{errors.email.message}</p>}
-        <input
-          {...register("email", {
+        <p className="-mt-2 text-center text-sm text-muted-foreground">
+          We'll send a new verification code to your inbox.
+        </p>
+
+        <ErrorBanner>{error}</ErrorBanner>
+
+        <FormField
+          id="email"
+          label="Email"
+          icon={MdEmail}
+          placeholder="Email"
+          autoComplete="email"
+          error={errors.email?.message}
+          registration={register("email", {
             required: "Email is required",
             pattern: {
               value: /^\S+@\S+\.\S+$/,
               message: "Enter a valid email address",
             },
           })}
-          className="text-xl p-2 border-2 border-neutral-400 rounded-xl"
-          id="email"
         />
-        <button className="bg-violet-800 p-2 rounded-2xl hover:scale-105 text-white">
-          {isLoading ? "Loading..." : "Send Verification Email"}
-        </button>
-        {error && error === "This user is already verified" && (
-          <Link to="/login">Log in instead</Link>
-        )}
+
+        <SubmitButton isLoading={isLoading} loadingText="Sending...">
+          Send Verification Email
+        </SubmitButton>
+
+        <p className="text-center text-xs">
+          {error === "This user is already verified"
+            ? "Already verified?"
+            : "Remembered your password?"}{" "}
+          <Link to="/login" className="font-semibold text-primary hover:underline">
+            Log in
+          </Link>
+        </p>
       </form>
-    </div>
+    </AuthCard>
   );
 };
 

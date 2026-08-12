@@ -1,15 +1,13 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import { useParams } from "react-router-dom";
-import { FaEye } from "react-icons/fa";
-import { FaEyeSlash } from "react-icons/fa";
-import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import AuthCard from "../components/AuthCard";
+import PasswordField from "../components/PasswordField";
+import SubmitButton from "../components/SubmitButton";
+
 const ResetPassword = () => {
-  const { resetPassword } = useAuthStore();
-  const [showPassword, setShowPassword] = useState(false);
+  const { resetPassword, isLoading } = useAuthStore();
   const navigate = useNavigate();
   const {
     register,
@@ -18,7 +16,6 @@ const ResetPassword = () => {
   } = useForm();
   const { token } = useParams();
   const onSubmit = async (data) => {
-
     try {
       const response = await resetPassword(token, data.password);
       if (response instanceof Error) {
@@ -30,47 +27,29 @@ const ResetPassword = () => {
     }
   };
   return (
-    <div className="w-full flex items-center justify-center">
+    <AuthCard title="Enter the new password">
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="w-1/2 container shadow-2xl rounded-2xl p-20 gap-4 text-xl flex flex-col"
+        className="flex w-full flex-col gap-4"
       >
-        <label htmlFor="new-password" className="text-3xl font-semibold mb-5 ">
-          Enter the new password
-        </label>
-        {errors.password && (
-          <p className="text-red-500">{errors.password.message}</p>
-        )}
-        <div className="relative">
-          <input
-            {...register("password", {
-              required: "The password is required",
-              minLength: {
-                value: 8,
-                message: "Enter a minimum 8 characters password",
-              },
-            })}
-            id="new-password"
-            type={showPassword ? "text" : "password"}
-            className="w-full border border-gray-500 rounded-md pl-2 pr-10 py-2 font-semibold"
-          ></input>
-          {showPassword ? (
-            <FaEyeSlash
-              className="absolute top-3 right-2 cursor-pointer"
-              onClick={() => setShowPassword(!showPassword)}
-            />
-          ) : (
-            <FaEye
-              className="absolute top-3 right-2 cursor-pointer"
-              onClick={() => setShowPassword(!showPassword)}
-            />
-          )}
-        </div>
-        <button className="bg-violet-600 p-2 rounded-2xl hover:scale-105">
+        <PasswordField
+          id="new-password"
+          label="New password"
+          autoComplete="new-password"
+          error={errors.password?.message}
+          registration={register("password", {
+            required: "The password is required",
+            minLength: {
+              value: 8,
+              message: "Enter a minimum 8 characters password",
+            },
+          })}
+        />
+        <SubmitButton isLoading={isLoading} loadingText="Resetting...">
           Reset Password
-        </button>
+        </SubmitButton>
       </form>
-    </div>
+    </AuthCard>
   );
 };
 
