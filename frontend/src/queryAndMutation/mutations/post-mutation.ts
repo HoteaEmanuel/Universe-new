@@ -1,22 +1,40 @@
-import { useMutation } from "@tanstack/react-query";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePostStore } from "../../store/postStore";
 import { toast } from "sonner";
+
+export type CreatePostPayload = {
+  title: string;
+  body?: string;
+  location?: string;
+  tags: string;
+  images: File[];
+};
+
+export type UpdatePostPayload = {
+  id: string;
+  title: string;
+  body: string;
+  location?: string;
+  tags: string;
+  images: (File | string)[];
+};
+
 export const useCreatePostMutation = () => {
   const queryClient = useQueryClient();
   const { createPost } = usePostStore();
   return useMutation({
-    mutationFn: (post) => createPost(post),
+    mutationFn: (post: CreatePostPayload) => createPost(post),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       toast.success("Post created");
     },
-    onError: (err) => {
-      toast.error(err);
+    onError: (err: Error) => {
+      toast.error(err.message);
     },
   });
 };
-export const useLikeMutation = (postId) => {
+
+export const useLikeMutation = (postId: string) => {
   const queryClient = useQueryClient();
   const { likePost } = usePostStore();
   return useMutation({
@@ -27,7 +45,8 @@ export const useLikeMutation = (postId) => {
     },
   });
 };
-export const useUnlikeMutation = (postId) => {
+
+export const useUnlikeMutation = (postId: string) => {
   const queryClient = useQueryClient();
   const { unlikePost } = usePostStore();
   return useMutation({
@@ -38,26 +57,27 @@ export const useUnlikeMutation = (postId) => {
     },
   });
 };
-export const useUpdatePostMutation = ( userId) => {
+
+export const useUpdatePostMutation = (userId?: string) => {
   const queryClient = useQueryClient();
   const { updatePost } = usePostStore();
   return useMutation({
-    mutationFn: async (data) => await updatePost(data),
+    mutationFn: async (data: UpdatePostPayload) => await updatePost(data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["posts"]);
-      queryClient.invalidateQueries(["userPosts", userId]);
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts", userId] });
     },
   });
 };
-export const useDeletePostMutation = (postId, userId) => {
+
+export const useDeletePostMutation = (postId: string, userId?: string) => {
   const queryClient = useQueryClient();
   const { deletePost } = usePostStore();
-  console.log("USER DELETE POST MUTATION " + userId);
   return useMutation({
     mutationFn: async () => await deletePost(postId),
     onSuccess: () => {
-      queryClient.invalidateQueries(["posts"]);
-      queryClient.invalidateQueries(["userPosts", userId]);
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts", userId] });
     },
   });
 };

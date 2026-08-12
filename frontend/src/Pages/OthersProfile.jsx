@@ -7,7 +7,7 @@ import {
   useGetUserByNameQuery,
   useIsFollowingQuery,
 } from "../queryAndMutation/queries/user-queries.js";
-import { useGetUserPostsQuery } from "../queryAndMutation/queries/post-queries.js";
+import { useGetUserPostsQuery } from "../queryAndMutation/queries/post-queries";
 import {
   useFollowMutation,
   useUnfollowMutation,

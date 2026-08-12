@@ -14,7 +14,7 @@ import {
 import {
   useGetSavedPostsQuery,
   useGetUserPostsQuery,
-} from "../queryAndMutation/queries/post-queries.js";
+} from "../queryAndMutation/queries/post-queries";
 import { PiStudentFill } from "react-icons/pi";
 import { FaPersonRifle } from "react-icons/fa6";
 import { useEffect } from "react";

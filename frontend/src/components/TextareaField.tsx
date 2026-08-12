@@ -1,44 +1,38 @@
+import type { ChangeEvent } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
-import type { IconType } from "react-icons";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-type FormFieldProps = {
+type TextareaFieldProps = {
   id: string;
   label?: string;
-  icon?: IconType;
   error?: string;
   registration: UseFormRegisterReturn;
-  type?: string;
   placeholder?: string;
-  autoComplete?: string;
+  rows?: number;
   maxLength?: number;
   currentLength?: number;
+  onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void;
 };
 
-const FormField = ({
+const TextareaField = ({
   id,
   label,
-  icon: Icon,
   error,
   registration,
-  type = "text",
   placeholder,
-  autoComplete,
+  rows = 6,
   maxLength,
   currentLength = 0,
-}: FormFieldProps) => {
+  onChange,
+}: TextareaFieldProps) => {
   const errorId = error ? `${id}-error` : undefined;
   const isMaxed = maxLength !== undefined && currentLength >= maxLength;
   return (
     <div className="flex flex-col gap-1.5">
       {(label || maxLength !== undefined) && (
         <div className="flex items-center justify-between">
-          {label && (
-            <Label htmlFor={id} className="">
-              {label}
-            </Label>
-          )}
+          {label && <Label htmlFor={id} className="">{label}</Label>}
           {maxLength !== undefined && (
             <span
               className={`text-xs ${isMaxed ? "text-destructive" : "text-muted-foreground"}`}
@@ -56,24 +50,22 @@ const FormField = ({
       {!error && isMaxed && (
         <p className="text-xs text-destructive">Character limit reached</p>
       )}
-      <div className="relative">
-        {Icon && (
-          <Icon className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground" />
-        )}
-        <Input
-          id={id}
-          type={type}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          maxLength={maxLength}
-          aria-invalid={!!error || isMaxed}
-          aria-describedby={errorId}
-          className={Icon ? "h-10 pl-8" : "h-10"}
-          {...registration}
-        />
-      </div>
+      <Textarea
+        id={id}
+        rows={rows}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        aria-invalid={!!error || isMaxed}
+        aria-describedby={errorId}
+        className="resize-none"
+        {...registration}
+        onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
+          registration.onChange(e);
+          onChange?.(e);
+        }}
+      />
     </div>
   );
 };
 
-export default FormField;
+export default TextareaField;
