@@ -10,7 +10,7 @@ import ForgotPassword from "./auth/ForgotPassword";
 import ResetPassword from "./auth/ResetPassword";
 import ResendVerificationEmail from "./auth/ResendVerificationEmail";
 import { useAuthStore } from "./store/authStore";
-import UserProfile from "./Pages/UserProfile";
+import ProfilePage from "./features/profile/ProfilePage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AuthLayout from "./components/AuthLayout";
 import RootLayout from "./Pages/RootLayout";
@@ -18,7 +18,6 @@ import ContentLayout from "./Pages/ContentLayout";
 import CreatePost from "./Pages/CreatePost";
 import EditPost from "./Pages/EditPost";
 import Explore from "./Pages/Explore";
-import OthersProfile from "./Pages/OthersProfile";
 import ChatHome from "./Pages/ChatContainer";
 import PostDetails from "./Pages/PostDetails";
 import ChatContainer from "./Pages/ChatContainer";
@@ -30,7 +29,7 @@ import Admin from "./Pages/Admin";
 import NotFound from "./Pages/NotFound";
 import NewConversation from "./Pages/NewConversation.jsx";
 import Group from "./Pages/Group.jsx";
-import EditProfile from "./Pages/EditProfile.jsx";
+import EditProfile from "./Pages/EditProfile";
 import Background from "./components/Background.jsx";
 import Notifications from "./Pages/Notifications.jsx";
 const queryClient = new QueryClient();
@@ -149,8 +148,8 @@ function App() {
           >
             <Route element={<ContentLayout />}>
               <Route path="/home" element={<HomePage />} />
-              <Route path="/profile" element={<UserProfile />} />
-              <Route path="/users/:name" element={<OthersProfile />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/users/:name" element={<ProfilePage />} />
               <Route
                 path="/users/:name/edit-profile"
                 element={<EditProfile />}

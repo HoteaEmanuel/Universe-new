@@ -57,6 +57,7 @@ export const useGetConversationByUsersIdsQuery = (id) => {
   return useQuery({
     queryFn: () => getConversationByUsersIds(id),
     queryKey: ["conversations"],
+    enabled: !!id,
   });
 };
 

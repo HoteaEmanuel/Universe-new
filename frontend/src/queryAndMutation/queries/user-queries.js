@@ -33,6 +33,7 @@ export const useIsFollowingQuery = (id) => {
   return useQuery({
     queryFn: () => isFollowing(id),
     queryKey: ["isFollowing", id],
+    enabled: !!id,
   });
 };
 
@@ -41,5 +42,6 @@ export const useGetUserByNameQuery=(name)=>{
   return useQuery({
     queryFn: async () => await getUserByName(name),
     queryKey: ["userByName", name],
+    enabled: !!name,
   });
 }

@@ -1,0 +1,210 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaUserCircle } from "react-icons/fa";
+import { Camera, GraduationCap, BookOpen, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { getFullName } from "../../utils/fullName";
+import { useAuthStore } from "../../store/authStore";
+import {
+  useGetFollowersQuery,
+  useGetFollowingQuery,
+  useIsFollowingQuery,
+} from "../../queryAndMutation/queries/user-queries";
+import { useGetConversationByUsersIdsQuery } from "../../queryAndMutation/queries/conversation-queries";
+import {
+  useFollowMutation,
+  useUnfollowMutation,
+} from "../../queryAndMutation/mutations/user-mutation";
+import ProfileImageModal from "../../Modals/ProfileImageModal";
+import FollowListSheet from "../../Modals/FollowListSheet";
+import type { ProfileUser } from "./types";
+
+type ProfileHeaderProps = {
+  user: ProfileUser;
+  isOwnProfile: boolean;
+  postsCount: number;
+};
+
+const ProfileHeader = ({
+  user,
+  isOwnProfile,
+  postsCount,
+}: ProfileHeaderProps) => {
+  const navigate = useNavigate();
+  const { user: authUser } = useAuthStore();
+  const [openImageModal, setOpenImageModal] = useState(false);
+  const [followListOpen, setFollowListOpen] = useState<
+    "followers" | "following" | null
+  >(null);
+
+  const { data: followers, isPending: isPendingFollowers } =
+    useGetFollowersQuery(user._id);
+  const { data: following, isPending: isPendingFollowing } =
+    useGetFollowingQuery(user._id);
+
+  const { data: isFollowing } = useIsFollowingQuery(
+    isOwnProfile ? undefined : user._id,
+  );
+  const { data: conversation } = useGetConversationByUsersIdsQuery(
+    isOwnProfile ? undefined : user._id,
+  );
+  const followMutation = useFollowMutation(user._id, authUser._id);
+  const unfollowMutation = useUnfollowMutation(user._id, authUser._id);
+
+  const handleMessageClick = () => {
+    if (conversation) {
+      navigate(`/conversations/${conversation._id}`);
+    } else {
+      navigate(`/new-conversation/${user._id}`);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:gap-8">
+      <div className="group/avatar relative shrink-0">
+        {user.profilePicture ? (
+          <img
+            src={user.profilePicture}
+            alt={getFullName(user)}
+            className="size-24 rounded-full object-cover ring-1 ring-border sm:size-28"
+          />
+        ) : (
+          <FaUserCircle className="size-24 text-muted-foreground sm:size-28" />
+        )}
+        {isOwnProfile && (
+          <Button
+            type="button"
+            variant="ghost"
+            aria-label="Change profile picture"
+            onClick={() => setOpenImageModal(true)}
+            className="absolute inset-0 size-full rounded-full bg-black/0 p-0 text-transparent hover:bg-black/40 hover:text-white"
+          >
+            <Camera className="size-6" />
+          </Button>
+        )}
+      </div>
+
+      <div className="flex w-full flex-1 flex-col items-center gap-3 sm:items-start">
+        <div className="flex flex-col items-center gap-2 sm:flex-row sm:items-center">
+          {user.accountType === "business" && (
+            <img
+              src="/images/verify.png"
+              alt="Verified"
+              className="size-5"
+            />
+          )}
+          <h1 className="text-xl font-semibold">{getFullName(user)}</h1>
+        </div>
+
+        <div className="flex items-center gap-5 text-sm">
+          <span className="flex items-center gap-1.5">
+            <span className="font-semibold">{postsCount}</span>
+            <span className="text-muted-foreground">
+              {postsCount === 1 ? "post" : "posts"}
+            </span>
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto gap-1.5 p-0 text-sm hover:bg-transparent"
+            onClick={() => setFollowListOpen("followers")}
+          >
+            <span className="font-semibold">{followers?.length ?? 0}</span>
+            <span className="text-muted-foreground">followers</span>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto gap-1.5 p-0 text-sm hover:bg-transparent"
+            onClick={() => setFollowListOpen("following")}
+          >
+            <span className="font-semibold">{following?.length ?? 0}</span>
+            <span className="text-muted-foreground">following</span>
+          </Button>
+        </div>
+
+        {(user.university || user.major) && (
+          <div className="flex flex-col items-center gap-1 text-xs text-muted-foreground sm:items-start">
+            {user.university && (
+              <span className="flex items-center gap-1.5">
+                <GraduationCap className="size-3.5" />
+                {user.university}
+              </span>
+            )}
+            {user.major && (
+              <span className="flex items-center gap-1.5">
+                <BookOpen className="size-3.5" />
+                {user.major}
+              </span>
+            )}
+          </div>
+        )}
+
+        {user.bio && (
+          <p className="max-w-md text-center text-sm sm:text-left">
+            {user.bio}
+          </p>
+        )}
+
+        <div className="flex items-center gap-2 pt-1">
+          {isOwnProfile ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/users/${user._id}/edit-profile`)}
+            >
+              Edit profile
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant={isFollowing ? "outline" : "default"}
+                size="sm"
+                onClick={() =>
+                  isFollowing
+                    ? unfollowMutation.mutate()
+                    : followMutation.mutate()
+                }
+              >
+                {isFollowing ? "Following" : "Follow"}
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                aria-label="Message"
+                onClick={handleMessageClick}
+              >
+                <MessageCircle />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {isOwnProfile && (
+        <ProfileImageModal
+          open={openImageModal}
+          onClose={() => setOpenImageModal(false)}
+          entityType="user"
+        />
+      )}
+
+      <FollowListSheet
+        open={followListOpen === "followers"}
+        onClose={() => setFollowListOpen(null)}
+        title="Followers"
+        users={followers}
+        isLoading={isPendingFollowers}
+      />
+      <FollowListSheet
+        open={followListOpen === "following"}
+        onClose={() => setFollowListOpen(null)}
+        title="Following"
+        users={following}
+        isLoading={isPendingFollowing}
+      />
+    </div>
+  );
+};
+
+export default ProfileHeader;

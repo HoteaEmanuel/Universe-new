@@ -34,11 +34,12 @@ export const useCheckPostIsSaved = (id: string) => {
   });
 };
 
-export const useGetUserPostsQuery = (id: string) => {
+export const useGetUserPostsQuery = (id?: string) => {
   const { getUserPosts } = usePostStore();
   return useQuery({
     queryFn: async () => (await getUserPosts(id)) as Post[],
     queryKey: ["userPosts", id],
+    enabled: !!id,
   });
 };
 
