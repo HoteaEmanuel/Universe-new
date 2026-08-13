@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import type {} from "multer";
-import { v2 as cloudinary } from "cloudinary";
+import { uploadImageAndCleanup } from "../lib/cloudinary.js";
 import { prisma } from "../database/prisma.js";
 import { redis } from "../lib/redis.js";
 import { findUserById, updateUser } from "../repository/user.repository.js";
@@ -33,7 +33,10 @@ export const getAllUsers = async (req: Request, res: Response) => {
 export const getUserById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const user = await prisma.user.findUnique({ where: { id }, omit: { password: true } });
+    const user = await prisma.user.findUnique({
+      where: { id },
+      omit: { password: true },
+    });
     if (!user) throw new Error("User not found");
     return res.status(200).json({ message: "User found", user });
   } catch (error) {
@@ -56,7 +59,8 @@ export const getUserByName = async (req: Request, res: Response) => {
       });
       userWithName =
         candidates.find(
-          (u) => `${u.firstName} ${u.lastName}`.toLowerCase() === name.toLowerCase(),
+          (u) =>
+            `${u.firstName} ${u.lastName}`.toLowerCase() === name.toLowerCase(),
         ) ?? null;
     }
 
@@ -73,7 +77,7 @@ export const updateUserImage = async (req: Request, res: Response) => {
     const user = await findUserById(req.userId as string);
     if (!user) throw new Error("User not found");
     if (!file) throw new Error("No file uploaded");
-    const result = await cloudinary.uploader.upload(file.path, {
+    const result = await uploadImageAndCleanup(file.path, {
       folder: "users",
       resource_type: "image",
     });
@@ -94,7 +98,9 @@ export const savePostController = async (req: Request, res: Response) => {
     const savedPost = await savePost(data);
     return res.status(200).json({ message: "Saved the post", data: savedPost });
   } catch (error) {
-    return res.status(400).json({ message: error instanceof Error ? error.message : "" });
+    return res
+      .status(400)
+      .json({ message: error instanceof Error ? error.message : "" });
   }
 };
 
@@ -206,10 +212,17 @@ export const followsUser = async (req: Request, res: Response) => {
     const userId = req.userId as string;
     const otherUserId = req.params.id as string;
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    const otherUser = await prisma.user.findUnique({ where: { id: otherUserId } });
+    const otherUser = await prisma.user.findUnique({
+      where: { id: otherUserId },
+    });
     if (!user || !otherUser) throw new Error("No user found");
     const isFollowing = await prisma.follow.findUnique({
-      where: { followerId_followingId: { followerId: userId, followingId: otherUserId } },
+      where: {
+        followerId_followingId: {
+          followerId: userId,
+          followingId: otherUserId,
+        },
+      },
     });
     return res
       .status(200)
@@ -219,7 +232,10 @@ export const followsUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getUsersFromSameUniversity = async (req: Request, res: Response) => {
+export const getUsersFromSameUniversity = async (
+  req: Request,
+  res: Response,
+) => {
   try {
     const userId = req.userId as string;
     const authUser = await prisma.user.findUnique({ where: { id: userId } });
@@ -253,8 +269,6 @@ export const updateBio = async (req: Request, res: Response) => {
     await updateUser(userId, { bio });
     return res.status(200).json({ message: "Bio updated successfully" });
   } catch (error) {
-    return res
-      .status(400)
-      .json({ message: "Updating bio went wrong", error });
+    return res.status(400).json({ message: "Updating bio went wrong", error });
   }
 };

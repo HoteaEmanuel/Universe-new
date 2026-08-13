@@ -9,7 +9,7 @@ import {
 } from "../repository/post.repository.js";
 import { findUserById } from "../repository/user.repository.js";
 import { prisma } from "../database/prisma.js";
-import cloudinary from "cloudinary";
+import { uploadImageAndCleanup } from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 import {
   createLike,
@@ -90,7 +90,7 @@ export const createNewPost = async (data: CreatePostInput) => {
   if (images && images.length > 0) {
     const uploadResults = await Promise.all(
       images.map((image) =>
-        cloudinary.v2.uploader.upload(image.path, {
+        uploadImageAndCleanup(image.path, {
           folder: "posts",
           resource_type: "image",
         }),
@@ -180,7 +180,7 @@ export const updatePost = async (data: UpdatePostInput) => {
   if (images && images.length > 0) {
     const uploadResults = await Promise.all(
       images.map((image) =>
-        cloudinary.v2.uploader.upload(image.path, {
+        uploadImageAndCleanup(image.path, {
           folder: "posts",
           resource_type: "image",
         }),

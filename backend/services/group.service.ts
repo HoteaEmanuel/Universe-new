@@ -14,7 +14,7 @@ import {
   findGroupMessageById,
 } from "../repository/message.repository.js";
 import { prisma } from "../database/prisma.js";
-import { v2 as cloudinary } from "cloudinary";
+import { uploadImageAndCleanup } from "../lib/cloudinary.js";
 import type { GroupVisibility } from "../generated/prisma/client.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 
@@ -78,7 +78,7 @@ export const sendMessage = async (data: {
   if (images && images.length > 0) {
     result = await Promise.all(
       images.map((image) =>
-        cloudinary.uploader.upload(image.path, {
+        uploadImageAndCleanup(image.path, {
           folder: "message_images",
           resource_type: "image",
         }),
@@ -163,7 +163,7 @@ export const updateGroupImage = async (data: {
   const { image, groupId } = data;
   let result: { secure_url: string; public_id: string } | undefined;
   if (image?.path) {
-    result = await cloudinary.uploader.upload(image.path, {
+    result = await uploadImageAndCleanup(image.path, {
       folder: "group_covers",
       resource_type: "image",
     });

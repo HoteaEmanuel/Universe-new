@@ -10,7 +10,7 @@ import {
 } from "../repository/message.repository.js";
 import { prisma } from "../database/prisma.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
-import { v2 as cloudinary } from "cloudinary";
+import { uploadImageAndCleanup } from "../lib/cloudinary.js";
 import { createMessageNotification } from "../repository/notification.repository.js";
 import { findUserById } from "../repository/user.repository.js";
 
@@ -61,7 +61,7 @@ export const sendMessage = async (data: {
   if (images && images.length > 0) {
     result = await Promise.all(
       images.map((image) =>
-        cloudinary.uploader.upload(image.path, {
+        uploadImageAndCleanup(image.path, {
           folder: "message_images",
           resource_type: "image",
         }),

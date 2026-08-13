@@ -7,3 +7,4 @@ context/
 backend/generated/
 backend/dist/
 node_modules/
+uploads/
