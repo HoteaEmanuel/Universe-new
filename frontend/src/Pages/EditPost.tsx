@@ -16,6 +16,16 @@ import SubmitButton from "@/components/SubmitButton";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   TITLE_MAX_LENGTH,
   BODY_MAX_LENGTH,
   LOCATION_MAX_LENGTH,
@@ -36,6 +46,7 @@ const EditPost = () => {
   const { id } = useParams();
   const { user } = useAuthStore() as { user?: { _id: string } };
   const [files, setFiles] = useState<(File | string)[]>([]);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const navigate = useNavigate();
   const {
     register,
@@ -159,10 +170,7 @@ const EditPost = () => {
               type="button"
               variant="ghost"
               className="mr-auto text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => {
-                deletePostMutation.mutate();
-                navigate("/profile");
-              }}
+              onClick={() => setConfirmDeleteOpen(true)}
             >
               Delete
             </Button>
@@ -183,6 +191,29 @@ const EditPost = () => {
           </div>
         </form>
       </PostFormCard>
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                deletePostMutation.mutate();
+                navigate("/profile");
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 };

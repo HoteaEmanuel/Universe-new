@@ -24,6 +24,7 @@ import {
   useUnlikeMutation,
 } from "../queryAndMutation/mutations/post-mutation";
 import { formatDateDetailed } from "../utils/formatDate";
+import { formatCount } from "../utils/formatCount";
 import LikesModal from "../Modals/LikesModal";
 import { urlPathName } from "../utils/urlPathFromName";
 import ImageSlider from "./ImageSlider";
@@ -318,11 +319,12 @@ const PostCard = ({ post }) => {
           className="cursor-pointer text-sm font-semibold"
           onClick={handleSeeLikesModal}
         >
-          {likes} {likes === 1 ? "like" : "likes"}
+          {formatCount(likes)} {likes === 1 ? "like" : "likes"}
         </span>
         {commentsCount > 0 && (
           <span className="ml-3 text-sm text-muted-foreground">
-            {commentsCount} {commentsCount === 1 ? "comment" : "comments"}
+            {formatCount(commentsCount)}{" "}
+            {commentsCount === 1 ? "comment" : "comments"}
           </span>
         )}
       </div>

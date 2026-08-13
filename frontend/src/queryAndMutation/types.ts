@@ -18,3 +18,12 @@ export type PostAuthor = {
   name?: string;
   profilePicture?: string;
 };
+
+export type PostComment = {
+  _id: string;
+  userId: string;
+  postId: string;
+  text: string;
+  createdAt: string;
+  isLiked: boolean;
+};

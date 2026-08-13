@@ -64,6 +64,12 @@ function ImageSlider({ images }) {
     if (newIndex > images.length) newIndex = 1;
     setIndex(newIndex);
   };
+
+  const handleDotClick = (e, dotIndex) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIndex(dotIndex + 1);
+  };
   return (
     <div
       className="w-full"
@@ -97,12 +103,19 @@ function ImageSlider({ images }) {
         />
         <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
           {images.map((_, i) => (
-            <span
+            <button
               key={i}
-              className={`size-1.5 rounded-full transition-colors ${
-                i === index - 1 ? "bg-white" : "bg-white/40"
-              }`}
-            />
+              type="button"
+              aria-label={`Go to image ${i + 1}`}
+              className="p-1"
+              onClick={(e) => handleDotClick(e, i)}
+            >
+              <span
+                className={`block size-1.5 rounded-full transition-colors ${
+                  i === index - 1 ? "bg-white" : "bg-white/40"
+                }`}
+              />
+            </button>
           ))}
         </div>
       </div>
