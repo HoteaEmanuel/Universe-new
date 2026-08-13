@@ -186,6 +186,7 @@ const ProfileHeader = ({
           open={openImageModal}
           onClose={() => setOpenImageModal(false)}
           entityType="user"
+          currentImageUrl={user.profilePicture}
         />
       )}
 

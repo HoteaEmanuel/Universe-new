@@ -3,16 +3,17 @@ import { useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetPostComments } from "../queryAndMutation/queries/comments-queries";
 import { useAuthStore } from "../store/authStore";
+import { Skeleton } from "./ui/skeleton";
 import Comment from "./Comment";
 
 const CommentsSkeleton = () => (
   <ul className="flex flex-col gap-3 pt-1">
     {Array.from({ length: 3 }).map((_, i) => (
       <li key={i} className="flex items-start gap-2.5 py-1.5">
-        <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
+        <Skeleton className="size-8 shrink-0 rounded-full" />
         <div className="flex-1 space-y-1.5">
-          <div className="h-3.5 w-3/4 animate-pulse rounded bg-muted" />
-          <div className="h-3 w-1/4 animate-pulse rounded bg-muted" />
+          <Skeleton className="h-3.5 w-3/4" />
+          <Skeleton className="h-3 w-1/4" />
         </div>
       </li>
     ))}

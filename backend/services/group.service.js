@@ -2,8 +2,13 @@ import {
   createGroupMember,
   findGroupMember,
   findGroupMembers,
+  findGroupMembershipsForUser,
 } from "../repository/group-members.repository.js";
-import { createGroup, findGroupById } from "../repository/group.repository.js";
+import {
+  createGroup,
+  findGroupById,
+  findPublicGroupsNotJoined,
+} from "../repository/group.repository.js";
 import {
   createGroupMessage,
   findGroupMessageById,
@@ -12,8 +17,8 @@ import {
 import { v2 as cloudinary } from "cloudinary";
 import { getActiveConversationUsers, io } from "../lib/socket.js";
 export const createGroupService = async (data) => {
-  const { name, description, userId } = data;
-  const groupData = { name, description };
+  const { name, description, userId, visibility } = data;
+  const groupData = { name, description, visibility };
 
   const newGroup = await createGroup(groupData);
   const memberData = { userId, groupId: newGroup._id, role: "admin" };
@@ -23,8 +28,31 @@ export const createGroupService = async (data) => {
 };
 
 export const addMemberToGroup = async (data) => {
-  const groupMember = await createGroupMember(data);
+  const { groupId, userId, requesterId } = data;
+  const isSelfJoin = userId.toString() === requesterId.toString();
+
+  if (isSelfJoin) {
+    const [group] = await findGroupById(groupId);
+    if (!group) throw new Error("Group not found");
+    if (group.visibility !== "public") {
+      throw new Error("This group is private. Ask an admin to add you.");
+    }
+  } else {
+    const requester = await findGroupMember(groupId, requesterId);
+    if (!requester || requester.role !== "admin") {
+      throw new Error("Only group admins can add members");
+    }
+  }
+
+  const groupMember = await createGroupMember({ groupId, userId, role: "member" });
   return groupMember;
+};
+
+export const getDiscoverablePublicGroups = async (userId) => {
+  const memberships = await findGroupMembershipsForUser(userId);
+  const joinedGroupIds = memberships.map((membership) => membership.groupId);
+  const groups = await findPublicGroupsNotJoined(joinedGroupIds);
+  return groups;
 };
 
 export const sendMessage = async (data) => {

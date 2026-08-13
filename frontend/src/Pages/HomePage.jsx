@@ -1,5 +1,5 @@
 import PostCard from "../components/PostCard";
-import PostSkelet from "../skeletons/PostSkelet";
+import PostSkeleton from "../skeletons/PostSkeleton";
 import { useGetPostsQuery } from "../queryAndMutation/queries/post-queries";
 import { useAuthStore } from "../store/authStore";
 import { useState } from "react";
@@ -43,8 +43,8 @@ const HomePage = () => {
 
       {(isPendingPosts || isPendingFollowing) && (
         <div className="flex flex-col gap-6">
-          <PostSkelet />
-          <PostSkelet />
+          <PostSkeleton />
+          <PostSkeleton />
         </div>
       )}
 

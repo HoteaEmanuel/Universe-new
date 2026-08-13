@@ -28,7 +28,7 @@ import { formatCount } from "../utils/formatCount";
 import LikesModal from "../Modals/LikesModal";
 import { urlPathName } from "../utils/urlPathFromName";
 import ImageSlider from "./ImageSlider";
-import PostSkelet from "../skeletons/PostSkelet";
+import PostSkeleton from "../skeletons/PostSkeleton";
 const PostCard = ({ post }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -177,7 +177,7 @@ const PostCard = ({ post }) => {
     isPendingLikes ||
     isPendingCommentsCount
   )
-    return <PostSkelet/>;
+    return <PostSkeleton/>;
   const { firstName, name, lastName, profilePicture } = creator;
   return (
     <Link

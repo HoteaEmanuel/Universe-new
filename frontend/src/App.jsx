@@ -25,7 +25,6 @@ import ContentLayout from "./Pages/ContentLayout";
 import CreatePost from "./Pages/CreatePost";
 import EditPost from "./Pages/EditPost";
 import Explore from "./Pages/Explore";
-import ChatHome from "./Pages/ChatContainer";
 import PostDetails from "./Pages/PostDetails";
 import PostDetailsModal from "./Modals/PostDetailsModal";
 import ChatContainer from "./Pages/ChatContainer";
@@ -35,8 +34,8 @@ import Settings from "./Pages/Settings";
 import RelatedPosts from "./Pages/RelatedPosts";
 import Admin from "./Pages/Admin";
 import NotFound from "./Pages/NotFound";
-import NewConversation from "./Pages/NewConversation.jsx";
-import Group from "./Pages/Group.jsx";
+import NewConversation from "./Pages/NewConversation";
+import Group from "./Pages/Group";
 import EditProfile from "./Pages/EditProfile";
 import Background from "./components/Background.jsx";
 import Notifications from "./Pages/Notifications.jsx";
@@ -171,13 +170,15 @@ function App() {
               <Route path="/related-posts/:tag" element={<RelatedPosts />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/chat" element={<ChatContainer />} />
+              <Route path="/conversations/:id" element={<Conversation />} />
+              <Route path="/new-conversation/:id" element={<NewConvo />} />
+              <Route
+                path="/create-conversation"
+                element={<NewConversation />}
+              />
+              <Route path="/groups/:id" element={<Group />} />
             </Route>
-            {/* Full-bleed layouts that manage their own width (chat/conversation panes) */}
-            <Route path="/chat" element={<ChatContainer />} />
-            <Route path="/conversations/:id" element={<Conversation />} />
-            <Route path="/new-conversation/:id" element={<NewConvo />} />
-            <Route path="/create-conversation" element={<NewConversation />} />
-            <Route path="/groups/:id" element={<Group />} />
             {/* <Route path="/test" element={<Background />} /> */}
           </Route>
         </Routes>

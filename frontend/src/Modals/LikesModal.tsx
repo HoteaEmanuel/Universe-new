@@ -6,13 +6,20 @@ import {
   SheetHeader,
   SheetTitle,
 } from "../components/ui/sheet";
+import { Skeleton } from "../components/ui/skeleton";
 
-const LikesModal = ({ open, onClose, postId }) => {
+type LikesModalProps = {
+  open: boolean;
+  onClose: () => void;
+  postId: string;
+};
+
+const LikesModal = ({ open, onClose, postId }: LikesModalProps) => {
   const { data, error, isLoading } = useGetUsersWhoLikedPostQuery(postId);
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
-      <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
+      <Sheet open={open} onOpenChange={(next: boolean) => !next && onClose()}>
         <SheetContent
           side="bottom"
           className="mx-auto flex max-h-[70vh] w-full flex-col rounded-t-2xl sm:max-w-md"
@@ -25,15 +32,15 @@ const LikesModal = ({ open, onClose, postId }) => {
               <ul className="flex flex-col gap-3 pt-1">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <li key={i} className="flex items-center gap-3 p-2">
-                    <div className="size-12 shrink-0 animate-pulse rounded-full bg-muted" />
-                    <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                    <Skeleton className="size-12 shrink-0 rounded-full" />
+                    <Skeleton className="h-4 w-32" />
                   </li>
                 ))}
               </ul>
             )}
-            {error && (
+            {!!error && (
               <p className="pt-8 text-center text-sm text-muted-foreground">
-                Couldn't load likes.
+                Couldn&apos;t load likes.
               </p>
             )}
             {!isLoading && !error && data?.length === 0 && (
@@ -41,7 +48,7 @@ const LikesModal = ({ open, onClose, postId }) => {
                 No likes yet.
               </p>
             )}
-            {!isLoading && !error && data?.length > 0 && (
+            {!isLoading && !error && data && data.length > 0 && (
               <ul className="flex flex-col gap-1 pt-1">
                 {data.map((user) => (
                   <li key={user._id}>

@@ -15,6 +15,11 @@ export const findGroupMembers = async (groupId) => {
   return members;
 };
 
+export const findGroupMembershipsForUser = async (userId) => {
+  const memberships = await GroupMembers.find({ memberId: userId });
+  return memberships;
+};
+
 
 export const findGroupMember=async(groupId,memberId)=>{
     const member=await GroupMembers.findOne({groupId,memberId});

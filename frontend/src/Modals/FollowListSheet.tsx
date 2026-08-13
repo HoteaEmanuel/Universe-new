@@ -5,6 +5,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "../components/ui/sheet";
+import { Skeleton } from "../components/ui/skeleton";
 import type { ProfileUser } from "../features/profile/types";
 
 type FollowListSheetProps = {
@@ -40,8 +41,8 @@ const FollowListSheet = ({
               <ul className="flex flex-col gap-3 pt-1">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <li key={i} className="flex items-center gap-3 p-2">
-                    <div className="size-12 shrink-0 animate-pulse rounded-full bg-muted" />
-                    <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                    <Skeleton className="size-12 shrink-0 rounded-full" />
+                    <Skeleton className="h-4 w-32" />
                   </li>
                 ))}
               </ul>

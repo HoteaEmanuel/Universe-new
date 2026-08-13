@@ -1,153 +1,124 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { create } from "zustand";
-import { useAuthStore } from "./authStore";
-import { QueryClient } from "@tanstack/react-query";
+import type { ChatMessage, ChatUser, DirectConversation } from "../features/chat/types";
+
 const API_URL =
   import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:5000/api";
 axios.defaults.withCredentials = true;
 
-export const useConversationStore = create((set) => ({
+const errorMessage = (error: unknown, fallback: string) =>
+  (error as AxiosError<{ message?: string }>)?.response?.data?.message ||
+  fallback;
+
+type ConversationStore = {
+  isLoading: boolean;
+  error: string | null;
+  getUserByConvoId: (id: string) => Promise<ChatUser>;
+  getMessages: (id: string) => Promise<ChatMessage[]>;
+  getConversationByUsersIds: (id: string) => Promise<DirectConversation | null>;
+  getUserConversations: () => Promise<DirectConversation[]>;
+  getConvoUsers: () => Promise<ChatUser[]>;
+  startConversation: (id: string, message: string) => Promise<string>;
+  sendMessage: (
+    id: string,
+    message: Record<string, unknown>,
+  ) => Promise<ChatMessage>;
+  deleteMessage: (id: string) => Promise<{ message: string }>;
+  editMessage: (id: string, text: string) => Promise<ChatMessage>;
+};
+
+export const useConversationStore = create<ConversationStore>((set) => ({
   isLoading: false,
-  messages: [],
-  error:undefined,
-  getConvoById: async (id) => {
-    set({ isLoading: false });
-    try {
-      const response = await axios.get(`${API_URL}/conversations/${id}`);
-      return response.data;
-    } catch (error) {
-      throw new Error(error);
-    } finally {
-      set({ isLoading: false });
-    }
-  },
+  error: null,
   getUserByConvoId: async (id) => {
-    set({ isLoading: false });
     try {
       const response = await axios.get(`${API_URL}/conversations/${id}/user`);
       return response.data.user;
     } catch (error) {
-      throw new Error(error);
-    } finally {
-      set({ isLoading: false });
+      throw new Error(errorMessage(error, "Could not load this conversation"));
     }
   },
   getMessages: async (id) => {
-    set({ isLoading: false });
     try {
       const response = await axios.get(
         `${API_URL}/conversations/${id}/messages`,
       );
       return response.data.messages;
     } catch (error) {
-      throw new Error(error);
-    } finally {
-      set({ isLoading: false });
+      throw new Error(errorMessage(error, "Could not load messages"));
     }
   },
   getConversationByUsersIds: async (id) => {
-    set({ isLoading: false });
     try {
       const response = await axios.get(`${API_URL}/conversations/user/${id}`);
       return response.data.conversation;
     } catch (error) {
-      throw new Error(error);
-    } finally {
-      set({ isLoading: false });
+      throw new Error(
+        errorMessage(error, "Could not check for an existing conversation"),
+      );
     }
   },
   getUserConversations: async () => {
-    set({ isLoading: true });
     try {
       const response = await axios.get(`${API_URL}/conversations`);
       return response.data.conversations;
     } catch (error) {
-      throw new Error(error);
-    } finally {
-      set({ isLoading: false });
+      throw new Error(errorMessage(error, "Could not load conversations"));
     }
   },
   getConvoUsers: async () => {
-    set({ isLoading: true });
     try {
       const response = await axios.get(`${API_URL}/conversations/users`);
       return response.data.users;
     } catch (error) {
-      throw new Error(error);
-    } finally {
-      set({ isLoading: false });
+      throw new Error(errorMessage(error, "Could not load contacts"));
     }
   },
   startConversation: async (id, message) => {
-    set({ isLoading: true });
     try {
       const response = await axios.post(
         `${API_URL}/conversations/start-conversation/${id}`,
-        {
-          message,
-        },
+        { message },
       );
-      console.log(response.data.id);  
       return response.data.id;
     } catch (error) {
-      throw new Error(error);
-    } finally {
-      set({ isLoading: false });
+      throw new Error(errorMessage(error, "Could not start conversation"));
     }
   },
   sendMessage: async (id, message) => {
-    set({ isLoading: true });
-    console.log("SEND MESSAGE PLEASE");
     try {
       const response = await axios.post(
         `${API_URL}/conversations/${id}/send-message`,
         message,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
-
-      set({error:null});
+      set({ error: null });
       return response.data;
     } catch (error) {
-      console.log(error);
-      set({error:error?.response?.data?.message});
-    } finally {
-      set({ isLoading: false });
+      const messageText = errorMessage(error, "Could not send message");
+      set({ error: messageText });
+      throw new Error(messageText);
     }
   },
   deleteMessage: async (id) => {
-    set({ isLoading: true });
     try {
-      console.log("HEER");
       const response = await axios.delete(
         `${API_URL}/conversations/delete-messages/${id}`,
       );
       return response.data;
     } catch (error) {
-      throw new Error(error);
-    } finally {
-      set({ isLoading: false });
+      throw new Error(errorMessage(error, "Could not delete message"));
     }
   },
   editMessage: async (id, text) => {
-    set({ isLoading: true });
     try {
       const response = await axios.patch(
         `${API_URL}/conversations/edit-messages/${id}`,
-        { newContent:text },
+        { newContent: text },
       );
       return response.data;
     } catch (error) {
-      throw new Error(error);
-    } finally {
-      set({ isLoading: false });
+      throw new Error(errorMessage(error, "Could not edit message"));
     }
-  },
-  getLiveMessages: async () => {
-    const socket = useAuthStore.getState().socket;
-    socket.on("newMessage", (newMessage) => {
-      return newMessage;
-    });
   },
 }));

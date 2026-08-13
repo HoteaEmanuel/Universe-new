@@ -9,13 +9,14 @@ import {
   giveAdminRole,
   sendMessage,
   updateGroupImage,
+  addMemberToGroup,
+  getDiscoverablePublicGroups,
 } from "../services/group.service.js";
-import { createGroupMember } from "../repository/group-members.repository.js";
 import { getActiveConversationUsers } from "../lib/socket.js";
 export const createGroupController = async (req, res) => {
   try {
-    const { name, description } = req.body;
-    const data = { name, description, userId: req.userId };
+    const { name, description, visibility } = req.body;
+    const data = { name, description, visibility, userId: req.userId };
     const newGroup = await createGroupService(data);
     return res
       .status(201)
@@ -29,13 +30,22 @@ export const addMemberToGroupController = async (req, res) => {
   try {
     const { userId } = req.body;
     const { id: groupId } = req.params;
-    
-    const groupData = { userId, groupId };
-    const groupMember = await createGroupMember(groupData);
+
+    const groupData = { userId, groupId, requesterId: req.userId };
+    const groupMember = await addMemberToGroup(groupData);
     return res.status(201).json({
       message: "User added to the group succesfully",
       data: groupMember,
     });
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+export const getDiscoverableGroupsController = async (req, res) => {
+  try {
+    const groups = await getDiscoverablePublicGroups(req.userId);
+    return res.status(200).json({ groups });
   } catch (error) {
     return res.status(400).json({ message: error.message });
   }

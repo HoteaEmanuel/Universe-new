@@ -14,6 +14,11 @@ const groupSchema = new mongoose.Schema({
   coverImagePublicId: {
     type: String,
   },
+  visibility: {
+    type: String,
+    enum: ["public", "private"],
+    default: "private",
+  },
   createdAt: {
     type: Date,
     default: Date.now,

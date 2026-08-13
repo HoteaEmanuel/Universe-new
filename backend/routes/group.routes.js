@@ -20,12 +20,14 @@ import {
   updateGroupCoverImageController,
   addMemberToGroupController,
   getActiveGroupUsersOnConversation,
+  getDiscoverableGroupsController,
 } from "../controllers/group.controller.js";
 import { rateLimiter } from "../middleware/rateLimiter.js";
 const router = express.Router();
 router.post("/", createGroupController);
 router.delete("/:id", deleteGroup);
 router.get("/user/:userId", getUserGroups);
+router.get("/discover/public", getDiscoverableGroupsController);
 router.get("/:id", getGroupById);
 router.get("/:id/members", getGroupMembers);
 router.get("/:id/auth-user", getGroupMemberById);

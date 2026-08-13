@@ -87,19 +87,6 @@
 [data-theme="dark"] .uploader {
   @apply bg-gray-950 border-gray-700;
 }
-.conversationContainer {
-  @apply bg-gray-100 border border-gray-300;
-}
-[data-theme="dark"] .conversationContainer {
-  @apply bg-gray-900 border border-gray-700;
-}
-
-.modalContainer {
-  @apply bg-gray-100 border border-gray-300 rounded-2xl;
-}
-[data-theme="dark"] .modalContainer {
-  @apply bg-gray-950 border border-gray-700 rounded-2xl;
-}
 .hoverGray:hover {
   @apply bg-gray-200;
 }
