@@ -4,3 +4,6 @@
 .claude/
 context/
 .playwright-mcp/
+backend/generated/
+backend/dist/
+node_modules/
