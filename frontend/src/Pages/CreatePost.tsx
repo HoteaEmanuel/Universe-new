@@ -10,6 +10,7 @@ import { useDebounce } from "../hooks/Debounce";
 import MultipleImagesUploader from "../components/MultipleImagesUploader.jsx";
 import PostFormCard from "@/components/PostFormCard";
 import FormField from "@/components/FormField";
+import LocationAutocompleteField from "@/components/LocationAutocompleteField";
 import TextareaField from "@/components/TextareaField";
 import SubmitButton from "@/components/SubmitButton";
 import { Button } from "@/components/ui/button";
@@ -112,9 +113,16 @@ const CreatePost = () => {
             <MultipleImagesUploader setFiles={setFiles} files={files} />
           </div>
 
-          <FormField
+          <LocationAutocompleteField
             id="location"
             label="Location"
+            value={watchedValues.location ?? ""}
+            onSelect={(value) =>
+              setValue("location", value, {
+                shouldValidate: true,
+                shouldDirty: true,
+              })
+            }
             maxLength={LOCATION_MAX_LENGTH}
             currentLength={watchedValues.location?.length ?? 0}
             error={errors.location?.message}
