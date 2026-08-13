@@ -28,7 +28,7 @@ const Admin = () => {
         <ul className="flex flex-col gap-5 p-5">
           {businessRegistrations.map((registration) => (
             <li
-              key={registration._id}
+              key={registration.id}
               className="w-full flex gap-5 p-10 border hover:scale-101"
             >
               <p>{registration.name + " " + registration.email}</p>
@@ -39,13 +39,13 @@ const Admin = () => {
               <div className="flex gap-5 justify-end ml-auto">
                 <button
                   className="bg-green-400 py-2 px-4 rounded-2xl hover:scale-105"
-                  onClick={() => acceptBusinessRegistration(registration._id)}
+                  onClick={() => acceptBusinessRegistration(registration.id)}
                 >
                   Accept
                 </button>
                 <button
                   className="bg-red-400 py-2 px-4 rounded-2xl hover:scale-105"
-                  onClick={() => rejectBusinessRegistration(registration._id)}
+                  onClick={() => rejectBusinessRegistration(registration.id)}
                 >
                   Reject
                 </button>

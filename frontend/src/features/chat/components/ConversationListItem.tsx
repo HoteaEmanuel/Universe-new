@@ -23,7 +23,7 @@ const ConversationListItem = ({
   const lastMessage = entry.lastMessage;
   const lastSender = lastMessage?.senderId;
   const lastSenderId =
-    typeof lastSender === "string" ? lastSender : lastSender?._id;
+    typeof lastSender === "string" ? lastSender : lastSender?.id;
   const prefix =
     lastSenderId === currentUserId
       ? "You: "

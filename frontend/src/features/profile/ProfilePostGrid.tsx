@@ -44,9 +44,9 @@ const ProfilePostGrid = ({
       {posts.map((post) => {
         const hasImage = post.imagesUrls?.length > 0;
         return (
-          <li key={post._id} className="group/tile relative aspect-square">
+          <li key={post.id} className="group/tile relative aspect-square">
             <Link
-              to={`/post/${post._id}`}
+              to={`/post/${post.id}`}
               state={{ backgroundLocation: location }}
               className="block size-full overflow-hidden rounded-lg bg-muted"
             >
@@ -89,7 +89,7 @@ const ProfilePostGrid = ({
                 onClick={(e: MouseEvent) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  navigate(`/edit-post/${post._id}`);
+                  navigate(`/edit-post/${post.id}`);
                 }}
               >
                 <Pencil />

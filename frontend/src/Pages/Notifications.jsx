@@ -12,9 +12,9 @@ const Notifications = () => {
   const { user, socket } = useAuthStore();
   
   const queryClient = useQueryClient();
-  const { data: notifications, isLoading } = useGetUserNotifications(user._id);
+  const { data: notifications, isLoading } = useGetUserNotifications(user.id);
 
-  const { mutate: seeNotifications } = useSeeNotifications(user._id);
+  const { mutate: seeNotifications } = useSeeNotifications(user.id);
 
   useEffect(() => {
     const timeOutId = setTimeout(() => {
@@ -28,10 +28,10 @@ const Notifications = () => {
   useEffect(() => {
     socket.on("newNotification", (notification) => {
       console.log(notification);
-      queryClient.invalidateQueries(["unread-notifications", user._id]);
-      queryClient.invalidateQueries(["notifications",user._id]);
+      queryClient.invalidateQueries(["unread-notifications", user.id]);
+      queryClient.invalidateQueries(["notifications",user.id]);
     });
-  }, [socket, user._id, queryClient]);
+  }, [socket, user.id, queryClient]);
   if (isLoading) return <h1>Loading..</h1>;
   console.log("NOTIFICATIONS: ", notifications);
 
@@ -41,7 +41,7 @@ const Notifications = () => {
       <ul className="w-full h-full flex flex-col gap-5 mt-10 p-5 ">
         {notifications.map((notif) => (
           <li
-            key={notif._id}
+            key={notif.id}
             className="flex flex-col items-center justify-center p-2"
           >
             {notif.actionUser && notif.actionUser.profilePicture && (

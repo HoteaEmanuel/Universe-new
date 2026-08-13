@@ -15,13 +15,13 @@ const ChatContainer = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   console.log("USER DIN CONVO");
-  console.log(user._id);
+  console.log(user.id);
   const { data: conversatiiDirecte, isPending: isPendingConversations } =
     useGetUserConversations(null);
   console.log("CONV DATA: ");
   console.log(conversatiiDirecte);
   const { data: groups, isLoading: isLoadingGroups } = useGetUserGroups(
-    user._id,
+    user.id,
   );
 
   const { onlineUsers } = useAuthStore();
@@ -94,8 +94,8 @@ const ChatContainer = () => {
                 className="commentsContainer flex p-2 rounded-xl cursor-pointer"
                 onClick={() => {
                   data.name
-                    ? navigate(`/groups/${data._id}`)
-                    : navigate(`/conversations/${data._id}`);
+                    ? navigate(`/groups/${data.id}`)
+                    : navigate(`/conversations/${data.id}`);
                 }}
               >
                 <div className="relative">
@@ -108,10 +108,10 @@ const ChatContainer = () => {
                   ) : (
                     <FaUserCircle className="size-15 rounded-full" />
                   )}
-                  {data._id && onlineUsers.includes(data.user?._id) && (
+                  {data.id && onlineUsers.includes(data.user?.id) && (
                     <FaCircle
                       className={`absolute size-4 -bottom-1  right-1 border-2 border-black rounded-full ${
-                        onlineUsers.includes(data.user?._id)
+                        onlineUsers.includes(data.user?.id)
                           && "text-green-500"
                          
                       }`}
@@ -131,8 +131,8 @@ const ChatContainer = () => {
                   </p>
                   <div className="flex items-center text-xs">
                     <span className="px-1 gray-text ">
-                      {data.lastMessage?.senderId._id === user._id ||
-                      data.lastMessage?.senderId === user._id
+                      {data.lastMessage?.senderId.id === user.id ||
+                      data.lastMessage?.senderId === user.id
                         ? "You: "
                         : data.lastMessage?.senderId.firstName
                           ? "You: "

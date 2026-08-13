@@ -38,7 +38,7 @@ const MessageBubble = ({
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const sender = message.senderId;
-  const senderId = typeof sender === "string" ? sender : sender._id;
+  const senderId = typeof sender === "string" ? sender : sender.id;
   const senderUser: ChatUser | null = typeof sender === "string" ? null : sender;
   const isOwn = senderId === currentUserId;
   const isGroupChat = variant === "group" && !isOwn;
@@ -135,8 +135,8 @@ const MessageBubble = ({
             >
               <MessageActionsMenu
                 message={message}
-                onDelete={() => onDelete(message._id)}
-                onEdit={(newContent) => onEdit(message._id, newContent)}
+                onDelete={() => onDelete(message.id)}
+                onEdit={(newContent) => onEdit(message.id, newContent)}
               />
             </span>
           )}

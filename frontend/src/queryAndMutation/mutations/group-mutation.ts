@@ -27,7 +27,7 @@ export const useCreateGroupMutation = () => {
 export const useSendMessageToGroupMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
   const { sendMessageToGroup } = useGroupStore();
-  const { user } = useAuthStore() as { user: { _id: string } | null };
+  const { user } = useAuthStore() as { user: { id: string } | null };
 
   return useMutation({
     mutationFn: (message: NewMessagePayload) =>
@@ -38,9 +38,9 @@ export const useSendMessageToGroupMutation = (groupId?: string) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<ChatMessage[]>(queryKey);
       const optimisticMessage: ChatMessage = {
-        _id: `optimistic-${Date.now()}`,
+        id: `optimistic-${Date.now()}`,
         content: message.messageText || undefined,
-        senderId: user?._id ?? "",
+        senderId: user?.id ?? "",
         groupId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -76,7 +76,7 @@ export const useEditMessageInGroupMutation = (groupId?: string) => {
       const previous = queryClient.getQueryData<ChatMessage[]>(queryKey);
       queryClient.setQueryData<ChatMessage[]>(queryKey, (old) =>
         old?.map((m) =>
-          m._id === id ? { ...m, content: newContent, edited: true } : m,
+          m.id === id ? { ...m, content: newContent, edited: true } : m,
         ),
       );
       return { previous };
@@ -105,7 +105,7 @@ export const useDeleteMessageInGroupMutation = (groupId?: string) => {
       const previous = queryClient.getQueryData<ChatMessage[]>(queryKey);
       queryClient.setQueryData<ChatMessage[]>(queryKey, (old) =>
         old?.map((m) =>
-          m._id === messageId
+          m.id === messageId
             ? { ...m, deleted: true, content: undefined, imageUrls: [] }
             : m,
         ),

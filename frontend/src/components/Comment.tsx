@@ -42,16 +42,16 @@ const Comment = ({ comment }: CommentProps) => {
 
   if (isPendingUser || !user) return null;
 
-  const isOwnComment = authUser._id === user._id;
+  const isOwnComment = authUser.id === user.id;
   const fullName = urlPathName(user);
 
   const handleToggleLike = () => {
     const nextLiked = !liked;
     setLiked(nextLiked);
     if (nextLiked) {
-      likeComment.mutate(comment._id, { onError: () => setLiked(false) });
+      likeComment.mutate(comment.id, { onError: () => setLiked(false) });
     } else {
-      removeLikeComment.mutate(comment._id, { onError: () => setLiked(true) });
+      removeLikeComment.mutate(comment.id, { onError: () => setLiked(true) });
     }
   };
 
@@ -122,7 +122,7 @@ const Comment = ({ comment }: CommentProps) => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={() => deleteComment.mutate(comment._id)}
+              onClick={() => deleteComment.mutate(comment.id)}
             >
               Delete
             </AlertDialogAction>

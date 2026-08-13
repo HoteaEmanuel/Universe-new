@@ -35,7 +35,7 @@ const PostCard = ({ post }) => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { userId } = post;
-  const postId = post._id;
+  const postId = post.id;
   const [showMore, setShowMore] = useState(false);
   const [isClamped, setIsClamped] = useState(false);
   const [isSaved, setIsSaved] = useState(post.isSaved);
@@ -68,12 +68,12 @@ const PostCard = ({ post }) => {
     useGetPostCommentsCount(postId);
   const likeMutation = useLikeMutation(postId);
   const unlikeMutation = useUnlikeMutation(postId);
-  const { mutate: savePostMutation } = useSavePostMutation(postId, user._id);
-  const followMutation = useFollowMutation(userId, user._id);
-  const unfollowMutation = useUnfollowMutation(userId, user._id);
+  const { mutate: savePostMutation } = useSavePostMutation(postId, user.id);
+  const followMutation = useFollowMutation(userId, user.id);
+  const unfollowMutation = useUnfollowMutation(userId, user.id);
   const { mutate: unsavePostMutation } = useUnsavePostMutation(
     postId,
-    user._id,
+    user.id,
   );
 
   const [showSaveOption, setShowSaveOption] = useState(false);
@@ -115,7 +115,7 @@ const PostCard = ({ post }) => {
   const handleProfileClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (userId !== user._id) {
+    if (userId !== user.id) {
       navigate(`/users/${fullName}`);
     } else {
       navigate("/profile");
@@ -210,7 +210,7 @@ const PostCard = ({ post }) => {
             </p>
           </div>
 
-          {(!isFollowing && userId !== user._id && (
+          {(!isFollowing && userId !== user.id && (
             <button
               className="rounded-full px-2 py-1 text-xs font-semibold text-primary transition-transform duration-200 ease-in hover:scale-105"
               onClick={handleFollowClick}
@@ -218,7 +218,7 @@ const PostCard = ({ post }) => {
               Follow
             </button>
           )) ||
-            (userId !== user._id && isFollowing && (
+            (userId !== user.id && isFollowing && (
               <button
                 className="rounded-full px-2 py-1 text-xs text-muted-foreground transition-transform duration-200 ease-in hover:scale-105"
                 onClick={handleUnfollowClick}
@@ -287,7 +287,7 @@ const PostCard = ({ post }) => {
           <MessageCircle className="size-6 text-foreground/80 hover:text-foreground" />
         </button>
         <div className="relative ml-auto">
-          {userId !== user._id && !isSaved && (
+          {userId !== user.id && !isSaved && (
             <Bookmark
               className="size-6 text-foreground/80 hover:scale-110 hover:text-foreground cursor-pointer transition-transform duration-150"
               onClick={handleSaveClick}
@@ -296,7 +296,7 @@ const PostCard = ({ post }) => {
               aria-label="Save post"
             />
           )}
-          {userId !== user._id && isSaved && (
+          {userId !== user.id && isSaved && (
             <BookmarkCheck
               className="size-6 text-foreground hover:scale-110 cursor-pointer transition-transform duration-150"
               fill="currentColor"

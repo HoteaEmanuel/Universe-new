@@ -26,7 +26,7 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
   const { id: groupId } = useParams();
   const { user } = useAuthStore() as { user: ChatUser };
   const { data: groupMembers, isPending } = useGetGroupMembers(groupId);
-  const { data: isAdmin } = useCheckUserIsAdminQuery(groupId, user._id);
+  const { data: isAdmin } = useCheckUserIsAdminQuery(groupId, user.id);
   const { mutate: promoteMemberToAdmin, isPending: isPromoting } =
     usePromoteMemberToAdminMutation(groupId);
 
@@ -53,7 +53,7 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
           {!isPending && groupMembers && groupMembers.length > 0 && (
             <ul className="flex flex-col gap-1 pt-1">
               {groupMembers.map((member) => (
-                <li key={member._id} className="flex items-center gap-3 p-2">
+                <li key={member.id} className="flex items-center gap-3 p-2">
                   {member.memberId.profilePicture ? (
                     <img
                       src={member.memberId.profilePicture}
@@ -78,7 +78,7 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
                       size="sm"
                       variant="outline"
                       disabled={isPromoting}
-                      onClick={() => promoteMemberToAdmin(member.memberId._id)}
+                      onClick={() => promoteMemberToAdmin(member.memberId.id)}
                     >
                       Make admin
                     </Button>

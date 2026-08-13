@@ -51,7 +51,7 @@ const LikesModal = ({ open, onClose, postId }: LikesModalProps) => {
             {!isLoading && !error && data && data.length > 0 && (
               <ul className="flex flex-col gap-1 pt-1">
                 {data.map((user) => (
-                  <li key={user._id}>
+                  <li key={user.id}>
                     <UserListElement user={user} />
                   </li>
                 ))}

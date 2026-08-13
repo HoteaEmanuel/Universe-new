@@ -38,24 +38,24 @@ const ProfileHeader = ({
   >(null);
 
   const { data: followers, isPending: isPendingFollowers } =
-    useGetFollowersQuery(user._id);
+    useGetFollowersQuery(user.id);
   const { data: following, isPending: isPendingFollowing } =
-    useGetFollowingQuery(user._id);
+    useGetFollowingQuery(user.id);
 
   const { data: isFollowing } = useIsFollowingQuery(
-    isOwnProfile ? undefined : user._id,
+    isOwnProfile ? undefined : user.id,
   );
   const { data: conversation } = useGetConversationByUsersIdsQuery(
-    isOwnProfile ? undefined : user._id,
+    isOwnProfile ? undefined : user.id,
   );
-  const followMutation = useFollowMutation(user._id, authUser._id);
-  const unfollowMutation = useUnfollowMutation(user._id, authUser._id);
+  const followMutation = useFollowMutation(user.id, authUser.id);
+  const unfollowMutation = useUnfollowMutation(user.id, authUser.id);
 
   const handleMessageClick = () => {
     if (conversation) {
-      navigate(`/conversations/${conversation._id}`);
+      navigate(`/conversations/${conversation.id}`);
     } else {
-      navigate(`/new-conversation/${user._id}`);
+      navigate(`/new-conversation/${user.id}`);
     }
   };
 
@@ -151,7 +151,7 @@ const ProfileHeader = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/users/${user._id}/edit-profile`)}
+              onClick={() => navigate(`/users/${user.id}/edit-profile`)}
             >
               Edit profile
             </Button>

@@ -223,12 +223,12 @@ const Explore = () => {
             {searchedUsers.map((user) => {
               return (
                 <li
-                  key={user._id}
+                  key={user.id}
                   className="w-full flex justify-center gap-4 border p-2 border-violet-950 rounded-2xl cursor-pointer"
                   onClick={() => {
-                    user._id === authUser._id
+                    user.id === authUser.id
                       ? navigate("/profile")
-                      : navigate(`/user/profile/${user._id}`);
+                      : navigate(`/user/profile/${user.id}`);
                   }}
                 >
                   {user.profilePicture && (

@@ -55,7 +55,7 @@ const FollowListSheet = ({
             {!isLoading && users && users.length > 0 && (
               <ul className="flex flex-col gap-1 pt-1">
                 {users.map((user) => (
-                  <li key={user._id}>
+                  <li key={user.id}>
                     <UserListElement user={user} />
                   </li>
                 ))}

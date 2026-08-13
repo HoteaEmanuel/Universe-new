@@ -55,11 +55,11 @@ const SideSection = () => {
   }, [user.role]);
 
   const { data: notifications, isPending: isPendingNormalNotifications } =
-    useGetUnreadNotifications(user._id);
+    useGetUnreadNotifications(user.id);
   const {
     data: messageNotifications,
     isPending: isPendingMessageNotifications,
-  } = useGetNewMessageNotifications(user._id);
+  } = useGetNewMessageNotifications(user.id);
 
   if (isPendingNormalNotifications || isPendingMessageNotifications)
     return <h1>Loading...</h1>;

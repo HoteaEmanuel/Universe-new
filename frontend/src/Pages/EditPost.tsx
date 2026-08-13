@@ -44,7 +44,7 @@ const EditPost = () => {
     document.title = "Edit Post";
   }, []);
   const { id } = useParams();
-  const { user } = useAuthStore() as { user?: { _id: string } };
+  const { user } = useAuthStore() as { user?: { id: string } };
   const [files, setFiles] = useState<(File | string)[]>([]);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const navigate = useNavigate();
@@ -60,8 +60,8 @@ const EditPost = () => {
   const [imageError, setImageError] = useState("");
 
   const { data: post, isPending } = useGetPostQuery(id);
-  const updatePostMutation = useUpdatePostMutation(user?._id);
-  const deletePostMutation = useDeletePostMutation(id ?? "", user?._id);
+  const updatePostMutation = useUpdatePostMutation(user?.id);
+  const deletePostMutation = useDeletePostMutation(id ?? "", user?.id);
 
   useEffect(() => {
     if (post) {

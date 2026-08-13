@@ -14,7 +14,7 @@ const HomePage = () => {
     document.title = "Home";
   }, []);
   const { user } = useAuthStore();
-  const { isPending: isPendingFollowing } = useGetFollowingQuery(user._id);
+  const { isPending: isPendingFollowing } = useGetFollowingQuery(user.id);
   const [feedSelector, setFeedSelector] = useState("Global");
 
   const { data: posts, isPending: isPendingPosts } =
@@ -62,7 +62,7 @@ const HomePage = () => {
       {!isPendingPosts && !isPendingFollowing && posts?.length > 0 && (
         <ul className="flex flex-col gap-6">
           {posts.map((post) => (
-            <li key={post._id}>
+            <li key={post.id}>
               <PostCard post={post} />
             </li>
           ))}

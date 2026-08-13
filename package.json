@@ -2,8 +2,18 @@
   "name": "proiect-pi",
   "version": "1.0.0",
   "main": "ap",
+  "type": "module",
   "scripts": {
-    "dev": "nodemon backend/app.js"
+    "postinstall": "prisma generate",
+    "predev": "prisma generate",
+    "dev": "tsx watch --env-file=backend/.env backend/app.ts",
+    "prebuild": "prisma generate",
+    "build": "tsc -p backend/tsconfig.json",
+    "start": "node backend/dist/app.js",
+    "typecheck": "tsc -p backend/tsconfig.json --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +22,8 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@huggingface/inference": "^4.13.11",
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "7.9.1",
     "@upstash/redis": "^1.36.2",
     "bcryptjs": "^3.0.2",
     "bullmq": "^5.68.0",
@@ -23,16 +35,28 @@
     "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.2",
     "mailtrap": "^4.3.0",
-    "mongoose": "^8.19.2",
     "multer": "^2.0.2",
     "nodemailer": "^6.10.1",
     "openai": "^6.17.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "pg": "^8.23.0",
+    "prisma": "7.9.1",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^26.2.0",
+    "@types/nodemailer": "^6.4.24",
+    "@types/passport": "^1.0.17",
+    "@types/passport-google-oauth20": "^2.0.17",
+    "@types/pg": "^8.21.0",
     "daisyui": "^5.5.5",
-    "nodemon": "^3.1.10"
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
   }
 }

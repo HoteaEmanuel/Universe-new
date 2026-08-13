@@ -27,17 +27,17 @@ const ProfilePage = () => {
   } = useGetUserByNameQuery(name);
 
   const profileUser: ProfileUser | undefined = name ? otherUser : authUser;
-  const isOwnProfile = !!profileUser && profileUser._id === authUser?._id;
+  const isOwnProfile = !!profileUser && profileUser.id === authUser?.id;
 
   useEffect(() => {
     document.title = profileUser ? getFullName(profileUser) : "Profile";
   }, [profileUser]);
 
   const { data: posts, isPending: isPendingPosts } = useGetUserPostsQuery(
-    profileUser?._id,
+    profileUser?.id,
   );
   const { data: savedPosts, isPending: isPendingSaved } =
-    useGetSavedPostsQuery(authUser?._id ?? "");
+    useGetSavedPostsQuery(authUser?.id ?? "");
 
   if (name && !isPendingOtherUser && isOtherUserError) {
     return (

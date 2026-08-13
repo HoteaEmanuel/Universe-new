@@ -38,7 +38,7 @@ const ChatContainer = () => {
   const { data: conversations, isPending: isPendingConversations } =
     useGetUserConversations();
   const { data: groups, isPending: isPendingGroups } = useGetUserGroups(
-    user._id,
+    user.id,
   );
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -92,17 +92,17 @@ const ChatContainer = () => {
           <ul className="flex flex-col gap-1">
             {filtered.map((entry) => (
               <ConversationListItem
-                key={entry._id}
+                key={entry.id}
                 entry={entry}
-                currentUserId={user._id}
+                currentUserId={user.id}
                 isOnline={
-                  !entry.name && !!entry.user && onlineUsers.includes(entry.user._id)
+                  !entry.name && !!entry.user && onlineUsers.includes(entry.user.id)
                 }
                 onClick={() =>
                   navigate(
                     entry.name
-                      ? `/groups/${entry._id}`
-                      : `/conversations/${entry._id}`,
+                      ? `/groups/${entry.id}`
+                      : `/conversations/${entry.id}`,
                   )
                 }
               />

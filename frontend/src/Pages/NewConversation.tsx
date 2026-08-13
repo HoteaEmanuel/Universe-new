@@ -77,10 +77,10 @@ const NewConversation = () => {
       {!isPending && results.length > 0 && (
         <ul className="flex flex-col gap-1">
           {results.map((candidate) => (
-            <li key={candidate._id}>
+            <li key={candidate.id}>
               <button
                 type="button"
-                onClick={() => navigate(`/new-conversation/${candidate._id}`)}
+                onClick={() => navigate(`/new-conversation/${candidate.id}`)}
                 className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-muted cursor-pointer"
               >
                 {candidate.profilePicture ? (

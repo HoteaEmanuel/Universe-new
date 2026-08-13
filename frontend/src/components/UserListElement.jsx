@@ -11,7 +11,7 @@ const UserListElement = ({ user }) => {
     <div
       className="flex hoverGray w-full  rounded-lg cursor-pointer p-2 items-center gap-4"
       onClick={() =>
-        user._id === authUser._id
+        user.id === authUser.id
           ? navigate("/profile")
           : navigate(`/users/${fullName}`)
       }
@@ -22,8 +22,8 @@ const UserListElement = ({ user }) => {
         <FaUserCircle className="size-12" />
       )}
       <h1>
-        {user._id === authUser._id ? "You" : user.firstName}{" "}
-        {user._id === authUser._id ? "" : user.accountType === "normal" ? user.lastName : user.name}
+        {user.id === authUser.id ? "You" : user.firstName}{" "}
+        {user.id === authUser.id ? "" : user.accountType === "normal" ? user.lastName : user.name}
       </h1>
     </div>
   );

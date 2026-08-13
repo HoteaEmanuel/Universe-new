@@ -31,7 +31,7 @@ const Conversation = () => {
   };
   const { data: otherUser, isPending: isPendingUser } =
     useGetUserByConvoId(convoId);
-  const { mutate: seeNewMessages } = useSeeNewMessages(authUser._id, convoId);
+  const { mutate: seeNewMessages } = useSeeNewMessages(authUser.id, convoId);
   const { data: messages, isPending: isPendingMessages } =
     useGetConvoMessages(convoId);
   const { mutate: deleteMessage } = useDeleteMessageMutation(convoId);
@@ -54,10 +54,10 @@ const Conversation = () => {
   }, [socket, queryClient, convoId]);
 
   useEffect(() => {
-    socket.emit("view_conversation", convoId, authUser._id);
+    socket.emit("view_conversation", convoId, authUser.id);
     seeNewMessages();
     return () => {
-      socket.emit("leave_conversation", convoId, authUser._id);
+      socket.emit("leave_conversation", convoId, authUser.id);
     };
   }, [seeNewMessages, socket, authUser, convoId]);
 
@@ -75,7 +75,7 @@ const Conversation = () => {
         otherUser && (
           <ChatUserHeader
             user={otherUser}
-            isOnline={onlineUsers.includes(otherUser._id)}
+            isOnline={onlineUsers.includes(otherUser.id)}
             actions={
               <Button variant="ghost" size="icon" aria-label="Conversation options">
                 <EllipsisVertical />
@@ -90,7 +90,7 @@ const Conversation = () => {
       ) : (
         <MessageThread
           messages={messages}
-          currentUserId={authUser._id}
+          currentUserId={authUser.id}
           variant="direct"
           onDelete={deleteMessage}
           onEdit={(id, newContent) => editMessage({ id, newContent })}

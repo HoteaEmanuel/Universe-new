@@ -1,0 +1,292 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  user
+  admin
+}
+
+enum AccountType {
+  normal
+  business
+}
+
+enum GroupVisibility {
+  public
+  private
+}
+
+enum GroupRole {
+  member
+  admin
+}
+
+model User {
+  id                        String    @id @default(uuid())
+  firstName                 String?
+  lastName                  String?
+  name                      String?
+  email                     String    @unique
+  password                  String?
+  lastLogin                 DateTime  @default(now())
+  isVerified                Boolean   @default(false)
+  profilePicture            String?   @default("")
+  university                String?
+  major                     String?
+  bio                       String?
+  role                      UserRole    @default(user)
+  googleId                  String?   @unique
+  accountType               AccountType @default(normal)
+  identityVerified          String    @default("false")
+  resetPasswordToken        String?
+  resetPasswordExpiresAt    DateTime?
+  refreshToken              String?
+  verificationCode          String?
+  verificationCodeExpiresAt DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  posts                 Post[]
+  comments               Comment[]
+  commentLikes            CommentLike[]
+  likes                  Like[]
+  following              Follow[]        @relation("Follower")
+  followers              Follow[]        @relation("Following")
+  savedPosts             SavedPost[]
+  notificationsReceived  Notification[]  @relation("NotificationUser")
+  notificationsActed     Notification[]  @relation("NotificationActionUser")
+  conversationsAsOne     Conversation[]  @relation("ParticipantOne")
+  conversationsAsTwo     Conversation[]  @relation("ParticipantTwo")
+  sentMessages           Message[]       @relation("SenderMessages")
+  receivedMessages       Message[]       @relation("ReceiverMessages")
+  groupMemberships       GroupMembers[]
+  groupMessages          GroupMessage[]
+
+  @@map("users")
+}
+
+model Post {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  imagesUrls      String[] @default([])
+  imagesPublicIds String[] @default([])
+  title           String
+  body            String?
+  location        String?
+  tags            Tag[]    @relation("PostTags")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  comments Comment[]
+  likes    Like[]
+  savedBy  SavedPost[]
+
+  @@index([userId])
+  @@map("posts")
+}
+
+model Tag {
+  id    String @id @default(uuid())
+  name  String @unique
+  posts Post[] @relation("PostTags")
+
+  @@map("tags")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  likes CommentLike[]
+
+  @@index([postId])
+  @@index([userId])
+  @@map("comments")
+}
+
+model CommentLike {
+  id        String   @id @default(uuid())
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  likedById String
+  likedBy   User     @relation(fields: [likedById], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([commentId, likedById])
+  @@map("comment_likes")
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@index([userId])
+  @@map("likes")
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model SavedPost {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  savedAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, postId])
+  @@index([userId, savedAt(sort: Desc)])
+  @@index([postId])
+  @@map("saved_posts")
+}
+
+model Notification {
+  id             String            @id @default(uuid())
+  title          String?
+  userId         String?
+  user           User?             @relation("NotificationUser", fields: [userId], references: [id], onDelete: Cascade)
+  actionUserId   String?
+  actionUser     User?             @relation("NotificationActionUser", fields: [actionUserId], references: [id], onDelete: Cascade)
+  type           String?
+  message        String?
+  read           Boolean           @default(false)
+  conversationId String?
+  conversation   Conversation?     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  groupId        String?
+  group          Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userAvatar     String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model Conversation {
+  id               String   @id @default(uuid())
+  participantOneId String
+  participantOne   User     @relation("ParticipantOne", fields: [participantOneId], references: [id], onDelete: Cascade)
+  participantTwoId String
+  participantTwo   User     @relation("ParticipantTwo", fields: [participantTwoId], references: [id], onDelete: Cascade)
+  lastMessageId    String?  @unique
+  lastMessage      Message? @relation("ConversationLastMessage", fields: [lastMessageId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  messages      Message[]      @relation("ConversationMessages")
+  notifications Notification[]
+
+  @@unique([participantOneId, participantTwoId])
+  @@index([updatedAt(sort: Desc)])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  senderId       String
+  sender         User         @relation("SenderMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId     String
+  receiver       User         @relation("ReceiverMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  conversationId String
+  conversation   Conversation @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
+  content        String?
+  edited         Boolean      @default(false)
+  deleted        Boolean      @default(false)
+  imageUrls      String[]     @default([])
+  imagePublicIds String[]     @default([])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  lastMessageOf Conversation? @relation("ConversationLastMessage")
+
+  @@index([senderId, receiverId])
+  @@index([conversationId])
+  @@map("messages")
+}
+
+model Group {
+  id                 String          @id @default(uuid())
+  name               String
+  description        String?
+  coverImageUrl      String?
+  coverImagePublicId String?
+  visibility         GroupVisibility @default(private)
+  lastMessageId      String?         @unique
+  lastMessage        GroupMessage?   @relation("GroupLastMessage", fields: [lastMessageId], references: [id])
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  members       GroupMembers[]
+  messages      GroupMessage[] @relation("GroupMessages")
+  notifications Notification[]
+
+  @@map("groups")
+}
+
+model GroupMembers {
+  id        String    @id @default(uuid())
+  groupId   String
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    User      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  role      GroupRole @default(member)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([groupId, memberId])
+  @@map("group_members")
+}
+
+model GroupMessage {
+  id             String   @id @default(uuid())
+  groupId        String
+  group          Group    @relation("GroupMessages", fields: [groupId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String?
+  imageUrls      String[] @default([])
+  imagePublicIds String[] @default([])
+  edited         Boolean  @default(false)
+  deleted        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  lastMessageOf Group? @relation("GroupLastMessage")
+
+  @@index([groupId])
+  @@map("group_messages")
+}

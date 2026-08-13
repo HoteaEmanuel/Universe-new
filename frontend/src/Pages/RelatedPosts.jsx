@@ -16,7 +16,7 @@ const RelatedPosts = () => {
     <div className="p-10">
       <h2 className="text-2xl font-bold mb-4">Related Posts</h2>
       <ul className="space-y-4 p-10">
-        {posts && posts.map((post) => <PostCard key={post._id} post={post} />)}
+        {posts && posts.map((post) => <PostCard key={post.id} post={post} />)}
       </ul>
     </div>
   );

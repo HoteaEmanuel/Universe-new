@@ -1,5 +1,5 @@
 export type Post = {
-  _id: string;
+  id: string;
   userId: string;
   title: string;
   body: string;
@@ -12,7 +12,7 @@ export type Post = {
 };
 
 export type PostAuthor = {
-  _id: string;
+  id: string;
   firstName?: string;
   lastName?: string;
   name?: string;
@@ -20,7 +20,7 @@ export type PostAuthor = {
 };
 
 export type PostComment = {
-  _id: string;
+  id: string;
   userId: string;
   postId: string;
   text: string;

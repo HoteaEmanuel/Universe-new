@@ -93,14 +93,14 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
   const unlikeMutation = useUnlikeMutation(postId ?? "");
   const { mutate: savePostMutation } = useSavePostMutation(
     postId ?? "",
-    user._id,
+    user.id,
   );
   const { mutate: unsavePostMutation } = useUnsavePostMutation(
     postId ?? "",
-    user._id,
+    user.id,
   );
-  const followMutation = useFollowMutation(userId, user._id);
-  const unfollowMutation = useUnfollowMutation(userId, user._id);
+  const followMutation = useFollowMutation(userId, user.id);
+  const unfollowMutation = useUnfollowMutation(userId, user.id);
 
   const handleLike = () => {
     const prevLikes =
@@ -135,7 +135,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
 
   const fullName = urlPathName(creator);
   const handleProfileClick = () => {
-    if (userId !== user._id) {
+    if (userId !== user.id) {
       navigate(`/users/${fullName}`);
     } else {
       navigate("/profile");
@@ -222,7 +222,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
                 {post.location && " · " + post.location}
               </p>
             </div>
-            {userId !== user._id &&
+            {userId !== user.id &&
               (isFollowing ? (
                 <button
                   className="shrink-0 rounded-full px-2 py-1 text-xs text-muted-foreground transition-transform duration-200 ease-in hover:scale-105"
@@ -348,7 +348,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
         <LikesModal
           open={seeLikesModal}
           onClose={() => setSeeLikesModal(false)}
-          postId={postId}
+          postId={postId ?? ""}
         />
       )}
     </div>

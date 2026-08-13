@@ -19,7 +19,7 @@ type MessageThreadProps = {
 const SCROLL_BUTTON_THRESHOLD = 400;
 
 const getSenderId = (message: ChatMessage) =>
-  typeof message.senderId === "string" ? message.senderId : message.senderId._id;
+  typeof message.senderId === "string" ? message.senderId : message.senderId.id;
 
 const groupConsecutiveMessages = (messages: ChatMessage[]): ChatMessage[][] => {
   const groups: ChatMessage[][] = [];
@@ -74,10 +74,10 @@ const MessageThread = ({
         {messages && messages.length > 0 ? (
           <div className="flex flex-col gap-4">
             {groupConsecutiveMessages(messages).map((group) => (
-              <MessageGroup key={group[0]._id} className="gap-px">
+              <MessageGroup key={group[0].id} className="gap-px">
                 {group.map((message, index) => (
                   <MessageBubble
-                    key={message._id}
+                    key={message.id}
                     message={message}
                     currentUserId={currentUserId}
                     variant={variant}

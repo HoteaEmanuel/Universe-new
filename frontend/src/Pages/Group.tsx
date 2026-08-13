@@ -31,7 +31,7 @@ const Group = () => {
   };
   const queryClient = useQueryClient();
   const { data: group, isPending: isPendingGroup } = useGetGroupById(id);
-  const { mutate: seeNewMessages } = useSeeNewMessages(user._id, id);
+  const { mutate: seeNewMessages } = useSeeNewMessages(user.id, id);
   const { data: messages, isPending: isPendingMessages } =
     useGetGroupMessages(id);
   const { data: activeMembers } = useGetActiveGroupMembers(id);
@@ -56,10 +56,10 @@ const Group = () => {
   }, [socket, queryClient, id]);
 
   useEffect(() => {
-    socket.emit("view_conversation", id, user._id);
+    socket.emit("view_conversation", id, user.id);
     seeNewMessages();
     return () => {
-      socket.emit("leave_conversation", id, user._id);
+      socket.emit("leave_conversation", id, user.id);
     };
   }, [socket, seeNewMessages, user, id]);
 
@@ -116,7 +116,7 @@ const Group = () => {
       ) : (
         <MessageThread
           messages={messages}
-          currentUserId={user._id}
+          currentUserId={user.id}
           variant="group"
           onDelete={deleteMessage}
           onEdit={(messageId, newContent) =>

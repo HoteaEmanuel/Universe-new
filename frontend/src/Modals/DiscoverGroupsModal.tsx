@@ -24,8 +24,8 @@ type DiscoverGroupRowProps = {
 };
 
 const DiscoverGroupRow = ({ group, onJoined }: DiscoverGroupRowProps) => {
-  const { mutate: joinGroup, isPending } = useAddMemberToGroupMutation(group._id);
-  const { user } = useAuthStore() as { user: { _id: string } };
+  const { mutate: joinGroup, isPending } = useAddMemberToGroupMutation(group.id);
+  const { user } = useAuthStore() as { user: { id: string } };
 
   return (
     <li className="flex items-center justify-between gap-3 p-2">
@@ -54,7 +54,7 @@ const DiscoverGroupRow = ({ group, onJoined }: DiscoverGroupRowProps) => {
         size="sm"
         disabled={isPending}
         onClick={() =>
-          joinGroup(user._id, { onSuccess: () => onJoined(group._id) })
+          joinGroup(user.id, { onSuccess: () => onJoined(group.id) })
         }
       >
         Join
@@ -97,7 +97,7 @@ const DiscoverGroupsModal = ({ open, onClose }: DiscoverGroupsModalProps) => {
               <ul className="flex flex-col gap-1 pt-1">
                 {groups.map((group) => (
                   <DiscoverGroupRow
-                    key={group._id}
+                    key={group.id}
                     group={group}
                     onJoined={(groupId) => {
                       onClose();

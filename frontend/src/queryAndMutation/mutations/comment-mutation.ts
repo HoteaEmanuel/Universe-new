@@ -18,8 +18,8 @@ export const useSendCommentMutation = (postId?: string) => {
       ]);
 
       const optimisticComment: PostComment = {
-        _id: `optimistic-${Date.now()}`,
-        userId: user?._id,
+        id: `optimistic-${Date.now()}`,
+        userId: user?.id,
         postId: postId ?? "",
         text: comment,
         createdAt: new Date().toISOString(),
@@ -67,7 +67,7 @@ export const useDeleteCommentMutation = (postId?: string) => {
       ]);
 
       queryClient.setQueryData<PostComment[]>(["comments", postId], (old) =>
-        (old ?? []).filter((comment) => comment._id !== commentId),
+        (old ?? []).filter((comment) => comment.id !== commentId),
       );
       queryClient.setQueryData<number>(["comments-count", postId], (old) =>
         Math.max(0, (old ?? 1) - 1),

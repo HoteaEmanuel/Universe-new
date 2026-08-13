@@ -1,5 +1,5 @@
 export type ChatUser = {
-  _id: string;
+  id: string;
   firstName?: string;
   lastName?: string;
   name?: string;
@@ -11,7 +11,7 @@ export type ChatUser = {
 export type MessageSender = ChatUser | string;
 
 export type ChatMessage = {
-  _id: string;
+  id: string;
   content?: string;
   imageUrls?: string[];
   senderId: MessageSender;
@@ -29,7 +29,7 @@ export type LastMessagePreview = {
 };
 
 export type DirectConversation = {
-  _id: string;
+  id: string;
   user?: ChatUser;
   lastMessage?: LastMessagePreview;
   name?: undefined;
@@ -38,7 +38,7 @@ export type DirectConversation = {
 export type GroupVisibility = "public" | "private";
 
 export type GroupConversation = {
-  _id: string;
+  id: string;
   name: string;
   description?: string;
   coverImageUrl?: string;
@@ -51,7 +51,7 @@ export type GroupConversation = {
 export type ConversationListEntry = DirectConversation | GroupConversation;
 
 export type GroupMember = {
-  _id: string;
+  id: string;
   role: "admin" | "member" | string;
   memberId: ChatUser;
 };

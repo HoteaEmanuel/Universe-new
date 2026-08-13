@@ -44,7 +44,7 @@ const MemberCandidateRow = ({
   isAdding,
 }: MemberCandidateRowProps) => {
   const alreadyMember = groupMembers?.some(
-    (member) => member.memberId._id === candidate._id,
+    (member) => member.memberId.id === candidate.id,
   );
 
   return (
@@ -66,7 +66,7 @@ const MemberCandidateRow = ({
         <Button
           size="sm"
           disabled={isAdding}
-          onClick={() => onAdd(candidate._id)}
+          onClick={() => onAdd(candidate.id)}
         >
           Add
         </Button>
@@ -85,8 +85,8 @@ const AddMembersModal = ({ open, onClose }: AddMembersModalProps) => {
   const { data: convoUsers } = useGetConvoUsers();
   const { data: groupMembers, isPending: isPendingGroupMembers } =
     useGetGroupMembers(groupId);
-  const { data: followers } = useGetFollowersQuery(user._id);
-  const { data: following } = useGetFollowingQuery(user._id);
+  const { data: followers } = useGetFollowersQuery(user.id);
+  const { data: following } = useGetFollowingQuery(user.id);
   const { data: usersFromSameUniversity } =
     useGetUsersFromSameUniversityNotInGroupQuery(groupId);
   const { mutate: addMember, isPending: isAdding } =
@@ -143,7 +143,7 @@ const AddMembersModal = ({ open, onClose }: AddMembersModalProps) => {
                     <ul className="flex flex-col gap-1">
                       {users.map((candidate) => (
                         <MemberCandidateRow
-                          key={candidate._id}
+                          key={candidate.id}
                           candidate={candidate}
                           groupMembers={groupMembers}
                           onAdd={addMember}

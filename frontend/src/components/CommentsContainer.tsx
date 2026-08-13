@@ -52,7 +52,7 @@ const CommentsContainer = () => {
   return (
     <ul className="flex flex-col">
       {comments.map((comment) => (
-        <li key={comment._id}>
+        <li key={comment.id}>
           <Comment comment={comment} />
         </li>
       ))}
