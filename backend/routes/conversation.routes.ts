@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getMessages,
+  getConvoMediaController,
   getConversationByUserIds,
   getConvoById,
   getConvoUser,
@@ -20,6 +21,7 @@ router.get("/users", getConvoUsers);
 router.get("/:id", getConvoById);
 router.get("/messages/:id", getMessages);
 router.get("/:id/messages", getMessages);
+router.get("/:id/media", getConvoMediaController);
 router.get("/:id/user", getConvoUser);
 router.get("/user/:id", getConversationByUserIds);
 

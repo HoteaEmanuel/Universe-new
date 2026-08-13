@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { EllipsisVertical, LogOut, UserPlus, Users } from "lucide-react";
+import {
+  EllipsisVertical,
+  Images,
+  LogOut,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +18,7 @@ import { useGetGroupMemberById } from "../queryAndMutation/queries/group-queries
 import AddMembersModal from "./AddMembersModal";
 import ViewMembersModal from "./ViewMembersModal";
 import LeaveGroupWarningModal from "./LeaveGroupWarningModal";
+import ChatMediaModal from "./ChatMediaModal";
 
 const GroupMenuModal = () => {
   const { id } = useParams();
@@ -21,6 +28,7 @@ const GroupMenuModal = () => {
   const [addMembersOpen, setAddMembersOpen] = useState(false);
   const [viewMembersOpen, setViewMembersOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  const [mediaOpen, setMediaOpen] = useState(false);
 
   return (
     <>
@@ -47,6 +55,10 @@ const GroupMenuModal = () => {
             <Users />
             View members
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setMediaOpen(true)}>
+            <Images />
+            View media
+          </DropdownMenuItem>
           <DropdownMenuItem
             variant="destructive"
             onClick={() => setLeaveOpen(true)}
@@ -68,6 +80,11 @@ const GroupMenuModal = () => {
       <LeaveGroupWarningModal
         open={leaveOpen}
         onClose={() => setLeaveOpen(false)}
+      />
+      <ChatMediaModal
+        variant="group"
+        open={mediaOpen}
+        onClose={() => setMediaOpen(false)}
       />
     </>
   );

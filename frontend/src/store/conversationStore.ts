@@ -1,6 +1,11 @@
 import axios, { AxiosError } from "axios";
 import { create } from "zustand";
-import type { ChatMessage, ChatUser, DirectConversation } from "../features/chat/types";
+import type {
+  ChatMediaPage,
+  ChatMessage,
+  ChatUser,
+  DirectConversation,
+} from "../features/chat/types";
 
 const API_URL =
   import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:5000/api";
@@ -15,6 +20,7 @@ type ConversationStore = {
   error: string | null;
   getUserByConvoId: (id: string) => Promise<ChatUser>;
   getMessages: (id: string) => Promise<ChatMessage[]>;
+  getConvoMedia: (id: string, before?: string) => Promise<ChatMediaPage>;
   getConversationByUsersIds: (id: string) => Promise<DirectConversation | null>;
   getUserConversations: () => Promise<DirectConversation[]>;
   getConvoUsers: () => Promise<ChatUser[]>;
@@ -46,6 +52,20 @@ export const useConversationStore = create<ConversationStore>((set) => ({
       return response.data.messages;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load messages"));
+    }
+  },
+  getConvoMedia: async (id, before) => {
+    try {
+      const response = await axios.get(`${API_URL}/conversations/${id}/media`, {
+        params: before ? { before } : undefined,
+      });
+      return {
+        items: response.data.items,
+        nextCursor: response.data.nextCursor,
+        hasMore: response.data.hasMore,
+      };
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not load media"));
     }
   },
   getConversationByUsersIds: async (id) => {

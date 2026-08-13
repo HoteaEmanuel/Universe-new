@@ -7,6 +7,7 @@ import {
   getUserGroups,
   getGroupById,
   getGroupMessages,
+  getGroupMediaController,
   sendMessageToGroupController,
   getGroupMemberById,
   getUsersFromSameUniversityNotInGroup,
@@ -32,6 +33,7 @@ router.get("/:id", getGroupById);
 router.get("/:id/members", getGroupMembers);
 router.get("/:id/auth-user", getGroupMemberById);
 router.get("/:id/messages", getGroupMessages);
+router.get("/:id/media", getGroupMediaController);
 router.get(
   "/:id/users-from-same-university-not-in-group",
   getUsersFromSameUniversityNotInGroup,

@@ -12,6 +12,7 @@ import {
   getDiscoverablePublicGroups,
 } from "../services/group.service.js";
 import { findGroupMembershipsForUser } from "../repository/group-members.repository.js";
+import { getGroupMediaPage } from "../repository/message.repository.js";
 import { getActiveConversationUsers } from "../lib/socket.js";
 
 const errorMessage = (error: unknown) =>
@@ -132,6 +133,17 @@ export const getGroupMessages = async (req: Request, res: Response) => {
       },
     });
     return res.status(200).json({ groupMessages });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const getGroupMediaController = async (req: Request, res: Response) => {
+  try {
+    const groupId = req.params.id as string;
+    const before = req.query.before as string | undefined;
+    const page = await getGroupMediaPage(groupId, before);
+    return res.status(200).json({ message: "Fetched the group media", ...page });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

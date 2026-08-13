@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import type {} from "multer";
 import { prisma } from "../database/prisma.js";
 import { findConversationByParticipants } from "../repository/conversation.repository.js";
+import { getConversationMediaPage } from "../repository/message.repository.js";
 
 import {
   deleteMessage,
@@ -114,6 +115,17 @@ export const getMessages = async (req: Request, res: Response) => {
     return res
       .status(200)
       .json({ message: "Fetched the messages successfully", messages });
+  } catch (error) {
+    return res.status(400).json({ error });
+  }
+};
+
+export const getConvoMediaController = async (req: Request, res: Response) => {
+  try {
+    const convoId = req.params.id as string;
+    const before = req.query.before as string | undefined;
+    const page = await getConversationMediaPage(convoId, before);
+    return res.status(200).json({ message: "Fetched the conversation media", ...page });
   } catch (error) {
     return res.status(400).json({ error });
   }

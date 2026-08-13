@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useConversationStore } from "../../store/conversationStore";
 import type {
+  ChatMediaPage,
   ChatMessage,
   ChatUser,
   DirectConversation,
@@ -28,6 +29,18 @@ export const useGetConvoMessages = (id?: string) => {
   return useQuery<ChatMessage[]>({
     queryFn: () => getMessages(id as string),
     queryKey: ["conversation_messages", id],
+    enabled: !!id,
+  });
+};
+
+export const useGetConvoMediaInfinite = (id?: string) => {
+  const { getConvoMedia } = useConversationStore();
+  return useInfiniteQuery<ChatMediaPage>({
+    queryKey: ["conversation-media", id],
+    queryFn: ({ pageParam }) => getConvoMedia(id as string, pageParam as string | undefined),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
     enabled: !!id,
   });
 };

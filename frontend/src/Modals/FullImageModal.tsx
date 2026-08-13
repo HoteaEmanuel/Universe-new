@@ -1,4 +1,7 @@
+import { Download } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { downloadImage } from "../utils/downloadImage";
 
 type FullImageModalProps = {
   image: File | string | null;
@@ -8,6 +11,7 @@ type FullImageModalProps = {
 
 const FullImageModal = ({ image, open, onClose }: FullImageModalProps) => {
   if (!image) return null;
+  const isRemoteImage = typeof image === "string";
   const src = image instanceof File ? URL.createObjectURL(image) : image;
 
   return (
@@ -19,6 +23,18 @@ const FullImageModal = ({ image, open, onClose }: FullImageModalProps) => {
           alt="full size"
           className="max-h-[85vh] max-w-full rounded-2xl object-contain"
         />
+        {isRemoteImage && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            aria-label="Download image"
+            className="absolute top-2 left-2 shadow-md"
+            onClick={() => downloadImage(image)}
+          >
+            <Download />
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   );

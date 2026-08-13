@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { EllipsisVertical } from "lucide-react";
+import { Images } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -19,10 +19,12 @@ import MessageThread from "../features/chat/components/MessageThread";
 import MessageInput from "../features/chat/components/MessageInput";
 import TypingIndicator from "../features/chat/components/TypingIndicator";
 import { useTypingIndicator } from "../features/chat/hooks/useTypingIndicator";
+import ChatMediaModal from "../Modals/ChatMediaModal";
 import type { ChatUser } from "../features/chat/types";
 
 const Conversation = () => {
   const { id: convoId } = useParams();
+  const [mediaOpen, setMediaOpen] = useState(false);
   const queryClient = useQueryClient();
   const { user: authUser, socket, onlineUsers } = useAuthStore() as {
     user: ChatUser;
@@ -77,8 +79,13 @@ const Conversation = () => {
             user={otherUser}
             isOnline={onlineUsers.includes(otherUser.id)}
             actions={
-              <Button variant="ghost" size="icon" aria-label="Conversation options">
-                <EllipsisVertical />
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="View media"
+                onClick={() => setMediaOpen(true)}
+              >
+                <Images />
               </Button>
             }
           />
@@ -99,6 +106,12 @@ const Conversation = () => {
 
       <TypingIndicator typingUsers={typingUsers} variant="direct" />
       <MessageInput variant="direct" id={convoId as string} />
+
+      <ChatMediaModal
+        variant="direct"
+        open={mediaOpen}
+        onClose={() => setMediaOpen(false)}
+      />
     </section>
   );
 };

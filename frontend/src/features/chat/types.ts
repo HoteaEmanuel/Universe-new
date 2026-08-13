@@ -50,6 +50,18 @@ export type GroupConversation = {
 
 export type ConversationListEntry = DirectConversation | GroupConversation;
 
+export type ChatMediaItem = {
+  url: string;
+  messageId: string;
+  createdAt: string;
+};
+
+export type ChatMediaPage = {
+  items: ChatMediaItem[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type GroupMember = {
   id: string;
   role: "admin" | "member" | string;

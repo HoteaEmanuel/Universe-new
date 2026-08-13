@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useGroupStore } from "../../store/groupStore";
 import type {
+  ChatMediaPage,
   ChatMessage,
   ChatUser,
   GroupConversation,
@@ -39,6 +40,18 @@ export const useGetGroupMessages = (id?: string) => {
   return useQuery<ChatMessage[]>({
     queryFn: () => getGroupMessages(id as string),
     queryKey: ["group-messages", id],
+    enabled: !!id,
+  });
+};
+
+export const useGetGroupMediaInfinite = (id?: string) => {
+  const { getGroupMedia } = useGroupStore();
+  return useInfiniteQuery<ChatMediaPage>({
+    queryKey: ["group-media", id],
+    queryFn: ({ pageParam }) => getGroupMedia(id as string, pageParam as string | undefined),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
     enabled: !!id,
   });
 };
