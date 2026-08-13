@@ -17,6 +17,8 @@ import { useAuthStore } from "../store/authStore";
 import ChatUserHeader from "../features/chat/components/ChatUserHeader";
 import MessageThread from "../features/chat/components/MessageThread";
 import MessageInput from "../features/chat/components/MessageInput";
+import TypingIndicator from "../features/chat/components/TypingIndicator";
+import { useTypingIndicator } from "../features/chat/hooks/useTypingIndicator";
 import type { ChatUser } from "../features/chat/types";
 
 const Conversation = () => {
@@ -34,15 +36,21 @@ const Conversation = () => {
     useGetConvoMessages(convoId);
   const { mutate: deleteMessage } = useDeleteMessageMutation(convoId);
   const { mutate: editMessage } = useEditMessageMutation(convoId);
+  const typingUsers = useTypingIndicator(convoId);
 
   useEffect(() => {
-    const handleNewMessage = () => {
+    const invalidateMessages = () =>
       queryClient.invalidateQueries({
         queryKey: ["conversation_messages", convoId],
       });
+    socket.on("newMessage", invalidateMessages);
+    socket.on("messageEdited", invalidateMessages);
+    socket.on("messageDeleted", invalidateMessages);
+    return () => {
+      socket.off?.("newMessage", invalidateMessages);
+      socket.off?.("messageEdited", invalidateMessages);
+      socket.off?.("messageDeleted", invalidateMessages);
     };
-    socket.on("newMessage", handleNewMessage);
-    return () => socket.off?.("newMessage", handleNewMessage);
   }, [socket, queryClient, convoId]);
 
   useEffect(() => {
@@ -89,6 +97,7 @@ const Conversation = () => {
         />
       )}
 
+      <TypingIndicator typingUsers={typingUsers} variant="direct" />
       <MessageInput variant="direct" id={convoId as string} />
     </section>
   );

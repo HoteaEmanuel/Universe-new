@@ -132,7 +132,7 @@ export const deleteMessage = async (data) => {
   await message.save();
   io.to(getReceiverSocketId(message.receiverId.toString())).emit(
     "messageDeleted",
-    id,
+    messageId,
   );
 };
 
@@ -141,9 +141,9 @@ export const editMessage = async (data) => {
 
   const message = await findMessageById(messageId);
 
+  if (!message) throw new Error("Message not found");
   if (message.senderId.toString() !== senderId)
     throw new Error("No authorization to edit the message");
-  if (!message) throw new Error("Message not found");
   message.content = newContent;
   message.edited = true;
   message.updatedAt = Date.now();

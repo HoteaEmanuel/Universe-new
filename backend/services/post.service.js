@@ -10,7 +10,7 @@ import {
 import { findUserById, findUserByName } from "../repository/user.repository.js";
 import { redis } from "../lib/redis.js";
 import cloudinary from "cloudinary";
-import { io } from "../lib/socket.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 import {
   createLike,
   deleteLike,

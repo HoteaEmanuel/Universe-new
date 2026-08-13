@@ -139,7 +139,7 @@ export const editMessageController = async (req, res) => {
 
 export const deleteMessageController = async (req, res) => {
   try {
-    const { id: messageId } = req.params;
+    const { messageId } = req.params;
     const authUserId = req.userId;
     const data = { messageId, authUserId };
     await deleteMessage(data);

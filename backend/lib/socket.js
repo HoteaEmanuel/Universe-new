@@ -72,6 +72,26 @@ io.on("connection", (socket) => {
       console.log(activeConversationUsers[id]);
   })
 
+  socket.on("typing",({ id, userId, name })=>{
+    const activeUsers = activeConversationUsers[id];
+    if(!activeUsers) return;
+    activeUsers.forEach((memberId)=>{
+      if(memberId===userId) return;
+      const receiverSocketId = getReceiverSocketId(memberId);
+      if(receiverSocketId) io.to(receiverSocketId).emit("userTyping",{ id, userId, name });
+    });
+  })
+
+  socket.on("stopTyping",({ id, userId })=>{
+    const activeUsers = activeConversationUsers[id];
+    if(!activeUsers) return;
+    activeUsers.forEach((memberId)=>{
+      if(memberId===userId) return;
+      const receiverSocketId = getReceiverSocketId(memberId);
+      if(receiverSocketId) io.to(receiverSocketId).emit("userStoppedTyping",{ id, userId });
+    });
+  })
+
   io.emit("getOnlineUsers", Object.keys(usersSocket));
   socket.on("disconnect", () => {
     console.log("A user disconnected " + socket.id);

@@ -16,6 +16,8 @@ import { useSeeNewMessages } from "../queryAndMutation/mutations/notification-mu
 import { useAuthStore } from "../store/authStore";
 import MessageThread from "../features/chat/components/MessageThread";
 import MessageInput from "../features/chat/components/MessageInput";
+import TypingIndicator from "../features/chat/components/TypingIndicator";
+import { useTypingIndicator } from "../features/chat/hooks/useTypingIndicator";
 import GroupMenuModal from "../Modals/GroupMenuModal";
 import ProfileImageModal from "../Modals/ProfileImageModal";
 import type { ChatUser } from "../features/chat/types";
@@ -35,15 +37,22 @@ const Group = () => {
   const { data: activeMembers } = useGetActiveGroupMembers(id);
   const { mutate: deleteMessage } = useDeleteMessageInGroupMutation(id);
   const { mutate: editMessage } = useEditMessageInGroupMutation(id);
+  const typingUsers = useTypingIndicator(id);
 
   useEffect(() => {
-    const handleNewGroupMessage = (message: { groupId: string }) => {
-      if (message.groupId === id) {
+    const invalidateIfCurrentGroup = (payload: { groupId: string }) => {
+      if (payload.groupId === id) {
         queryClient.invalidateQueries({ queryKey: ["group-messages", id] });
       }
     };
-    socket.on("newGroupMessage", handleNewGroupMessage);
-    return () => socket.off?.("newGroupMessage", handleNewGroupMessage);
+    socket.on("newGroupMessage", invalidateIfCurrentGroup);
+    socket.on("messageEdited", invalidateIfCurrentGroup);
+    socket.on("messageDeleted", invalidateIfCurrentGroup);
+    return () => {
+      socket.off?.("newGroupMessage", invalidateIfCurrentGroup);
+      socket.off?.("messageEdited", invalidateIfCurrentGroup);
+      socket.off?.("messageDeleted", invalidateIfCurrentGroup);
+    };
   }, [socket, queryClient, id]);
 
   useEffect(() => {
@@ -116,6 +125,7 @@ const Group = () => {
         />
       )}
 
+      <TypingIndicator typingUsers={typingUsers} variant="group" />
       <MessageInput variant="group" id={id as string} />
 
       <ProfileImageModal

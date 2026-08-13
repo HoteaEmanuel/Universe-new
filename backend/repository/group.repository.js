@@ -7,7 +7,7 @@ export const createGroup = async (data) => {
 };
 
 export const findGroupById = async (groupId) => {
-  const group = await Group.find({ _id: groupId });
+  const group = await Group.findById(groupId);
   return group;
 };
 

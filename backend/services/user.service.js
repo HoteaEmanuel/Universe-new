@@ -11,6 +11,7 @@ import {
 import { findUserById } from "../repository/user.repository.js";
 import { redis } from "../lib/redis.js";
 import { createNotification } from "../repository/notification.repository.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 export const savePost = async (data) => {
   const { postId, authUserId } = data;
   const post = await findPostById(postId);

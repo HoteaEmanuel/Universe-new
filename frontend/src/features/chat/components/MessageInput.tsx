@@ -1,21 +1,39 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { ImagePlus, SendHorizontal, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSendMessageMutation } from "../../../queryAndMutation/mutations/conversation-mutation";
 import { useSendMessageToGroupMutation } from "../../../queryAndMutation/mutations/group-mutation";
+import { useAuthStore } from "../../../store/authStore";
+import { getFullName } from "../../../utils/fullName";
 import ImagePickerModal from "../../../Modals/ImagePickerModal";
+import type { ChatUser } from "../types";
 
 type MessageInputProps = {
   variant: "direct" | "group";
   id: string;
 };
 
+const TYPING_IDLE_MS = 2000;
+const TYPING_EMIT_THROTTLE_MS = 2000;
+
 const MessageInput = ({ variant, id }: MessageInputProps) => {
   const [text, setText] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const { user, socket } = useAuthStore() as {
+    user: ChatUser;
+    socket: { emit: (event: string, payload: unknown) => void };
+  };
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingEmitRef = useRef(0);
 
   const directMutation = useSendMessageMutation(
     variant === "direct" ? id : undefined,
@@ -27,9 +45,37 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
 
   const canSend = (text.trim().length > 0 || images.length > 0) && !isPending;
 
+  const stopTyping = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    if (lastTypingEmitRef.current) {
+      socket.emit("stopTyping", { id, userId: user._id });
+      lastTypingEmitRef.current = 0;
+    }
+  };
+
+  useEffect(() => {
+    return () => stopTyping();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const handleTextChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setText(e.target.value);
+    const now = Date.now();
+    if (now - lastTypingEmitRef.current > TYPING_EMIT_THROTTLE_MS) {
+      socket.emit("typing", { id, userId: user._id, name: getFullName(user) });
+      lastTypingEmitRef.current = now;
+    }
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(stopTyping, TYPING_IDLE_MS);
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!canSend) return;
+    stopTyping();
     mutate(
       { messageText: text.trim(), images },
       {
@@ -81,7 +127,8 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
         <Input
           type="text"
           value={text}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setText(e.target.value)}
+          onChange={handleTextChange}
+          onBlur={stopTyping}
           placeholder="Send a message"
           className="flex-1"
         />

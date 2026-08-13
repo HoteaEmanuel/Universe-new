@@ -12,10 +12,13 @@ import {
 import {
   createGroupMessage,
   findGroupMessageById,
-  findMessageById,
 } from "../repository/message.repository.js";
 import { v2 as cloudinary } from "cloudinary";
-import { getActiveConversationUsers, io } from "../lib/socket.js";
+import {
+  getActiveConversationUsers,
+  getReceiverSocketId,
+  io,
+} from "../lib/socket.js";
 export const createGroupService = async (data) => {
   const { name, description, userId, visibility } = data;
   const groupData = { name, description, visibility };
@@ -32,7 +35,7 @@ export const addMemberToGroup = async (data) => {
   const isSelfJoin = userId.toString() === requesterId.toString();
 
   if (isSelfJoin) {
-    const [group] = await findGroupById(groupId);
+    const group = await findGroupById(groupId);
     if (!group) throw new Error("Group not found");
     if (group.visibility !== "public") {
       throw new Error("This group is private. Ask an admin to add you.");
@@ -98,7 +101,7 @@ export const sendMessage = async (data) => {
   members.forEach((member) => {
     io.to(getReceiverSocketId(member.memberId.toString())).emit(
       "newGroupMessage",
-      message,
+      groupMessage,
     );
   });
 
@@ -118,7 +121,7 @@ export const sendMessage = async (data) => {
 
 export const editMessage = async (data) => {
   const { authUserId, messageId, content } = data;
-  const message = await findMessageById(messageId);
+  const message = await findGroupMessageById(messageId);
   if (!message) throw new Error("Message not found");
 
   if (message.senderId.toString() !== authUserId.toString())
@@ -152,7 +155,7 @@ export const deleteMessage = async (data) => {
   groupMembers.forEach((member) => {
     io.to(getReceiverSocketId(member.memberId.toString())).emit(
       "messageDeleted",
-      messageId,
+      { messageId, groupId },
     );
   });
 };
