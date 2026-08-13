@@ -33,10 +33,11 @@ import { formatDateDetailed } from "../utils/formatDate";
 import { urlPathName } from "../utils/urlPathFromName";
 import { BiLoader } from "react-icons/bi";
 import ImageSlider from "../components/ImageSlider";
-const PostDetails = () => {
+const PostDetails = ({ inModal = false }) => {
   useEffect(() => {
+    if (inModal) return;
     document.title = "Post Details";
-  }, []);
+  }, [inModal]);
   const {socket}= useAuthStore();
   const { id: postId } = useParams();
   const { data: post, isPending: isPendingPost } = useGetPostQuery(postId);
@@ -161,14 +162,30 @@ const PostDetails = () => {
     isPendingLikes ||
     isPendingComments
   )
-    return <BiLoader className="size-10 main-dark animate-spin" />;
+    return (
+      <div
+        className={
+          inModal
+            ? "flex w-full items-center justify-center py-24"
+            : ""
+        }
+      >
+        <BiLoader className="size-10 main-dark animate-spin" />
+      </div>
+    );
 
   const firstName = creator?.firstName || creator?.name;
   const lastName = creator?.lastName || "";
   const profilePicture = creator?.profilePicture;
   return (
-    <div className="sm:min-h-full flex flex-col justify-center items-center md:p-5 rounded-2xl sm:mt-10">
-      <div className="w-3/4 min-h-full ">
+    <div
+      className={
+        inModal
+          ? "flex w-full flex-col"
+          : "sm:min-h-full flex flex-col justify-center items-center md:p-5 rounded-2xl sm:mt-10"
+      }
+    >
+      <div className={inModal ? "w-full" : "w-3/4 min-h-full "}>
         {post.imagesUrls?.length === 1 && (
           <img
             src={post.imagesUrls[0]}

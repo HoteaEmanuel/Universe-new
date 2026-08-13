@@ -1,5 +1,5 @@
 import type { MouseEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Heart, Images, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Post } from "../../queryAndMutation/types";
@@ -20,6 +20,7 @@ const ProfilePostGrid = ({
   showCreateCta = false,
 }: ProfilePostGridProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (posts.length === 0) {
     return (
@@ -46,6 +47,7 @@ const ProfilePostGrid = ({
           <li key={post._id} className="group/tile relative aspect-square">
             <Link
               to={`/post/${post._id}`}
+              state={{ backgroundLocation: location }}
               className="block size-full overflow-hidden rounded-lg bg-muted"
             >
               {hasImage ? (

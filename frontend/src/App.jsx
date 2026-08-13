@@ -1,4 +1,11 @@
-import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Link,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 import HomePage from "./Pages/HomePage";
@@ -20,6 +27,7 @@ import EditPost from "./Pages/EditPost";
 import Explore from "./Pages/Explore";
 import ChatHome from "./Pages/ChatContainer";
 import PostDetails from "./Pages/PostDetails";
+import PostDetailsModal from "./Modals/PostDetailsModal";
 import ChatContainer from "./Pages/ChatContainer";
 import Conversation from "./Pages/Conversation";
 import NewConvo from "./Pages/NewConvo";
@@ -59,6 +67,8 @@ const AuthenticatedUser = ({ children }) => {
 };
 function App() {
   const { checkAuth } = useAuthStore();
+  const location = useLocation();
+  const backgroundLocation = location.state?.backgroundLocation;
   useEffect(() => {
     const theme = localStorage.getItem("theme");
     console.log(theme);
@@ -103,7 +113,7 @@ function App() {
       />
 
       <div className="min-h-screen">
-        <Routes>
+        <Routes location={backgroundLocation || location}>
           <Route
             path="/"
             element={
@@ -171,6 +181,19 @@ function App() {
             {/* <Route path="/test" element={<Background />} /> */}
           </Route>
         </Routes>
+
+        {backgroundLocation && (
+          <Routes>
+            <Route
+              path="/post/:id"
+              element={
+                <ProtectedRoute>
+                  <PostDetailsModal />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        )}
       </div>
     </QueryClientProvider>
   );

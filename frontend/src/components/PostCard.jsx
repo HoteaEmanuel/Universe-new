@@ -5,7 +5,7 @@ import { FaUserCircle } from "react-icons/fa";
 import { Heart, MessageCircle, Bookmark, BookmarkCheck } from "lucide-react";
 import { useAuthStore } from "../store/authStore";
 import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   useGetLikesQuery,
   usePostLikedQuery,
@@ -30,6 +30,7 @@ import ImageSlider from "./ImageSlider";
 import PostSkelet from "../skeletons/PostSkelet";
 const PostCard = ({ post }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { userId } = post;
@@ -180,6 +181,7 @@ const PostCard = ({ post }) => {
   return (
     <Link
       to={`/post/${postId}`}
+      state={{ backgroundLocation: location }}
       className="flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow duration-200 hover:shadow-sm"
     >
       <div className="flex items-center gap-3 px-4 py-3">
