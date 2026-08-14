@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MessageGroup } from "@/components/ui/message";
 import MessageBubble from "./MessageBubble";
@@ -14,9 +15,18 @@ type MessageThreadProps = {
   headerNote?: ReactNode;
   onDelete: (messageId: string) => void;
   onEdit: (messageId: string, newContent: string) => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  fetchNextPage?: () => void;
 };
 
 const SCROLL_BUTTON_THRESHOLD = 400;
+const SCROLL_FETCH_THRESHOLD = 100;
+// Message groups don't have a fixed height (text length, image count, and
+// how many consecutive messages are bundled all vary) — this is just the
+// initial guess react-virtual uses before `measureElement` corrects it to
+// the group's real rendered height.
+const ESTIMATED_GROUP_HEIGHT = 72;
 
 const getSenderId = (message: ChatMessage) =>
   typeof message.senderId === "string" ? message.senderId : message.senderId.id;
@@ -42,14 +52,57 @@ const MessageThread = ({
   headerNote,
   onDelete,
   onEdit,
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
 }: MessageThreadProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [fullImage, setFullImage] = useState<string | null>(null);
+  const prevScrollHeightRef = useRef<number | null>(null);
+  const firstMessageIdRef = useRef<string | null>(null);
+  const lastMessageIdRef = useRef<string | null>(null);
+  const pinnedToBottomRef = useRef(true);
+  const groups = messages ? groupConsecutiveMessages(messages) : [];
+
+  const virtualizer = useVirtualizer({
+    count: groups.length,
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => ESTIMATED_GROUP_HEIGHT,
+    overscan: 8,
+    getItemKey: (index) => groups[index][0].id,
+  });
+  const totalSize = virtualizer.getTotalSize();
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = containerRef.current;
+    if (!el || !pinnedToBottomRef.current) return;
+    el.scrollTop = el.scrollHeight;
+  }, [totalSize]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !messages || messages.length === 0) return;
+    const firstId = messages[0].id;
+    const lastId = messages[messages.length - 1].id;
+    const isOlderPagePrepended =
+      firstMessageIdRef.current !== null &&
+      firstId !== firstMessageIdRef.current &&
+      lastId === lastMessageIdRef.current &&
+      prevScrollHeightRef.current !== null;
+
+    if (isOlderPagePrepended) {
+      el.scrollTop += el.scrollHeight - (prevScrollHeightRef.current ?? 0);
+    } else if (lastId !== lastMessageIdRef.current) {
+      bottomRef.current?.scrollIntoView({
+        behavior: lastMessageIdRef.current === null ? "auto" : "smooth",
+      });
+    }
+
+    prevScrollHeightRef.current = null;
+    firstMessageIdRef.current = firstId;
+    lastMessageIdRef.current = lastId;
   }, [messages]);
 
   useEffect(() => {
@@ -58,38 +111,67 @@ const MessageThread = ({
     const handleScroll = () => {
       const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
       setShowScrollButton(distanceFromBottom > SCROLL_BUTTON_THRESHOLD);
+      pinnedToBottomRef.current = distanceFromBottom <= SCROLL_BUTTON_THRESHOLD;
+
+      if (
+        fetchNextPage &&
+        hasNextPage &&
+        !isFetchingNextPage &&
+        el.scrollTop < SCROLL_FETCH_THRESHOLD
+      ) {
+        prevScrollHeightRef.current = el.scrollHeight;
+        fetchNextPage();
+      }
     };
     el.addEventListener("scroll", handleScroll);
     return () => el.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const scrollToBottom = () => {
+    pinnedToBottomRef.current = true;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
     <div className="relative min-h-0 flex-1">
       <div ref={containerRef} className="h-full overflow-y-auto px-1 py-4">
+        {isFetchingNextPage && (
+          <Loader2 className="mx-auto mb-4 size-5 animate-spin text-muted-foreground" />
+        )}
         {headerNote}
         {messages && messages.length > 0 ? (
-          <div className="flex flex-col gap-4">
-            {groupConsecutiveMessages(messages).map((group) => (
-              <MessageGroup key={group[0].id} className="gap-px">
-                {group.map((message, index) => (
-                  <MessageBubble
-                    key={message.id}
-                    message={message}
-                    currentUserId={currentUserId}
-                    variant={variant}
-                    isFirstInGroup={index === 0}
-                    isLastInGroup={index === group.length - 1}
-                    onOpenImage={setFullImage}
-                    onDelete={onDelete}
-                    onEdit={onEdit}
-                  />
-                ))}
-              </MessageGroup>
-            ))}
+          <div
+            style={{ height: virtualizer.getTotalSize() }}
+            className="relative"
+          >
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const group = groups[virtualItem.index];
+              return (
+                <div
+                  key={virtualItem.key}
+                  data-index={virtualItem.index}
+                  ref={virtualizer.measureElement}
+                  className="absolute top-0 left-0 w-full pb-4"
+                  style={{ transform: `translateY(${virtualItem.start}px)` }}
+                >
+                  <MessageGroup className="gap-px">
+                    {group.map((message, index) => (
+                      <MessageBubble
+                        key={message.id}
+                        message={message}
+                        currentUserId={currentUserId}
+                        variant={variant}
+                        isFirstInGroup={index === 0}
+                        isLastInGroup={index === group.length - 1}
+                        onOpenImage={setFullImage}
+                        onDelete={onDelete}
+                        onEdit={onEdit}
+                      />
+                    ))}
+                  </MessageGroup>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="pt-10 text-center text-sm text-muted-foreground">

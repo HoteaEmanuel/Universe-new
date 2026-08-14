@@ -2,7 +2,10 @@ import type { Request, Response } from "express";
 import type {} from "multer";
 import { prisma } from "../database/prisma.js";
 import { findConversationByParticipants } from "../repository/conversation.repository.js";
-import { getConversationMediaPage } from "../repository/message.repository.js";
+import {
+  getConversationMediaPage,
+  getConversationMessagesPage,
+} from "../repository/message.repository.js";
 
 import {
   deleteMessage,
@@ -108,13 +111,12 @@ export const getMessages = async (req: Request, res: Response) => {
   try {
     const convoId = req.params.id as string;
     if (!convoId) throw new Error("No convo id provided");
-    const messages = await prisma.message.findMany({
-      where: { conversationId: convoId },
-      orderBy: { createdAt: "asc" },
-    });
+    const cursor = req.query.cursor as string | undefined;
+    const limit = Number(req.query.limit) || 30;
+    const page = await getConversationMessagesPage(convoId, cursor, limit);
     return res
       .status(200)
-      .json({ message: "Fetched the messages successfully", messages });
+      .json({ message: "Fetched the messages successfully", ...page });
   } catch (error) {
     return res.status(400).json({ error });
   }

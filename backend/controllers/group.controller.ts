@@ -12,7 +12,10 @@ import {
   getDiscoverablePublicGroups,
 } from "../services/group.service.js";
 import { findGroupMembershipsForUser } from "../repository/group-members.repository.js";
-import { getGroupMediaPage } from "../repository/message.repository.js";
+import {
+  getGroupMediaPage,
+  getGroupMessagesPage,
+} from "../repository/message.repository.js";
 import { getActiveConversationUsers } from "../lib/socket.js";
 
 const errorMessage = (error: unknown) =>
@@ -116,23 +119,16 @@ export const getGroupById = async (req: Request, res: Response) => {
 export const getGroupMessages = async (req: Request, res: Response) => {
   try {
     const groupId = req.params.id as string;
-    const groupMessages = await prisma.groupMessage.findMany({
-      where: { groupId },
-      orderBy: { createdAt: "asc" },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            profilePicture: true,
-            accountType: true,
-            name: true,
-          },
-        },
-      },
-    });
-    return res.status(200).json({ groupMessages });
+    const cursor = req.query.cursor as string | undefined;
+    const limit = Number(req.query.limit) || 30;
+    const { messages, nextCursor, hasMore } = await getGroupMessagesPage(
+      groupId,
+      cursor,
+      limit,
+    );
+    return res
+      .status(200)
+      .json({ groupMessages: messages, nextCursor, hasMore });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

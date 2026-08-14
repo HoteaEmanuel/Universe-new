@@ -62,6 +62,12 @@ export type ChatMediaPage = {
   hasMore: boolean;
 };
 
+export type ChatMessagePage = {
+  messages: ChatMessage[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type GroupMember = {
   id: string;
   role: "admin" | "member" | string;

@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   useGetActiveGroupMembers,
   useGetGroupById,
-  useGetGroupMessages,
+  useGetGroupMessagesInfinite,
 } from "../queryAndMutation/queries/group-queries";
 import {
   useDeleteMessageInGroupMutation,
@@ -32,8 +32,17 @@ const Group = () => {
   const queryClient = useQueryClient();
   const { data: group, isPending: isPendingGroup } = useGetGroupById(id);
   const { mutate: seeNewMessages } = useSeeNewMessages(user.id, id);
-  const { data: messages, isPending: isPendingMessages } =
-    useGetGroupMessages(id);
+  const {
+    data: messagePages,
+    isPending: isPendingMessages,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useGetGroupMessagesInfinite(id);
+  const messages = messagePages?.pages
+    .slice()
+    .reverse()
+    .flatMap((page) => page.messages);
   const { data: activeMembers } = useGetActiveGroupMembers(id);
   const { mutate: deleteMessage } = useDeleteMessageInGroupMutation(id);
   const { mutate: editMessage } = useEditMessageInGroupMutation(id);
@@ -122,6 +131,9 @@ const Group = () => {
           onEdit={(messageId, newContent) =>
             editMessage({ id: messageId, newContent })
           }
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={fetchNextPage}
         />
       )}
 

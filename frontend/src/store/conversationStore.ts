@@ -3,6 +3,7 @@ import { create } from "zustand";
 import type {
   ChatMediaPage,
   ChatMessage,
+  ChatMessagePage,
   ChatUser,
   DirectConversation,
 } from "../features/chat/types";
@@ -19,7 +20,7 @@ type ConversationStore = {
   isLoading: boolean;
   error: string | null;
   getUserByConvoId: (id: string) => Promise<ChatUser>;
-  getMessages: (id: string) => Promise<ChatMessage[]>;
+  getMessages: (id: string, cursor?: string) => Promise<ChatMessagePage>;
   getConvoMedia: (id: string, before?: string) => Promise<ChatMediaPage>;
   getConversationByUsersIds: (id: string) => Promise<DirectConversation | null>;
   getUserConversations: () => Promise<DirectConversation[]>;
@@ -44,12 +45,17 @@ export const useConversationStore = create<ConversationStore>((set) => ({
       throw new Error(errorMessage(error, "Could not load this conversation"));
     }
   },
-  getMessages: async (id) => {
+  getMessages: async (id, cursor) => {
     try {
       const response = await axios.get(
         `${API_URL}/conversations/${id}/messages`,
+        { params: cursor ? { cursor } : undefined },
       );
-      return response.data.messages;
+      return {
+        messages: response.data.messages,
+        nextCursor: response.data.nextCursor,
+        hasMore: response.data.hasMore,
+      };
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load messages"));
     }

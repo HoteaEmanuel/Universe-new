@@ -1,4 +1,5 @@
 import { prisma } from "../database/prisma.js";
+import type { Prisma } from "../generated/prisma/client.js";
 
 interface CreateMessageInput {
   conversationId: string;
@@ -53,6 +54,76 @@ export const createGroupMessage = async (data: CreateGroupMessageInput) => {
 
 export const findGroupMessageById = async (id: string) => {
   return prisma.groupMessage.findUnique({ where: { id } });
+};
+
+const MESSAGE_ORDER_BY: Prisma.MessageOrderByWithRelationInput[] = [
+  { createdAt: "desc" },
+  { id: "desc" },
+];
+
+const GROUP_MESSAGE_ORDER_BY: Prisma.GroupMessageOrderByWithRelationInput[] = [
+  { createdAt: "desc" },
+  { id: "desc" },
+];
+
+interface MessagePage<T> {
+  messages: T[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+const toMessagePage = <T extends { id: string }>(
+  rows: T[],
+  limit: number,
+): MessagePage<T> => {
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  const nextCursor = hasMore ? page[page.length - 1].id : null;
+  return {
+    messages: page.reverse(),
+    nextCursor,
+    hasMore,
+  };
+};
+
+export const getConversationMessagesPage = async (
+  conversationId: string,
+  cursor?: string,
+  limit = 30,
+) => {
+  const rows = await prisma.message.findMany({
+    where: { conversationId },
+    take: limit + 1,
+    orderBy: MESSAGE_ORDER_BY,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+  return toMessagePage(rows, limit);
+};
+
+export const getGroupMessagesPage = async (
+  groupId: string,
+  cursor?: string,
+  limit = 30,
+) => {
+  const rows = await prisma.groupMessage.findMany({
+    where: { groupId },
+    take: limit + 1,
+    orderBy: GROUP_MESSAGE_ORDER_BY,
+    include: {
+      sender: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          profilePicture: true,
+          accountType: true,
+          name: true,
+        },
+      },
+    },
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+  return toMessagePage(rows, limit);
 };
 
 export interface MediaPageItem {

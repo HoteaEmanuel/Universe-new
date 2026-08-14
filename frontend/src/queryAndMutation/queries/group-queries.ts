@@ -2,7 +2,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useGroupStore } from "../../store/groupStore";
 import type {
   ChatMediaPage,
-  ChatMessage,
+  ChatMessagePage,
   ChatUser,
   GroupConversation,
   GroupMember,
@@ -35,11 +35,15 @@ export const useGetGroupById = (id?: string) => {
   });
 };
 
-export const useGetGroupMessages = (id?: string) => {
+export const useGetGroupMessagesInfinite = (id?: string) => {
   const { getGroupMessages } = useGroupStore();
-  return useQuery<ChatMessage[]>({
-    queryFn: () => getGroupMessages(id as string),
+  return useInfiniteQuery<ChatMessagePage>({
     queryKey: ["group-messages", id],
+    queryFn: ({ pageParam }) =>
+      getGroupMessages(id as string, pageParam as string | undefined),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
     enabled: !!id,
   });
 };

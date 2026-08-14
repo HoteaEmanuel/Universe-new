@@ -1,12 +1,17 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useGroupStore } from "../../store/groupStore";
 import { useAuthStore } from "../../store/authStore";
 import { toast } from "sonner";
 import type {
   ChatMessage,
+  ChatMessagePage,
   GroupVisibility,
   NewMessagePayload,
 } from "../../features/chat/types";
+import {
+  appendOptimisticMessage,
+  updateMessageInPages,
+} from "../../features/chat/utils/messagePageCache";
 
 export const useCreateGroupMutation = () => {
   const queryClient = useQueryClient();
@@ -36,7 +41,8 @@ export const useSendMessageToGroupMutation = (groupId?: string) => {
       if (!groupId) return;
       const queryKey = ["group-messages", groupId];
       await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<ChatMessage[]>(queryKey);
+      const previous =
+        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
       const optimisticMessage: ChatMessage = {
         id: `optimistic-${Date.now()}`,
         content: message.messageText || undefined,
@@ -45,10 +51,9 @@ export const useSendMessageToGroupMutation = (groupId?: string) => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      queryClient.setQueryData<ChatMessage[]>(queryKey, (old) => [
-        ...(old ?? []),
-        optimisticMessage,
-      ]);
+      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
+        appendOptimisticMessage(old, optimisticMessage),
+      );
       return { previous };
     },
     onError: (_error, _message, context) => {
@@ -73,11 +78,14 @@ export const useEditMessageInGroupMutation = (groupId?: string) => {
     onMutate: async ({ id, newContent }) => {
       if (!groupId) return;
       await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<ChatMessage[]>(queryKey);
-      queryClient.setQueryData<ChatMessage[]>(queryKey, (old) =>
-        old?.map((m) =>
-          m.id === id ? { ...m, content: newContent, edited: true } : m,
-        ),
+      const previous =
+        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
+      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
+        updateMessageInPages(old, id, (m) => ({
+          ...m,
+          content: newContent,
+          edited: true,
+        })),
       );
       return { previous };
     },
@@ -102,13 +110,15 @@ export const useDeleteMessageInGroupMutation = (groupId?: string) => {
     onMutate: async (messageId) => {
       if (!groupId) return;
       await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<ChatMessage[]>(queryKey);
-      queryClient.setQueryData<ChatMessage[]>(queryKey, (old) =>
-        old?.map((m) =>
-          m.id === messageId
-            ? { ...m, deleted: true, content: undefined, imageUrls: [] }
-            : m,
-        ),
+      const previous =
+        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
+      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
+        updateMessageInPages(old, messageId, (m) => ({
+          ...m,
+          deleted: true,
+          content: undefined,
+          imageUrls: [],
+        })),
       );
       return { previous };
     },

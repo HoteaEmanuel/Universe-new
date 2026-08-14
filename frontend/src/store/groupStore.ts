@@ -3,6 +3,7 @@ import { create } from "zustand";
 import type {
   ChatMediaPage,
   ChatMessage,
+  ChatMessagePage,
   ChatUser,
   GroupConversation,
   GroupMember,
@@ -26,7 +27,7 @@ type GroupStore = {
   getUserGroups: (userId: string) => Promise<GroupConversation[]>;
   getDiscoverablePublicGroups: () => Promise<GroupConversation[]>;
   getGroupById: (id: string) => Promise<GroupConversation>;
-  getGroupMessages: (id: string) => Promise<ChatMessage[]>;
+  getGroupMessages: (id: string, cursor?: string) => Promise<ChatMessagePage>;
   getGroupMedia: (id: string, before?: string) => Promise<ChatMediaPage>;
   sendMessageToGroup: (
     id: string,
@@ -82,10 +83,16 @@ export const useGroupStore = create<GroupStore>(() => ({
       throw new Error(errorMessage(error, "Could not load group"));
     }
   },
-  getGroupMessages: async (id) => {
+  getGroupMessages: async (id, cursor) => {
     try {
-      const response = await axios.get(`${API_URL}/groups/${id}/messages`);
-      return response.data.groupMessages;
+      const response = await axios.get(`${API_URL}/groups/${id}/messages`, {
+        params: cursor ? { cursor } : undefined,
+      });
+      return {
+        messages: response.data.groupMessages,
+        nextCursor: response.data.nextCursor,
+        hasMore: response.data.hasMore,
+      };
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load messages"));
     }

@@ -5,7 +5,7 @@ import { Images } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  useGetConvoMessages,
+  useGetConvoMessagesInfinite,
   useGetUserByConvoId,
 } from "../queryAndMutation/queries/conversation-queries";
 import {
@@ -34,8 +34,17 @@ const Conversation = () => {
   const { data: otherUser, isPending: isPendingUser } =
     useGetUserByConvoId(convoId);
   const { mutate: seeNewMessages } = useSeeNewMessages(authUser.id, convoId);
-  const { data: messages, isPending: isPendingMessages } =
-    useGetConvoMessages(convoId);
+  const {
+    data: messagePages,
+    isPending: isPendingMessages,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useGetConvoMessagesInfinite(convoId);
+  const messages = messagePages?.pages
+    .slice()
+    .reverse()
+    .flatMap((page) => page.messages);
   const { mutate: deleteMessage } = useDeleteMessageMutation(convoId);
   const { mutate: editMessage } = useEditMessageMutation(convoId);
   const typingUsers = useTypingIndicator(convoId);
@@ -101,6 +110,9 @@ const Conversation = () => {
           variant="direct"
           onDelete={deleteMessage}
           onEdit={(id, newContent) => editMessage({ id, newContent })}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={fetchNextPage}
         />
       )}
 
