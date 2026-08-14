@@ -33,3 +33,8 @@ export type PostComment = {
   createdAt: string;
   isLiked: boolean;
 };
+
+export type SearchPage<T> = {
+  items: T[];
+  hasMore: boolean;
+};

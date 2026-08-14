@@ -12,3 +12,14 @@ export const useGetTopNewsQuery = () => {
     queryKey: ["topNews"],
   });
 };
+
+export const useGetNewsByCategoryQuery = (category) => {
+  return useQuery({
+    queryFn: async () => {
+      const response = await axios.get(`${API_URL}/news/${category}`);
+      return response.data;
+    },
+    queryKey: ["news", category],
+    enabled: !!category,
+  });
+};

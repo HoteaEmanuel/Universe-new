@@ -51,6 +51,7 @@ model User {
   verificationCodeExpiresAt DateTime?
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
+  searchVector              Unsupported("tsvector")?
 
   posts                 Post[]
   comments               Comment[]
@@ -83,6 +84,7 @@ model Post {
   tags            Tag[]    @relation("PostTags")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  searchVector    Unsupported("tsvector")?
 
   comments Comment[]
   likes    Like[]
@@ -249,6 +251,7 @@ model Group {
   lastMessage        GroupMessage?   @relation("GroupLastMessage", fields: [lastMessageId], references: [id])
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
+  searchVector       Unsupported("tsvector")?
 
   members       GroupMembers[]
   messages      GroupMessage[] @relation("GroupMessages")
