@@ -6,4 +6,10 @@ export type AccountType = "normal" | "business";
 export type UserRole = "user" | "admin";
 export type GroupVisibility = "public" | "private";
 export type GroupRole = "member" | "admin";
-export type NotificationType = "post-like" | "post-comment" | "follow" | "message";
+export type NotificationType =
+  | "post-like"
+  | "post-comment"
+  | "post-reply"
+  | "comment-like"
+  | "follow"
+  | "message";

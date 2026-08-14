@@ -61,6 +61,13 @@ export const getCommentRepliesPage = async (
   return toCommentPage(rows, limit);
 };
 
+export const findCommentById = async (commentId: string) => {
+  return prisma.comment.findUnique({
+    where: { id: commentId },
+    select: { id: true, userId: true, postId: true, parentId: true },
+  });
+};
+
 export const getLikedCommentIds = async (commentIds: string[], userId: string) => {
   if (commentIds.length === 0) return new Set<string>();
   const likes = await prisma.commentLike.findMany({

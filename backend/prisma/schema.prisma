@@ -201,6 +201,7 @@ model Notification {
   updatedAt      DateTime      @updatedAt
 
   @@index([userId])
+  @@index([userId, read, createdAt(sort: Desc)])
   @@map("notifications")
 }
 

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useGetPostCommentsInfinite } from "../queryAndMutation/queries/comments-queries";
 import { Skeleton } from "./ui/skeleton";
 import Comment from "./Comment";
+import { findScrollableAncestor } from "../utils/scroll";
 
 const SCROLL_FETCH_THRESHOLD = 150;
 
@@ -23,19 +24,6 @@ const CommentsSkeleton = () => (
     ))}
   </ul>
 );
-
-// CommentsContainer doesn't own the scroll container — PostDetails' shared
-// scroll region (post body + tags + comments) does — so find it at runtime
-// instead of coupling to that ancestor's specific class name.
-const findScrollableAncestor = (el: HTMLElement | null): HTMLElement | null => {
-  let node = el?.parentElement ?? null;
-  while (node && node !== document.body) {
-    const { overflowY } = getComputedStyle(node);
-    if (overflowY === "auto" || overflowY === "scroll") return node;
-    node = node.parentElement;
-  }
-  return null;
-};
 
 const CommentsContainer = () => {
   const { id: postId } = useParams();

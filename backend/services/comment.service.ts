@@ -5,6 +5,7 @@ import { createNotification } from "../repository/notification.repository.js";
 import {
   createCommentTx,
   deleteCommentTx,
+  findCommentById,
   likeCommentTx,
   removeCommentLikeTx,
 } from "../repository/comment.repository.js";
@@ -18,6 +19,9 @@ export const createComment = async (data: {
   const { id, userId, commentText, parentId } = data;
   const post = await findPostById(id);
   if (!post) throw new Error("The post doesnt exist");
+
+  const parentComment = parentId ? await findCommentById(parentId) : null;
+
   const comment = await createCommentTx({
     postId: id,
     userId,
@@ -26,10 +30,33 @@ export const createComment = async (data: {
   });
 
   const activePostUsers = getActivePostUsers(id);
+  const user = await findUserById(userId);
+  const notifiedUserIds = new Set<string>();
 
-  // If the user that created the post is not on the post => send notification
-  if (!activePostUsers?.has(post.userId)) {
-    const user = await findUserById(userId);
+  // Notify the parent comment's author directly when someone replies to them
+  if (
+    parentComment &&
+    parentComment.userId !== userId &&
+    !activePostUsers?.has(parentComment.userId)
+  ) {
+    const notification = await createNotification({
+      actionUserId: userId,
+      userId: parentComment.userId,
+      title: "New reply",
+      type: "post-reply",
+      message: `${user?.firstName || user?.name} replied to your comment - ${commentText}!`,
+    });
+    io.to(getReceiverSocketId(parentComment.userId)).emit("newNotification", notification);
+    notifiedUserIds.add(parentComment.userId);
+  }
+
+  // Notify the post owner about new activity on their post, unless they were
+  // already notified above or are actively viewing the post
+  if (
+    post.userId !== userId &&
+    !notifiedUserIds.has(post.userId) &&
+    !activePostUsers?.has(post.userId)
+  ) {
     const notification = await createNotification({
       actionUserId: userId,
       userId: post.userId,
@@ -48,7 +75,24 @@ export const createComment = async (data: {
 
 export const likeComment = async (data: { commentId: string; userId: string }) => {
   const { commentId, userId } = data;
-  return likeCommentTx(commentId, userId);
+  const comment = await findCommentById(commentId);
+  if (!comment) throw new Error("Comment not found");
+
+  const like = await likeCommentTx(commentId, userId);
+
+  if (comment.userId !== userId) {
+    const user = await findUserById(userId);
+    const notification = await createNotification({
+      actionUserId: userId,
+      userId: comment.userId,
+      title: "New comment like",
+      type: "comment-like",
+      message: `${user?.firstName || user?.name} liked your comment!`,
+    });
+    io.to(getReceiverSocketId(comment.userId)).emit("newNotification", notification);
+  }
+
+  return like;
 };
 
 export const removeCommentLike = async (commentId: string, userId: string) => {

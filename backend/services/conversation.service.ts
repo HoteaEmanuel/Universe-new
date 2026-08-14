@@ -91,18 +91,19 @@ export const sendMessage = async (data: {
     data: { lastMessageId: message.id },
   });
 
-  const user = await findUserById(receiverId);
+  const sender = await findUserById(authUserId);
 
   const activeConversationUsers = getActiveConversationUsers(convoId);
   if (!activeConversationUsers?.has(receiverId)) {
-    await createMessageNotification({
+    const notification = await createMessageNotification({
       actionUserId: authUserId,
       userId: receiverId,
       title: "New message",
       type: "message",
-      message: `${user?.firstName || user?.name}: ${message?.content ? message.content : "IMAGE"}`,
+      message: `${sender?.firstName || sender?.name}: ${message?.content ? message.content : "IMAGE"}`,
       conversationId: convoId,
     });
+    io.to(getReceiverSocketId(receiverId)).emit("newNotification", notification);
   }
 
   io.to(getReceiverSocketId(receiverId)).emit("newMessage", message);

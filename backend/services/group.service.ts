@@ -13,6 +13,8 @@ import {
   createGroupMessage,
   findGroupMessageById,
 } from "../repository/message.repository.js";
+import { createGroupMessageNotification } from "../repository/notification.repository.js";
+import { findUserById } from "../repository/user.repository.js";
 import { prisma } from "../database/prisma.js";
 import { uploadImageAndCleanup } from "../lib/cloudinary.js";
 import type { GroupVisibility } from "../generated/prisma/client.js";
@@ -55,6 +57,11 @@ export const addMemberToGroup = async (data: {
     if (!requester || requester.role !== "admin") {
       throw new Error("Only group admins can add members");
     }
+  }
+
+  const existingMember = await findGroupMember(groupId, userId);
+  if (existingMember) {
+    throw new Error("User is already a member of this group");
   }
 
   return createGroupMember({ groupId, userId, role: "member" });
@@ -109,6 +116,22 @@ export const sendMessage = async (data: {
   members.forEach((member) => {
     io.to(getReceiverSocketId(member.memberId)).emit("newGroupMessage", groupMessage);
   });
+
+  const sender = await findUserById(authUserId);
+  const recipients = members.filter((member) => member.memberId !== authUserId);
+  await Promise.all(
+    recipients.map(async (member) => {
+      const notification = await createGroupMessageNotification({
+        actionUserId: authUserId,
+        userId: member.memberId,
+        title: `New message in ${group.name}`,
+        type: "message",
+        message: `${sender?.firstName || sender?.name}: ${groupMessage.content ? groupMessage.content : "IMAGE"}`,
+        groupId,
+      });
+      io.to(getReceiverSocketId(member.memberId)).emit("newNotification", notification);
+    }),
+  );
 
   return groupMessage;
 };

@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import { prisma } from "../database/prisma.js";
+import { getNotificationsPage } from "../repository/notification.repository.js";
+import type { NotificationQueryInput } from "../schemas/notification.schema.js";
 
 export const getUserNotifications = async (req: Request, res: Response) => {
   try {
@@ -10,17 +12,14 @@ export const getUserNotifications = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "User not found with specified id" });
 
-    const notifications = await prisma.notification.findMany({
-      where: { userId: id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        actionUser: {
-          select: { id: true, profilePicture: true, firstName: true, lastName: true, name: true },
-        },
-      },
-    });
+    const { cursor, limit } = req.query as unknown as NotificationQueryInput;
+    const { notifications, nextCursor, hasMore } = await getNotificationsPage(
+      id,
+      cursor,
+      limit,
+    );
 
-    return res.status(200).json({ notifications });
+    return res.status(200).json({ notifications, nextCursor, hasMore });
   } catch (error) {
     return res.status(400).json({ error });
   }
@@ -32,6 +31,11 @@ export const getUnreadMessageNotifications = async (req: Request, res: Response)
     const notifications = await prisma.notification.findMany({
       where: { userId: id, read: false, type: "message" },
       orderBy: { createdAt: "desc" },
+      include: {
+        actionUser: {
+          select: { id: true, profilePicture: true, firstName: true, lastName: true, name: true },
+        },
+      },
     });
     return res.status(200).json({ notifications });
   } catch (error) {
@@ -45,6 +49,11 @@ export const getUnreadNotifications = async (req: Request, res: Response) => {
     const notifications = await prisma.notification.findMany({
       where: { userId: id, read: false, type: { not: "message" } },
       orderBy: { createdAt: "desc" },
+      include: {
+        actionUser: {
+          select: { id: true, profilePicture: true, firstName: true, lastName: true, name: true },
+        },
+      },
     });
 
     return res.status(200).json({ notifications });

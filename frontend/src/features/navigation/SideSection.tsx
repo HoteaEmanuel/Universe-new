@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { SideLinks } from "./SideTabLinks";
 import { cn } from "@/lib/utils";
+import NotificationBell from "@/features/notifications/NotificationBell";
 
 const NotificationBadge = ({ count }: { count: number }) => (
   <div className="absolute -top-1.5 -right-2 flex size-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-primary-foreground">
@@ -97,19 +98,22 @@ const SideSection = () => {
                       size="lg"
                       className={menuButtonClass}
                     >
-                      {item.text !== "Profile" ? (
+                      {item.newNotification ? (
+                        <NotificationBell
+                          icon={Icon}
+                          iconClassName={item.hoverAnimation}
+                          badgeCount={
+                            notificationsOn ? (notifications?.length ?? 0) : 0
+                          }
+                        />
+                      ) : item.text !== "Profile" ? (
                         <div className="relative flex shrink-0">
                           {Icon && <Icon className={item.hoverAnimation} />}
-                          {notificationsOn &&
-                            item.newNotification &&
-                            (notifications?.length ?? 0) > 0 && (
-                              <NotificationBadge count={notifications.length} />
-                            )}
                           {notificationsOn &&
                             item.notification &&
                             (messageNotifications?.length ?? 0) > 0 && (
                               <NotificationBadge
-                                count={messageNotifications.length}
+                                count={messageNotifications?.length ?? 0}
                               />
                             )}
                         </div>

@@ -38,7 +38,7 @@ import NewConversation from "./Pages/NewConversation";
 import Group from "./Pages/Group";
 import EditProfile from "./Pages/EditProfile";
 import Background from "./components/Background.jsx";
-import Notifications from "./Pages/Notifications.jsx";
+import Notifications from "./Pages/Notifications.tsx";
 const queryClient = new QueryClient();
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
