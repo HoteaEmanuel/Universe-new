@@ -10,6 +10,7 @@ import {
   useRemoveLikeCommentMutation,
 } from "../queryAndMutation/mutations/comment-mutation";
 import { formatDateDetailed } from "../utils/formatDate";
+import { formatCount } from "../utils/formatCount";
 import { urlPathName } from "../utils/urlPathFromName";
 import { getFullName } from "../utils/fullName";
 import type { PostComment } from "../queryAndMutation/types";
@@ -35,6 +36,7 @@ const Comment = ({ comment }: CommentProps) => {
     comment.userId,
   );
   const [liked, setLiked] = useState(comment.isLiked);
+  const [likesCount, setLikesCount] = useState(comment.likesCount);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const deleteComment = useDeleteCommentMutation(postId);
   const likeComment = useLikeCommentMutation(postId);
@@ -48,10 +50,21 @@ const Comment = ({ comment }: CommentProps) => {
   const handleToggleLike = () => {
     const nextLiked = !liked;
     setLiked(nextLiked);
+    setLikesCount((count) => count + (nextLiked ? 1 : -1));
     if (nextLiked) {
-      likeComment.mutate(comment.id, { onError: () => setLiked(false) });
+      likeComment.mutate(comment.id, {
+        onError: () => {
+          setLiked(false);
+          setLikesCount((count) => count - 1);
+        },
+      });
     } else {
-      removeLikeComment.mutate(comment.id, { onError: () => setLiked(true) });
+      removeLikeComment.mutate(comment.id, {
+        onError: () => {
+          setLiked(true);
+          setLikesCount((count) => count + 1);
+        },
+      });
     }
   };
 
@@ -94,10 +107,17 @@ const Comment = ({ comment }: CommentProps) => {
         </div>
       </div>
 
-      {!isOwnComment && (
+      {isOwnComment ? (
+        <span className="mt-1 flex shrink-0 flex-col items-center gap-0.5 text-muted-foreground">
+          <Heart className="size-3.5" fill="none" />
+          {likesCount > 0 && (
+            <span className="text-[10px] leading-none">{formatCount(likesCount)}</span>
+          )}
+        </span>
+      ) : (
         <button
           type="button"
-          className="mt-1 shrink-0"
+          className="mt-1 flex shrink-0 flex-col items-center gap-0.5"
           onClick={handleToggleLike}
           aria-label={liked ? "Unlike comment" : "Like comment"}
         >
@@ -107,6 +127,15 @@ const Comment = ({ comment }: CommentProps) => {
             }`}
             fill={liked ? "currentColor" : "none"}
           />
+          {likesCount > 0 && (
+            <span
+              className={`text-[10px] leading-none ${
+                liked ? "text-like" : "text-muted-foreground"
+              }`}
+            >
+              {formatCount(likesCount)}
+            </span>
+          )}
         </button>
       )}
 

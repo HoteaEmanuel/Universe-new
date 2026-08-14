@@ -5,24 +5,35 @@ import {
   likeComment,
   removeCommentLike,
 } from "../services/comment.service.js";
+import {
+  getLikedCommentIds,
+  getPostCommentsPage,
+} from "../repository/comment.repository.js";
+import type { CommentQueryInput } from "../schemas/comment.schema.js";
 
 export const getComments = async (req: Request, res: Response) => {
   try {
     const postId = req.params.id as string;
-    const comments = await prisma.comment.findMany({ where: { postId } });
-    const commentsWithLikes = await Promise.all(
-      comments.map(async (comment) => {
-        const isLiked = await prisma.commentLike.findUnique({
-          where: {
-            commentId_likedById: { commentId: comment.id, likedById: req.userId as string },
-          },
-        });
-        return { ...comment, isLiked: !!isLiked };
-      }),
+    const { cursor, limit } = req.query as unknown as CommentQueryInput;
+    const { comments, nextCursor, hasMore } = await getPostCommentsPage(
+      postId,
+      cursor,
+      limit,
     );
-    return res
-      .status(200)
-      .json({ message: "Success", comments: commentsWithLikes });
+    const likedCommentIds = await getLikedCommentIds(
+      comments.map((comment) => comment.id),
+      req.userId as string,
+    );
+    const commentsWithLikes = comments.map((comment) => ({
+      ...comment,
+      isLiked: likedCommentIds.has(comment.id),
+    }));
+    return res.status(200).json({
+      message: "Success",
+      comments: commentsWithLikes,
+      nextCursor,
+      hasMore,
+    });
   } catch (error) {
     return res.status(400).json({ error });
   }

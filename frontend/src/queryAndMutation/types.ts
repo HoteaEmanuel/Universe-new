@@ -31,7 +31,14 @@ export type PostComment = {
   postId: string;
   text: string;
   createdAt: string;
+  likesCount: number;
   isLiked: boolean;
+};
+
+export type PostCommentsPage = {
+  comments: PostComment[];
+  nextCursor: string | null;
+  hasMore: boolean;
 };
 
 export type SearchPage<T> = {

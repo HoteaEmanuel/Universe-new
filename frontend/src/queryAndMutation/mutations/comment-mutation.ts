@@ -1,7 +1,13 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { useCommentsStore } from "../../store/commentStore";
 import { useAuthStore } from "../../store/authStore";
-import type { PostComment } from "../types";
+import type { PostComment, PostCommentsPage } from "../types";
+import {
+  prependOptimisticComment,
+  removeCommentFromPages,
+} from "../../utils/commentPageCache";
+
+type CommentsCache = InfiniteData<PostCommentsPage>;
 
 export const useSendCommentMutation = (postId?: string) => {
   const queryClient = useQueryClient();
@@ -12,7 +18,7 @@ export const useSendCommentMutation = (postId?: string) => {
     mutationFn: (comment: string) => sendComment(postId, comment),
     onMutate: async (comment: string) => {
       await queryClient.cancelQueries({ queryKey: ["comments", postId] });
-      const previousComments = queryClient.getQueryData<PostComment[]>([
+      const previousComments = queryClient.getQueryData<CommentsCache>([
         "comments",
         postId,
       ]);
@@ -23,14 +29,13 @@ export const useSendCommentMutation = (postId?: string) => {
         postId: postId ?? "",
         text: comment,
         createdAt: new Date().toISOString(),
+        likesCount: 0,
         isLiked: false,
       };
 
-      // Prepend so the new comment shows up instantly at the top (newest-first order).
-      queryClient.setQueryData<PostComment[]>(["comments", postId], (old) => [
-        optimisticComment,
-        ...(old ?? []),
-      ]);
+      queryClient.setQueryData<CommentsCache>(["comments", postId], (old) =>
+        prependOptimisticComment(old, optimisticComment),
+      );
       queryClient.setQueryData<number>(
         ["comments-count", postId],
         (old) => (old ?? 0) + 1,
@@ -61,13 +66,13 @@ export const useDeleteCommentMutation = (postId?: string) => {
     mutationFn: (commentId: string) => deleteComment(commentId),
     onMutate: async (commentId: string) => {
       await queryClient.cancelQueries({ queryKey: ["comments", postId] });
-      const previousComments = queryClient.getQueryData<PostComment[]>([
+      const previousComments = queryClient.getQueryData<CommentsCache>([
         "comments",
         postId,
       ]);
 
-      queryClient.setQueryData<PostComment[]>(["comments", postId], (old) =>
-        (old ?? []).filter((comment) => comment.id !== commentId),
+      queryClient.setQueryData<CommentsCache>(["comments", postId], (old) =>
+        removeCommentFromPages(old, commentId),
       );
       queryClient.setQueryData<number>(["comments-count", postId], (old) =>
         Math.max(0, (old ?? 1) - 1),

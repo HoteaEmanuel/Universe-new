@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MessageGroup } from "@/components/ui/message";
 import MessageBubble from "./MessageBubble";
 import FullImageModal from "../../../Modals/FullImageModal";
 import type { ChatMessage } from "../types";
+
+const MessageSkeletonRow = ({ align }: { align: "start" | "end" }) => (
+  <div className={`flex px-2 py-1 ${align === "end" ? "justify-end" : "justify-start"}`}>
+    <Skeleton className="h-9 w-40 rounded-2xl" />
+  </div>
+);
 
 type MessageThreadProps = {
   messages?: ChatMessage[];
@@ -136,7 +143,11 @@ const MessageThread = ({
     <div className="relative min-h-0 flex-1">
       <div ref={containerRef} className="h-full overflow-y-auto px-1 py-4">
         {isFetchingNextPage && (
-          <Loader2 className="mx-auto mb-4 size-5 animate-spin text-muted-foreground" />
+          <div className="mb-4 flex flex-col gap-1">
+            <MessageSkeletonRow align="start" />
+            <MessageSkeletonRow align="end" />
+            <MessageSkeletonRow align="start" />
+          </div>
         )}
         {headerNote}
         {messages && messages.length > 0 ? (

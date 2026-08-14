@@ -10,9 +10,13 @@ import {
 import { rateLimiter } from "../middleware/rateLimiter.js";
 import { validate } from "../middleware/validate.js";
 import { requireCommentOwner } from "../middleware/authorization.js";
-import { sendCommentSchema } from "../schemas/comment.schema.js";
+import { commentQuerySchema, sendCommentSchema } from "../schemas/comment.schema.js";
 const router = express.Router();
-router.get("/posts/:id/comments", getComments);
+router.get(
+  "/posts/:id/comments",
+  validate({ query: commentQuerySchema }),
+  getComments,
+);
 router.get("/posts/:id/comments-count", getCommentsCount);
 router.post(
   "/posts/:id/send-comment",

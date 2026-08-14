@@ -1,17 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useCommentsStore } from "../../store/commentStore";
-import type { PostComment } from "../types";
+import type { PostCommentsPage } from "../types";
 
-export const useGetPostComments = (id?: string) => {
+export const useGetPostCommentsInfinite = (id?: string) => {
   const { getComments } = useCommentsStore();
-  return useQuery({
-    queryFn: async () => {
-      const comments = (await getComments(id)) as PostComment[];
-      return [...comments].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-    },
+  return useInfiniteQuery<PostCommentsPage>({
     queryKey: ["comments", id],
+    queryFn: ({ pageParam }) => getComments(id, pageParam as string | undefined),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
     enabled: !!id,
   });
 };
