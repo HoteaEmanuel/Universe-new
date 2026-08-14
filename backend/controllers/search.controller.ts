@@ -36,8 +36,8 @@ export const searchUsersController = async (req: Request, res: Response) => {
     if (query.length < MIN_QUERY_LENGTH) {
       return res.status(200).json({ items: [], hasMore: false });
     }
-    const limit = req.query.limit ? Number(req.query.limit) : undefined;
-    const offset = req.query.offset ? Number(req.query.offset) : undefined;
+    const limit = req.query.limit as unknown as number;
+    const offset = req.query.offset as unknown as number;
     const page = await getSearchedUsers(query, limit, offset);
     return res.status(200).json({ message: "Fetched matching users", ...page });
   } catch (error) {
@@ -51,8 +51,8 @@ export const searchPostsController = async (req: Request, res: Response) => {
     if (query.length < MIN_QUERY_LENGTH) {
       return res.status(200).json({ items: [], hasMore: false });
     }
-    const limit = req.query.limit ? Number(req.query.limit) : undefined;
-    const offset = req.query.offset ? Number(req.query.offset) : undefined;
+    const limit = req.query.limit as unknown as number;
+    const offset = req.query.offset as unknown as number;
     const page = await getSearchedPosts(query, limit, offset);
     return res.status(200).json({ message: "Fetched matching posts", ...page });
   } catch (error) {
@@ -66,8 +66,8 @@ export const searchGroupsController = async (req: Request, res: Response) => {
     if (query.length < MIN_QUERY_LENGTH) {
       return res.status(200).json({ items: [], hasMore: false });
     }
-    const limit = req.query.limit ? Number(req.query.limit) : undefined;
-    const offset = req.query.offset ? Number(req.query.offset) : undefined;
+    const limit = req.query.limit as unknown as number;
+    const offset = req.query.offset as unknown as number;
     const page = await getSearchedGroups(query, req.userId as string, limit, offset);
     return res.status(200).json({ message: "Fetched matching groups", ...page });
   } catch (error) {

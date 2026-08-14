@@ -120,7 +120,7 @@ export const getGroupMessages = async (req: Request, res: Response) => {
   try {
     const groupId = req.params.id as string;
     const cursor = req.query.cursor as string | undefined;
-    const limit = Number(req.query.limit) || 30;
+    const limit = req.query.limit as unknown as number;
     const { messages, nextCursor, hasMore } = await getGroupMessagesPage(
       groupId,
       cursor,

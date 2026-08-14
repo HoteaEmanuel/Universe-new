@@ -112,7 +112,7 @@ export const getMessages = async (req: Request, res: Response) => {
     const convoId = req.params.id as string;
     if (!convoId) throw new Error("No convo id provided");
     const cursor = req.query.cursor as string | undefined;
-    const limit = Number(req.query.limit) || 30;
+    const limit = req.query.limit as unknown as number;
     const page = await getConversationMessagesPage(convoId, cursor, limit);
     return res
       .status(200)

@@ -1,6 +1,5 @@
 import express from "express";
-import multer from "multer";
-const upload = multer({ dest: "uploads/" });
+import { imageUpload } from "../lib/imageUpload.js";
 import {
   createGroupController,
   deleteGroup,
@@ -24,33 +23,63 @@ import {
   getDiscoverableGroupsController,
 } from "../controllers/group.controller.js";
 import { rateLimiter } from "../middleware/rateLimiter.js";
+import { validate } from "../middleware/validate.js";
+import {
+  createGroupSchema,
+  addMemberToGroupSchema,
+  sendGroupMessageSchema,
+  editGroupMessageSchema,
+  groupMessagesQuerySchema,
+  groupMediaQuerySchema,
+} from "../schemas/group.schema.js";
 const router = express.Router();
-router.post("/", createGroupController);
+router.post("/", validate({ body: createGroupSchema }), createGroupController);
 router.delete("/:id", deleteGroup);
 router.get("/user/:userId", getUserGroups);
 router.get("/discover/public", getDiscoverableGroupsController);
 router.get("/:id", getGroupById);
 router.get("/:id/members", getGroupMembers);
 router.get("/:id/auth-user", getGroupMemberById);
-router.get("/:id/messages", getGroupMessages);
-router.get("/:id/media", getGroupMediaController);
+router.get(
+  "/:id/messages",
+  validate({ query: groupMessagesQuerySchema }),
+  getGroupMessages,
+);
+router.get(
+  "/:id/media",
+  validate({ query: groupMediaQuerySchema }),
+  getGroupMediaController,
+);
 router.get(
   "/:id/users-from-same-university-not-in-group",
   getUsersFromSameUniversityNotInGroup,
 );
 router.get("/:id/check-admin/:userId", checkUserIsAdmin);
-router.post("/:id/add-member", addMemberToGroupController);
+router.post(
+  "/:id/add-member",
+  validate({ body: addMemberToGroupSchema }),
+  addMemberToGroupController,
+);
 
 router.use(rateLimiter);
-router.post("/:id/send-message", upload.any(), sendMessageToGroupController);
-router.patch("/edit-message/:messageId", editMessageController);
+router.post(
+  "/:id/send-message",
+  imageUpload.any(),
+  validate({ body: sendGroupMessageSchema }),
+  sendMessageToGroupController,
+);
+router.patch(
+  "/edit-message/:messageId",
+  validate({ body: editGroupMessageSchema }),
+  editMessageController,
+);
 router.post("/delete-message/:messageId", deleteMessageController);
 router.post("/:id/make-admin/:userId", makeUserAdminController);
 router.post("/:id/leave-group", leaveGroup);
 router.post("/:id/kick-member/:userId", kickMemberFromGroup);
 router.post(
   "/:id/change-group-image",
-  upload.single("image"),
+  imageUpload.single("image"),
   updateGroupCoverImageController,
 );
 
