@@ -162,9 +162,8 @@ export const sendMessageToGroupController = async (req: Request, res: Response) 
 export const editMessageController = async (req: Request, res: Response) => {
   try {
     const messageId = req.params.messageId as string;
-    const authUserId = req.userId as string;
     const { content } = req.body;
-    const editedMessage = await editMessage({ authUserId, content, messageId });
+    const editedMessage = await editMessage({ content, messageId });
     return res.status(200).json({ editedMessage });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
@@ -174,8 +173,7 @@ export const editMessageController = async (req: Request, res: Response) => {
 export const deleteMessageController = async (req: Request, res: Response) => {
   try {
     const messageId = req.params.messageId as string;
-    const authUserId = req.userId as string;
-    await deleteMessage({ messageId, authUserId });
+    await deleteMessage({ messageId });
     return res.status(200).json({ message: "Message deleted successfully" });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });

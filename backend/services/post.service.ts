@@ -165,17 +165,13 @@ interface UpdatePostInput {
     tags?: string;
   };
   postId: string;
-  userId: string;
   images?: UploadedImage[];
 }
 
 export const updatePost = async (data: UpdatePostInput) => {
-  const { postData, postId, images, userId } = data;
+  const { postData, postId, images } = data;
 
   if (!postData) throw new Error("No post data");
-  const post = await findPostById(postId);
-  if (!post) throw new Error("No post found with that id");
-  if (post.userId !== userId) throw new Error("No permission to edit");
 
   let result: { secure_url: string; public_id: string }[] = [];
   if (images && images.length > 0) {
@@ -219,7 +215,7 @@ export const updatePost = async (data: UpdatePostInput) => {
   });
 };
 
-export const deletePost = async (data: { postId: string; userId: string }) => {
+export const deletePost = async (data: { postId: string }) => {
   const { postId } = data;
   const post = await findPostById(postId);
   if (!post) throw new Error("Post not found");

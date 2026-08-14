@@ -22,6 +22,7 @@ import {
 } from "../controllers/post.controller.js";
 import { imageUpload } from "../lib/imageUpload.js";
 import { validate } from "../middleware/validate.js";
+import { requirePostOwner } from "../middleware/authorization.js";
 import {
   createPostSchema,
   updatePostSchema,
@@ -63,11 +64,12 @@ router.post(
 );
 router.patch(
   "/posts/:id",
+  requirePostOwner,
   imageUpload.array("images"),
   validate({ body: updatePostSchema }),
   updatePostController,
 );
-router.delete("/posts/:id", deletePostController);
+router.delete("/posts/:id", requirePostOwner, deletePostController);
 router.get("/posts-by-name/:name", getSearchedPostsController);
 router.get("/posts-by-tag/:tag", getPostsByTagController);
 

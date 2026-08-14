@@ -114,15 +114,12 @@ export const sendMessage = async (data: {
 };
 
 export const editMessage = async (data: {
-  authUserId: string;
   messageId: string;
   content: string;
 }) => {
-  const { authUserId, messageId, content } = data;
+  const { messageId, content } = data;
   const message = await findGroupMessageById(messageId);
   if (!message) throw new Error("Message not found");
-
-  if (message.senderId !== authUserId) throw new Error("Unauthorized");
 
   const updated = await prisma.groupMessage.update({
     where: { id: messageId },
@@ -136,11 +133,10 @@ export const editMessage = async (data: {
   return updated;
 };
 
-export const deleteMessage = async (data: { messageId: string; authUserId: string }) => {
-  const { messageId, authUserId } = data;
+export const deleteMessage = async (data: { messageId: string }) => {
+  const { messageId } = data;
   const message = await findGroupMessageById(messageId);
   if (!message) throw new Error("Message not found");
-  if (message.senderId !== authUserId) throw new Error("Unauthorized");
 
   await prisma.groupMessage.update({
     where: { id: messageId },

@@ -109,11 +109,10 @@ export const sendMessage = async (data: {
   return message;
 };
 
-export const deleteMessage = async (data: { messageId: string; authUserId: string }) => {
-  const { messageId, authUserId } = data;
+export const deleteMessage = async (data: { messageId: string }) => {
+  const { messageId } = data;
   const message = await findMessageById(messageId);
   if (!message) throw new Error("Message not found");
-  if (message.senderId !== authUserId) throw new Error("Unauthorized");
   await prisma.message.update({ where: { id: messageId }, data: { deleted: true } });
   io.to(getReceiverSocketId(message.receiverId)).emit("messageDeleted", messageId);
 };
@@ -121,15 +120,12 @@ export const deleteMessage = async (data: { messageId: string; authUserId: strin
 export const editMessage = async (data: {
   newContent: string;
   messageId: string;
-  senderId: string;
 }) => {
-  const { newContent, messageId, senderId } = data;
+  const { newContent, messageId } = data;
 
   const message = await findMessageById(messageId);
 
   if (!message) throw new Error("Message not found");
-  if (message.senderId !== senderId)
-    throw new Error("No authorization to edit the message");
 
   const updated = await prisma.message.update({
     where: { id: messageId },

@@ -166,8 +166,7 @@ export const sendMessageController = async (req: Request, res: Response) => {
 export const deleteMessageController = async (req: Request, res: Response) => {
   try {
     const messageId = req.params.id as string;
-    const authUserId = req.userId as string;
-    await deleteMessage({ messageId, authUserId });
+    await deleteMessage({ messageId });
     return res.status(200).json({ message: "Message deleted successfully" });
   } catch (error) {
     return res
@@ -179,9 +178,8 @@ export const deleteMessageController = async (req: Request, res: Response) => {
 export const editMessageController = async (req: Request, res: Response) => {
   try {
     const messageId = req.params.id as string;
-    const authUserId = req.userId as string;
     const { newContent } = req.body;
-    await editMessage({ newContent, senderId: authUserId, messageId });
+    await editMessage({ newContent, messageId });
     return res.status(200).json({ message: "Message edited successfully" });
   } catch (error) {
     return res

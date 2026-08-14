@@ -9,6 +9,7 @@ import {
 } from "../controllers/comment.controller.js";
 import { rateLimiter } from "../middleware/rateLimiter.js";
 import { validate } from "../middleware/validate.js";
+import { requireCommentOwner } from "../middleware/authorization.js";
 import { sendCommentSchema } from "../schemas/comment.schema.js";
 const router = express.Router();
 router.get("/posts/:id/comments", getComments);
@@ -21,5 +22,9 @@ router.post(
 );
 router.post("/posts/:id/like-comment", likeCommentController);
 router.post("/posts/:id/remove-like-comment", removeLikeCommentController);
-router.delete("/posts/:id/delete-comment", deleteComment);
+router.delete(
+  "/posts/:id/delete-comment",
+  requireCommentOwner,
+  deleteComment,
+);
 export default router;

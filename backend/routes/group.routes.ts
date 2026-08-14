@@ -25,6 +25,12 @@ import {
 import { rateLimiter } from "../middleware/rateLimiter.js";
 import { validate } from "../middleware/validate.js";
 import {
+  requireGroupMembership,
+  requireGroupAdmin,
+  requireGroupMessageOwner,
+  requireSelf,
+} from "../middleware/authorization.js";
+import {
   createGroupSchema,
   addMemberToGroupSchema,
   sendGroupMessageSchema,
@@ -34,27 +40,34 @@ import {
 } from "../schemas/group.schema.js";
 const router = express.Router();
 router.post("/", validate({ body: createGroupSchema }), createGroupController);
-router.delete("/:id", deleteGroup);
-router.get("/user/:userId", getUserGroups);
+router.delete("/:id", requireGroupAdmin, deleteGroup);
+router.get("/user/:userId", requireSelf("userId"), getUserGroups);
 router.get("/discover/public", getDiscoverableGroupsController);
-router.get("/:id", getGroupById);
-router.get("/:id/members", getGroupMembers);
+router.get("/:id", requireGroupMembership, getGroupById);
+router.get("/:id/members", requireGroupMembership, getGroupMembers);
 router.get("/:id/auth-user", getGroupMemberById);
 router.get(
   "/:id/messages",
+  requireGroupMembership,
   validate({ query: groupMessagesQuerySchema }),
   getGroupMessages,
 );
 router.get(
   "/:id/media",
+  requireGroupMembership,
   validate({ query: groupMediaQuerySchema }),
   getGroupMediaController,
 );
 router.get(
   "/:id/users-from-same-university-not-in-group",
+  requireGroupMembership,
   getUsersFromSameUniversityNotInGroup,
 );
-router.get("/:id/check-admin/:userId", checkUserIsAdmin);
+router.get(
+  "/:id/check-admin/:userId",
+  requireGroupMembership,
+  checkUserIsAdmin,
+);
 router.post(
   "/:id/add-member",
   validate({ body: addMemberToGroupSchema }),
@@ -64,24 +77,35 @@ router.post(
 router.use(rateLimiter);
 router.post(
   "/:id/send-message",
+  requireGroupMembership,
   imageUpload.any(),
   validate({ body: sendGroupMessageSchema }),
   sendMessageToGroupController,
 );
 router.patch(
   "/edit-message/:messageId",
+  requireGroupMessageOwner,
   validate({ body: editGroupMessageSchema }),
   editMessageController,
 );
-router.post("/delete-message/:messageId", deleteMessageController);
-router.post("/:id/make-admin/:userId", makeUserAdminController);
+router.post(
+  "/delete-message/:messageId",
+  requireGroupMessageOwner,
+  deleteMessageController,
+);
+router.post("/:id/make-admin/:userId", requireGroupAdmin, makeUserAdminController);
 router.post("/:id/leave-group", leaveGroup);
-router.post("/:id/kick-member/:userId", kickMemberFromGroup);
+router.post("/:id/kick-member/:userId", requireGroupAdmin, kickMemberFromGroup);
 router.post(
   "/:id/change-group-image",
+  requireGroupAdmin,
   imageUpload.single("image"),
   updateGroupCoverImageController,
 );
 
-router.get("/active-users/:id", getActiveGroupUsersOnConversation);
+router.get(
+  "/active-users/:id",
+  requireGroupMembership,
+  getActiveGroupUsersOnConversation,
+);
 export default router;

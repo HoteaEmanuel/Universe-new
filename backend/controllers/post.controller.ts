@@ -214,7 +214,7 @@ export const updatePostController = async (req: Request, res: Response) => {
     const postData = req.body;
     const id = req.params.id as string;
     const images = req.files as Express.Multer.File[] | undefined;
-    await updatePost({ postData, postId: id, userId: req.userId as string, images });
+    await updatePost({ postData, postId: id, images });
     return res.status(200).json({ message: "Updated successfully" });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
@@ -224,7 +224,7 @@ export const updatePostController = async (req: Request, res: Response) => {
 export const deletePostController = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    await deletePost({ postId: id, userId: req.userId as string });
+    await deletePost({ postId: id });
     return res.status(204).json({ message: "Post deleted successfully" });
   } catch (error) {
     return res.status(404).json({ message: "Deleting failed", error: errorMessage(error) });
@@ -254,7 +254,7 @@ export const getPostsByTagController = async (req: Request, res: Response) => {
 export const deletePostsByName = async (req: Request, res: Response) => {
   try {
     const { title } = req.body;
-    await prisma.post.deleteMany({ where: { title } });
+    await prisma.post.deleteMany({ where: { title, userId: req.userId as string } });
     return res.status(200).json({ message: "Posts deleted" });
   } catch (error) {
     return res.status(400).json({ error: errorMessage(error) });
