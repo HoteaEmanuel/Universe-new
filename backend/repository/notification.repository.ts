@@ -1,5 +1,6 @@
 import { prisma } from "../database/prisma.js";
 import type { NotificationType } from "../types/shared.js";
+import { getReceiverSocketId, io } from "../lib/socket.js";
 
 const NOTIFICATION_ACTION_USER_SELECT = {
   id: true,
@@ -105,4 +106,22 @@ export const createGroupMessageNotification = async (
     },
     include: { actionUser: { select: NOTIFICATION_ACTION_USER_SELECT } },
   });
+};
+
+// Notifications are always created/stored above regardless of preference,
+// so history stays complete - this only gates real-time delivery to the recipient.
+export const emitNewNotification = async (
+  userId: string,
+  notification: unknown,
+) => {
+  const preferences = await prisma.userPreferences.findUnique({
+    where: { userId },
+    select: { notificationsEnabled: true },
+  });
+  if (preferences?.notificationsEnabled === false) return;
+
+  const receiverSocketId = getReceiverSocketId(userId);
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit("newNotification", notification);
+  }
 };

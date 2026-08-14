@@ -3,8 +3,10 @@ import SideSection from "../features/navigation/SideSection";
 import TopBar from "../features/navigation/TopBar";
 import BottomBar from "../features/navigation/BottomBar";
 import NotificationSocketListener from "../features/notifications/NotificationSocketListener";
+import { useGetPreferencesQuery } from "../queryAndMutation/queries/preferences-queries";
 
 const RootLayout = () => {
+  useGetPreferencesQuery();
   return (
       <div className=" block md:flex w-full max-h-screen">
         <NotificationSocketListener />

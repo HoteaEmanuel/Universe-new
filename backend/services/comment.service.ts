@@ -1,7 +1,10 @@
-import { getActivePostUsers, getReceiverSocketId, io } from "../lib/socket.js";
+import { getActivePostUsers } from "../lib/socket.js";
 import { findPostById } from "../repository/post.repository.js";
 import { findUserById } from "../repository/user.repository.js";
-import { createNotification } from "../repository/notification.repository.js";
+import {
+  createNotification,
+  emitNewNotification,
+} from "../repository/notification.repository.js";
 import {
   createCommentTx,
   deleteCommentTx,
@@ -46,7 +49,7 @@ export const createComment = async (data: {
       type: "post-reply",
       message: `${user?.firstName || user?.name} replied to your comment - ${commentText}!`,
     });
-    io.to(getReceiverSocketId(parentComment.userId)).emit("newNotification", notification);
+    await emitNewNotification(parentComment.userId, notification);
     notifiedUserIds.add(parentComment.userId);
   }
 
@@ -67,7 +70,7 @@ export const createComment = async (data: {
         : `${user?.firstName || user?.name} commented on your post - ${commentText}!`,
     });
 
-    io.to(getReceiverSocketId(post.userId)).emit("newNotification", notification);
+    await emitNewNotification(post.userId, notification);
   }
 
   return comment;
@@ -89,7 +92,7 @@ export const likeComment = async (data: { commentId: string; userId: string }) =
       type: "comment-like",
       message: `${user?.firstName || user?.name} liked your comment!`,
     });
-    io.to(getReceiverSocketId(comment.userId)).emit("newNotification", notification);
+    await emitNewNotification(comment.userId, notification);
   }
 
   return like;

@@ -13,7 +13,10 @@ import {
   createGroupMessage,
   findGroupMessageById,
 } from "../repository/message.repository.js";
-import { createGroupMessageNotification } from "../repository/notification.repository.js";
+import {
+  createGroupMessageNotification,
+  emitNewNotification,
+} from "../repository/notification.repository.js";
 import { findUserById } from "../repository/user.repository.js";
 import { prisma } from "../database/prisma.js";
 import { uploadImageAndCleanup } from "../lib/cloudinary.js";
@@ -129,7 +132,7 @@ export const sendMessage = async (data: {
         message: `${sender?.firstName || sender?.name}: ${groupMessage.content ? groupMessage.content : "IMAGE"}`,
         groupId,
       });
-      io.to(getReceiverSocketId(member.memberId)).emit("newNotification", notification);
+      await emitNewNotification(member.memberId, notification);
     }),
   );
 

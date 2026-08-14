@@ -9,8 +9,10 @@ import {
   findSavedPostByIds,
 } from "../repository/post.repository.js";
 import { findUserById } from "../repository/user.repository.js";
-import { createNotification } from "../repository/notification.repository.js";
-import { getReceiverSocketId, io } from "../lib/socket.js";
+import {
+  createNotification,
+  emitNewNotification,
+} from "../repository/notification.repository.js";
 
 export const savePost = async (data: { postId: string; authUserId: string }) => {
   const { postId, authUserId } = data;
@@ -48,7 +50,7 @@ export const follow = async (data: { authUserId: string; followerId: string }) =
     actionUserId: authUserId,
     type: "follow",
   });
-  io.to(getReceiverSocketId(followerId)).emit("newNotification", notification);
+  await emitNewNotification(followerId, notification);
 };
 
 export const unfollow = async (data: {

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
+import { useGlobalStore } from "@/store/globalStore";
 import type { Notification } from "@/queryAndMutation/types";
 import { showNotificationToast } from "./NotificationToast";
 import { urlPathName } from "@/utils/urlPathFromName";
@@ -10,11 +11,12 @@ const TOAST_TYPES = new Set(["message", "follow"]);
 
 const NotificationSocketListener = () => {
   const { socket, user } = useAuthStore();
+  const { notificationsOn } = useGlobalStore();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!socket || !user?.id) return;
+    if (!socket || !user?.id || !notificationsOn) return;
 
     const handleNewNotification = (notification: Notification) => {
       queryClient.invalidateQueries({ queryKey: ["unread-notifications", user.id] });
@@ -41,7 +43,7 @@ const NotificationSocketListener = () => {
     return () => {
       socket.off("newNotification", handleNewNotification);
     };
-  }, [socket, user?.id, queryClient, navigate]);
+  }, [socket, user?.id, notificationsOn, queryClient, navigate]);
 
   return null;
 };

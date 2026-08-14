@@ -1,51 +1,28 @@
-import React from "react";
 import ProfileCard from "@/features/profile/ProfileCard";
-import { useState } from "react";
-import { MdDarkMode, MdLibraryAdd, MdLightMode } from "react-icons/md";
-import { BiLogOut } from "react-icons/bi";
-import { PiCloudFogThin } from "react-icons/pi";
 import { useEffect } from "react";
 import { useGlobalStore } from "../store/globalStore";
+import { useUpdatePreferencesMutation } from "@/queryAndMutation/mutations/preferences-mutation";
+
 const Settings = () => {
-  const { toggleNotifications, notificationsOn } = useGlobalStore();
+  const { theme, notificationsOn } = useGlobalStore();
+  const { mutate: updatePreferences } = useUpdatePreferencesMutation();
   useEffect(() => {
     document.title = "Settings";
   }, []);
-  const [theme, setTheme] = useState(() => {
-    return (
-      document.documentElement.getAttribute("data-theme") ||
-      document.getElementById("root")?.getAttribute("data-theme") ||
-      localStorage.getItem("theme") ||
-      "light"
-    );
-  });
-  console.log("THEME: " + theme);
+
   const toggleTheme = () => {
-    console.log("THEME: " + theme);
-    const next = theme == "light" ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", next);
-    document.getElementById("root")?.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-    setTheme(next);
+    updatePreferences({ theme: theme === "light" ? "dark" : "light" });
   };
 
-  console.log("NOTIF ON: " + notificationsOn);
-  console.log("THEME: " + theme);
+  const toggleNotifications = () => {
+    updatePreferences({ notificationsEnabled: !notificationsOn });
+  };
+
   return (
     <div className="h-screen p-10">
       <ProfileCard />
       <div className="h-3/4 mt-10">
         <ul className="h-full flex flex-col gap-5">
-          {/* <li className="w-full h-20 flex items-center justify-between rounded-2xl p-10 border-2 border-violet-950 hover:border-violet-600">
-            <button onClick={toggleTheme} className="text-lg">
-              Change theme
-            </button>
-            {localStorage.getItem("theme") == "light" ? (
-              <MdDarkMode color="orange" size={20} />
-            ) : (
-              <MdLightMode color="yellow" size={20} />
-            )}
-          </li> */}
           <li className="w-full h-20 flex items-center justify-between rounded-2xl p-10 border-2 border-violet-950">
             <h1>Toggle Theme</h1>
             <label class="switch">

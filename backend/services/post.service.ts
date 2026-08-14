@@ -12,14 +12,16 @@ import {
 import { findUserById } from "../repository/user.repository.js";
 import { prisma } from "../database/prisma.js";
 import { uploadImageAndCleanup } from "../lib/cloudinary.js";
-import { getReceiverSocketId, io } from "../lib/socket.js";
 import {
   createLike,
   deleteLike,
   deleteLikes,
   findLikeByPostAndUser,
 } from "../repository/like.repository.js";
-import { createNotification } from "../repository/notification.repository.js";
+import {
+  createNotification,
+  emitNewNotification,
+} from "../repository/notification.repository.js";
 
 interface UploadedImage {
   path: string;
@@ -140,7 +142,7 @@ export const likePost = async (data: { postId: string; userId: string }) => {
     type: "post-like",
     message: `${user?.firstName || user?.name} liked your post!`,
   });
-  io.to(getReceiverSocketId(post.userId)).emit("newNotification", notification);
+  await emitNewNotification(post.userId, notification);
 };
 
 export const unlikePost = async (data: { postId: string; userId: string }) => {

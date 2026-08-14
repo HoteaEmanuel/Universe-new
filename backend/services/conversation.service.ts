@@ -11,7 +11,10 @@ import {
 import { prisma } from "../database/prisma.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 import { uploadImageAndCleanup } from "../lib/cloudinary.js";
-import { createMessageNotification } from "../repository/notification.repository.js";
+import {
+  createMessageNotification,
+  emitNewNotification,
+} from "../repository/notification.repository.js";
 import { findUserById } from "../repository/user.repository.js";
 
 import { getActiveConversationUsers } from "../lib/socket.js";
@@ -103,7 +106,7 @@ export const sendMessage = async (data: {
       message: `${sender?.firstName || sender?.name}: ${message?.content ? message.content : "IMAGE"}`,
       conversationId: convoId,
     });
-    io.to(getReceiverSocketId(receiverId)).emit("newNotification", notification);
+    await emitNewNotification(receiverId, notification);
   }
 
   io.to(getReceiverSocketId(receiverId)).emit("newMessage", message);

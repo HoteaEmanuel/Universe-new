@@ -69,9 +69,8 @@ function App() {
   const location = useLocation();
   const backgroundLocation = location.state?.backgroundLocation;
   useEffect(() => {
-    const theme = localStorage.getItem("theme");
-    console.log(theme);
-    document.documentElement.setAttribute("data-theme", theme);
+    const cachedTheme = localStorage.getItem("theme") || "light";
+    document.documentElement.setAttribute("data-theme", cachedTheme);
   }, []);
   useEffect(() => {
     checkAuth();
