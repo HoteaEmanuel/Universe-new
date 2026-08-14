@@ -68,15 +68,7 @@ interface SignUpBody {
 
 export const signUp = async (body: SignUpBody) => {
   let { firstName, lastName, name, email, password, accountType, major } = body;
-  if (!firstName || !lastName || !email || !password || !accountType)
-    throw new Error("All fields are required");
   email = email.toLowerCase();
-  if (
-    RegExp("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$").test(email) ===
-    false
-  ) {
-    throw new Error("Invalid email format");
-  }
 
   const existingUser = await findUserByEmail(email);
 

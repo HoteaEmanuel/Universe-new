@@ -17,6 +17,16 @@ import {
   authWithGoogleMobile,
 } from "../controllers/auth.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
+import { validate } from "../middleware/validate.js";
+import {
+  signupSchema,
+  loginSchema,
+  verifyEmailSchema,
+  resendVerifyEmailSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  googleMobileSchema,
+} from "../schemas/auth.schema.js";
 const router = express.Router();
 router.post("/check-auth", verifyToken, checkAuth);
 router.get(
@@ -27,7 +37,11 @@ router.get(
   }),
 );
 
-router.post("/google/mobile", authWithGoogle);
+router.post(
+  "/google/mobile",
+  validate({ body: googleMobileSchema }),
+  authWithGoogle,
+);
 
 router.get(
   "/google/callback",
@@ -39,11 +53,19 @@ router.get(
 );
 
 router.post("/reject-business-registrations/:id", rejectBusinessRegistration);
-router.post("/signup", signUpController);
-router.post("/verify-email", verifyEmailController);
-router.post("/resend-verify-email", sendVerificationEmailController);
-router.post("/login", loginWeb);
-router.post("/login/mobile", loginMobile);
+router.post("/signup", validate({ body: signupSchema }), signUpController);
+router.post(
+  "/verify-email",
+  validate({ body: verifyEmailSchema }),
+  verifyEmailController,
+);
+router.post(
+  "/resend-verify-email",
+  validate({ body: resendVerifyEmailSchema }),
+  sendVerificationEmailController,
+);
+router.post("/login", validate({ body: loginSchema }), loginWeb);
+router.post("/login/mobile", validate({ body: loginSchema }), loginMobile);
 
 router.get("/google/mobile-init", (req, res) => {
   const redirect_uri =
@@ -61,9 +83,17 @@ router.get("/google/mobile-init", (req, res) => {
 });
 
 router.get("/google/mobile-callback", authWithGoogleMobile);
-router.post("/reset-password/:token", resetPasswordController);
+router.post(
+  "/reset-password/:token",
+  validate({ body: resetPasswordSchema }),
+  resetPasswordController,
+);
 router.post("/logout", logout);
-router.post("/forgot-password", forgotPasswordController);
+router.post(
+  "/forgot-password",
+  validate({ body: forgotPasswordSchema }),
+  forgotPasswordController,
+);
 
 router.get("/business-account-registrations", businessRegistrations);
 router.post("/accept-business-registrations/:id", acceptBusinessRegistration);
