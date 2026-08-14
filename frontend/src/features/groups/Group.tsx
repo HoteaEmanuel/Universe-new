@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Users } from "lucide-react";
@@ -7,11 +7,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   useGetActiveGroupMembers,
   useGetGroupById,
+  useGetGroupMembers,
   useGetGroupMessagesInfinite,
 } from "@/queryAndMutation/queries/group-queries";
 import {
   useDeleteMessageInGroupMutation,
   useEditMessageInGroupMutation,
+  useReactToGroupMessageMutation,
 } from "@/queryAndMutation/mutations/group-mutation";
 import { useSeeNewMessages } from "@/queryAndMutation/mutations/notification-mutation";
 import { useAuthStore } from "@/store/authStore";
@@ -46,8 +48,14 @@ const Group = () => {
     .reverse()
     .flatMap((page) => page.messages);
   const { data: activeMembers } = useGetActiveGroupMembers(id);
+  const { data: groupMembers } = useGetGroupMembers(id);
+  const memberLookup = useMemo(
+    () => new Map(groupMembers?.map((m) => [m.memberId.id, m.memberId])),
+    [groupMembers],
+  );
   const { mutate: deleteMessage } = useDeleteMessageInGroupMutation(id);
   const { mutate: editMessage } = useEditMessageInGroupMutation(id);
+  const { mutate: reactToMessage } = useReactToGroupMessageMutation(id);
   const typingUsers = useTypingIndicator(id);
 
   useEffect(() => {
@@ -59,10 +67,14 @@ const Group = () => {
     socket.on("newGroupMessage", invalidateIfCurrentGroup);
     socket.on("messageEdited", invalidateIfCurrentGroup);
     socket.on("messageDeleted", invalidateIfCurrentGroup);
+    socket.on("groupReactionAdded", invalidateIfCurrentGroup);
+    socket.on("groupReactionRemoved", invalidateIfCurrentGroup);
     return () => {
       socket.off?.("newGroupMessage", invalidateIfCurrentGroup);
       socket.off?.("messageEdited", invalidateIfCurrentGroup);
       socket.off?.("messageDeleted", invalidateIfCurrentGroup);
+      socket.off?.("groupReactionAdded", invalidateIfCurrentGroup);
+      socket.off?.("groupReactionRemoved", invalidateIfCurrentGroup);
     };
   }, [socket, queryClient, id]);
 
@@ -147,9 +159,13 @@ const Group = () => {
           messages={messages}
           currentUserId={user.id}
           variant="group"
+          memberLookup={memberLookup}
           onDelete={deleteMessage}
           onEdit={(messageId, newContent) =>
             editMessage({ id: messageId, newContent })
+          }
+          onReact={(messageId, emoji) =>
+            reactToMessage({ id: messageId, emoji })
           }
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}

@@ -11,6 +11,7 @@ import {
 import {
   useDeleteMessageMutation,
   useEditMessageMutation,
+  useReactToMessageMutation,
 } from "@/queryAndMutation/mutations/conversation-mutation";
 import { useSeeNewMessages } from "@/queryAndMutation/mutations/notification-mutation";
 import { useAuthStore } from "@/store/authStore";
@@ -48,6 +49,7 @@ const Conversation = () => {
     .flatMap((page) => page.messages);
   const { mutate: deleteMessage } = useDeleteMessageMutation(convoId);
   const { mutate: editMessage } = useEditMessageMutation(convoId);
+  const { mutate: reactToMessage } = useReactToMessageMutation(convoId);
   const typingUsers = useTypingIndicator(convoId);
 
   useEffect(() => {
@@ -58,10 +60,14 @@ const Conversation = () => {
     socket.on("newMessage", invalidateMessages);
     socket.on("messageEdited", invalidateMessages);
     socket.on("messageDeleted", invalidateMessages);
+    socket.on("reactionAdded", invalidateMessages);
+    socket.on("reactionRemoved", invalidateMessages);
     return () => {
       socket.off?.("newMessage", invalidateMessages);
       socket.off?.("messageEdited", invalidateMessages);
       socket.off?.("messageDeleted", invalidateMessages);
+      socket.off?.("reactionAdded", invalidateMessages);
+      socket.off?.("reactionRemoved", invalidateMessages);
     };
   }, [socket, queryClient, convoId]);
 
@@ -123,6 +129,7 @@ const Conversation = () => {
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={fetchNextPage}
+          onReact={(id, emoji) => reactToMessage({ id, emoji })}
         />
       )}
 

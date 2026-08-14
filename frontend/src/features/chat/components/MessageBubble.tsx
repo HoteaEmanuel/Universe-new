@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
+import { SmilePlus } from "lucide-react";
 import {
   Message,
   MessageAvatar,
@@ -8,10 +9,13 @@ import {
   MessageHeader,
   MessageFooter,
 } from "@/components/ui/message";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getFullName } from "../../../utils/fullName";
 import { formatDateDetailed } from "../../../utils/formatDate";
 import { urlPathName } from "../../../utils/urlPathFromName";
 import MessageActionsMenu from "./MessageActionsMenu";
+import EmojiPickerPopover from "./EmojiPickerPopover";
 import type { ChatMessage, ChatUser } from "../types";
 
 type MessageBubbleProps = {
@@ -23,6 +27,152 @@ type MessageBubbleProps = {
   onOpenImage: (image: string) => void;
   onDelete: (messageId: string) => void;
   onEdit: (messageId: string, newContent: string) => void;
+  onReact: (messageId: string, emoji: string) => void;
+  memberLookup?: Map<string, ChatUser>;
+};
+
+const MAX_VISIBLE_REACTION_PILLS = 5;
+
+const summarizeReactions = (
+  reactions: ChatMessage["reactions"],
+  currentUserId: string,
+) => {
+  const summary = new Map<string, { emoji: string; userIds: string[] }>();
+  for (const reaction of reactions ?? []) {
+    const entry = summary.get(reaction.emoji) ?? {
+      emoji: reaction.emoji,
+      userIds: [],
+    };
+    entry.userIds.push(reaction.userId);
+    summary.set(reaction.emoji, entry);
+  }
+  return [...summary.values()]
+    .map((entry) => ({
+      ...entry,
+      count: entry.userIds.length,
+      reactedByMe: entry.userIds.includes(currentUserId),
+    }))
+    .sort((a, b) => b.count - a.count);
+};
+
+const resolveReactorName = (
+  userId: string,
+  currentUserId: string,
+  memberLookup?: Map<string, ChatUser>,
+) => {
+  if (userId === currentUserId) return "You";
+  const user = memberLookup?.get(userId);
+  return user ? getFullName(user) : "Member";
+};
+
+const MAX_VISIBLE_REACTOR_NAMES = 10;
+
+const formatReactorNames = (
+  userIds: string[],
+  currentUserId: string,
+  memberLookup?: Map<string, ChatUser>,
+) => {
+  const names = userIds
+    .slice(0, MAX_VISIBLE_REACTOR_NAMES)
+    .map((userId) => resolveReactorName(userId, currentUserId, memberLookup));
+  const remaining = userIds.length - names.length;
+  return remaining > 0
+    ? `${names.join(", ")} and ${remaining} more`
+    : names.join(", ");
+};
+
+type ReactionSummary = {
+  emoji: string;
+  userIds: string[];
+  count: number;
+  reactedByMe: boolean;
+};
+
+type ReactionsRowProps = {
+  reactions: ReactionSummary[];
+  variant: "direct" | "group";
+  align: "start" | "end";
+  currentUserId: string;
+  onReact: (emoji: string) => void;
+  memberLookup?: Map<string, ChatUser>;
+};
+
+const ReactionPill = ({
+  emoji,
+  count,
+  reactedByMe,
+}: Pick<ReactionSummary, "emoji" | "count" | "reactedByMe">) => (
+  <span
+    className={`flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs ${
+      reactedByMe
+        ? "border-primary bg-primary/10 text-primary"
+        : "border-border bg-background text-foreground"
+    }`}
+  >
+    <span>{emoji}</span>
+    <span>{count}</span>
+  </span>
+);
+
+const OverflowPill = ({ count }: { count: number }) => (
+  <span className="flex items-center rounded-full border border-border bg-background px-1.5 py-0.5 text-xs text-muted-foreground">
+    +{count}
+  </span>
+);
+
+const ReactionsRow = ({
+  reactions,
+  variant,
+  align,
+  currentUserId,
+  onReact,
+  memberLookup,
+}: ReactionsRowProps) => {
+  const visible = reactions.slice(0, MAX_VISIBLE_REACTION_PILLS);
+  const overflowCount = reactions.length - visible.length;
+
+  if (variant === "direct") {
+    return (
+      <div className="flex flex-wrap gap-1">
+        {visible.map(({ emoji, count, reactedByMe }) => (
+          <button key={emoji} type="button" onClick={() => onReact(emoji)}>
+            <ReactionPill emoji={emoji} count={count} reactedByMe={reactedByMe} />
+          </button>
+        ))}
+        {overflowCount > 0 && <OverflowPill count={overflowCount} />}
+      </div>
+    );
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={<div className="flex w-fit cursor-pointer flex-wrap gap-1" />}
+      >
+        {visible.map(({ emoji, count, reactedByMe }) => (
+          <ReactionPill
+            key={emoji}
+            emoji={emoji}
+            count={count}
+            reactedByMe={reactedByMe}
+          />
+        ))}
+        {overflowCount > 0 && <OverflowPill count={overflowCount} />}
+      </PopoverTrigger>
+      <PopoverContent align={align} className="w-56 p-2">
+        <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
+          {reactions.map(({ emoji, userIds }) => (
+            <div key={emoji} className="flex items-start gap-2 text-sm">
+              <span>{emoji}</span>
+              <span className="text-muted-foreground">
+                {formatReactorNames(userIds, currentUserId, memberLookup)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 };
 
 const MessageBubble = ({
@@ -34,6 +184,8 @@ const MessageBubble = ({
   onOpenImage,
   onDelete,
   onEdit,
+  onReact,
+  memberLookup,
 }: MessageBubbleProps) => {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
@@ -114,6 +266,17 @@ const MessageBubble = ({
           </div>
         )}
 
+        {!message.deleted && (message.reactions?.length ?? 0) > 0 && (
+          <ReactionsRow
+            reactions={summarizeReactions(message.reactions, currentUserId)}
+            variant={variant}
+            align={isOwn ? "end" : "start"}
+            onReact={(emoji) => onReact(message.id, emoji)}
+            currentUserId={currentUserId}
+            memberLookup={memberLookup}
+          />
+        )}
+
         <MessageFooter>
           <span
             className={
@@ -129,15 +292,32 @@ const MessageBubble = ({
                 : message.updatedAt || message.createdAt,
             )}
           </span>
-          {isOwn && !message.deleted && (
+          {!message.deleted && (
             <span
-              className={isHovered ? "opacity-100" : "pointer-events-none opacity-0"}
+              className={`flex items-center ${
+                isHovered ? "opacity-100" : "pointer-events-none opacity-0"
+              }`}
             >
-              <MessageActionsMenu
-                message={message}
-                onDelete={() => onDelete(message.id)}
-                onEdit={(newContent) => onEdit(message.id, newContent)}
+              <EmojiPickerPopover
+                onPick={(emoji) => onReact(message.id, emoji)}
+                align={isOwn ? "end" : "start"}
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label="React with emoji"
+                  >
+                    <SmilePlus className="size-3.5" />
+                  </Button>
+                }
               />
+              {isOwn && (
+                <MessageActionsMenu
+                  message={message}
+                  onDelete={() => onDelete(message.id)}
+                  onEdit={(newContent) => onEdit(message.id, newContent)}
+                />
+              )}
             </span>
           )}
         </MessageFooter>

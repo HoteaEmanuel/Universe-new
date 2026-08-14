@@ -13,6 +13,7 @@ import {
   getUserConversations,
   sendMessage,
   startConversation,
+  setMessageReaction,
 } from "../services/conversation.service.js";
 
 const PARTICIPANT_OMIT = {
@@ -181,6 +182,20 @@ export const editMessageController = async (req: Request, res: Response) => {
     const { newContent } = req.body;
     await editMessage({ newContent, messageId });
     return res.status(200).json({ message: "Message edited successfully" });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: error instanceof Error ? error.message : "" });
+  }
+};
+
+export const reactToMessageController = async (req: Request, res: Response) => {
+  try {
+    const messageId = req.params.id as string;
+    const userId = req.userId as string;
+    const { emoji } = req.body;
+    const result = await setMessageReaction({ messageId, userId, emoji });
+    return res.status(200).json(result);
   } catch (error) {
     return res
       .status(400)

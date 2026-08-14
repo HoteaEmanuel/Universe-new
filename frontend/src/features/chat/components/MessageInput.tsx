@@ -5,7 +5,7 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { ImagePlus, SendHorizontal, X } from "lucide-react";
+import { ImagePlus, SendHorizontal, Smile, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { useSendMessageToGroupMutation } from "../../../queryAndMutation/mutatio
 import { useAuthStore } from "../../../store/authStore";
 import { getFullName } from "../../../utils/fullName";
 import ImagePickerModal from "./ImagePickerModal";
+import EmojiPickerPopover from "./EmojiPickerPopover";
 import type { ChatUser } from "../types";
 
 type MessageInputProps = {
@@ -34,6 +35,7 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
   };
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingEmitRef = useRef(0);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const directMutation = useSendMessageMutation(
     variant === "direct" ? id : undefined,
@@ -70,6 +72,19 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
     }
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(stopTyping, TYPING_IDLE_MS);
+  };
+
+  const handleEmojiPick = (emoji: string) => {
+    const input = inputRef.current;
+    const start = input?.selectionStart ?? text.length;
+    const end = input?.selectionEnd ?? text.length;
+    const next = text.slice(0, start) + emoji + text.slice(end);
+    setText(next);
+    requestAnimationFrame(() => {
+      const caret = start + emoji.length;
+      input?.focus();
+      input?.setSelectionRange(caret, caret);
+    });
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -125,12 +140,26 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
           <ImagePlus />
         </Button>
         <Input
+          ref={inputRef}
           type="text"
           value={text}
           onChange={handleTextChange}
           onBlur={stopTyping}
           placeholder="Send a message"
           className="flex-1"
+        />
+        <EmojiPickerPopover
+          onPick={handleEmojiPick}
+          trigger={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Add emoji"
+            >
+              <Smile />
+            </Button>
+          }
         />
         <Button
           type="submit"

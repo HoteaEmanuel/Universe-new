@@ -175,6 +175,48 @@ export const deleteMessage = async (data: { messageId: string }) => {
   });
 };
 
+export const setGroupMessageReaction = async (data: {
+  messageId: string;
+  userId: string;
+  emoji: string;
+}) => {
+  const { messageId, userId, emoji } = data;
+  const message = await findGroupMessageById(messageId);
+  if (!message) throw new Error("Message not found");
+
+  const existing = await prisma.groupMessageReaction.findUnique({
+    where: { groupMessageId_userId: { groupMessageId: messageId, userId } },
+  });
+
+  const members = await findGroupMembers(message.groupId);
+
+  if (existing?.emoji === emoji) {
+    await prisma.groupMessageReaction.delete({ where: { id: existing.id } });
+    members.forEach((member) => {
+      io.to(getReceiverSocketId(member.memberId)).emit("groupReactionRemoved", {
+        messageId,
+        groupId: message.groupId,
+        userId,
+        emoji,
+      });
+    });
+    return { removed: true, messageId, userId, emoji };
+  }
+
+  const reaction = await prisma.groupMessageReaction.upsert({
+    where: { groupMessageId_userId: { groupMessageId: messageId, userId } },
+    update: { emoji },
+    create: { groupMessageId: messageId, userId, emoji },
+  });
+  members.forEach((member) => {
+    io.to(getReceiverSocketId(member.memberId)).emit("groupReactionAdded", {
+      ...reaction,
+      groupId: message.groupId,
+    });
+  });
+  return { removed: false, reaction };
+};
+
 export const updateGroupImage = async (data: {
   image?: UploadedImage;
   groupId: string;

@@ -7,6 +7,7 @@ import {
   editMessage,
   giveAdminRole,
   sendMessage,
+  setGroupMessageReaction,
   updateGroupImage,
   addMemberToGroup,
   getDiscoverablePublicGroups,
@@ -175,6 +176,18 @@ export const deleteMessageController = async (req: Request, res: Response) => {
     const messageId = req.params.messageId as string;
     await deleteMessage({ messageId });
     return res.status(200).json({ message: "Message deleted successfully" });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const reactToGroupMessageController = async (req: Request, res: Response) => {
+  try {
+    const messageId = req.params.messageId as string;
+    const userId = req.userId as string;
+    const { emoji } = req.body;
+    const result = await setGroupMessageReaction({ messageId, userId, emoji });
+    return res.status(200).json(result);
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

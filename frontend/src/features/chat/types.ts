@@ -10,6 +10,12 @@ export type ChatUser = {
 
 export type MessageSender = ChatUser | string;
 
+export type MessageReaction = {
+  id: string;
+  emoji: string;
+  userId: string;
+};
+
 export type ChatMessage = {
   id: string;
   content?: string;
@@ -19,6 +25,7 @@ export type ChatMessage = {
   groupId?: string;
   deleted?: boolean;
   edited?: boolean;
+  reactions?: MessageReaction[];
   createdAt: string;
   updatedAt: string;
 };

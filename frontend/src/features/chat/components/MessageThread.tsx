@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageGroup } from "@/components/ui/message";
 import MessageBubble from "./MessageBubble";
 import FullImageModal from "../../../Modals/FullImageModal";
-import type { ChatMessage } from "../types";
+import type { ChatMessage, ChatUser } from "../types";
 
 const MessageSkeletonRow = ({ align }: { align: "start" | "end" }) => (
   <div className={`flex px-2 py-1 ${align === "end" ? "justify-end" : "justify-start"}`}>
@@ -22,6 +22,8 @@ type MessageThreadProps = {
   headerNote?: ReactNode;
   onDelete: (messageId: string) => void;
   onEdit: (messageId: string, newContent: string) => void;
+  onReact: (messageId: string, emoji: string) => void;
+  memberLookup?: Map<string, ChatUser>;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   fetchNextPage?: () => void;
@@ -59,6 +61,8 @@ const MessageThread = ({
   headerNote,
   onDelete,
   onEdit,
+  onReact,
+  memberLookup,
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
@@ -177,6 +181,8 @@ const MessageThread = ({
                         onOpenImage={setFullImage}
                         onDelete={onDelete}
                         onEdit={onEdit}
+                        onReact={onReact}
+                        memberLookup={memberLookup}
                       />
                     ))}
                   </MessageGroup>

@@ -68,6 +68,8 @@ model User {
   receivedMessages      Message[]      @relation("ReceiverMessages")
   groupMemberships      GroupMembers[]
   groupMessages         GroupMessage[]
+  messageReactions      MessageReaction[]
+  groupMessageReactions GroupMessageReaction[]
 
   @@map("users")
 }
@@ -241,10 +243,25 @@ model Message {
   updatedAt      DateTime     @updatedAt
 
   lastMessageOf Conversation? @relation("ConversationLastMessage")
+  reactions     MessageReaction[]
 
   @@index([senderId, receiverId])
   @@index([conversationId])
   @@map("messages")
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@map("message_reactions")
 }
 
 model Group {
@@ -296,7 +313,22 @@ model GroupMessage {
   updatedAt      DateTime @updatedAt
 
   lastMessageOf Group? @relation("GroupLastMessage")
+  reactions     GroupMessageReaction[]
 
   @@index([groupId])
   @@map("group_messages")
+}
+
+model GroupMessageReaction {
+  id             String       @id @default(uuid())
+  groupMessageId String
+  groupMessage   GroupMessage @relation(fields: [groupMessageId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji          String
+  createdAt      DateTime     @default(now())
+
+  @@unique([groupMessageId, userId])
+  @@index([groupMessageId])
+  @@map("group_message_reactions")
 }

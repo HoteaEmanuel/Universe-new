@@ -21,6 +21,7 @@ import {
   addMemberToGroupController,
   getActiveGroupUsersOnConversation,
   getDiscoverableGroupsController,
+  reactToGroupMessageController,
 } from "../controllers/group.controller.js";
 import { rateLimiter } from "../middleware/rateLimiter.js";
 import { validate } from "../middleware/validate.js";
@@ -28,6 +29,7 @@ import {
   requireGroupMembership,
   requireGroupAdmin,
   requireGroupMessageOwner,
+  requireGroupMessageMembership,
   requireSelf,
 } from "../middleware/authorization.js";
 import {
@@ -37,6 +39,7 @@ import {
   editGroupMessageSchema,
   groupMessagesQuerySchema,
   groupMediaQuerySchema,
+  reactToGroupMessageSchema,
 } from "../schemas/group.schema.js";
 const router = express.Router();
 router.post("/", validate({ body: createGroupSchema }), createGroupController);
@@ -92,6 +95,12 @@ router.post(
   "/delete-message/:messageId",
   requireGroupMessageOwner,
   deleteMessageController,
+);
+router.post(
+  "/react-message/:messageId",
+  requireGroupMessageMembership,
+  validate({ body: reactToGroupMessageSchema }),
+  reactToGroupMessageController,
 );
 router.post("/:id/make-admin/:userId", requireGroupAdmin, makeUserAdminController);
 router.post("/:id/leave-group", leaveGroup);

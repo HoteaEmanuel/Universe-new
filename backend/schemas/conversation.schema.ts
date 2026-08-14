@@ -34,3 +34,8 @@ export const mediaQuerySchema = z.object({
   before: z.string().min(1).optional(),
 });
 export type MediaQueryInput = z.infer<typeof mediaQuerySchema>;
+
+export const reactToMessageSchema = z.object({
+  emoji: z.string().min(1, "emoji is required").max(32, "Invalid emoji"),
+});
+export type ReactToMessageInput = z.infer<typeof reactToMessageSchema>;

@@ -32,6 +32,10 @@ type ConversationStore = {
   ) => Promise<ChatMessage>;
   deleteMessage: (id: string) => Promise<{ message: string }>;
   editMessage: (id: string, text: string) => Promise<ChatMessage>;
+  reactToMessage: (
+    id: string,
+    emoji: string,
+  ) => Promise<{ removed: boolean }>;
 };
 
 export const useConversationStore = create<ConversationStore>((set) => ({
@@ -145,6 +149,17 @@ export const useConversationStore = create<ConversationStore>((set) => ({
       return response.data;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not edit message"));
+    }
+  },
+  reactToMessage: async (id, emoji) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/conversations/react-message/${id}`,
+        { emoji },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not react to message"));
     }
   },
 }));

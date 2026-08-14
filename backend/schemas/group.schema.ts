@@ -47,3 +47,8 @@ export const groupMediaQuerySchema = z.object({
   before: z.string().min(1).optional(),
 });
 export type GroupMediaQueryInput = z.infer<typeof groupMediaQuerySchema>;
+
+export const reactToGroupMessageSchema = z.object({
+  emoji: z.string().min(1, "emoji is required").max(32, "Invalid emoji"),
+});
+export type ReactToGroupMessageInput = z.infer<typeof reactToGroupMessageSchema>;

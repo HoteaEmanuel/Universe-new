@@ -35,6 +35,10 @@ type GroupStore = {
   ) => Promise<ChatMessage>;
   editMessageInGroup: (messageId: string, content: string) => Promise<ChatMessage>;
   deleteMessageInGroup: (messageId: string) => Promise<{ message: string }>;
+  reactToGroupMessage: (
+    messageId: string,
+    emoji: string,
+  ) => Promise<{ removed: boolean }>;
   checkUserIsAdmin: (groupId: string, userId: string) => Promise<boolean>;
   addMemberToGroup: (groupId: string, userId: string) => Promise<unknown>;
   getGroupMembers: (groupId: string) => Promise<GroupMember[]>;
@@ -142,6 +146,17 @@ export const useGroupStore = create<GroupStore>(() => ({
       return response.data.message;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not delete message"));
+    }
+  },
+  reactToGroupMessage: async (messageId, emoji) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/groups/react-message/${messageId}`,
+        { emoji },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not react to message"));
     }
   },
   checkUserIsAdmin: async (groupId, userId) => {

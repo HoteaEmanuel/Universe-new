@@ -10,6 +10,7 @@ import type {
 } from "../../features/chat/types";
 import {
   appendOptimisticMessage,
+  setReactionInPages,
   updateMessageInPages,
 } from "../../features/chat/utils/messagePageCache";
 
@@ -86,6 +87,36 @@ export const useEditMessageInGroupMutation = (groupId?: string) => {
           content: newContent,
           edited: true,
         })),
+      );
+      return { previous };
+    },
+    onError: (_error, _vars, context) => {
+      if (groupId && context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous);
+      }
+    },
+    onSettled: () => {
+      if (groupId) queryClient.invalidateQueries({ queryKey });
+    },
+  });
+};
+
+export const useReactToGroupMessageMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { reactToGroupMessage } = useGroupStore();
+  const { user } = useAuthStore() as { user: { id: string } | null };
+  const queryKey = ["group-messages", groupId];
+
+  return useMutation({
+    mutationFn: ({ id, emoji }: { id: string; emoji: string }) =>
+      reactToGroupMessage(id, emoji),
+    onMutate: async ({ id, emoji }) => {
+      if (!groupId || !user) return;
+      await queryClient.cancelQueries({ queryKey });
+      const previous =
+        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
+      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
+        setReactionInPages(old, id, user.id, emoji),
       );
       return { previous };
     },

@@ -95,6 +95,9 @@ export const getConversationMessagesPage = async (
     where: { conversationId },
     take: limit + 1,
     orderBy: MESSAGE_ORDER_BY,
+    include: {
+      reactions: { select: { id: true, emoji: true, userId: true } },
+    },
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
   return toMessagePage(rows, limit);
@@ -120,6 +123,7 @@ export const getGroupMessagesPage = async (
           name: true,
         },
       },
+      reactions: { select: { id: true, emoji: true, userId: true } },
     },
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });

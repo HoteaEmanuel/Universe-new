@@ -69,6 +69,14 @@ export const requireConversationMessageOwner = requireAuthorization({
   forbiddenMessage: "You can only modify your own messages",
 });
 
+export const requireConversationMessageParticipant = requireAuthorization({
+  getResource: (req) => findMessageById(req.params.id as string),
+  authorize: (message, req) =>
+    message.senderId === req.userId || message.receiverId === req.userId,
+  notFoundMessage: "Message not found",
+  forbiddenMessage: "You are not a participant in this conversation",
+});
+
 export const requireGroupMembership = requireAuthorization({
   getResource: (req) =>
     findGroupMember(req.params.id as string, req.userId as string),
@@ -89,6 +97,18 @@ export const requireGroupMessageOwner = requireAuthorization({
   authorize: (message, req) => message.senderId === req.userId,
   notFoundMessage: "Message not found",
   forbiddenMessage: "You can only modify your own messages",
+});
+
+export const requireGroupMessageMembership = requireAuthorization({
+  getResource: async (req) => {
+    const message = await findGroupMessageById(req.params.messageId as string);
+    if (!message) return null;
+    const member = await findGroupMember(message.groupId, req.userId as string);
+    if (!member) return null;
+    return message;
+  },
+  authorize: () => true,
+  notFoundMessage: "Message not found or you are not a member of this group",
 });
 
 export const requireSelf = (paramName: string) => {

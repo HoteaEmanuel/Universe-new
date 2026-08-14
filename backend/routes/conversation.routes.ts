@@ -11,6 +11,7 @@ import {
   editMessageController,
   deleteMessageController,
   getConversationsController,
+  reactToMessageController,
 } from "../controllers/conversation.controller.js";
 import { imageUpload } from "../lib/imageUpload.js";
 import { rateLimiter } from "../middleware/rateLimiter.js";
@@ -18,6 +19,7 @@ import { validate } from "../middleware/validate.js";
 import {
   requireConversationParticipant,
   requireConversationMessageOwner,
+  requireConversationMessageParticipant,
 } from "../middleware/authorization.js";
 import {
   startConversationSchema,
@@ -25,6 +27,7 @@ import {
   editMessageSchema,
   messagesQuerySchema,
   mediaQuerySchema,
+  reactToMessageSchema,
 } from "../schemas/conversation.schema.js";
 const router = express.Router();
 router.get("/", getConversationsController);
@@ -61,6 +64,12 @@ router.patch(
   requireConversationMessageOwner,
   validate({ body: editMessageSchema }),
   editMessageController,
+);
+router.post(
+  "/react-message/:id",
+  requireConversationMessageParticipant,
+  validate({ body: reactToMessageSchema }),
+  reactToMessageController,
 );
 router.use(rateLimiter);
 router.post(

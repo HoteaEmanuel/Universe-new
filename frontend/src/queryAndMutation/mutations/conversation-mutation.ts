@@ -8,6 +8,7 @@ import type {
 } from "../../features/chat/types";
 import {
   appendOptimisticMessage,
+  setReactionInPages,
   updateMessageInPages,
 } from "../../features/chat/utils/messagePageCache";
 
@@ -92,6 +93,36 @@ export const useDeleteMessageMutation = (conversationId?: string) => {
       return { previous };
     },
     onError: (_error, _messageId, context) => {
+      if (conversationId && context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous);
+      }
+    },
+    onSettled: () => {
+      if (conversationId) queryClient.invalidateQueries({ queryKey });
+    },
+  });
+};
+
+export const useReactToMessageMutation = (conversationId?: string) => {
+  const queryClient = useQueryClient();
+  const { reactToMessage } = useConversationStore();
+  const { user } = useAuthStore() as { user: { id: string } | null };
+  const queryKey = ["conversation_messages", conversationId];
+
+  return useMutation({
+    mutationFn: ({ id, emoji }: { id: string; emoji: string }) =>
+      reactToMessage(id, emoji),
+    onMutate: async ({ id, emoji }) => {
+      if (!conversationId || !user) return;
+      await queryClient.cancelQueries({ queryKey });
+      const previous =
+        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
+      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
+        setReactionInPages(old, id, user.id, emoji),
+      );
+      return { previous };
+    },
+    onError: (_error, _vars, context) => {
       if (conversationId && context?.previous) {
         queryClient.setQueryData(queryKey, context.previous);
       }

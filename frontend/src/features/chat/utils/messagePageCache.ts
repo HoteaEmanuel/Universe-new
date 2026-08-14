@@ -28,3 +28,22 @@ export const updateMessageInPages = (
     })),
   };
 };
+
+export const setReactionInPages = (
+  data: MessagesCache | undefined,
+  messageId: string,
+  userId: string,
+  emoji: string,
+): MessagesCache | undefined =>
+  updateMessageInPages(data, messageId, (message) => {
+    const reactions = message.reactions ?? [];
+    const existing = reactions.find((r) => r.userId === userId);
+    const others = reactions.filter((r) => r.userId !== userId);
+    return {
+      ...message,
+      reactions:
+        existing?.emoji === emoji
+          ? others
+          : [...others, { id: existing?.id ?? `optimistic-${Date.now()}`, emoji, userId }],
+    };
+  });

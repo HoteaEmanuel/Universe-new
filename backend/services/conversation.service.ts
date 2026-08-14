@@ -135,6 +135,41 @@ export const editMessage = async (data: {
   io.to(getReceiverSocketId(message.receiverId)).emit("messageEdited", updated);
 };
 
+export const setMessageReaction = async (data: {
+  messageId: string;
+  userId: string;
+  emoji: string;
+}) => {
+  const { messageId, userId, emoji } = data;
+  const message = await findMessageById(messageId);
+  if (!message) throw new Error("Message not found");
+
+  const otherUserId =
+    message.senderId === userId ? message.receiverId : message.senderId;
+
+  const existing = await prisma.messageReaction.findUnique({
+    where: { messageId_userId: { messageId, userId } },
+  });
+
+  if (existing?.emoji === emoji) {
+    await prisma.messageReaction.delete({ where: { id: existing.id } });
+    io.to(getReceiverSocketId(otherUserId)).emit("reactionRemoved", {
+      messageId,
+      userId,
+      emoji,
+    });
+    return { removed: true, messageId, userId, emoji };
+  }
+
+  const reaction = await prisma.messageReaction.upsert({
+    where: { messageId_userId: { messageId, userId } },
+    update: { emoji },
+    create: { messageId, userId, emoji },
+  });
+  io.to(getReceiverSocketId(otherUserId)).emit("reactionAdded", reaction);
+  return { removed: false, reaction };
+};
+
 export const getUserConversations = async (userId: string) => {
   const conversations = await findAllConversationsByParticipant(userId);
 
