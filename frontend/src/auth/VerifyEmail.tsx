@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useVerifyEmailMutation } from "../queryAndMutation/mutations/auth-mutation";
 import { useState, type FormEvent } from "react";
-import AuthCard from "../components/AuthCard";
+import AuthCard from "./components/AuthCard";
 import ErrorBanner from "../components/ErrorBanner";
 import SubmitButton from "../components/SubmitButton";
 import {

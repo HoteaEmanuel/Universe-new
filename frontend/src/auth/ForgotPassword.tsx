@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { toast } from "sonner";
 import { MdEmail } from "react-icons/md";
-import AuthCard from "../components/AuthCard";
+import AuthCard from "./components/AuthCard";
 import FormField from "../components/FormField";
 import SubmitButton from "../components/SubmitButton";
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from "./schemas";

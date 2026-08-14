@@ -4,7 +4,7 @@ import { useAuthStore } from "../store/authStore";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { MdEmail } from "react-icons/md";
-import AuthCard from "../components/AuthCard";
+import AuthCard from "./components/AuthCard";
 import FormField from "../components/FormField";
 import ErrorBanner from "../components/ErrorBanner";
 import SubmitButton from "../components/SubmitButton";

@@ -13,7 +13,7 @@ import { useSendMessageMutation } from "../../../queryAndMutation/mutations/conv
 import { useSendMessageToGroupMutation } from "../../../queryAndMutation/mutations/group-mutation";
 import { useAuthStore } from "../../../store/authStore";
 import { getFullName } from "../../../utils/fullName";
-import ImagePickerModal from "../../../Modals/ImagePickerModal";
+import ImagePickerModal from "./ImagePickerModal";
 import type { ChatUser } from "../types";
 
 type MessageInputProps = {

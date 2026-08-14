@@ -1,5 +1,5 @@
 import React from "react";
-import ProfileCard from "../components/ProfileCard";
+import ProfileCard from "@/features/profile/ProfileCard";
 import { useState } from "react";
 import { MdDarkMode, MdLibraryAdd, MdLightMode } from "react-icons/md";
 import { BiLogOut } from "react-icons/bi";

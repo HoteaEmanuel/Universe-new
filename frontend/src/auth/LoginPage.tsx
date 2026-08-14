@@ -6,7 +6,7 @@ import { useAuthStore } from "../store/authStore";
 import { MdEmail } from "react-icons/md";
 import { FcGoogle } from "react-icons/fc";
 import { toast } from "sonner";
-import AuthCard from "../components/AuthCard";
+import AuthCard from "./components/AuthCard";
 import FormField from "../components/FormField";
 import PasswordField from "../components/PasswordField";
 import ErrorBanner from "../components/ErrorBanner";

@@ -3,20 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { Camera, GraduationCap, BookOpen, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getFullName } from "../../utils/fullName";
-import { useAuthStore } from "../../store/authStore";
+import { getFullName } from "@/utils/fullName";
+import { useAuthStore } from "@/store/authStore";
 import {
   useGetFollowersQuery,
   useGetFollowingQuery,
   useIsFollowingQuery,
-} from "../../queryAndMutation/queries/user-queries";
-import { useGetConversationByUsersIdsQuery } from "../../queryAndMutation/queries/conversation-queries";
+} from "@/queryAndMutation/queries/user-queries";
+import { useGetConversationByUsersIdsQuery } from "@/queryAndMutation/queries/conversation-queries";
 import {
   useFollowMutation,
   useUnfollowMutation,
-} from "../../queryAndMutation/mutations/user-mutation";
-import ProfileImageModal from "../../Modals/ProfileImageModal";
-import FollowListSheet from "../../Modals/FollowListSheet";
+} from "@/queryAndMutation/mutations/user-mutation";
+import ProfileImageModal from "@/Modals/ProfileImageModal";
+import FollowListSheet from "./FollowListSheet";
 import type { ProfileUser } from "./types";
 
 type ProfileHeaderProps = {

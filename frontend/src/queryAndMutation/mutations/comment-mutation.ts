@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
-import { useCommentsStore } from "../../store/commentStore";
-import { useAuthStore } from "../../store/authStore";
+import { useCommentsStore } from "@/store/commentStore";
+import { useAuthStore } from "@/store/authStore";
 import type { PostComment, PostCommentsPage } from "../types";
 import {
   prependOptimisticComment,
   removeCommentFromPages,
-} from "../../utils/commentPageCache";
+} from "@/features/comments/utils/commentPageCache";
 
 type CommentsCache = InfiniteData<PostCommentsPage>;
 

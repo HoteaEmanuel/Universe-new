@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "../store/authStore";
 import { useNavigate, useParams } from "react-router-dom";
-import AuthCard from "../components/AuthCard";
+import AuthCard from "./components/AuthCard";
 import PasswordField from "../components/PasswordField";
 import SubmitButton from "../components/SubmitButton";
 import { resetPasswordSchema, type ResetPasswordFormValues } from "./schemas";

@@ -1,5 +1,5 @@
-import PostCard from "../components/PostCard";
-import PostSkeleton from "../skeletons/PostSkeleton";
+import PostCard from "@/features/posts/components/PostCard";
+import PostSkeleton from "@/features/posts/components/PostSkeleton";
 import { useGetPostsInfiniteQuery } from "../queryAndMutation/queries/post-queries";
 import { useAuthStore } from "../store/authStore";
 import { useState, useRef } from "react";
