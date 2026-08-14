@@ -12,7 +12,7 @@ const RootLayout = () => {
         <NotificationSocketListener />
         <TopBar />
         <SideSection />
-        <section className="flex flex-col flex-1 md:w-2/3 w-screen h-screen overflow-y-auto">
+        <section className="flex flex-col flex-1 md:w-2/3 w-screen h-screen overflow-y-auto pb-16 md:pb-0">
           <Outlet />
         </section>
 

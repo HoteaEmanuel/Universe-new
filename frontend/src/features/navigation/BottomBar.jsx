@@ -1,30 +1,35 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { BottomTabLinks } from "./BottomTabLinks";
-import { useLocation } from "react-router-dom";
+
 const BottomBar = () => {
-  const path = useLocation();
+  const { pathname } = useLocation();
+
   return (
-    <div className="absolute flex items-center justify-center w-full h-20 shadow md:hidden bottom-0 theme ">
-      <ul className="flex w-full justify-around">
-        {BottomTabLinks.map((item) => {
-          const isActive = path.pathname === item.link;
-          return (
-            <li key={item.link}>
-              <NavLink to={item.link}>
-                <div
-                  className={`flex flex-col items-center gap-1 p-4 violet mobile-hover ${
-                    isActive ? "active" : undefined
-                  }`}
-                >
-                  <item.element />
-                  {item.text}
-                </div>
-              </NavLink>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+    <nav className="theme fixed inset-x-0 bottom-0 z-20 flex h-16 items-center justify-around gap-1 border-t border-gray-200 px-2 shadow md:hidden dark:border-gray-800">
+      {BottomTabLinks.map((item) => {
+        const isActive = pathname === item.link;
+        const Icon = item.element;
+
+        return (
+          <NavLink
+            key={item.link}
+            to={item.link}
+            className={`flex h-11 shrink-0 items-center justify-center overflow-hidden rounded-full transition-all duration-300 ease-out ${
+              isActive
+                ? "active flex-[1.6] gap-1.5 px-3"
+                : "flex-1 gap-0 px-0 text-gray-400 hover:text-violet-500 dark:text-gray-600"
+            }`}
+          >
+            <Icon className="size-5 shrink-0" />
+            {isActive && (
+              <span className="truncate text-xs font-semibold">
+                {item.text}
+              </span>
+            )}
+          </NavLink>
+        );
+      })}
+    </nav>
   );
 };
 
