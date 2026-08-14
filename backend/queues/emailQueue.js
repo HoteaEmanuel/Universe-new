@@ -1,21 +1,27 @@
-import { Worker, Queue } from "bullmq";
+// import { Worker, Queue } from "bullmq";
 // import {
 //   sendEmail,
 //   sendPasswordResetEmail,
 //   sendWelcomeEmail,
 // } from "../mail-service/sendMail.js";
-import { redisConnection } from "../lib/redisConnections.js";
-export const verifyEmailQueue = new Queue("verify-emails", {
-  connection: redisConnection,
-});
+// Redis disabled for dev (avoid burning Upstash quota) — see lib/redisConnections.js
+// import { redisConnection } from "../lib/redisConnections.js";
+// export const verifyEmailQueue = new Queue("verify-emails", {
+//   connection: redisConnection,
+// });
 
-export const welcomeEmailQueue = new Queue("welcome-emails", {
-  connection: redisConnection,
-});
+// export const welcomeEmailQueue = new Queue("welcome-emails", {
+//   connection: redisConnection,
+// });
 
-export const resetPasswordEmailQueue = new Queue("reset-password", {
-  connection: redisConnection,
-});
+// export const resetPasswordEmailQueue = new Queue("reset-password", {
+//   connection: redisConnection,
+// });
+
+const noopQueue = { add: async (_name, _data) => {} };
+export const verifyEmailQueue = noopQueue;
+export const welcomeEmailQueue = noopQueue;
+export const resetPasswordEmailQueue = noopQueue;
 
 // const welcomeEmailWorker = new Worker(
 //   "welcome-emails",

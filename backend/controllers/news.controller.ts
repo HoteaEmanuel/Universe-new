@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import axios from "axios";
-import { redis } from "../lib/redis.js";
+// Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
+// import { redis } from "../lib/redis.js";
 
 interface GNewsArticle {
   title: string;
@@ -12,11 +13,12 @@ export const getNews = async (req: Request, res: Response) => {
   const category = req.params.category as string;
   try {
     let categoryNews = null;
-    try {
-      categoryNews = await redis.get(`news - ${category}`);
-    } catch (cacheError) {
-      console.warn("Redis cache read failed (non-fatal):", cacheError);
-    }
+    // Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
+    // try {
+    //   categoryNews = await redis.get(`news - ${category}`);
+    // } catch (cacheError) {
+    //   console.warn("Redis cache read failed (non-fatal):", cacheError);
+    // }
     if (categoryNews) return res.status(200).json(categoryNews);
     const response = await axios.get("https://gnews.io/api/v4/top-headlines", {
       params: {
@@ -46,11 +48,12 @@ export const getNews = async (req: Request, res: Response) => {
       },
     );
 
-    try {
-      await redis.setex(`news - ${category}`, 600, JSON.stringify(filteredArticles));
-    } catch (cacheError) {
-      console.warn("Redis cache write failed (non-fatal):", cacheError);
-    }
+    // Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
+    // try {
+    //   await redis.setex(`news - ${category}`, 600, JSON.stringify(filteredArticles));
+    // } catch (cacheError) {
+    //   console.warn("Redis cache write failed (non-fatal):", cacheError);
+    // }
     return res.status(200).json(filteredArticles);
   } catch (error) {
     return res.status(400).json(error);
@@ -61,11 +64,12 @@ export const getTopNews = async (req: Request, res: Response) => {
   const limit = req.query.limit || 100;
   try {
     let topNews = null;
-    try {
-      topNews = await redis.get("top-news");
-    } catch (cacheError) {
-      console.warn("Redis cache read failed (non-fatal):", cacheError);
-    }
+    // Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
+    // try {
+    //   topNews = await redis.get("top-news");
+    // } catch (cacheError) {
+    //   console.warn("Redis cache read failed (non-fatal):", cacheError);
+    // }
     if (topNews) {
       console.log("EXISTS IN THE CACHE");
       return res.status(200).json(topNews);
@@ -80,11 +84,12 @@ export const getTopNews = async (req: Request, res: Response) => {
       },
     });
     const articles = response.data.articles;
-    try {
-      await redis.setex("top-news", 600, articles);
-    } catch (cacheError) {
-      console.warn("Redis cache write failed (non-fatal):", cacheError);
-    }
+    // Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
+    // try {
+    //   await redis.setex("top-news", 600, articles);
+    // } catch (cacheError) {
+    //   console.warn("Redis cache write failed (non-fatal):", cacheError);
+    // }
     return res.status(200).json(articles);
   } catch (error) {
     return res

@@ -2,7 +2,8 @@ import type { Request, Response } from "express";
 import type {} from "multer";
 import { uploadImageAndCleanup } from "../lib/cloudinary.js";
 import { prisma } from "../database/prisma.js";
-import { redis } from "../lib/redis.js";
+// Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
+// import { redis } from "../lib/redis.js";
 import { findUserById, updateUser } from "../repository/user.repository.js";
 import { follow, savePost, unfollow } from "../services/user.service.js";
 
@@ -148,11 +149,12 @@ export const getFollowers = async (req: Request, res: Response) => {
       include: { follower: { select: PROFILE_CARD_SELECT } },
     });
     const data = followers.map((f) => f.follower);
-    try {
-      await redis.set("followers-" + userId, JSON.stringify(data));
-    } catch (cacheError) {
-      console.warn("Redis cache write failed (non-fatal):", cacheError);
-    }
+    // Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
+    // try {
+    //   await redis.set("followers-" + userId, JSON.stringify(data));
+    // } catch (cacheError) {
+    //   console.warn("Redis cache write failed (non-fatal):", cacheError);
+    // }
     return res.status(200).json({
       message: "Fetched the followers",
       followers: data,
@@ -168,11 +170,12 @@ export const getFollowing = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error("User not found");
     let followingFromCache: string | null = null;
-    try {
-      followingFromCache = await redis.get("following-" + userId);
-    } catch (cacheError) {
-      console.warn("Redis cache read failed (non-fatal):", cacheError);
-    }
+    // Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
+    // try {
+    //   followingFromCache = await redis.get("following-" + userId);
+    // } catch (cacheError) {
+    //   console.warn("Redis cache read failed (non-fatal):", cacheError);
+    // }
     if (followingFromCache) {
       return res.status(200).json({
         message: "Fetched the following",
@@ -193,11 +196,12 @@ export const getFollowing = async (req: Request, res: Response) => {
       },
     });
     const data = following.map((f) => f.following);
-    try {
-      await redis.set("following-" + userId, JSON.stringify(data));
-    } catch (cacheError) {
-      console.warn("Redis cache write failed (non-fatal):", cacheError);
-    }
+    // Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
+    // try {
+    //   await redis.set("following-" + userId, JSON.stringify(data));
+    // } catch (cacheError) {
+    //   console.warn("Redis cache write failed (non-fatal):", cacheError);
+    // }
     return res.status(200).json({
       message: "Fetched the following",
       following: data,
