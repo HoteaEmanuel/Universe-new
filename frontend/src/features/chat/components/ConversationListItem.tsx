@@ -1,6 +1,7 @@
-import { FaUserCircle } from "react-icons/fa";
-import { Users } from "lucide-react";
+import { Camera } from "lucide-react";
 import { getFullName } from "../../../utils/fullName";
+import { getAvatarColorClass, getInitials } from "../utils/avatarColor";
+import { formatChatListTime } from "../utils/chatListTime";
 import type { ConversationListEntry } from "../types";
 
 type ConversationListItemProps = {
@@ -30,9 +31,8 @@ const ConversationListItem = ({
       : isGroup && lastSender && typeof lastSender !== "string"
         ? `${getFullName(lastSender)}: `
         : "";
-  const preview = lastMessage
-    ? `${prefix}${lastMessage.content || "Image"}`
-    : "No messages yet";
+  const isImageOnly = !lastMessage?.content && !!lastMessage?.imageUrls?.length;
+  const time = formatChatListTime(entry.updatedAt);
 
   return (
     <li>
@@ -48,12 +48,12 @@ const ConversationListItem = ({
               alt={title}
               className="size-14 rounded-full object-cover"
             />
-          ) : isGroup ? (
-            <div className="flex size-14 items-center justify-center rounded-full bg-muted">
-              <Users className="size-6 text-muted-foreground" />
-            </div>
           ) : (
-            <FaUserCircle className="size-14 text-muted-foreground" />
+            <div
+              className={`flex size-14 items-center justify-center rounded-full font-medium text-white ${getAvatarColorClass(entry.id)}`}
+            >
+              {getInitials(title)}
+            </div>
           )}
           {!isGroup && isOnline && (
             <span className="absolute right-0.5 bottom-0.5 size-3.5 rounded-full bg-green-500 ring-2 ring-background" />
@@ -61,8 +61,29 @@ const ConversationListItem = ({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <p className="truncate font-medium">{title}</p>
-          <p className="truncate text-sm text-muted-foreground">{preview}</p>
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="truncate font-medium">{title}</p>
+            {lastMessage && (
+              <span className="shrink-0 text-xs text-muted-foreground">{time}</span>
+            )}
+          </div>
+          <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+            {lastMessage ? (
+              <>
+                <span className="truncate">
+                  {prefix}
+                  {isImageOnly ? "" : lastMessage.content}
+                </span>
+                {isImageOnly && (
+                  <span className="inline-flex shrink-0 items-center gap-1">
+                    <Camera className="size-3.5" /> Photo
+                  </span>
+                )}
+              </>
+            ) : (
+              "No messages yet"
+            )}
+          </p>
         </div>
       </button>
     </li>

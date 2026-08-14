@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Users } from "lucide-react";
+import { ArrowLeft, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useGetActiveGroupMembers,
@@ -23,6 +24,7 @@ import ProfileImageModal from "../Modals/ProfileImageModal";
 import type { ChatUser } from "../features/chat/types";
 
 const Group = () => {
+  const navigate = useNavigate();
   const { id } = useParams();
   const [groupImageOpen, setGroupImageOpen] = useState(false);
   const { user, socket } = useAuthStore() as {
@@ -76,6 +78,15 @@ const Group = () => {
     <section className="flex h-[calc(100dvh-10rem)] flex-col overflow-hidden rounded-2xl border border-border md:h-[calc(100dvh-4rem)]">
       {isPendingGroup ? (
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Back to messages"
+            className="shrink-0"
+            onClick={() => navigate("/chat")}
+          >
+            <ArrowLeft />
+          </Button>
           <Skeleton className="size-11 shrink-0 rounded-full" />
           <div className="flex-1 space-y-1.5">
             <Skeleton className="h-4 w-32" />
@@ -85,6 +96,15 @@ const Group = () => {
       ) : (
         group && (
           <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Back to messages"
+              className="shrink-0"
+              onClick={() => navigate("/chat")}
+            >
+              <ArrowLeft />
+            </Button>
             <button
               type="button"
               onClick={() => setGroupImageOpen(true)}

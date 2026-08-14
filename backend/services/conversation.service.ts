@@ -144,6 +144,7 @@ export const getUserConversations = async (userId: string) => {
   return conversations.map((convo) => ({
     id: convo.id,
     lastMessage: convo.lastMessage,
+    updatedAt: convo.updatedAt,
     user: convo.participants.find((p) => p.id !== userId),
   }));
 };

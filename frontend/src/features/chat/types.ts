@@ -25,6 +25,7 @@ export type ChatMessage = {
 
 export type LastMessagePreview = {
   content?: string;
+  imageUrls?: string[];
   senderId?: MessageSender;
 };
 
@@ -32,6 +33,7 @@ export type DirectConversation = {
   id: string;
   user?: ChatUser;
   lastMessage?: LastMessagePreview;
+  updatedAt: string;
   name?: undefined;
 };
 
@@ -44,6 +46,7 @@ export type GroupConversation = {
   coverImageUrl?: string;
   visibility?: GroupVisibility;
   createdAt: string;
+  updatedAt: string;
   lastMessage?: LastMessagePreview;
   user?: undefined;
 };

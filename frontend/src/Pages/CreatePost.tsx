@@ -78,6 +78,7 @@ const CreatePost = () => {
           <FormField
             id="post-title"
             label="Title"
+            placeholder="Give your post a title"
             maxLength={TITLE_MAX_LENGTH}
             currentLength={watchedValues.title?.length ?? 0}
             error={errors.title?.message}

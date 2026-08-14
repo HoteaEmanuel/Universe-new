@@ -121,6 +121,7 @@ const LocationAutocompleteField = ({
             id={id}
             type="text"
             autoComplete="off"
+            placeholder="e.g. New York, London"
             maxLength={maxLength}
             aria-invalid={!!error || isMaxed}
             aria-describedby={errorId}

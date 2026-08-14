@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { FaUserCircle } from "react-icons/fa";
+import { Button } from "@/components/ui/button";
 import { getFullName } from "../../../utils/fullName";
 import { urlPathName } from "../../../utils/urlPathFromName";
 import type { ChatUser } from "../types";
@@ -17,6 +19,16 @@ const ChatUserHeader = ({ user, isOnline, actions }: ChatUserHeaderProps) => {
 
   return (
     <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Back to messages"
+        className="shrink-0"
+        onClick={() => navigate("/chat")}
+      >
+        <ArrowLeft />
+      </Button>
+
       <button
         type="button"
         onClick={goToProfile}
