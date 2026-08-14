@@ -24,7 +24,7 @@ export const getNews = async (req: Request, res: Response) => {
       params: {
         q: category,
         topic: category,
-        lang: "ro",
+        lang: "en",
         max: 100,
         apikey: process.env.GNEWS_API_KEY,
       },

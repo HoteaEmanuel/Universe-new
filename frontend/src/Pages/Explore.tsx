@@ -1,4 +1,10 @@
-import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import { Search, X, Loader2, Compass } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,21 +36,14 @@ import {
   useSearchGroupsInfinite,
 } from "../queryAndMutation/queries/search-queries";
 import type { SearchPage } from "../queryAndMutation/types";
-
-const NEWS_TOPICS = [
-  "stiinta",
-  "tehnologie",
-  "sport",
-  "politica",
-  "afaceri",
-  "entertainment",
-  "educatie",
-];
+import {
+  useExploreFilters,
+  NEWS_TOPICS,
+  type TabKey,
+} from "../features/search/hooks/useExploreFilters";
 
 const SEARCH_DEBOUNCE_MS = 350;
 const OVERVIEW_PREVIEW_SIZE = 5;
-
-type TabKey = "all" | "people" | "posts" | "groups";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "all", label: "All" },
@@ -114,17 +113,25 @@ const Explore = () => {
     document.title = "Explore";
   }, []);
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const { filters, setFilters } = useExploreFilters();
+
+  const [searchTerm, setSearchTerm] = useState(filters.q);
   const debouncedSearch = useDebounce(searchTerm, SEARCH_DEBOUNCE_MS);
   const trimmedQuery = debouncedSearch.trim();
   const isSearching = trimmedQuery.length > 2;
 
-  const [activeTab, setActiveTab] = useState<TabKey>("all");
+  const activeTab = filters.tab;
+  const isFirstQueryChange = useRef(true);
   useEffect(() => {
-    setActiveTab("all");
-  }, [trimmedQuery]);
+    if (isFirstQueryChange.current) {
+      isFirstQueryChange.current = false;
+      setFilters({ q: trimmedQuery });
+      return;
+    }
+    setFilters({ q: trimmedQuery, tab: "all" });
+  }, [trimmedQuery, setFilters]);
 
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const selectedTopic = filters.topic;
 
   const { data: overview, isPending: isOverviewPending } =
     useSearchOverviewQuery(trimmedQuery, isSearching);
@@ -147,8 +154,7 @@ const Explore = () => {
     useGetNewsByCategoryQuery(selectedTopic ?? "");
 
   const newsToShow = (selectedTopic ? topicNews : topNews) as
-    | NewsArticle[]
-    | undefined;
+    NewsArticle[] | undefined;
   const isNewsPending = selectedTopic ? isTopicNewsPending : isTopNewsPending;
 
   const users = usersQuery.data?.pages.flatMap((page) => page.items) ?? [];
@@ -202,7 +208,9 @@ const Explore = () => {
       {isSearching ? (
         <Tabs
           value={activeTab}
-          onValueChange={(value: unknown) => setActiveTab(value as TabKey)}
+          onValueChange={(value: unknown) =>
+            setFilters({ tab: value as TabKey })
+          }
           className="gap-4"
         >
           <TabsList>
@@ -242,71 +250,80 @@ const Explore = () => {
                 />
               )}
 
-              {!isOverviewPending && overview && overview.users.items.length > 0 && (
-                <section className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-semibold">People</h2>
-                    {(overview.users.hasMore ||
-                      overview.users.items.length === OVERVIEW_PREVIEW_SIZE) && (
-                      <button
-                        onClick={() => setActiveTab("people")}
-                        className="text-sm text-muted-foreground hover:text-foreground"
-                      >
-                        See all
-                      </button>
-                    )}
-                  </div>
-                  <ul className="flex flex-col gap-1">
-                    {overview.users.items.map((user) => (
-                      <SearchUserRow key={user.id} user={user} />
-                    ))}
-                  </ul>
-                </section>
-              )}
+              {!isOverviewPending &&
+                overview &&
+                overview.users.items.length > 0 && (
+                  <section className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <h2 className="font-semibold">People</h2>
+                      {(overview.users.hasMore ||
+                        overview.users.items.length ===
+                          OVERVIEW_PREVIEW_SIZE) && (
+                        <button
+                          onClick={() => setFilters({ tab: "people" })}
+                          className="text-sm text-muted-foreground hover:text-foreground"
+                        >
+                          See all
+                        </button>
+                      )}
+                    </div>
+                    <ul className="flex flex-col gap-1">
+                      {overview.users.items.map((user) => (
+                        <SearchUserRow key={user.id} user={user} />
+                      ))}
+                    </ul>
+                  </section>
+                )}
 
-              {!isOverviewPending && overview && overview.groups.items.length > 0 && (
-                <section className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-semibold">Groups</h2>
-                    {(overview.groups.hasMore ||
-                      overview.groups.items.length === OVERVIEW_PREVIEW_SIZE) && (
-                      <button
-                        onClick={() => setActiveTab("groups")}
-                        className="text-sm text-muted-foreground hover:text-foreground"
-                      >
-                        See all
-                      </button>
-                    )}
-                  </div>
-                  <ul className="flex flex-col gap-1">
-                    {overview.groups.items.map((group) => (
-                      <SearchGroupRow key={group.id} group={group} />
-                    ))}
-                  </ul>
-                </section>
-              )}
+              {!isOverviewPending &&
+                overview &&
+                overview.groups.items.length > 0 && (
+                  <section className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <h2 className="font-semibold">Groups</h2>
+                      {(overview.groups.hasMore ||
+                        overview.groups.items.length ===
+                          OVERVIEW_PREVIEW_SIZE) && (
+                        <button
+                          onClick={() => setFilters({ tab: "groups" })}
+                          className="text-sm text-muted-foreground hover:text-foreground"
+                        >
+                          See all
+                        </button>
+                      )}
+                    </div>
+                    <ul className="flex flex-col gap-1">
+                      {overview.groups.items.map((group) => (
+                        <SearchGroupRow key={group.id} group={group} />
+                      ))}
+                    </ul>
+                  </section>
+                )}
 
-              {!isOverviewPending && overview && overview.posts.items.length > 0 && (
-                <section className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-semibold">Posts</h2>
-                    {(overview.posts.hasMore ||
-                      overview.posts.items.length === OVERVIEW_PREVIEW_SIZE) && (
-                      <button
-                        onClick={() => setActiveTab("posts")}
-                        className="text-sm text-muted-foreground hover:text-foreground"
-                      >
-                        See all
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    {overview.posts.items.map((post) => (
-                      <PostCard key={post.id} post={post} />
-                    ))}
-                  </div>
-                </section>
-              )}
+              {!isOverviewPending &&
+                overview &&
+                overview.posts.items.length > 0 && (
+                  <section className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <h2 className="font-semibold">Posts</h2>
+                      {(overview.posts.hasMore ||
+                        overview.posts.items.length ===
+                          OVERVIEW_PREVIEW_SIZE) && (
+                        <button
+                          onClick={() => setFilters({ tab: "posts" })}
+                          className="text-sm text-muted-foreground hover:text-foreground"
+                        >
+                          See all
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-4">
+                      {overview.posts.items.map((post) => (
+                        <PostCard key={post.id} post={post} />
+                      ))}
+                    </div>
+                  </section>
+                )}
             </div>
           </TabsContent>
 
@@ -410,9 +427,9 @@ const Explore = () => {
                 <li key={topic}>
                   <button
                     onClick={() =>
-                      setSelectedTopic((current) =>
-                        current === topic ? null : topic,
-                      )
+                      setFilters({
+                        topic: selectedTopic === topic ? null : topic,
+                      })
                     }
                     className={cn(
                       "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
@@ -458,7 +475,9 @@ const Explore = () => {
                     />
                   )}
                   <div className="flex min-w-0 flex-col gap-1">
-                    <h3 className="line-clamp-2 font-medium">{article.title}</h3>
+                    <h3 className="line-clamp-2 font-medium">
+                      {article.title}
+                    </h3>
                     <p className="text-xs text-muted-foreground">
                       {formatToLocalDate(article.publishedAt)}
                     </p>
