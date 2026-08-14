@@ -91,7 +91,7 @@ export const getPostsController = async (req: Request, res: Response) => {
     const feed = req.params.feed as string;
     const userId = req.userId as string;
     const cursor = req.query.cursor as string | undefined;
-    const limit = req.query.limit ? Number(req.query.limit) : undefined;
+    const limit = req.query.limit as unknown as number;
     const page = await getPosts({ feed, userId, cursor, limit });
     return res
       .status(200)

@@ -17,6 +17,7 @@ import userRouter from "./routes/user.routes.js";
 import { app, server } from "./lib/socket.js";
 import { rateLimiter } from "./middleware/rateLimiter.js";
 import { verifyToken } from "./middleware/verifyToken.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 dotenv.config();
 import passport from "passport";
 import "./config/passport.js";
@@ -43,6 +44,7 @@ app.use("/api/groups", groupRouter);
 app.use("/api/search", searchRouter);
 app.use("/api", aiRouter);
 app.use("/api", notificationRouter);
+app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`SERVER RUNNING ON PORT ${PORT}`);

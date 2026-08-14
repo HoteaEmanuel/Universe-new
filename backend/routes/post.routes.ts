@@ -20,10 +20,22 @@ import {
   createPostController,
   getPostsByTagController,
 } from "../controllers/post.controller.js";
-import multer from "multer";
-const upload = multer({ dest: "uploads/" });
+import { imageUpload } from "../lib/imageUpload.js";
+import { validate } from "../middleware/validate.js";
+import {
+  createPostSchema,
+  updatePostSchema,
+  postIdSchema,
+  deletePostsByNameSchema,
+  feedQuerySchema,
+} from "../schemas/post.schema.js";
+
 router.get("/post/:id", getPost);
-router.get("/posts/:feed", getPostsController);
+router.get(
+  "/posts/:feed",
+  validate({ query: feedQuerySchema }),
+  getPostsController,
+);
 router.get("/post-user/:id", getPostUser);
 router.get("/user-posts/:id", getUserPostsController);
 router.get("/saved-posts/:id", getSavedPostsController);
@@ -32,15 +44,37 @@ router.get("/related-posts/:tag", getRelatedPosts);
 router.get("/likes/:id", getLikes);
 router.get("/users-who-liked/:id", getUsersWhoLikedPost);
 
-router.post("/like-post", likePostController);
-router.post("/unlike-post", unlikePostController);
+router.post(
+  "/like-post",
+  validate({ body: postIdSchema }),
+  likePostController,
+);
+router.post(
+  "/unlike-post",
+  validate({ body: postIdSchema }),
+  unlikePostController,
+);
 router.get("/user-liked/:id", userHasLiked);
-router.post("/posts", upload.array("images"), createPostController);
-router.patch("/posts/:id", upload.array("images"), updatePostController);
+router.post(
+  "/posts",
+  imageUpload.array("images"),
+  validate({ body: createPostSchema }),
+  createPostController,
+);
+router.patch(
+  "/posts/:id",
+  imageUpload.array("images"),
+  validate({ body: updatePostSchema }),
+  updatePostController,
+);
 router.delete("/posts/:id", deletePostController);
 router.get("/posts-by-name/:name", getSearchedPostsController);
 router.get("/posts-by-tag/:tag", getPostsByTagController);
 
-router.post("/delete-posts", deletePostsByName);
+router.post(
+  "/delete-posts",
+  validate({ body: deletePostsByNameSchema }),
+  deletePostsByName,
+);
 
 export default router;

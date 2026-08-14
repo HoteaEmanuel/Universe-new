@@ -30,7 +30,13 @@ export const validate = (schemas: ValidateSchemas) => {
         );
         return;
       }
-      req[key] = result.data;
+
+      Object.defineProperty(req, key, {
+        value: result.data,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
     });
 
     if (errors.length > 0) {
