@@ -90,10 +90,12 @@ export const getPostsController = async (req: Request, res: Response) => {
   try {
     const feed = req.params.feed as string;
     const userId = req.userId as string;
-    const posts = await getPosts({ feed, userId });
+    const cursor = req.query.cursor as string | undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : undefined;
+    const page = await getPosts({ feed, userId, cursor, limit });
     return res
       .status(200)
-      .json({ posts, message: "Fetched the posts succesfully" });
+      .json({ ...page, message: "Fetched the posts succesfully" });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

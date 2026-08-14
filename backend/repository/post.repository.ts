@@ -1,11 +1,69 @@
 import { prisma } from "../database/prisma.js";
+import type { Prisma } from "../generated/prisma/client.js";
 
 export const findPostById = async (id: string) => {
   return prisma.post.findUnique({ where: { id } });
 };
 
-export const findAllPosts = async () => {
-  return prisma.post.findMany({ orderBy: { createdAt: "desc" } });
+const FEED_ORDER_BY: Prisma.PostOrderByWithRelationInput[] = [
+  { createdAt: "desc" },
+  { id: "desc" },
+];
+
+interface FeedPage<T> {
+  posts: T[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+const toFeedPage = <T extends { id: string }>(
+  posts: T[],
+  limit: number,
+): FeedPage<T> => {
+  const hasMore = posts.length > limit;
+  const page = hasMore ? posts.slice(0, limit) : posts;
+  return {
+    posts: page,
+    nextCursor: hasMore ? page[page.length - 1].id : null,
+    hasMore,
+  };
+};
+
+export const findAllPosts = async (cursor?: string, limit = 10) => {
+  const posts = await prisma.post.findMany({
+    take: limit + 1,
+    orderBy: FEED_ORDER_BY,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+  return toFeedPage(posts, limit);
+};
+
+export const findFollowingPosts = async (
+  followingIds: string[],
+  cursor?: string,
+  limit = 10,
+) => {
+  const posts = await prisma.post.findMany({
+    where: { userId: { in: followingIds } },
+    take: limit + 1,
+    orderBy: FEED_ORDER_BY,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+  return toFeedPage(posts, limit);
+};
+
+export const findUniversityPosts = async (
+  university: string | null,
+  cursor?: string,
+  limit = 10,
+) => {
+  const posts = await prisma.post.findMany({
+    where: { user: { university } },
+    take: limit + 1,
+    orderBy: FEED_ORDER_BY,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+  return toFeedPage(posts, limit);
 };
 
 export const findUserPosts = async (userId: string) => {

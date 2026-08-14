@@ -4,6 +4,8 @@ import {
   findUserSavedPosts,
   createPost,
   findAllPosts,
+  findFollowingPosts,
+  findUniversityPosts,
   findPostsByText,
   findPostsByTag,
 } from "../repository/post.repository.js";
@@ -44,35 +46,34 @@ export const getSavedPosts = async (id: string) => {
 interface GetPostsInput {
   userId: string;
   feed: string;
+  cursor?: string;
+  limit?: number;
 }
 
 export const getPosts = async (data: GetPostsInput) => {
-  const { userId, feed } = data;
+  const { userId, feed, cursor, limit = 10 } = data;
   const user = await findUserById(userId);
   if (!user) throw new Error("User not found");
 
   const savedPosts = await findUserSavedPosts(userId);
   const savedPostIds = new Set(savedPosts.map((sp) => sp.postId));
 
-  let posts;
+  let page;
   if (feed === "Global" || feed === "") {
-    posts = await findAllPosts();
+    page = await findAllPosts(cursor, limit);
   } else if (feed === "Following") {
     const following = await prisma.follow.findMany({ where: { followerId: userId } });
     const followingIds = following.map((f) => f.followingId);
-    posts = await prisma.post.findMany({
-      where: { userId: { in: followingIds } },
-      orderBy: { createdAt: "desc" },
-    });
+    page = await findFollowingPosts(followingIds, cursor, limit);
   } else {
     // University feed
-    posts = await prisma.post.findMany({
-      where: { user: { university: user.university } },
-      orderBy: { createdAt: "desc" },
-    });
+    page = await findUniversityPosts(user.university, cursor, limit);
   }
 
-  return posts.map((post) => withIsSaved(post, savedPostIds));
+  return {
+    ...page,
+    posts: page.posts.map((post) => withIsSaved(post, savedPostIds)),
+  };
 };
 
 interface CreatePostInput {

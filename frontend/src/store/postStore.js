@@ -144,11 +144,17 @@ export const usePostStore = create((set) => ({
       set({ isLoading: false });
     }
   },
-  getPosts: async (feed) => {
+  getPosts: async (feed, cursor) => {
     set({ isLoading: true });
     try {
-      const response = await axios.get(`${API_URL}/posts/${feed}`);
-      return response.data.posts;
+      const response = await axios.get(`${API_URL}/posts/${feed}`, {
+        params: cursor ? { cursor } : undefined,
+      });
+      return {
+        posts: response.data.posts,
+        nextCursor: response.data.nextCursor,
+        hasMore: response.data.hasMore,
+      };
     } catch (error) {
       set({ error: error });
     } finally {

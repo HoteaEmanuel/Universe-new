@@ -11,6 +11,12 @@ export type Post = {
   createdAt: string;
 };
 
+export type PostsPage = {
+  posts: Post[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type PostAuthor = {
   id: string;
   firstName?: string;

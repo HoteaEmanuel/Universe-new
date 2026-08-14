@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { usePostStore } from "../../store/postStore";
-import type { Post, PostAuthor } from "../types";
+import type { Post, PostAuthor, PostsPage } from "../types";
 
 export const useGetPostQuery = (id?: string) => {
   const { getPost } = usePostStore();
@@ -43,11 +43,15 @@ export const useGetUserPostsQuery = (id?: string) => {
   });
 };
 
-export const useGetPostsQuery = (feedSelector: string) => {
+export const useGetPostsInfiniteQuery = (feedSelector: string) => {
   const { getPosts } = usePostStore();
-  return useQuery({
-    queryFn: () => getPosts(feedSelector) as Promise<Post[]>,
+  return useInfiniteQuery<PostsPage>({
     queryKey: ["posts", feedSelector],
+    queryFn: ({ pageParam }) =>
+      getPosts(feedSelector, pageParam as string | undefined),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
   });
 };
 
