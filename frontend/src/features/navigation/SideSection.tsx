@@ -50,6 +50,7 @@ const SideSection = () => {
         link: "/admin",
         text: "Admin",
         element: ShieldCheck,
+        hoverAnimation: "group-hover/menu-button:animate-icon-shield-pulse",
       });
     }
   }, [user.role]);
@@ -98,7 +99,7 @@ const SideSection = () => {
                     >
                       {item.text !== "Profile" ? (
                         <div className="relative flex shrink-0">
-                          {Icon && <Icon />}
+                          {Icon && <Icon className={item.hoverAnimation} />}
                           {notificationsOn &&
                             item.newNotification &&
                             (notifications?.length ?? 0) > 0 && (

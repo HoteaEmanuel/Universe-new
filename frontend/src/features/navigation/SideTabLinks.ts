@@ -14,6 +14,7 @@ export type SideLink = {
   element?: LucideIcon;
   notification?: boolean;
   newNotification?: boolean;
+  hoverAnimation?: string;
 };
 
 export const SideLinks: SideLink[] = [
@@ -21,13 +22,20 @@ export const SideLinks: SideLink[] = [
     link: "/home",
     text: "Home",
     element: Home,
+    hoverAnimation: "group-hover/menu-button:animate-icon-hop",
   },
-  { link: "/explore", text: "Explore", element: Compass },
+  {
+    link: "/explore",
+    text: "Explore",
+    element: Compass,
+    hoverAnimation: "group-hover/menu-button:animate-icon-spin-once",
+  },
   {
     link: "/chat",
     text: "Chat",
     notification: true,
     element: MessageCircle,
+    hoverAnimation: "group-hover/menu-button:animate-icon-wiggle",
   },
   {
     link: "/profile",
@@ -37,16 +45,19 @@ export const SideLinks: SideLink[] = [
     link: "/create-post",
     text: "Create post",
     element: PlusSquare,
+    hoverAnimation: "group-hover/menu-button:animate-icon-pop-rotate",
   },
   {
     link: "/notifications",
     text: "Notifications",
     element: Bell,
     newNotification: true,
+    hoverAnimation: "group-hover/menu-button:animate-icon-ring",
   },
   {
     link: "/settings",
     text: "Settings",
     element: Settings,
+    hoverAnimation: "group-hover/menu-button:animate-icon-gear-spin",
   },
 ];
