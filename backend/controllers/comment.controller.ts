@@ -2,10 +2,12 @@ import type { Request, Response } from "express";
 import { prisma } from "../database/prisma.js";
 import {
   createComment,
+  deleteComment as deleteCommentService,
   likeComment,
   removeCommentLike,
 } from "../services/comment.service.js";
 import {
+  getCommentRepliesPage,
   getLikedCommentIds,
   getPostCommentsPage,
 } from "../repository/comment.repository.js";
@@ -17,6 +19,36 @@ export const getComments = async (req: Request, res: Response) => {
     const { cursor, limit } = req.query as unknown as CommentQueryInput;
     const { comments, nextCursor, hasMore } = await getPostCommentsPage(
       postId,
+      cursor,
+      limit,
+    );
+    const likedCommentIds = await getLikedCommentIds(
+      comments.map((comment) => comment.id),
+      req.userId as string,
+    );
+    const commentsWithLikes = comments.map((comment) => ({
+      ...comment,
+      isLiked: likedCommentIds.has(comment.id),
+    }));
+    return res.status(200).json({
+      message: "Success",
+      comments: commentsWithLikes,
+      nextCursor,
+      hasMore,
+    });
+  } catch (error) {
+    return res.status(400).json({ error });
+  }
+};
+
+export const getCommentReplies = async (req: Request, res: Response) => {
+  try {
+    const postId = req.params.id as string;
+    const parentId = req.params.commentId as string;
+    const { cursor, limit } = req.query as unknown as CommentQueryInput;
+    const { comments, nextCursor, hasMore } = await getCommentRepliesPage(
+      postId,
+      parentId,
       cursor,
       limit,
     );
@@ -76,8 +108,8 @@ export const sendCommentController = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const userId = req.userId as string;
-    const { comment: commentText } = req.body;
-    await createComment({ id, userId, commentText });
+    const { comment: commentText, parentId } = req.body;
+    await createComment({ id, userId, commentText, parentId });
     return res.status(201).json({ message: "Succes" });
   } catch (error) {
     return res.status(400).json({ error });
@@ -87,7 +119,7 @@ export const sendCommentController = async (req: Request, res: Response) => {
 export const deleteComment = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    await prisma.comment.deleteMany({ where: { id } });
+    await deleteCommentService(id);
     return res
       .status(200)
       .json({ message: "Deleted the comment successfully" });

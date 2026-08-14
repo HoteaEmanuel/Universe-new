@@ -2,6 +2,7 @@ import express from "express";
 import {
   deleteComment,
   getComments,
+  getCommentReplies,
   getCommentsCount,
   likeCommentController,
   removeLikeCommentController,
@@ -10,12 +11,21 @@ import {
 import { rateLimiter } from "../middleware/rateLimiter.js";
 import { validate } from "../middleware/validate.js";
 import { requireCommentOwner } from "../middleware/authorization.js";
-import { commentQuerySchema, sendCommentSchema } from "../schemas/comment.schema.js";
+import {
+  commentQuerySchema,
+  replyParamsSchema,
+  sendCommentSchema,
+} from "../schemas/comment.schema.js";
 const router = express.Router();
 router.get(
   "/posts/:id/comments",
   validate({ query: commentQuerySchema }),
   getComments,
+);
+router.get(
+  "/posts/:id/comments/:commentId/replies",
+  validate({ params: replyParamsSchema, query: commentQuerySchema }),
+  getCommentReplies,
 );
 router.get("/posts/:id/comments-count", getCommentsCount);
 router.post(

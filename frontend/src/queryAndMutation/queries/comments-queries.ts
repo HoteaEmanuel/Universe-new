@@ -14,6 +14,19 @@ export const useGetPostCommentsInfinite = (id?: string) => {
   });
 };
 
+export const useGetCommentRepliesInfinite = (postId?: string, parentId?: string) => {
+  const { getCommentReplies } = useCommentsStore();
+  return useInfiniteQuery<PostCommentsPage>({
+    queryKey: ["comment-replies", postId, parentId],
+    queryFn: ({ pageParam }) =>
+      getCommentReplies(postId, parentId, pageParam as string | undefined),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled: !!postId && !!parentId,
+  });
+};
+
 export const useGetPostCommentsCount = (id?: string) => {
   const { getCommentsCount } = useCommentsStore();
   return useQuery({

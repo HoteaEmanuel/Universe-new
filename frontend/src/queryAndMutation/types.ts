@@ -33,6 +33,8 @@ export type PostComment = {
   createdAt: string;
   likesCount: number;
   isLiked: boolean;
+  parentId?: string | null;
+  repliesCount?: number;
 };
 
 export type PostCommentsPage = {

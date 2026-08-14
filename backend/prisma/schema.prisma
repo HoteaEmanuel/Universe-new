@@ -103,20 +103,25 @@ model Tag {
 }
 
 model Comment {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  postId     String
-  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  text       String
-  likesCount Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId       String
+  post         Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  text         String
+  likesCount   Int       @default(0)
+  parentId     String?
+  parent       Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies      Comment[] @relation("CommentReplies")
+  repliesCount Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   likes CommentLike[]
 
   @@index([postId])
   @@index([userId])
+  @@index([parentId])
   @@map("comments")
 }
 

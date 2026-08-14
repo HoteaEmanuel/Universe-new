@@ -47,9 +47,17 @@ const CommentsContainer = () => {
     isFetchingNextPage,
   } = useGetPostCommentsInfinite(postId);
   const listRef = useRef<HTMLUListElement>(null);
+  // Shared with each top-level Comment so its expanded replies list can
+  // attach its own scroll-distance listener to this same container instead
+  // of re-walking the DOM per reply thread.
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    const scrollEl = findScrollableAncestor(listRef.current);
+    scrollContainerRef.current = findScrollableAncestor(listRef.current);
+  }, []);
+
+  useEffect(() => {
+    const scrollEl = scrollContainerRef.current;
     if (!scrollEl) return;
 
     const handleScroll = () => {
@@ -83,7 +91,7 @@ const CommentsContainer = () => {
     <ul ref={listRef} className="flex flex-col">
       {comments.map((comment) => (
         <li key={comment.id}>
-          <Comment comment={comment} />
+          <Comment comment={comment} scrollContainerRef={scrollContainerRef} />
         </li>
       ))}
       {isFetchingNextPage && <CommentSkeletonRow />}

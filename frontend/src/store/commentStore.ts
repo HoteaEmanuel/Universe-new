@@ -9,10 +9,20 @@ axios.defaults.withCredentials = true;
 type CommentStore = {
   isLoading: boolean;
   getComments: (id?: string, cursor?: string, limit?: number) => Promise<PostCommentsPage>;
+  getCommentReplies: (
+    postId?: string,
+    parentId?: string,
+    cursor?: string,
+    limit?: number,
+  ) => Promise<PostCommentsPage>;
   likeComment: (id: string) => Promise<{ message: string }>;
   removeLikeComment: (id: string) => Promise<{ message: string }>;
   getCommentsCount: (id?: string) => Promise<number>;
-  sendComment: (id?: string, comment?: string) => Promise<{ data: { message: string } }>;
+  sendComment: (
+    id?: string,
+    comment?: string,
+    parentId?: string,
+  ) => Promise<{ data: { message: string } }>;
   deleteComment: (id: string) => Promise<{ data: { message: string } }>;
 };
 
@@ -24,6 +34,24 @@ export const useCommentsStore = create<CommentStore>((set) => ({
       const response = await axios.get(`${API_URL}/posts/${id}/comments`, {
         params: { cursor, limit },
       });
+      return {
+        comments: response.data.comments as PostComment[],
+        nextCursor: response.data.nextCursor,
+        hasMore: response.data.hasMore,
+      };
+    } catch (error) {
+      throw new Error(error as string);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  getCommentReplies: async (postId, parentId, cursor, limit = 20) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get(
+        `${API_URL}/posts/${postId}/comments/${parentId}/replies`,
+        { params: { cursor, limit } },
+      );
       return {
         comments: response.data.comments as PostComment[],
         nextCursor: response.data.nextCursor,
@@ -68,11 +96,12 @@ export const useCommentsStore = create<CommentStore>((set) => ({
       set({ isLoading: false });
     }
   },
-  sendComment: async (id, comment) => {
+  sendComment: async (id, comment, parentId) => {
     set({ isLoading: true });
     try {
       const response = await axios.post(`${API_URL}/posts/${id}/send-comment`, {
         comment: comment,
+        parentId,
       });
       return response;
     } catch (error) {

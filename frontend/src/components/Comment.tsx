@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { Link, useParams } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { Heart, Trash2 } from "lucide-react";
@@ -14,6 +14,8 @@ import { formatCount } from "../utils/formatCount";
 import { urlPathName } from "../utils/urlPathFromName";
 import { getFullName } from "../utils/fullName";
 import type { PostComment } from "../queryAndMutation/types";
+import CommentReplies from "./CommentReplies";
+import ReplyInput from "./ReplyInput";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,20 +29,26 @@ import {
 
 type CommentProps = {
   comment: PostComment;
+  scrollContainerRef?: RefObject<HTMLElement | null>;
+  onDeleted?: () => void;
 };
 
-const Comment = ({ comment }: CommentProps) => {
+const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
   const { id: postId } = useParams();
   const { user: authUser } = useAuthStore();
   const { data: user, isPending: isPendingUser } = useGetUserByIdQuery(
     comment.userId,
   );
+  const isReply = !!comment.parentId;
   const [liked, setLiked] = useState(comment.isLiked);
   const [likesCount, setLikesCount] = useState(comment.likesCount);
+  const [repliesCount, setRepliesCount] = useState(comment.repliesCount ?? 0);
+  const [repliesExpanded, setRepliesExpanded] = useState(false);
+  const [replyBoxOpen, setReplyBoxOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const deleteComment = useDeleteCommentMutation(postId);
-  const likeComment = useLikeCommentMutation(postId);
-  const removeLikeComment = useRemoveLikeCommentMutation(postId);
+  const deleteComment = useDeleteCommentMutation(postId, comment.parentId);
+  const likeComment = useLikeCommentMutation(postId, comment.parentId);
+  const removeLikeComment = useRemoveLikeCommentMutation(postId, comment.parentId);
 
   if (isPendingUser || !user) return null;
 
@@ -68,21 +76,32 @@ const Comment = ({ comment }: CommentProps) => {
     }
   };
 
+  const handleConfirmDelete = () => {
+    deleteComment.mutate(comment.id, { onSuccess: () => onDeleted?.() });
+  };
+
+  const avatarSize = isReply ? "size-6" : "size-8";
+  const heartSize = isReply ? "size-3" : "size-3.5";
+
   return (
-    <div className="group/comment flex items-start gap-2.5 py-1.5">
+    <div
+      className={`group/comment flex items-start ${
+        isReply ? "gap-2 py-1 text-xs" : "gap-2.5 py-1.5 text-sm"
+      }`}
+    >
       <Link to={isOwnComment ? "/profile" : `/users/${fullName}`}>
         {user.profilePicture ? (
           <img
             src={user.profilePicture}
             alt={getFullName(user)}
-            className="size-8 shrink-0 rounded-full object-cover"
+            className={`${avatarSize} shrink-0 rounded-full object-cover`}
           />
         ) : (
-          <FaUserCircle className="size-8 shrink-0 text-muted-foreground" />
+          <FaUserCircle className={`${avatarSize} shrink-0 text-muted-foreground`} />
         )}
       </Link>
 
-      <div className="min-w-0 flex-1 text-sm">
+      <div className="min-w-0 flex-1">
         <p className="wrap-break-word">
           <Link
             to={isOwnComment ? "/profile" : `/users/${fullName}`}
@@ -94,6 +113,24 @@ const Comment = ({ comment }: CommentProps) => {
         </p>
         <div className="flex items-center gap-3 pt-0.5 text-xs text-muted-foreground">
           <span>{formatDateDetailed(comment.createdAt)}</span>
+          {!isReply && (
+            <button
+              type="button"
+              className="font-medium hover:text-foreground"
+              onClick={() => setReplyBoxOpen((open) => !open)}
+            >
+              Reply
+            </button>
+          )}
+          {!isReply && (repliesCount > 0 || repliesExpanded) && (
+            <button
+              type="button"
+              className="font-medium hover:text-foreground"
+              onClick={() => setRepliesExpanded((open) => !open)}
+            >
+              {repliesExpanded ? "Hide replies" : "View replies"}
+            </button>
+          )}
           {isOwnComment && (
             <button
               type="button"
@@ -105,11 +142,33 @@ const Comment = ({ comment }: CommentProps) => {
             </button>
           )}
         </div>
+
+        {!isReply && replyBoxOpen && (
+          <ReplyInput
+            postId={postId}
+            parentId={comment.id}
+            onSent={() => {
+              setRepliesCount((count) => count + 1);
+              setRepliesExpanded(true);
+              setReplyBoxOpen(false);
+            }}
+          />
+        )}
+
+        {!isReply && repliesExpanded && scrollContainerRef && (
+          <CommentReplies
+            parentId={comment.id}
+            scrollContainerRef={scrollContainerRef}
+            onCountChange={(delta) =>
+              setRepliesCount((count) => Math.max(0, count + delta))
+            }
+          />
+        )}
       </div>
 
       {isOwnComment ? (
         <span className="mt-1 flex shrink-0 flex-col items-center gap-0.5 text-muted-foreground">
-          <Heart className="size-3.5" fill="none" />
+          <Heart className={heartSize} fill="none" />
           {likesCount > 0 && (
             <span className="text-[10px] leading-none">{formatCount(likesCount)}</span>
           )}
@@ -122,7 +181,7 @@ const Comment = ({ comment }: CommentProps) => {
           aria-label={liked ? "Unlike comment" : "Like comment"}
         >
           <Heart
-            className={`size-3.5 transition-colors ${
+            className={`${heartSize} transition-colors ${
               liked ? "text-like" : "text-muted-foreground hover:text-foreground"
             }`}
             fill={liked ? "currentColor" : "none"}
@@ -149,10 +208,7 @@ const Comment = ({ comment }: CommentProps) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => deleteComment.mutate(comment.id)}
-            >
+            <AlertDialogAction variant="destructive" onClick={handleConfirmDelete}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
