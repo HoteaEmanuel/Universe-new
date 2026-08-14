@@ -54,15 +54,10 @@ const SideSection = () => {
     }
   }, [user.role]);
 
-  const { data: notifications, isPending: isPendingNormalNotifications } =
-    useGetUnreadNotifications(user.id);
-  const {
-    data: messageNotifications,
-    isPending: isPendingMessageNotifications,
-  } = useGetNewMessageNotifications(user.id);
-
-  if (isPendingNormalNotifications || isPendingMessageNotifications)
-    return <h1>Loading...</h1>;
+  const { data: notifications } = useGetUnreadNotifications(user.id);
+  const { data: messageNotifications } = useGetNewMessageNotifications(
+    user.id,
+  );
 
   return (
     <SidebarProvider open={open} onOpenChange={setOpen} className="contents">

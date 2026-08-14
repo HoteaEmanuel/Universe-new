@@ -1,8 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
-import { Heart, MessageCircle, Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, BookmarkCheck, ImageOff, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import NotFoundState from "../components/NotFoundState";
 import { useAuthStore } from "../store/authStore";
 import {
   useGetLikesQuery,
@@ -46,7 +47,11 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: post, isPending: isPendingPost } = useGetPostQuery(postId);
+  const {
+    data: post,
+    isPending: isPendingPost,
+    isError: isPostError,
+  } = useGetPostQuery(postId);
   const [seeLikesModal, setSeeLikesModal] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [isClamped, setIsClamped] = useState(false);
@@ -152,22 +157,34 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
     unsavePostMutation(undefined, { onError: () => setIsSaved(true) });
   };
 
-  const isLoading =
-    isPendingPost ||
+  const spinner = (
+    <div className="flex w-full items-center justify-center py-24">
+      <Loader2 className="size-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+
+  const postNotFound = (
+    <NotFoundState
+      icon={ImageOff}
+      title="Post not found"
+      description="This post may have been deleted or the link might be broken."
+      compact={inModal}
+    />
+  );
+
+  if (isPendingPost) return spinner;
+
+  if (isPostError || !post) return postNotFound;
+
+  const isLoadingPostDetails =
     isPendingCheckLiked ||
     isPendingIsFollowing ||
     isPendingPostUser ||
     isPendingLikes;
 
-  if (isLoading) {
-    return (
-      <div className="flex w-full items-center justify-center py-24">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  if (isLoadingPostDetails) return spinner;
 
-  if (!post || !creator) return null;
+  if (!creator) return postNotFound;
 
   return (
     <div

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Grid3x3, Bookmark } from "lucide-react";
+import { Grid3x3, Bookmark, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import NotFoundState from "../../components/NotFoundState";
 import { useAuthStore } from "../../store/authStore";
 import {
   useGetSavedPostsQuery,
@@ -41,9 +42,11 @@ const ProfilePage = () => {
 
   if (name && !isPendingOtherUser && isOtherUserError) {
     return (
-      <p className="py-16 text-center text-muted-foreground">
-        This user couldn't be found.
-      </p>
+      <NotFoundState
+        icon={UserX}
+        title="User not found"
+        description="This profile doesn't exist or may have been removed."
+      />
     );
   }
 
