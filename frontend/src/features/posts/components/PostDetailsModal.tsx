@@ -30,7 +30,7 @@ const PostDetailsModal = () => {
               <Button
                 variant="ghost"
                 size="icon-lg"
-                className="fixed top-4 right-4 z-60 text-white hover:bg-white/10 hover:text-white"
+                className="fixed top-4 right-4 z-60 bg-black/30 text-white backdrop-blur-sm hover:bg-black/40 hover:text-white"
               />
             }
           >

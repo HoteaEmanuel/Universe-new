@@ -186,35 +186,47 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
 
   if (!creator) return postNotFound;
 
+  const hasImages = !!post.imagesUrls?.length;
+
   return (
     <div
       className={
         inModal
-          ? "flex w-full flex-1 flex-col overflow-y-auto md:h-full md:min-h-0 md:flex-row md:overflow-hidden"
+          ? "flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden md:flex-row"
           : "mx-auto flex w-full max-w-5xl flex-col overflow-hidden border-border bg-card md:h-[80vh] md:flex-row md:rounded-2xl md:border"
       }
     >
       {/* Media column */}
-      <div className="relative flex w-full shrink-0 items-center justify-center bg-black md:h-full md:w-3/5">
-        {post.imagesUrls?.length === 1 && (
-          <img
-            src={post.imagesUrls[0]}
-            alt="post"
-            className="aspect-square w-full object-cover md:h-full md:w-full"
-          />
-        )}
-        {post.imagesUrls?.length > 1 && <ImageSlider images={post.imagesUrls} />}
-        {showHeartBurst && (
-          <Heart
-            className="pointer-events-none absolute inset-0 m-auto size-24 animate-heart-burst text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]"
-            fill="currentColor"
-            onAnimationEnd={() => setShowHeartBurst(false)}
-          />
-        )}
-      </div>
+      {hasImages && (
+        <div className="relative flex w-full shrink-0 items-center justify-center bg-black md:h-full md:w-3/5">
+          {post.imagesUrls?.length === 1 && (
+            <img
+              src={post.imagesUrls[0]}
+              alt="post"
+              className="aspect-square w-full object-cover md:h-full md:w-full"
+            />
+          )}
+          {post.imagesUrls?.length > 1 && (
+            <ImageSlider images={post.imagesUrls} />
+          )}
+          {showHeartBurst && (
+            <Heart
+              className="pointer-events-none absolute inset-0 m-auto size-24 animate-heart-burst text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]"
+              fill="currentColor"
+              onAnimationEnd={() => setShowHeartBurst(false)}
+            />
+          )}
+        </div>
+      )}
 
       {/* Info + comments column */}
-      <div className="flex w-full flex-1 flex-col md:h-full md:w-2/5 md:min-h-0">
+      <div
+        className={
+          hasImages
+            ? "flex min-h-0 w-full flex-1 flex-col md:h-full md:w-2/5"
+            : "flex min-h-0 w-full flex-1 flex-col md:mx-auto md:h-full md:max-w-2xl"
+        }
+      >
         <div className="flex shrink-0 items-center gap-2.5 border-b border-border px-4 py-3">
           {creator.profilePicture ? (
             <img
@@ -258,7 +270,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
           </div>
         </div>
 
-        <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex items-start gap-2.5 px-4 pt-3 pb-1.5">
             {creator.profilePicture ? (
               <img
@@ -326,22 +338,24 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
               />
             </button>
             <MessageCircle className="size-6 text-foreground/80" />
-            <div className="ml-auto">
-              {!isSaved ? (
-                <Bookmark
-                  className="size-6 cursor-pointer text-foreground/80 transition-transform duration-150 hover:scale-110 hover:text-foreground"
-                  onClick={handleSaveClick}
-                  aria-label="Save post"
-                />
-              ) : (
-                <BookmarkCheck
-                  className="size-6 cursor-pointer text-foreground transition-transform duration-150 hover:scale-110"
-                  fill="currentColor"
-                  onClick={handleUnsaveClick}
-                  aria-label="Unsave post"
-                />
-              )}
-            </div>
+            {userId !== user.id && (
+              <div className="ml-auto">
+                {!isSaved ? (
+                  <Bookmark
+                    className="size-6 cursor-pointer text-foreground/80 transition-transform duration-150 hover:scale-110 hover:text-foreground"
+                    onClick={handleSaveClick}
+                    aria-label="Save post"
+                  />
+                ) : (
+                  <BookmarkCheck
+                    className="size-6 cursor-pointer text-foreground transition-transform duration-150 hover:scale-110"
+                    fill="currentColor"
+                    onClick={handleUnsaveClick}
+                    aria-label="Unsave post"
+                  />
+                )}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2 px-4 pt-1.5 text-sm">
             <button

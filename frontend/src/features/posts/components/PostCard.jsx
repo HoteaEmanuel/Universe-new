@@ -179,6 +179,30 @@ const PostCard = ({ post }) => {
   )
     return <PostSkeleton/>;
   const { firstName, name, lastName, profilePicture } = creator;
+  const hasImages = !!post.imagesUrls?.length;
+  const captionBlock = (
+    <div className="px-4 pt-2">
+      {post?.title && (
+        <span className="mr-1.5 text-sm font-semibold">{post.title}</span>
+      )}
+      {post?.body && (
+        <span
+          className={`text-sm wrap-break-word ${!showMore && "line-clamp-3"}`}
+          ref={bodyRef}
+        >
+          {post.body}
+        </span>
+      )}
+      {isClamped && (
+        <button
+          className="block text-xs text-muted-foreground hover:text-foreground"
+          onClick={handleSeeMoreClick}
+        >
+          {showMore ? "See less" : "See more"}
+        </button>
+      )}
+    </div>
+  );
   return (
     <Link
       to={`/post/${postId}`}
@@ -229,25 +253,29 @@ const PostCard = ({ post }) => {
         </div>
       </div>
 
-      <div className="relative">
-        {post.imagesUrls?.length === 1 && (
-          <img
-            src={post.imagesUrls[0]}
-            alt="post image"
-            className="aspect-square w-full self-center object-cover"
-          />
-        )}
-        {post.imagesUrls?.length > 1 && (
-          <ImageSlider images={post.imagesUrls} />
-        )}
-        {showHeartBurst && (
-          <Heart
-            className="pointer-events-none absolute inset-0 m-auto size-24 animate-heart-burst text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]"
-            fill="currentColor"
-            onAnimationEnd={() => setShowHeartBurst(false)}
-          />
-        )}
-      </div>
+      {!hasImages && captionBlock}
+
+      {hasImages && (
+        <div className="relative">
+          {post.imagesUrls?.length === 1 && (
+            <img
+              src={post.imagesUrls[0]}
+              alt="post image"
+              className="aspect-square w-full self-center object-cover"
+            />
+          )}
+          {post.imagesUrls?.length > 1 && (
+            <ImageSlider images={post.imagesUrls} />
+          )}
+          {showHeartBurst && (
+            <Heart
+              className="pointer-events-none absolute inset-0 m-auto size-24 animate-heart-burst text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]"
+              fill="currentColor"
+              onAnimationEnd={() => setShowHeartBurst(false)}
+            />
+          )}
+        </div>
+      )}
 
       <div className="flex items-center gap-4 px-4 pt-3">
         <button
@@ -337,27 +365,7 @@ const PostCard = ({ post }) => {
         />
       )}
 
-      <div className="px-4 pt-2">
-        {post?.title && (
-          <span className="mr-1.5 text-sm font-semibold">{post.title}</span>
-        )}
-        {post?.body && (
-          <span
-            className={`text-sm wrap-break-word ${!showMore && "line-clamp-3"}`}
-            ref={bodyRef}
-          >
-            {post.body}
-          </span>
-        )}
-        {isClamped && (
-          <button
-            className="block text-xs text-muted-foreground hover:text-foreground"
-            onClick={handleSeeMoreClick}
-          >
-            {showMore ? "See less" : "See more"}
-          </button>
-        )}
-      </div>
+      {hasImages && captionBlock}
 
       {post.tags?.length > 0 && (
         <ul className="flex flex-wrap gap-2 px-4 pt-2 pb-4">

@@ -71,12 +71,7 @@ function ImageSlider({ images }) {
     setIndex(dotIndex + 1);
   };
   return (
-    <div
-      className="w-full"
-      onClick={(e) => {
-        e.preventDefault();
-      }}
-    >
+    <div className="w-full">
       <div
         className="relative"
         onTouchStart={handleTouchStart}
