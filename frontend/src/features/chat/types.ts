@@ -20,6 +20,8 @@ export type ChatMessage = {
   id: string;
   content?: string;
   imageUrls?: string[];
+  audioUrl?: string;
+  audioDurationSec?: number;
   senderId: MessageSender;
   conversationId?: string;
   groupId?: string;
@@ -33,6 +35,7 @@ export type ChatMessage = {
 export type LastMessagePreview = {
   content?: string;
   imageUrls?: string[];
+  audioUrl?: string;
   senderId?: MessageSender;
 };
 
@@ -89,4 +92,9 @@ export type GroupMember = {
 export type NewMessagePayload = {
   messageText: string;
   images?: File[];
+};
+
+export type NewVoiceMessagePayload = {
+  audio: Blob;
+  durationSec: number;
 };

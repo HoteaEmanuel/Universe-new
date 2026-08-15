@@ -12,9 +12,7 @@ export const errorHandler = (
 
   if (err instanceof MulterError) {
     const message =
-      err.code === "LIMIT_FILE_SIZE"
-        ? "File must be smaller than 5MB"
-        : err.message;
+      err.code === "LIMIT_FILE_SIZE" ? "File is too large" : err.message;
     return res.status(400).json({ message });
   }
 

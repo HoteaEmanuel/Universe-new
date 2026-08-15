@@ -16,6 +16,7 @@ import { formatDateDetailed } from "../../../utils/formatDate";
 import { urlPathName } from "../../../utils/urlPathFromName";
 import MessageActionsMenu from "./MessageActionsMenu";
 import EmojiPickerPopover from "./EmojiPickerPopover";
+import VoiceMessagePlayer from "./VoiceMessagePlayer";
 import type { ChatMessage, ChatUser } from "../types";
 
 type MessageBubbleProps = {
@@ -246,6 +247,23 @@ const MessageBubble = ({
                 onClick={() => onOpenImage(image)}
               />
             ))}
+          </div>
+        )}
+
+        {!message.deleted && message.audioUrl && (
+          <div
+            data-slot="message-audio"
+            className={`w-fit rounded-2xl px-2 py-1 ${
+              isOwn
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-foreground"
+            }`}
+          >
+            <VoiceMessagePlayer
+              url={message.audioUrl}
+              durationSec={message.audioDurationSec}
+              isOwn={isOwn}
+            />
           </div>
         )}
 

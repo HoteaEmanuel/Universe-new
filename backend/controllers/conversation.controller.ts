@@ -16,6 +16,7 @@ import {
   getUserConversations,
   markConversationRead,
   sendMessage,
+  sendVoiceMessage,
   startConversation,
   setMessageReaction,
 } from "../services/conversation.service.js";
@@ -185,6 +186,21 @@ export const sendMessageController = async (req: Request, res: Response) => {
     const { messageText } = req.body;
     const images = req.files as Express.Multer.File[] | undefined;
     const message = await sendMessage({ convoId, authUserId, messageText, images });
+
+    return res.status(201).json(message);
+  } catch (error) {
+    return res.status(400).json({ error });
+  }
+};
+
+export const sendVoiceMessageController = async (req: Request, res: Response) => {
+  try {
+    const convoId = req.params.id as string;
+    const authUserId = req.userId as string;
+    const { durationSec } = req.body;
+    const audio = req.file as Express.Multer.File | undefined;
+    if (!audio) throw new Error("No audio file provided");
+    const message = await sendVoiceMessage({ convoId, authUserId, audio, durationSec });
 
     return res.status(201).json(message);
   } catch (error) {

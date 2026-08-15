@@ -8,6 +8,7 @@ import {
   startConversationController,
   getConvoUsers,
   sendMessageController,
+  sendVoiceMessageController,
   editMessageController,
   deleteMessageController,
   getConversationsController,
@@ -15,6 +16,7 @@ import {
   markConversationReadController,
 } from "../controllers/conversation.controller.js";
 import { imageUpload } from "../lib/imageUpload.js";
+import { audioUpload } from "../lib/audioUpload.js";
 import { messageRateLimiter } from "../middleware/messageRateLimiter.js";
 import { validate } from "../middleware/validate.js";
 import {
@@ -25,6 +27,7 @@ import {
 import {
   startConversationSchema,
   sendMessageSchema,
+  sendVoiceMessageSchema,
   editMessageSchema,
   messagesQuerySchema,
   mediaQuerySchema,
@@ -87,5 +90,13 @@ router.post(
   imageUpload.any(),
   validate({ body: sendMessageSchema }),
   sendMessageController,
+);
+router.post(
+  "/:id/send-voice-message",
+  requireConversationParticipant,
+  messageRateLimiter,
+  audioUpload.single("audio"),
+  validate({ body: sendVoiceMessageSchema }),
+  sendVoiceMessageController,
 );
 export default router;

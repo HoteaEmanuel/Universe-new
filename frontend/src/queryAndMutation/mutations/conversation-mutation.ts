@@ -5,6 +5,7 @@ import type {
   ChatMessage,
   ChatMessagePage,
   NewMessagePayload,
+  NewVoiceMessagePayload,
 } from "../../features/chat/types";
 import {
   appendOptimisticMessage,
@@ -29,6 +30,50 @@ export const useSendMessageMutation = (conversationId?: string) => {
       const optimisticMessage: ChatMessage = {
         id: `optimistic-${Date.now()}`,
         content: message.messageText || undefined,
+        senderId: user?.id ?? "",
+        conversationId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
+        appendOptimisticMessage(old, optimisticMessage),
+      );
+      return { previous };
+    },
+    onError: (_error, _message, context) => {
+      if (conversationId && context?.previous) {
+        queryClient.setQueryData(
+          ["conversation_messages", conversationId],
+          context.previous,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["conversation_messages", conversationId],
+      });
+    },
+  });
+};
+
+export const useSendVoiceMessageMutation = (conversationId?: string) => {
+  const queryClient = useQueryClient();
+  const { sendVoiceMessage } = useConversationStore();
+  const { user } = useAuthStore() as { user: { id: string } | null };
+
+  return useMutation({
+    mutationFn: (message: NewVoiceMessagePayload) =>
+      sendVoiceMessage(conversationId as string, message),
+    onMutate: async (message) => {
+      if (!conversationId) return;
+      const queryKey = ["conversation_messages", conversationId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous =
+        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
+      const optimisticMessage: ChatMessage = {
+        id: `optimistic-${Date.now()}`,
+        audioUrl: URL.createObjectURL(message.audio),
+        audioDurationSec: message.durationSec,
         senderId: user?.id ?? "",
         conversationId,
         createdAt: new Date().toISOString(),

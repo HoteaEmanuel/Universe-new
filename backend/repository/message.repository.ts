@@ -8,11 +8,23 @@ interface CreateMessageInput {
   content?: string | null;
   imageUrls?: string[];
   imagePublicIds?: string[];
+  audioUrl?: string | null;
+  audioKey?: string | null;
+  audioDurationSec?: number | null;
 }
 
 export const createMessage = async (data: CreateMessageInput) => {
-  const { conversationId, senderId, receiverId, content, imagePublicIds, imageUrls } =
-    data;
+  const {
+    conversationId,
+    senderId,
+    receiverId,
+    content,
+    imagePublicIds,
+    imageUrls,
+    audioUrl,
+    audioKey,
+    audioDurationSec,
+  } = data;
 
   return prisma.message.create({
     data: {
@@ -22,6 +34,9 @@ export const createMessage = async (data: CreateMessageInput) => {
       imageUrls: imageUrls ?? [],
       imagePublicIds: imagePublicIds ?? [],
       content: content || null,
+      audioUrl: audioUrl || null,
+      audioKey: audioKey || null,
+      audioDurationSec: audioDurationSec ?? null,
     },
   });
 };

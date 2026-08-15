@@ -255,6 +255,9 @@ model Message {
   deleted        Boolean      @default(false)
   imageUrls      String[]     @default([])
   imagePublicIds String[]     @default([])
+  audioUrl       String?
+  audioKey       String?
+  audioDurationSec Int?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 

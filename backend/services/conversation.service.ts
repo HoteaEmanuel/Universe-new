@@ -23,6 +23,49 @@ import { getActiveConversationUsers } from "../lib/socket.js";
 
 type UploadedImage = Express.Multer.File;
 
+const notificationPreviewText = (message: {
+  content?: string | null;
+  audioUrl?: string | null;
+}) => {
+  if (message.content) return message.content;
+  if (message.audioUrl) return "Voice message";
+  return "IMAGE";
+};
+
+const finalizeNewMessage = async (data: {
+  convoId: string;
+  authUserId: string;
+  receiverId: string;
+  message: Awaited<ReturnType<typeof createMessage>>;
+}) => {
+  const { convoId, authUserId, receiverId, message } = data;
+
+  await prisma.conversation.update({
+    where: { id: convoId },
+    data: { lastMessageId: message.id },
+  });
+
+  const sender = await findUserById(authUserId);
+
+  const activeConversationUsers = getActiveConversationUsers(convoId);
+  if (!activeConversationUsers?.has(receiverId)) {
+    const notification = await createMessageNotification({
+      actionUserId: authUserId,
+      userId: receiverId,
+      title: "New message",
+      type: "message",
+      message: `${sender?.firstName || sender?.name}: ${notificationPreviewText(message)}`,
+      conversationId: convoId,
+    });
+    await emitNewNotification(receiverId, notification);
+  } else {
+    await markConversationRead({ convoId, userId: receiverId });
+  }
+
+  io.to(getReceiverSocketId(receiverId)).emit("newMessage", message);
+  return message;
+};
+
 export const startConversation = async (data: {
   authUserId: string;
   otherUserId: string;
@@ -90,30 +133,40 @@ export const sendMessage = async (data: {
     imagePublicIds: imagePublicIds,
   });
 
-  await prisma.conversation.update({
-    where: { id: convoId },
-    data: { lastMessageId: message.id },
+  return finalizeNewMessage({ convoId, authUserId, receiverId, message });
+};
+
+export const sendVoiceMessage = async (data: {
+  convoId: string;
+  authUserId: string;
+  audio: UploadedImage;
+  durationSec: number;
+}) => {
+  const { convoId, authUserId, audio, durationSec } = data;
+  const conversation = await findConversationById(convoId);
+  if (!conversation) throw new Error("Conversation doesnt exist");
+
+  const uploaded = await uploadImage({
+    buffer: audio.buffer,
+    mimeType: audio.mimetype,
+    folder: "message_audio",
   });
 
-  const sender = await findUserById(authUserId);
+  const receiverId =
+    conversation.participantOneId === authUserId
+      ? conversation.participantTwoId
+      : conversation.participantOneId;
 
-  const activeConversationUsers = getActiveConversationUsers(convoId);
-  if (!activeConversationUsers?.has(receiverId)) {
-    const notification = await createMessageNotification({
-      actionUserId: authUserId,
-      userId: receiverId,
-      title: "New message",
-      type: "message",
-      message: `${sender?.firstName || sender?.name}: ${message?.content ? message.content : "IMAGE"}`,
-      conversationId: convoId,
-    });
-    await emitNewNotification(receiverId, notification);
-  } else {
-    await markConversationRead({ convoId, userId: receiverId });
-  }
+  const message = await createMessage({
+    senderId: authUserId,
+    receiverId,
+    conversationId: convoId,
+    audioUrl: uploaded.url,
+    audioKey: uploaded.key,
+    audioDurationSec: durationSec,
+  });
 
-  io.to(getReceiverSocketId(receiverId)).emit("newMessage", message);
-  return message;
+  return finalizeNewMessage({ convoId, authUserId, receiverId, message });
 };
 
 export const markConversationRead = async (data: { convoId: string; userId: string }) => {
@@ -143,9 +196,12 @@ export const deleteMessage = async (data: { messageId: string }) => {
   if (!message) throw new Error("Message not found");
   await prisma.message.update({ where: { id: messageId }, data: { deleted: true } });
 
-  if (message.imagePublicIds.length > 0) {
-    deleteImages(message.imagePublicIds).catch((error: unknown) => {
-      console.error(`Failed to delete storage images for message ${messageId}:`, error);
+  const keysToDelete = message.audioKey
+    ? [...message.imagePublicIds, message.audioKey]
+    : message.imagePublicIds;
+  if (keysToDelete.length > 0) {
+    deleteImages(keysToDelete).catch((error: unknown) => {
+      console.error(`Failed to delete storage objects for message ${messageId}:`, error);
     });
   }
 

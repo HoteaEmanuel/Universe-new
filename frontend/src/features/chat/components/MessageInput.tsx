@@ -5,16 +5,20 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { ImagePlus, SendHorizontal, Smile, X } from "lucide-react";
+import { ImagePlus, Mic, SendHorizontal, Smile, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useSendMessageMutation } from "../../../queryAndMutation/mutations/conversation-mutation";
+import {
+  useSendMessageMutation,
+  useSendVoiceMessageMutation,
+} from "../../../queryAndMutation/mutations/conversation-mutation";
 import { useSendMessageToGroupMutation } from "../../../queryAndMutation/mutations/group-mutation";
 import { useAuthStore } from "../../../store/authStore";
 import { getFullName } from "../../../utils/fullName";
 import ImagePickerModal from "./ImagePickerModal";
 import EmojiPickerPopover from "./EmojiPickerPopover";
+import VoiceRecorder from "./VoiceRecorder";
 import type { ChatUser } from "../types";
 
 type MessageInputProps = {
@@ -29,6 +33,7 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
   const [text, setText] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const { user, socket } = useAuthStore() as {
     user: ChatUser;
     socket: { emit: (event: string, payload: unknown) => void };
@@ -44,6 +49,9 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
     variant === "group" ? id : undefined,
   );
   const { mutate, isPending } = variant === "direct" ? directMutation : groupMutation;
+  const { mutate: mutateVoice, isPending: isSendingVoice } = useSendVoiceMessageMutation(
+    variant === "direct" ? id : undefined,
+  );
 
   const canSend = (text.trim().length > 0 || images.length > 0) && !isPending;
 
@@ -105,6 +113,32 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
     setImages([]);
   };
 
+  const handleSendVoice = (audio: Blob, durationSec: number) => {
+    mutateVoice(
+      { audio, durationSec },
+      {
+        onError: (error: unknown) => {
+          toast.error(
+            error instanceof Error ? error.message : "Could not send voice message",
+          );
+        },
+      },
+    );
+    setIsRecording(false);
+  };
+
+  if (isRecording) {
+    return (
+      <div className="border-t border-border bg-background px-3 py-2">
+        <VoiceRecorder
+          onCancel={() => setIsRecording(false)}
+          onSend={handleSendVoice}
+          isSending={isSendingVoice}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="border-t border-border bg-background px-3 py-2">
       {images.length > 0 && (
@@ -161,14 +195,26 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
             </Button>
           }
         />
-        <Button
-          type="submit"
-          size="icon"
-          disabled={!canSend}
-          aria-label="Send message"
-        >
-          <SendHorizontal />
-        </Button>
+        {variant === "direct" && text.trim().length === 0 && images.length === 0 ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Record voice message"
+            onClick={() => setIsRecording(true)}
+          >
+            <Mic />
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            size="icon"
+            disabled={!canSend}
+            aria-label="Send message"
+          >
+            <SendHorizontal />
+          </Button>
+        )}
       </form>
       <ImagePickerModal
         open={pickerOpen}

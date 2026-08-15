@@ -16,6 +16,11 @@ export const sendMessageSchema = z.object({
 });
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 
+export const sendVoiceMessageSchema = z.object({
+  durationSec: z.coerce.number().int().min(1).max(120),
+});
+export type SendVoiceMessageInput = z.infer<typeof sendVoiceMessageSchema>;
+
 export const editMessageSchema = z.object({
   newContent: z
     .string()

@@ -1,4 +1,4 @@
-import { Camera } from "lucide-react";
+import { Camera, Mic } from "lucide-react";
 import { getFullName } from "../../../utils/fullName";
 import { getAvatarColorClass, getInitials } from "../utils/avatarColor";
 import { formatChatListTime } from "../utils/chatListTime";
@@ -32,6 +32,7 @@ const ConversationListItem = ({
         ? `${getFullName(lastSender)}: `
         : "";
   const isImageOnly = !lastMessage?.content && !!lastMessage?.imageUrls?.length;
+  const isVoiceOnly = !lastMessage?.content && !!lastMessage?.audioUrl;
   const time = formatChatListTime(entry.updatedAt);
   const unreadCount = !isGroup ? (entry.unreadCount ?? 0) : 0;
   const hasUnread = unreadCount > 0;
@@ -81,11 +82,16 @@ const ConversationListItem = ({
                 <>
                   <span className="truncate">
                     {prefix}
-                    {isImageOnly ? "" : lastMessage.content}
+                    {isImageOnly || isVoiceOnly ? "" : lastMessage.content}
                   </span>
                   {isImageOnly && (
                     <span className="inline-flex shrink-0 items-center gap-1">
                       <Camera className="size-3.5" /> Photo
+                    </span>
+                  )}
+                  {isVoiceOnly && (
+                    <span className="inline-flex shrink-0 items-center gap-1">
+                      <Mic className="size-3.5" /> Voice message
                     </span>
                   )}
                 </>

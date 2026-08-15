@@ -6,6 +6,7 @@ import type {
   ChatMessagePage,
   ChatUser,
   DirectConversation,
+  NewVoiceMessagePayload,
 } from "../features/chat/types";
 
 const API_URL =
@@ -30,6 +31,10 @@ type ConversationStore = {
   sendMessage: (
     id: string,
     message: Record<string, unknown>,
+  ) => Promise<ChatMessage>;
+  sendVoiceMessage: (
+    id: string,
+    message: NewVoiceMessagePayload,
   ) => Promise<ChatMessage>;
   deleteMessage: (id: string) => Promise<{ message: string }>;
   editMessage: (id: string, text: string) => Promise<ChatMessage>;
@@ -135,6 +140,24 @@ export const useConversationStore = create<ConversationStore>((set) => ({
       return response.data;
     } catch (error) {
       const messageText = errorMessage(error, "Could not send message");
+      set({ error: messageText });
+      throw new Error(messageText);
+    }
+  },
+  sendVoiceMessage: async (id, { audio, durationSec }) => {
+    try {
+      const formData = new FormData();
+      formData.append("audio", audio);
+      formData.append("durationSec", String(durationSec));
+      const response = await axios.post(
+        `${API_URL}/conversations/${id}/send-voice-message`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+      set({ error: null });
+      return response.data;
+    } catch (error) {
+      const messageText = errorMessage(error, "Could not send voice message");
       set({ error: messageText });
       throw new Error(messageText);
     }

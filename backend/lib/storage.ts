@@ -19,6 +19,11 @@ const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
   "image/gif": "gif",
+  "audio/webm": "webm",
+  "audio/ogg": "ogg",
+  "audio/mp4": "m4a",
+  "audio/mpeg": "mp3",
+  "audio/wav": "wav",
 };
 
 interface UploadImageInput {
