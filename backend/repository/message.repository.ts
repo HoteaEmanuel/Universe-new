@@ -103,6 +103,21 @@ export const getConversationMessagesPage = async (
   return toMessagePage(rows, limit);
 };
 
+export const countUnreadMessages = async (
+  conversationId: string,
+  userId: string,
+  since: Date | null,
+) => {
+  return prisma.message.count({
+    where: {
+      conversationId,
+      senderId: { not: userId },
+      deleted: false,
+      ...(since ? { createdAt: { gt: since } } : {}),
+    },
+  });
+};
+
 export const getGroupMessagesPage = async (
   groupId: string,
   cursor?: string,

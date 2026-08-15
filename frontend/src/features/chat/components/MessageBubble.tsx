@@ -24,6 +24,7 @@ type MessageBubbleProps = {
   variant: "direct" | "group";
   isFirstInGroup?: boolean;
   isLastInGroup?: boolean;
+  showSeen?: boolean;
   onOpenImage: (image: string) => void;
   onDelete: (messageId: string) => void;
   onEdit: (messageId: string, newContent: string) => void;
@@ -181,6 +182,7 @@ const MessageBubble = ({
   variant,
   isFirstInGroup = true,
   isLastInGroup = true,
+  showSeen = false,
   onOpenImage,
   onDelete,
   onEdit,
@@ -321,6 +323,14 @@ const MessageBubble = ({
             </span>
           )}
         </MessageFooter>
+        {showSeen && (
+          <span
+            data-slot="message-seen"
+            className="px-3 text-xs text-muted-foreground"
+          >
+            Seen
+          </span>
+        )}
       </MessageContent>
     </Message>
   );

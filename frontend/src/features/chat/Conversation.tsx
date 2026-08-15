@@ -11,6 +11,7 @@ import {
 import {
   useDeleteMessageMutation,
   useEditMessageMutation,
+  useMarkConversationReadMutation,
   useReactToMessageMutation,
 } from "@/queryAndMutation/mutations/conversation-mutation";
 import { useSeeNewMessages } from "@/queryAndMutation/mutations/notification-mutation";
@@ -36,6 +37,7 @@ const Conversation = () => {
   const { data: otherUser, isPending: isPendingUser } =
     useGetUserByConvoId(convoId);
   const { mutate: seeNewMessages } = useSeeNewMessages(authUser.id, convoId);
+  const { mutate: markConversationRead } = useMarkConversationReadMutation(convoId);
   const {
     data: messagePages,
     isPending: isPendingMessages,
@@ -47,6 +49,7 @@ const Conversation = () => {
     .slice()
     .reverse()
     .flatMap((page) => page.messages);
+  const otherParticipantLastReadAt = messagePages?.pages[0]?.otherParticipantLastReadAt;
   const { mutate: deleteMessage } = useDeleteMessageMutation(convoId);
   const { mutate: editMessage } = useEditMessageMutation(convoId);
   const { mutate: reactToMessage } = useReactToMessageMutation(convoId);
@@ -62,22 +65,25 @@ const Conversation = () => {
     socket.on("messageDeleted", invalidateMessages);
     socket.on("reactionAdded", invalidateMessages);
     socket.on("reactionRemoved", invalidateMessages);
+    socket.on("conversationRead", invalidateMessages);
     return () => {
       socket.off?.("newMessage", invalidateMessages);
       socket.off?.("messageEdited", invalidateMessages);
       socket.off?.("messageDeleted", invalidateMessages);
       socket.off?.("reactionAdded", invalidateMessages);
       socket.off?.("reactionRemoved", invalidateMessages);
+      socket.off?.("conversationRead", invalidateMessages);
     };
   }, [socket, queryClient, convoId]);
 
   useEffect(() => {
     socket.emit("view_conversation", convoId, authUser.id);
     seeNewMessages();
+    markConversationRead();
     return () => {
       socket.emit("leave_conversation", convoId, authUser.id);
     };
-  }, [seeNewMessages, socket, authUser, convoId]);
+  }, [seeNewMessages, markConversationRead, socket, authUser, convoId]);
 
   return (
     <section className="flex h-[calc(100dvh-10rem)] flex-col overflow-hidden rounded-2xl border border-border md:h-[calc(100dvh-4rem)]">
@@ -123,6 +129,7 @@ const Conversation = () => {
         <MessageThread
           messages={messages}
           currentUserId={authUser.id}
+          otherParticipantLastReadAt={otherParticipantLastReadAt}
           variant="direct"
           onDelete={deleteMessage}
           onEdit={(id, newContent) => editMessage({ id, newContent })}

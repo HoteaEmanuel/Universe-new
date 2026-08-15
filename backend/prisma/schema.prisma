@@ -222,15 +222,17 @@ model Notification {
 }
 
 model Conversation {
-  id               String   @id @default(uuid())
-  participantOneId String
-  participantOne   User     @relation("ParticipantOne", fields: [participantOneId], references: [id], onDelete: Cascade)
-  participantTwoId String
-  participantTwo   User     @relation("ParticipantTwo", fields: [participantTwoId], references: [id], onDelete: Cascade)
-  lastMessageId    String?  @unique
-  lastMessage      Message? @relation("ConversationLastMessage", fields: [lastMessageId], references: [id])
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                       String    @id @default(uuid())
+  participantOneId         String
+  participantOne           User      @relation("ParticipantOne", fields: [participantOneId], references: [id], onDelete: Cascade)
+  participantTwoId         String
+  participantTwo           User      @relation("ParticipantTwo", fields: [participantTwoId], references: [id], onDelete: Cascade)
+  lastMessageId            String?   @unique
+  lastMessage              Message?  @relation("ConversationLastMessage", fields: [lastMessageId], references: [id])
+  lastReadAtParticipantOne DateTime?
+  lastReadAtParticipantTwo DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
   messages      Message[]      @relation("ConversationMessages")
   notifications Notification[]

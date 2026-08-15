@@ -21,6 +21,7 @@ type ConversationStore = {
   error: string | null;
   getUserByConvoId: (id: string) => Promise<ChatUser>;
   getMessages: (id: string, cursor?: string) => Promise<ChatMessagePage>;
+  markConversationRead: (id: string) => Promise<void>;
   getConvoMedia: (id: string, before?: string) => Promise<ChatMediaPage>;
   getConversationByUsersIds: (id: string) => Promise<DirectConversation | null>;
   getUserConversations: () => Promise<DirectConversation[]>;
@@ -59,9 +60,17 @@ export const useConversationStore = create<ConversationStore>((set) => ({
         messages: response.data.messages,
         nextCursor: response.data.nextCursor,
         hasMore: response.data.hasMore,
+        otherParticipantLastReadAt: response.data.otherParticipantLastReadAt,
       };
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load messages"));
+    }
+  },
+  markConversationRead: async (id) => {
+    try {
+      await axios.post(`${API_URL}/conversations/${id}/read`);
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not mark conversation as read"));
     }
   },
   getConvoMedia: async (id, before) => {

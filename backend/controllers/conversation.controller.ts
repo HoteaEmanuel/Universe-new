@@ -1,7 +1,10 @@
 import type { Request, Response } from "express";
 import type {} from "multer";
 import { prisma } from "../database/prisma.js";
-import { findConversationByParticipants } from "../repository/conversation.repository.js";
+import {
+  findConversationByParticipants,
+  findConversationReadCursors,
+} from "../repository/conversation.repository.js";
 import {
   getConversationMediaPage,
   getConversationMessagesPage,
@@ -11,6 +14,7 @@ import {
   deleteMessage,
   editMessage,
   getUserConversations,
+  markConversationRead,
   sendMessage,
   startConversation,
   setMessageReaction,
@@ -112,14 +116,38 @@ export const getMessages = async (req: Request, res: Response) => {
   try {
     const convoId = req.params.id as string;
     if (!convoId) throw new Error("No convo id provided");
+    const userId = req.userId as string;
     const cursor = req.query.cursor as string | undefined;
     const limit = req.query.limit as unknown as number;
-    const page = await getConversationMessagesPage(convoId, cursor, limit);
-    return res
-      .status(200)
-      .json({ message: "Fetched the messages successfully", ...page });
+    const [page, cursors] = await Promise.all([
+      getConversationMessagesPage(convoId, cursor, limit),
+      findConversationReadCursors(convoId),
+    ]);
+    const otherParticipantLastReadAt = cursors
+      ? (cursors.participantOneId === userId
+          ? cursors.lastReadAtParticipantTwo
+          : cursors.lastReadAtParticipantOne)
+      : null;
+    return res.status(200).json({
+      message: "Fetched the messages successfully",
+      ...page,
+      otherParticipantLastReadAt,
+    });
   } catch (error) {
     return res.status(400).json({ error });
+  }
+};
+
+export const markConversationReadController = async (req: Request, res: Response) => {
+  try {
+    const convoId = req.params.id as string;
+    const userId = req.userId as string;
+    await markConversationRead({ convoId, userId });
+    return res.status(200).json({ message: "Conversation marked as read" });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: error instanceof Error ? error.message : "" });
   }
 };
 

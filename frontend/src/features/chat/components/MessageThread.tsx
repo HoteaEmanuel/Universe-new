@@ -17,6 +17,7 @@ const MessageSkeletonRow = ({ align }: { align: "start" | "end" }) => (
 type MessageThreadProps = {
   messages?: ChatMessage[];
   currentUserId: string;
+  otherParticipantLastReadAt?: string | null;
   variant: "direct" | "group";
   emptyLabel?: string;
   headerNote?: ReactNode;
@@ -56,6 +57,7 @@ const groupConsecutiveMessages = (messages: ChatMessage[]): ChatMessage[][] => {
 const MessageThread = ({
   messages,
   currentUserId,
+  otherParticipantLastReadAt,
   variant,
   emptyLabel = "No messages yet. Say hi!",
   headerNote,
@@ -76,6 +78,13 @@ const MessageThread = ({
   const lastMessageIdRef = useRef<string | null>(null);
   const pinnedToBottomRef = useRef(true);
   const groups = messages ? groupConsecutiveMessages(messages) : [];
+  const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : undefined;
+  const isLastMessageSeen =
+    variant === "direct" &&
+    !!lastMessage &&
+    getSenderId(lastMessage) === currentUserId &&
+    !!otherParticipantLastReadAt &&
+    new Date(otherParticipantLastReadAt) >= new Date(lastMessage.createdAt);
 
   const virtualizer = useVirtualizer({
     count: groups.length,
@@ -178,6 +187,7 @@ const MessageThread = ({
                         variant={variant}
                         isFirstInGroup={index === 0}
                         isLastInGroup={index === group.length - 1}
+                        showSeen={isLastMessageSeen && message.id === lastMessage?.id}
                         onOpenImage={setFullImage}
                         onDelete={onDelete}
                         onEdit={onEdit}

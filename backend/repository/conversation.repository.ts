@@ -58,6 +58,34 @@ export const findConversationById = async (id: string) => {
   };
 };
 
+export const markConversationRead = async (conversationId: string, userId: string) => {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { participantOneId: true, participantTwoId: true },
+  });
+  if (!conversation) return null;
+  const field =
+    conversation.participantOneId === userId
+      ? "lastReadAtParticipantOne"
+      : "lastReadAtParticipantTwo";
+  return prisma.conversation.update({
+    where: { id: conversationId },
+    data: { [field]: new Date() },
+  });
+};
+
+export const findConversationReadCursors = async (conversationId: string) => {
+  return prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: {
+      participantOneId: true,
+      participantTwoId: true,
+      lastReadAtParticipantOne: true,
+      lastReadAtParticipantTwo: true,
+    },
+  });
+};
+
 export const findAllConversationsByParticipant = async (userId: string) => {
   const conversations = await prisma.conversation.findMany({
     where: { OR: [{ participantOneId: userId }, { participantTwoId: userId }] },

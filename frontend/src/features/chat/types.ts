@@ -41,6 +41,7 @@ export type DirectConversation = {
   user?: ChatUser;
   lastMessage?: LastMessagePreview;
   updatedAt: string;
+  unreadCount?: number;
   name?: undefined;
 };
 
@@ -76,6 +77,7 @@ export type ChatMessagePage = {
   messages: ChatMessage[];
   nextCursor: string | null;
   hasMore: boolean;
+  otherParticipantLastReadAt?: string | null;
 };
 
 export type GroupMember = {

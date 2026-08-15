@@ -3,9 +3,11 @@ import {
   findAllConversationsByParticipant,
   findConversationById,
   findConversationByParticipants,
+  markConversationRead as markConversationReadRepo,
 } from "../repository/conversation.repository.js";
 import {
   createMessage,
+  countUnreadMessages,
   findMessageById,
 } from "../repository/message.repository.js";
 import { prisma } from "../database/prisma.js";
@@ -106,10 +108,33 @@ export const sendMessage = async (data: {
       conversationId: convoId,
     });
     await emitNewNotification(receiverId, notification);
+  } else {
+    await markConversationRead({ convoId, userId: receiverId });
   }
 
   io.to(getReceiverSocketId(receiverId)).emit("newMessage", message);
   return message;
+};
+
+export const markConversationRead = async (data: { convoId: string; userId: string }) => {
+  const { convoId, userId } = data;
+  const conversation = await markConversationReadRepo(convoId, userId);
+  if (!conversation) return null;
+
+  const otherUserId =
+    conversation.participantOneId === userId
+      ? conversation.participantTwoId
+      : conversation.participantOneId;
+
+  io.to(getReceiverSocketId(otherUserId)).emit("conversationRead", {
+    convoId,
+    readAt: (userId === conversation.participantOneId
+      ? conversation.lastReadAtParticipantOne
+      : conversation.lastReadAtParticipantTwo
+    )?.toISOString(),
+  });
+
+  return conversation;
 };
 
 export const deleteMessage = async (data: { messageId: string }) => {
@@ -182,10 +207,20 @@ export const setMessageReaction = async (data: {
 export const getUserConversations = async (userId: string) => {
   const conversations = await findAllConversationsByParticipant(userId);
 
-  return conversations.map((convo) => ({
-    id: convo.id,
-    lastMessage: convo.lastMessage,
-    updatedAt: convo.updatedAt,
-    user: convo.participants.find((p) => p.id !== userId),
-  }));
+  return Promise.all(
+    conversations.map(async (convo) => {
+      const myLastReadAt =
+        convo.participantOneId === userId
+          ? convo.lastReadAtParticipantOne
+          : convo.lastReadAtParticipantTwo;
+
+      return {
+        id: convo.id,
+        lastMessage: convo.lastMessage,
+        updatedAt: convo.updatedAt,
+        user: convo.participants.find((p) => p.id !== userId),
+        unreadCount: await countUnreadMessages(convo.id, userId, myLastReadAt),
+      };
+    }),
+  );
 };

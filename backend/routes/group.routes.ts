@@ -23,7 +23,8 @@ import {
   getDiscoverableGroupsController,
   reactToGroupMessageController,
 } from "../controllers/group.controller.js";
-import { rateLimiter } from "../middleware/rateLimiter.js";
+import { createRateLimiter } from "../middleware/rateLimiter.js";
+import { messageRateLimiter } from "../middleware/messageRateLimiter.js";
 import { validate } from "../middleware/validate.js";
 import {
   requireGroupMembership,
@@ -42,6 +43,14 @@ import {
   reactToGroupMessageSchema,
 } from "../schemas/group.schema.js";
 const router = express.Router();
+
+const groupActionRateLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 30,
+  keyFn: (req) => req.userId ?? req.socket.remoteAddress ?? "unknown",
+  message: "You're doing that too quickly. Please wait a moment and try again.",
+});
+
 router.post("/", validate({ body: createGroupSchema }), createGroupController);
 router.delete("/:id", requireGroupAdmin, deleteGroup);
 router.get("/user/:userId", requireSelf("userId"), getUserGroups);
@@ -77,14 +86,15 @@ router.post(
   addMemberToGroupController,
 );
 
-router.use(rateLimiter);
 router.post(
   "/:id/send-message",
   requireGroupMembership,
+  messageRateLimiter,
   imageUpload.any(),
   validate({ body: sendGroupMessageSchema }),
   sendMessageToGroupController,
 );
+router.use(groupActionRateLimiter);
 router.patch(
   "/edit-message/:messageId",
   requireGroupMessageOwner,

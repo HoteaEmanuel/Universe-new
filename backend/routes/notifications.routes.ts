@@ -8,14 +8,21 @@ import {
   seeNotifications,
 } from "../controllers/notifications.controller.js";
 const router = express.Router();
-import { rateLimiter } from "../middleware/rateLimiter.js";
+import { createRateLimiter } from "../middleware/rateLimiter.js";
 import { validate } from "../middleware/validate.js";
 import { requireSelf } from "../middleware/authorization.js";
 import {
   idParamSchema,
   notificationQuerySchema,
 } from "../schemas/notification.schema.js";
-router.use(rateLimiter);
+
+const notificationsRateLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 60,
+  keyFn: (req) => req.userId ?? req.socket.remoteAddress ?? "unknown",
+  message: "Too many requests. Please wait a moment and try again.",
+});
+router.use(notificationsRateLimiter);
 
 router.get(
   "/notifications/:id",

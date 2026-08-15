@@ -12,9 +12,10 @@ import {
   deleteMessageController,
   getConversationsController,
   reactToMessageController,
+  markConversationReadController,
 } from "../controllers/conversation.controller.js";
 import { imageUpload } from "../lib/imageUpload.js";
-import { rateLimiter } from "../middleware/rateLimiter.js";
+import { messageRateLimiter } from "../middleware/messageRateLimiter.js";
 import { validate } from "../middleware/validate.js";
 import {
   requireConversationParticipant,
@@ -30,6 +31,7 @@ import {
   reactToMessageSchema,
 } from "../schemas/conversation.schema.js";
 const router = express.Router();
+
 router.get("/", getConversationsController);
 router.get("/users", getConvoUsers);
 router.get("/:id", requireConversationParticipant, getConvoById);
@@ -53,6 +55,7 @@ router.get(
 );
 router.get("/:id/user", requireConversationParticipant, getConvoUser);
 router.get("/user/:id", getConversationByUserIds);
+router.post("/:id/read", requireConversationParticipant, markConversationReadController);
 
 router.delete(
   "/delete-messages/:id",
@@ -71,15 +74,16 @@ router.post(
   validate({ body: reactToMessageSchema }),
   reactToMessageController,
 );
-router.use(rateLimiter);
 router.post(
   "/start-conversation/:id",
+  messageRateLimiter,
   validate({ body: startConversationSchema }),
   startConversationController,
 );
 router.post(
   "/:id/send-message",
   requireConversationParticipant,
+  messageRateLimiter,
   imageUpload.any(),
   validate({ body: sendMessageSchema }),
   sendMessageController,

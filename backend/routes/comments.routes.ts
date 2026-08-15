@@ -8,7 +8,7 @@ import {
   removeLikeCommentController,
   sendCommentController,
 } from "../controllers/comment.controller.js";
-import { rateLimiter } from "../middleware/rateLimiter.js";
+import { createRateLimiter } from "../middleware/rateLimiter.js";
 import { validate } from "../middleware/validate.js";
 import { requireCommentOwner } from "../middleware/authorization.js";
 import {
@@ -17,6 +17,13 @@ import {
   sendCommentSchema,
 } from "../schemas/comment.schema.js";
 const router = express.Router();
+
+const commentRateLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 20,
+  keyFn: (req) => req.userId ?? req.socket.remoteAddress ?? "unknown",
+  message: "You're commenting too quickly. Please wait a moment and try again.",
+});
 router.get(
   "/posts/:id/comments",
   validate({ query: commentQuerySchema }),
@@ -30,7 +37,7 @@ router.get(
 router.get("/posts/:id/comments-count", getCommentsCount);
 router.post(
   "/posts/:id/send-comment",
-  rateLimiter,
+  commentRateLimiter,
   validate({ body: sendCommentSchema }),
   sendCommentController,
 );

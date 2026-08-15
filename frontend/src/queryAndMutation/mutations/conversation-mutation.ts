@@ -55,6 +55,18 @@ export const useSendMessageMutation = (conversationId?: string) => {
   });
 };
 
+export const useMarkConversationReadMutation = (conversationId?: string) => {
+  const queryClient = useQueryClient();
+  const { markConversationRead } = useConversationStore();
+
+  return useMutation({
+    mutationFn: () => markConversationRead(conversationId as string),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-conversations"] });
+    },
+  });
+};
+
 export const useStartConversationMutation = () => {
   const queryClient = useQueryClient();
   const { startConversation } = useConversationStore();

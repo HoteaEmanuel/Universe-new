@@ -33,6 +33,8 @@ const ConversationListItem = ({
         : "";
   const isImageOnly = !lastMessage?.content && !!lastMessage?.imageUrls?.length;
   const time = formatChatListTime(entry.updatedAt);
+  const unreadCount = !isGroup ? (entry.unreadCount ?? 0) : 0;
+  const hasUnread = unreadCount > 0;
 
   return (
     <li>
@@ -67,19 +69,27 @@ const ConversationListItem = ({
               <span className="shrink-0 text-xs text-muted-foreground">{time}</span>
             )}
           </div>
-          <p className="flex items-center gap-1 truncate text-sm text-muted-foreground">
+          <p
+            className={`flex items-center gap-1 truncate text-sm ${
+              hasUnread ? "font-semibold text-foreground" : "text-muted-foreground"
+            }`}
+          >
             {lastMessage ? (
-              <>
-                <span className="truncate">
-                  {prefix}
-                  {isImageOnly ? "" : lastMessage.content}
-                </span>
-                {isImageOnly && (
-                  <span className="inline-flex shrink-0 items-center gap-1">
-                    <Camera className="size-3.5" /> Photo
+              unreadCount > 1 ? (
+                <span className="truncate">+{unreadCount} new messages</span>
+              ) : (
+                <>
+                  <span className="truncate">
+                    {prefix}
+                    {isImageOnly ? "" : lastMessage.content}
                   </span>
-                )}
-              </>
+                  {isImageOnly && (
+                    <span className="inline-flex shrink-0 items-center gap-1">
+                      <Camera className="size-3.5" /> Photo
+                    </span>
+                  )}
+                </>
+              )
             ) : (
               "No messages yet"
             )}
