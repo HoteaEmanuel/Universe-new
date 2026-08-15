@@ -14,9 +14,12 @@ declare global {
       UPSTASH_REDIS_REST_URL: string;
       UPSTASH_REDIS_REST_TOKEN: string;
       UPSTASH_REDIS_URL: string;
-      CLOUDINARY_CLOUD_NAME: string;
-      CLOUDINARY_API_KEY: string;
-      CLOUDINARY_SECRET_KEY: string;
+      CLOUDFLARE_ACCESS_KEY: string;
+      CLOUDFLARE_SECRET_ACCESS: string;
+      CLOUDFLARE_ACCOUNT_ID: string;
+      CLOUDFLARE_S3_API: string;
+      CLOUDFLARE_BUCKET: string;
+      CLOUDFLARE_PUBLIC_URL: string;
       GEMINI_API_KEY: string;
       GNEWS_API_KEY: string;
       PORT?: string;

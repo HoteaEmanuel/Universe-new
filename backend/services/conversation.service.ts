@@ -10,7 +10,7 @@ import {
 } from "../repository/message.repository.js";
 import { prisma } from "../database/prisma.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
-import { uploadImageAndCleanup } from "../lib/cloudinary.js";
+import { uploadImage, deleteImages } from "../lib/storage.js";
 import {
   createMessageNotification,
   emitNewNotification,
@@ -19,9 +19,7 @@ import { findUserById } from "../repository/user.repository.js";
 
 import { getActiveConversationUsers } from "../lib/socket.js";
 
-interface UploadedImage {
-  path: string;
-}
+type UploadedImage = Express.Multer.File;
 
 export const startConversation = async (data: {
   authUserId: string;
@@ -60,20 +58,21 @@ export const sendMessage = async (data: {
   const conversation = await findConversationById(convoId);
   if (!conversation) throw new Error("Conversation doesnt exist");
 
-  let result: { secure_url: string; public_id: string }[] | undefined;
+  let uploaded: { url: string; key: string }[] | undefined;
   if (images && images.length > 0) {
-    result = await Promise.all(
+    uploaded = await Promise.all(
       images.map((image) =>
-        uploadImageAndCleanup(image.path, {
+        uploadImage({
+          buffer: image.buffer,
+          mimeType: image.mimetype,
           folder: "message_images",
-          resource_type: "image",
         }),
       ),
     );
   }
 
-  const imageSecureUrls = result?.map((r) => r.secure_url);
-  const imagePublicIds = result?.map((r) => r.public_id);
+  const imageSecureUrls = uploaded?.map((u) => u.url);
+  const imagePublicIds = uploaded?.map((u) => u.key);
 
   const receiverId =
     conversation.participantOneId === authUserId
@@ -118,6 +117,13 @@ export const deleteMessage = async (data: { messageId: string }) => {
   const message = await findMessageById(messageId);
   if (!message) throw new Error("Message not found");
   await prisma.message.update({ where: { id: messageId }, data: { deleted: true } });
+
+  if (message.imagePublicIds.length > 0) {
+    deleteImages(message.imagePublicIds).catch((error: unknown) => {
+      console.error(`Failed to delete storage images for message ${messageId}:`, error);
+    });
+  }
+
   io.to(getReceiverSocketId(message.receiverId)).emit("messageDeleted", messageId);
 };
 

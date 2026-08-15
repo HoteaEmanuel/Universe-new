@@ -19,13 +19,11 @@ import {
 } from "../repository/notification.repository.js";
 import { findUserById } from "../repository/user.repository.js";
 import { prisma } from "../database/prisma.js";
-import { uploadImageAndCleanup } from "../lib/cloudinary.js";
+import { uploadImage, deleteImages } from "../lib/storage.js";
 import type { GroupVisibility } from "../generated/prisma/client.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 
-interface UploadedImage {
-  path: string;
-}
+type UploadedImage = Express.Multer.File;
 
 export const createGroupService = async (data: {
   name: string;
@@ -84,20 +82,21 @@ export const sendMessage = async (data: {
 }) => {
   const { groupId, images, authUserId, messageText } = data;
 
-  let result: { secure_url: string; public_id: string }[] | undefined;
+  let uploaded: { url: string; key: string }[] | undefined;
   if (images && images.length > 0) {
-    result = await Promise.all(
+    uploaded = await Promise.all(
       images.map((image) =>
-        uploadImageAndCleanup(image.path, {
+        uploadImage({
+          buffer: image.buffer,
+          mimeType: image.mimetype,
           folder: "message_images",
-          resource_type: "image",
         }),
       ),
     );
   }
 
-  const imageSecureUrls = result?.map((r) => r.secure_url);
-  const imagePublicIds = result?.map((r) => r.public_id);
+  const imageSecureUrls = uploaded?.map((u) => u.url);
+  const imagePublicIds = uploaded?.map((u) => u.key);
 
   const group = await findGroupById(groupId);
   if (!group) throw new Error("Group doesnt exist");
@@ -169,6 +168,12 @@ export const deleteMessage = async (data: { messageId: string }) => {
     data: { deleted: true },
   });
 
+  if (message.imagePublicIds.length > 0) {
+    deleteImages(message.imagePublicIds).catch((error: unknown) => {
+      console.error(`Failed to delete storage images for group message ${messageId}:`, error);
+    });
+  }
+
   const groupMembers = await findGroupMembers(message.groupId);
   groupMembers.forEach((member) => {
     io.to(getReceiverSocketId(member.memberId)).emit("messageDeleted", {
@@ -225,11 +230,12 @@ export const updateGroupImage = async (data: {
   groupId: string;
 }) => {
   const { image, groupId } = data;
-  let result: { secure_url: string; public_id: string } | undefined;
-  if (image?.path) {
-    result = await uploadImageAndCleanup(image.path, {
+  let uploaded: { url: string; key: string } | undefined;
+  if (image?.buffer) {
+    uploaded = await uploadImage({
+      buffer: image.buffer,
+      mimeType: image.mimetype,
       folder: "group_covers",
-      resource_type: "image",
     });
   }
   const group = await findGroupById(groupId);
@@ -239,10 +245,16 @@ export const updateGroupImage = async (data: {
   await prisma.group.update({
     where: { id: groupId },
     data: {
-      coverImageUrl: result?.secure_url || group.coverImageUrl,
-      coverImagePublicId: result?.public_id || group.coverImagePublicId,
+      coverImageUrl: uploaded?.url || group.coverImageUrl,
+      coverImagePublicId: uploaded?.key || group.coverImagePublicId,
     },
   });
+
+  if (uploaded && group.coverImagePublicId) {
+    deleteImages([group.coverImagePublicId]).catch((error: unknown) => {
+      console.error(`Failed to delete previous cover image for group ${groupId}:`, error);
+    });
+  }
 };
 
 export const giveAdminRole = async (data: { groupId: string; memberId: string }) => {

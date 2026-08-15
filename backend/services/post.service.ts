@@ -11,7 +11,7 @@ import {
 } from "../repository/post.repository.js";
 import { findUserById } from "../repository/user.repository.js";
 import { prisma } from "../database/prisma.js";
-import { uploadImageAndCleanup } from "../lib/cloudinary.js";
+import { uploadImage, deleteImages } from "../lib/storage.js";
 import {
   createLike,
   deleteLike,
@@ -23,9 +23,7 @@ import {
   emitNewNotification,
 } from "../repository/notification.repository.js";
 
-interface UploadedImage {
-  path: string;
-}
+type UploadedImage = Express.Multer.File;
 
 const withIsSaved = <T extends { id: string }>(
   post: T,
@@ -89,22 +87,19 @@ export const createNewPost = async (data: CreatePostInput) => {
   const userId = data.userId;
   const images = data.images;
 
-  let result: { secure_url: string; public_id: string }[] = [];
+  let uploaded: { url: string; key: string }[] = [];
   if (images && images.length > 0) {
-    const uploadResults = await Promise.all(
+    uploaded = await Promise.all(
       images.map((image) =>
-        uploadImageAndCleanup(image.path, {
+        uploadImage({
+          buffer: image.buffer,
+          mimeType: image.mimetype,
           folder: "posts",
-          resource_type: "image",
         }),
       ),
     );
-    result = uploadResults;
   }
   const tagsArray = tags.split(" ").filter(Boolean).map((tag) => tag.toLowerCase());
-
-  const imageSecureUrls = result.map((r) => r.secure_url);
-  const imagePublicIds = result.map((r) => r.public_id);
 
   return createPost({
     userId,
@@ -112,8 +107,8 @@ export const createNewPost = async (data: CreatePostInput) => {
     body,
     location,
     tags: tagsArray,
-    imageUrls: imageSecureUrls,
-    imagePublicIds,
+    imageUrls: uploaded.map((u) => u.url),
+    imagePublicIds: uploaded.map((u) => u.key),
   });
 };
 
@@ -175,24 +170,38 @@ export const updatePost = async (data: UpdatePostInput) => {
 
   if (!postData) throw new Error("No post data");
 
-  let result: { secure_url: string; public_id: string }[] = [];
+  const currentPost = await findPostById(postId);
+  if (!currentPost) throw new Error("Post not found");
+
+  let uploaded: { url: string; key: string }[] = [];
   if (images && images.length > 0) {
-    const uploadResults = await Promise.all(
+    uploaded = await Promise.all(
       images.map((image) =>
-        uploadImageAndCleanup(image.path, {
+        uploadImage({
+          buffer: image.buffer,
+          mimeType: image.mimetype,
           folder: "posts",
-          resource_type: "image",
         }),
       ),
     );
-    result = uploadResults;
   }
-  const imageSecureUrls = result.map((r) => r.secure_url);
-  const imagePublicIds = result.map((r) => r.public_id);
 
   const existing = Array.isArray(postData?.images)
     ? postData.images
     : [postData?.images].filter((v): v is string => !!v);
+
+  // Retained images keep whichever storage key they already had; only the
+  // dropped-and-re-added case can't be recovered here, which matches the URLs
+  // the client actually sent back.
+  const urlToKey = new Map(
+    currentPost.imagesUrls.map((url, i) => [url, currentPost.imagesPublicIds[i]]),
+  );
+  const existingKeys = existing
+    .map((url) => urlToKey.get(url))
+    .filter((key): key is string => !!key);
+  const removedKeys = currentPost.imagesPublicIds.filter(
+    (key) => !existingKeys.includes(key),
+  );
 
   const tagsArray = (postData.tags ?? "")
     .split(" ")
@@ -203,8 +212,8 @@ export const updatePost = async (data: UpdatePostInput) => {
     where: { id: postId },
     data: {
       body: postData.body,
-      imagesUrls: [...existing, ...imageSecureUrls],
-      imagesPublicIds: imagePublicIds.length ? imagePublicIds : undefined,
+      imagesUrls: [...existing, ...uploaded.map((u) => u.url)],
+      imagesPublicIds: [...existingKeys, ...uploaded.map((u) => u.key)],
       location: postData?.location?.trim() ? postData.location : undefined,
       tags: {
         set: [],
@@ -215,6 +224,12 @@ export const updatePost = async (data: UpdatePostInput) => {
       },
     },
   });
+
+  if (removedKeys.length > 0) {
+    deleteImages(removedKeys).catch((error: unknown) => {
+      console.error(`Failed to delete removed post images for ${postId}:`, error);
+    });
+  }
 };
 
 export const deletePost = async (data: { postId: string }) => {
@@ -223,6 +238,12 @@ export const deletePost = async (data: { postId: string }) => {
   if (!post) throw new Error("Post not found");
   await deleteLikes(postId);
   await prisma.post.delete({ where: { id: postId } });
+
+  if (post.imagesPublicIds.length > 0) {
+    deleteImages(post.imagesPublicIds).catch((error: unknown) => {
+      console.error(`Failed to delete storage images for post ${postId}:`, error);
+    });
+  }
 };
 
 export const getSearchedPosts = async (text: string) => {

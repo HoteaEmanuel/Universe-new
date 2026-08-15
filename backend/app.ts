@@ -12,7 +12,6 @@ import searchRouter from "./routes/search.routes.js";
 import aiRouter from "./routes/aiRoutes.js";
 import notificationRouter from "./routes/notifications.routes.js";
 import cookieParser from "cookie-parser";
-import { v2 as cloudinary } from "cloudinary";
 import userRouter from "./routes/user.routes.js";
 import preferencesRouter from "./routes/preferences.routes.js";
 import { app, server } from "./lib/socket.js";
@@ -22,14 +21,6 @@ import { errorHandler } from "./middleware/errorHandler.js";
 dotenv.config();
 import passport from "passport";
 import "./config/passport.js";
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-const cloudApiKey = process.env.CLOUDINARY_API_KEY;
-const cloudSecretKey = process.env.CLOUDINARY_SECRET_KEY;
-cloudinary.config({
-  cloud_name: cloudName,
-  api_key: cloudApiKey,
-  api_secret: cloudSecretKey,
-});
 app.use(express.json());
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(cookieParser());

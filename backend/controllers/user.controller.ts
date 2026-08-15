@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import type {} from "multer";
-import { uploadImageAndCleanup } from "../lib/cloudinary.js";
+import { uploadImage, deleteImages } from "../lib/storage.js";
 import { prisma } from "../database/prisma.js";
 // Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
 // import { redis } from "../lib/redis.js";
@@ -78,12 +78,23 @@ export const updateUserImage = async (req: Request, res: Response) => {
     const user = await findUserById(req.userId as string);
     if (!user) throw new Error("User not found");
     if (!file) throw new Error("No file uploaded");
-    const result = await uploadImageAndCleanup(file.path, {
+    const uploaded = await uploadImage({
+      buffer: file.buffer,
+      mimeType: file.mimetype,
       folder: "users",
-      resource_type: "image",
     });
 
-    await updateUser(user.id, { profilePicture: result.secure_url });
+    await updateUser(user.id, {
+      profilePicture: uploaded.url,
+      profilePictureKey: uploaded.key,
+    });
+
+    if (user.profilePictureKey) {
+      deleteImages([user.profilePictureKey]).catch((error: unknown) => {
+        console.error(`Failed to delete previous avatar for user ${user.id}:`, error);
+      });
+    }
+
     return res.status(200).json({ message: "Updated the image successfully" });
   } catch (error) {
     return res.status(400).json({

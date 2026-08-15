@@ -37,6 +37,7 @@ model User {
   lastLogin                 DateTime                 @default(now())
   isVerified                Boolean                  @default(false)
   profilePicture            String?                  @default("")
+  profilePictureKey         String?
   university                String?
   major                     String?
   bio                       String?

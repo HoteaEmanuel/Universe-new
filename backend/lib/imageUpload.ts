@@ -12,7 +12,7 @@ export const ALLOWED_IMAGE_MIME_TYPES = new Set([
 ]);
 
 export const imageUpload = multer({
-  dest: "uploads/",
+  storage: multer.memoryStorage(),
   limits: { fileSize: MAX_IMAGE_SIZE },
   fileFilter: (req, file, cb) => {
     if (!ALLOWED_IMAGE_MIME_TYPES.has(file.mimetype)) {
