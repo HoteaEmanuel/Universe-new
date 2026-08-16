@@ -24,7 +24,8 @@ const NotificationBell = ({
   badgeCount: number;
 }) => {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user: authUser } = useAuthStore();
+  const user = authUser!;
   const [open, setOpen] = useState(false);
   const { data: notifications, isLoading } = useGetUnreadNotifications(user.id);
   const { mutate: seeNotifications, isPending: isMarkingSeen } =

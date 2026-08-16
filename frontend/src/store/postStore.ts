@@ -1,10 +1,40 @@
 import axios from "axios";
 import { create } from "zustand";
+import type {
+  CreatePostPayload,
+  Post,
+  PostAuthor,
+  PostsPage,
+  UpdatePostPayload,
+} from "../queryAndMutation/types";
+
 const API_URL =
   import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:5000/api";
 axios.defaults.withCredentials = true;
 
-export const usePostStore = create((set) => ({
+type PostStore = {
+  isLoading: boolean;
+  error: unknown;
+  getPostUser: (id?: string) => Promise<PostAuthor | undefined>;
+  getUserPosts: (id?: string) => Promise<Post[]>;
+  getSavedPosts: (id: string) => Promise<Post[]>;
+  getPost: (id?: string) => Promise<Post>;
+  createPost: (post: CreatePostPayload) => Promise<void>;
+  updatePost: (data: UpdatePostPayload) => Promise<void>;
+  deletePost: (id: string) => Promise<void>;
+  getRelatedPosts: (tag: string) => Promise<Post[]>;
+  getPosts: (feed: string, cursor?: string) => Promise<PostsPage>;
+  getLikes: (postId: string) => Promise<number | undefined>;
+  userHasLiked: (postId: string) => Promise<boolean | undefined>;
+  getUsersWhoLikedPost: (postId: string) => Promise<PostAuthor[] | undefined>;
+  likePost: (args: { postId: string }) => Promise<{ message: string }>;
+  unlikePost: (args: { postId: string }) => Promise<{ message: string } | undefined>;
+  checkSaved: (id: string) => Promise<{ isSaved: boolean }>;
+  getPostsByName: (name: string) => Promise<Post[]>;
+  getPostsByTag: (tag: string) => Promise<Post[]>;
+};
+
+export const usePostStore = create<PostStore>((set) => ({
   isLoading: false,
   error: null,
   getPostUser: async (id) => {
@@ -16,7 +46,7 @@ export const usePostStore = create((set) => ({
       return user;
     } catch (error) {
       set({ error: error });
-      throw new Error(error);
+      throw new Error(error as string);
     } finally {
       set({ isLoading: false });
     }
@@ -28,7 +58,7 @@ export const usePostStore = create((set) => ({
       return response.data.posts;
     } catch (error) {
       set({ error: error });
-      throw new Error(error);
+      throw new Error(error as string);
     } finally {
       set({ isLoading: false });
     }
@@ -42,7 +72,7 @@ export const usePostStore = create((set) => ({
       return response.data.savedPosts;
     } catch (error) {
       set({ error: error });
-      throw new Error(error);
+      throw new Error(error as string);
     } finally {
       set({ isLoading: false });
     }
@@ -54,16 +84,10 @@ export const usePostStore = create((set) => ({
       const post = response.data.post;
 
       console.log("FETCHED POST: ", post);
-      // const imageResponse = await fetch(post.imageUrl);
-      // const imageBlob = await imageResponse.blob();
-      // const image = new File([imageBlob], post.imagePublicId, {
-      //   type: imageBlob.type,
-      // });
-      // post.file = image;
       return post;
     } catch (error) {
       set({ error: error });
-      throw new Error(error);
+      throw new Error(error as string);
     } finally {
       set({ isLoading: false });
     }
@@ -103,8 +127,7 @@ export const usePostStore = create((set) => ({
       const formData = new FormData();
       console.log("DATA: ", data);
       formData.append("body", data.body);
-      if (data?.location);
-      formData.append("location", data.location);
+      if (data?.location) formData.append("location", data.location);
       formData.append("tags", data.tags);
       data.images.forEach((image) => {
         formData.append("images", image);
@@ -115,7 +138,7 @@ export const usePostStore = create((set) => ({
       });
     } catch (error) {
       set({ error: error });
-      throw new Error(error);
+      throw new Error(error as string);
     } finally {
       set({ isLoading: false });
     }
@@ -126,7 +149,7 @@ export const usePostStore = create((set) => ({
       await axios.delete(`${API_URL}/posts/${id}`);
     } catch (error) {
       set({ error: error });
-      throw new Error(error);
+      throw new Error(error as string);
     } finally {
       set({ isLoading: false });
     }
@@ -139,7 +162,7 @@ export const usePostStore = create((set) => ({
       return response.data.posts;
     } catch (error) {
       set({ error: error });
-      throw new Error(error);
+      throw new Error(error as string);
     } finally {
       set({ isLoading: false });
     }
@@ -157,6 +180,7 @@ export const usePostStore = create((set) => ({
       };
     } catch (error) {
       set({ error: error });
+      throw new Error(error as string);
     } finally {
       set({ isLoading: false });
     }
@@ -200,8 +224,7 @@ export const usePostStore = create((set) => ({
       const response = await axios.post(`${API_URL}/like-post`, {
         postId,
       });
-      if (!response.ok) throw new Error("Liking went wrong");
-      return response.json();
+      return response.data;
     } catch (error) {
       set({ error: error });
       throw error;
@@ -215,7 +238,7 @@ export const usePostStore = create((set) => ({
       const response = await axios.post(`${API_URL}/unlike-post`, {
         postId,
       });
-      return response.json();
+      return response.data;
     } catch (error) {
       set({ error: error });
     } finally {
@@ -229,7 +252,7 @@ export const usePostStore = create((set) => ({
       return response.data;
     } catch (error) {
       set({ error: error });
-      throw new Error(error);
+      throw new Error(error as string);
     } finally {
       set({ isLoading: false });
     }
@@ -241,7 +264,7 @@ export const usePostStore = create((set) => ({
       return response.data.posts;
     } catch (error) {
       set({ error: error });
-      throw new Error(error);
+      throw new Error(error as string);
     } finally {
       set({ isLoading: false });
     }
@@ -252,7 +275,7 @@ export const usePostStore = create((set) => ({
       return response.data.posts;
     } catch (error) {
       set({ error: error });
-      throw new Error(error);
+      throw new Error(error as string);
     } finally {
       set({ isLoading: false });
     }

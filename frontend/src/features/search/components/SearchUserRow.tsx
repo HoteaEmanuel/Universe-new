@@ -8,7 +8,7 @@ import type { ChatUser } from "../../chat/types";
 const SearchUserRow = ({ user }: { user: ChatUser }) => {
   const navigate = useNavigate();
   const { user: authUser } = useAuthStore();
-  const isSelf = user.id === authUser.id;
+  const isSelf = user.id === authUser!.id;
   const displayName = isSelf ? "You" : getFullName(user);
 
   const goToProfile = () =>

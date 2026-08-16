@@ -39,7 +39,8 @@ const menuButtonClass = cn(
 const SideSection = () => {
   const { pathname } = useLocation();
   const { notificationsOn } = useGlobalStore();
-  const { user, logOut } = useAuthStore();
+  const { user: authUser, logOut } = useAuthStore();
+  const user = authUser!;
   const [open, setOpen] = useState(false);
 
   useEffect(() => {

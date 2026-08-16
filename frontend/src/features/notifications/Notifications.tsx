@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useAuthStore } from "@/store/authStore";
 import { useSeeNotifications } from "@/queryAndMutation/mutations/notification-mutation";
 import {
@@ -14,6 +15,10 @@ import {
 } from "@/features/notifications/NotificationEmptyState";
 
 const SCROLL_FETCH_THRESHOLD = 150;
+// Notification rows vary with message length wrapping to multiple lines —
+// this is just the initial guess react-virtual uses before
+// `measureElement` corrects it to the row's real rendered height.
+const ESTIMATED_NOTIFICATION_HEIGHT = 64;
 
 const NotificationSkeletonRow = () => (
   <div className="flex items-start gap-2.5 p-2">
@@ -35,7 +40,7 @@ const NotificationSkeletonList = () => (
 
 const UnseenNotifications = () => {
   const { user } = useAuthStore();
-  const { data: notifications, isPending } = useGetUnreadNotifications(user.id);
+  const { data: notifications, isPending } = useGetUnreadNotifications(user!.id);
 
   if (isPending) return <NotificationSkeletonList />;
 
@@ -60,8 +65,17 @@ const NotificationHistory = () => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useGetNotificationsHistoryInfinite(user.id);
+  } = useGetNotificationsHistoryInfinite(user!.id);
   const listRef = useRef<HTMLDivElement>(null);
+  const notifications = data?.pages.flatMap((page) => page.notifications) ?? [];
+
+  const virtualizer = useVirtualizer({
+    count: notifications.length,
+    getScrollElement: () => listRef.current,
+    estimateSize: () => ESTIMATED_NOTIFICATION_HEIGHT,
+    overscan: 8,
+    getItemKey: (index) => notifications[index].id,
+  });
 
   useEffect(() => {
     const scrollEl = listRef.current;
@@ -80,17 +94,28 @@ const NotificationHistory = () => {
 
   if (isPending) return <NotificationSkeletonList />;
 
-  const notifications = data?.pages.flatMap((page) => page.notifications) ?? [];
-
   if (!notifications.length) {
     return <NoNotificationsState />;
   }
 
   return (
-    <div ref={listRef} className="flex h-full min-h-0 flex-col gap-1 overflow-y-auto">
-      {notifications.map((notification) => (
-        <NotificationItem key={notification.id} notification={notification} />
-      ))}
+    <div ref={listRef} className="h-full min-h-0 overflow-y-auto">
+      <div className="relative" style={{ height: virtualizer.getTotalSize() }}>
+        {virtualizer.getVirtualItems().map((virtualItem) => {
+          const notification = notifications[virtualItem.index];
+          return (
+            <div
+              key={virtualItem.key}
+              data-index={virtualItem.index}
+              ref={virtualizer.measureElement}
+              className="absolute top-0 left-0 w-full pb-1"
+              style={{ transform: `translateY(${virtualItem.start}px)` }}
+            >
+              <NotificationItem notification={notification} />
+            </div>
+          );
+        })}
+      </div>
       {isFetchingNextPage && <NotificationSkeletonRow />}
     </div>
   );
@@ -98,7 +123,7 @@ const NotificationHistory = () => {
 
 const Notifications = () => {
   const { user } = useAuthStore();
-  const { mutate: seeNotifications } = useSeeNotifications(user.id);
+  const { mutate: seeNotifications } = useSeeNotifications(user!.id);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => seeNotifications(), 2000);

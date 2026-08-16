@@ -48,8 +48,8 @@ const ProfileHeader = ({
   const { data: conversation } = useGetConversationByUsersIdsQuery(
     isOwnProfile ? undefined : user.id,
   );
-  const followMutation = useFollowMutation(user.id, authUser.id);
-  const unfollowMutation = useUnfollowMutation(user.id, authUser.id);
+  const followMutation = useFollowMutation(user.id, authUser!.id);
+  const unfollowMutation = useUnfollowMutation(user.id, authUser!.id);
 
   const handleMessageClick = () => {
     if (conversation) {

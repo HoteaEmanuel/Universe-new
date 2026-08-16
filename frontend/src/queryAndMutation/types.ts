@@ -1,3 +1,47 @@
+export type UserRole = "user" | "admin";
+export type AccountType = "normal" | "business";
+
+export type User = {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  name?: string | null;
+  email: string;
+  lastLogin?: string;
+  isVerified: boolean;
+  profilePicture?: string | null;
+  profilePictureKey?: string | null;
+  university?: string | null;
+  major?: string | null;
+  bio?: string | null;
+  role: UserRole;
+  googleId?: string | null;
+  accountType: AccountType;
+  identityVerified?: string;
+  verificationCode?: string | null;
+  verificationCodeExpiresAt?: string | null;
+  refreshToken?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type CreatePostPayload = {
+  title: string;
+  body?: string;
+  location?: string;
+  tags: string;
+  images: File[];
+};
+
+export type UpdatePostPayload = {
+  id: string;
+  title: string;
+  body: string;
+  location?: string;
+  tags: string;
+  images: (File | string)[];
+};
+
 export type Post = {
   id: string;
   userId: string;

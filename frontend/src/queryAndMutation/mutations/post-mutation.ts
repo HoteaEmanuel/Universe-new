@@ -1,23 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePostStore } from "../../store/postStore";
 import { toast } from "sonner";
+import type { CreatePostPayload, UpdatePostPayload } from "../types";
 
-export type CreatePostPayload = {
-  title: string;
-  body?: string;
-  location?: string;
-  tags: string;
-  images: File[];
-};
-
-export type UpdatePostPayload = {
-  id: string;
-  title: string;
-  body: string;
-  location?: string;
-  tags: string;
-  images: (File | string)[];
-};
+export type { CreatePostPayload, UpdatePostPayload };
 
 export const useCreatePostMutation = () => {
   const queryClient = useQueryClient();

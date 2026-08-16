@@ -52,7 +52,7 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
 
   if (isPendingUser || !user) return null;
 
-  const isOwnComment = authUser.id === user.id;
+  const isOwnComment = authUser!.id === user.id;
   const fullName = urlPathName(user);
 
   const handleToggleLike = () => {

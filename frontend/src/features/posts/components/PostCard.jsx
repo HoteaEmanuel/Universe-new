@@ -178,6 +178,7 @@ const PostCard = ({ post }) => {
     isPendingCommentsCount
   )
     return <PostSkeleton/>;
+  if (!creator) return null;
   const { firstName, name, lastName, profilePicture } = creator;
   const hasImages = !!post.imagesUrls?.length;
   const captionBlock = (

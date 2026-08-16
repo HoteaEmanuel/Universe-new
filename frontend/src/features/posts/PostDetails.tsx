@@ -42,7 +42,8 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
     document.title = "Post Details";
   }, [inModal]);
 
-  const { socket, user } = useAuthStore();
+  const { socket, user: authUser } = useAuthStore();
+  const user = authUser!;
   const { id: postId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

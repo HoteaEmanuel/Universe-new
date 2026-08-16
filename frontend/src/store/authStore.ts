@@ -1,10 +1,49 @@
 import { create } from "zustand";
 import axios from "axios";
-import { io } from "socket.io-client";
+import { io, type Socket } from "socket.io-client";
+import type { AccountType, User } from "../queryAndMutation/types";
+
 const BASE_URL = "http://localhost:5000";
 const API_URL = "http://localhost:5000/api";
 axios.defaults.withCredentials = true;
-export const useAuthStore = create((set, get) => ({
+
+type SignUpPayload = {
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  major?: string;
+  email: string;
+  password: string;
+  accountType?: AccountType;
+};
+
+type AuthStore = {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  error: string | null;
+  isCheckingAuth: boolean;
+  isVerified?: boolean;
+  socket: Socket | null;
+  onlineUsers: string[];
+  clearError: () => void;
+  signUp: (payload: SignUpPayload) => Promise<void>;
+  changeProfilePicture: (image: string) => Promise<void>;
+  getBusinessRegistrations: () => Promise<User[] | undefined>;
+  acceptBusinessRegistration: (id: string) => Promise<unknown>;
+  rejectBusinessRegistration: (id: string) => Promise<unknown>;
+  logIn: (email: string, password: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string) => Promise<void>;
+  sendVerificationEmail: (email: string) => Promise<void>;
+  verifyEmail: (verificationCode: string) => Promise<void>;
+  logOut: () => Promise<void>;
+  checkAuth: () => Promise<void>;
+  connectSocket: () => void;
+  disconnectSocket: () => void;
+};
+
+export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
   isLoading: false,
   isAuthenticated: false,
@@ -38,7 +77,8 @@ export const useAuthStore = create((set, get) => ({
     } catch (eroare) {
       console.log("EROARE LA SIGN UP");
       console.log(eroare);
-      set({ error: eroare?.response?.data?.message || "Sign up failed" });
+      const error = eroare as { response?: { data?: { message?: string } } };
+      set({ error: error?.response?.data?.message || "Sign up failed" });
       throw eroare;
     } finally {
       set({ isLoading: false });
@@ -57,12 +97,13 @@ export const useAuthStore = create((set, get) => ({
       //   }
       // );
       set((state) => ({
-        user: { ...state.user, profilePicture: image },
+        user: state.user ? { ...state.user, profilePicture: image } : state.user,
       }));
       // return response;
     } catch (error) {
-      set({ error: error });
-      throw new Error(error);
+      const err = error as { response?: { data?: { message?: string } } };
+      set({ error: err?.response?.data?.message || "Could not update profile picture" });
+      throw new Error(err?.response?.data?.message);
     } finally {
       set({ isLoading: false });
     }
@@ -70,11 +111,12 @@ export const useAuthStore = create((set, get) => ({
   getBusinessRegistrations: async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/auth/business-account-registrations`
+        `${API_URL}/auth/business-account-registrations`,
       );
       return response.data.businessRegistrations;
     } catch (error) {
-      set({ error: error?.response?.data?.message || "Login failed" });
+      const err = error as { response?: { data?: { message?: string } } };
+      set({ error: err?.response?.data?.message || "Login failed" });
     } finally {
       set({ isLoading: false });
     }
@@ -82,11 +124,12 @@ export const useAuthStore = create((set, get) => ({
   acceptBusinessRegistration: async (id) => {
     try {
       const response = await axios.post(
-        `${API_URL}/auth/accept-business-registrations/${id}`
+        `${API_URL}/auth/accept-business-registrations/${id}`,
       );
       return response;
     } catch (error) {
-      set({ error: error?.response?.data?.message || "Login failed" });
+      const err = error as { response?: { data?: { message?: string } } };
+      set({ error: err?.response?.data?.message || "Login failed" });
     } finally {
       set({ isLoading: false });
     }
@@ -94,11 +137,12 @@ export const useAuthStore = create((set, get) => ({
   rejectBusinessRegistration: async (id) => {
     try {
       const response = await axios.post(
-        `${API_URL}/auth/reject-business-registrations/${id}`
+        `${API_URL}/auth/reject-business-registrations/${id}`,
       );
       return response;
     } catch (error) {
-      set({ error: error?.response?.data?.message || "Login failed" });
+      const err = error as { response?: { data?: { message?: string } } };
+      set({ error: err?.response?.data?.message || "Login failed" });
     } finally {
       set({ isLoading: false });
     }
@@ -110,13 +154,14 @@ export const useAuthStore = create((set, get) => ({
         email,
         password,
       });
-      console.log(response)
+      console.log(response);
       set({ isAuthenticated: true, user: response?.data?.user || null });
       get().connectSocket();
     } catch (error) {
       console.log("ERROR FOUND");
-      console.log(error)
-      set({ error: error?.response?.data?.message || "Login failed" });
+      console.log(error);
+      const err = error as { response?: { data?: { message?: string } } };
+      set({ error: err?.response?.data?.message || "Login failed" });
     } finally {
       set({ isLoading: false });
     }
@@ -126,7 +171,8 @@ export const useAuthStore = create((set, get) => ({
     try {
       await axios.post(`${API_URL}/auth/forgot-password`, { email });
     } catch (error) {
-      set({ error: error.response.data.message || "Request failed" });
+      const err = error as { response: { data: { message?: string } } };
+      set({ error: err.response.data.message || "Request failed" });
       throw error;
     } finally {
       set({ isLoading: false });
@@ -135,10 +181,11 @@ export const useAuthStore = create((set, get) => ({
   resetPassword: async (token, password) => {
     set({ isLoading: true, error: null });
     try {
-      console.log(token,password);
+      console.log(token, password);
       await axios.post(`${API_URL}/auth/reset-password/${token}`, { password });
     } catch (eroare) {
-      set({ error: eroare.response.data.message || "Request failed" });
+      const err = eroare as { response: { data: { message?: string } } };
+      set({ error: err.response.data.message || "Request failed" });
       throw eroare;
     } finally {
       set({ isLoading: false });
@@ -149,9 +196,10 @@ export const useAuthStore = create((set, get) => ({
     try {
       await axios.post(`${API_URL}/auth/resend-verify-email`, { email });
     } catch (error) {
+      const err = error as { response: { data: { message?: string } } };
       set({
         isLoading: false,
-        error: error.response.data.message || "Could not find email",
+        error: err.response.data.message || "Could not find email",
       });
       throw error;
     } finally {
@@ -164,8 +212,9 @@ export const useAuthStore = create((set, get) => ({
       await axios.post(`${API_URL}/auth/verify-email`, { verificationCode });
       set({ isVerified: true, isLoading: false });
     } catch (eroare) {
+      const err = eroare as { response: { data: { message?: string } } };
       set({
-        error: eroare.response.data.message || "Verification failed",
+        error: err.response.data.message || "Verification failed",
       });
       throw eroare;
     } finally {
@@ -179,7 +228,8 @@ export const useAuthStore = create((set, get) => ({
       get().disconnectSocket();
       set({ isAuthenticated: false, user: null });
     } catch (error) {
-      set({ error: error.response.data.message || "Log out failed" });
+      const err = error as { response: { data: { message?: string } } };
+      set({ error: err.response.data.message || "Log out failed" });
     } finally {
       set({ isLoading: false });
     }
@@ -188,7 +238,6 @@ export const useAuthStore = create((set, get) => ({
     set({
       isLoading: true,
       error: null,
-      isAuthenticated: false,
       isCheckingAuth: true,
     });
     try {
@@ -200,14 +249,22 @@ export const useAuthStore = create((set, get) => ({
       });
       get().connectSocket();
     } catch (error) {
+      const err = error as { response?: { status?: number; data?: { message?: string } } };
+      if (!err.response) {
+        // Request never reached the server (offline, DNS failure, timeout,
+        // etc.) — that's not proof the session is invalid, so don't force a
+        // logout. Leave the existing auth state as-is; App retries this once
+        // connectivity comes back.
+        set({ isCheckingAuth: false, error: "Unable to reach the server" });
+        return;
+      }
       set({
         error:
-          error.response?.status === 401 ? null : error.response?.data?.message,
+          err.response.status === 401 ? null : err.response?.data?.message,
         isAuthenticated: false,
         user: null,
         isCheckingAuth: false,
       });
-      // throw new Error(error);
     } finally {
       set({ isLoading: false, isCheckingAuth: false });
     }
@@ -222,12 +279,12 @@ export const useAuthStore = create((set, get) => ({
     });
     socket.connect();
     set({ socket: socket });
-    socket.on("getOnlineUsers", (userIds) => {
+    socket.on("getOnlineUsers", (userIds: string[]) => {
       set({ onlineUsers: userIds });
     });
   },
   disconnectSocket: () => {
-    if (get().socket?.connected) get().socket.disconnect();
-    get().socket.on();
+    const socket = get().socket;
+    if (socket?.connected) socket.disconnect();
   },
 }));

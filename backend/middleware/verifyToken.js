@@ -42,7 +42,7 @@ export const verifyToken = async (req, res, next) => {
       req.userId = decodedRefresh.userId;
       return next();
     } catch (error) {
-      return res.status(400).json({ error });
+      return res.status(401).json({ message: "Session expired" });
     }
   }
 

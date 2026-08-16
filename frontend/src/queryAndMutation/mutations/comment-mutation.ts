@@ -25,7 +25,7 @@ export const useSendCommentMutation = (postId?: string) => {
 
       const optimisticComment: PostComment = {
         id: `optimistic-${Date.now()}`,
-        userId: user?.id,
+        userId: user?.id ?? "",
         postId: postId ?? "",
         text: comment,
         createdAt: new Date().toISOString(),
@@ -72,7 +72,7 @@ export const useSendReplyMutation = (postId?: string, parentId?: string) => {
 
       const optimisticReply: PostComment = {
         id: `optimistic-${Date.now()}`,
-        userId: user?.id,
+        userId: user?.id ?? "",
         postId: postId ?? "",
         text: comment,
         createdAt: new Date().toISOString(),

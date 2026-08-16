@@ -20,10 +20,7 @@ const ResetPassword = () => {
   const { token } = useParams();
   const onSubmit = async (data: ResetPasswordFormValues) => {
     try {
-      const response = await resetPassword(token, data.password);
-      if (response instanceof Error) {
-        throw response;
-      }
+      await resetPassword(token ?? "", data.password);
       navigate("/login");
     } catch (error) {
       return new Error(error as string);

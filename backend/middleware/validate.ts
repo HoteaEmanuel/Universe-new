@@ -11,7 +11,8 @@ interface ValidationErrorDetail {
   path: string;
   message: string;
 }
-
+/*
+Validate schema middleware  */
 export const validate = (schemas: ValidateSchemas) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const errors: ValidationErrorDetail[] = [];
