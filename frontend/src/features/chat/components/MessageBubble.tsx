@@ -17,6 +17,7 @@ import { urlPathName } from "../../../utils/urlPathFromName";
 import MessageActionsMenu from "./MessageActionsMenu";
 import EmojiPickerPopover from "./EmojiPickerPopover";
 import VoiceMessagePlayer from "./VoiceMessagePlayer";
+import MessageImageGrid from "./MessageImageGrid";
 import type { ChatMessage, ChatUser } from "../types";
 
 type MessageBubbleProps = {
@@ -26,7 +27,7 @@ type MessageBubbleProps = {
   isFirstInGroup?: boolean;
   isLastInGroup?: boolean;
   showSeen?: boolean;
-  onOpenImage: (image: string) => void;
+  onOpenGallery: (images: string[], index: number) => void;
   onDelete: (messageId: string) => void;
   onEdit: (messageId: string, newContent: string) => void;
   onReact: (messageId: string, emoji: string) => void;
@@ -184,7 +185,7 @@ const MessageBubble = ({
   isFirstInGroup = true,
   isLastInGroup = true,
   showSeen = false,
-  onOpenImage,
+  onOpenGallery,
   onDelete,
   onEdit,
   onReact,
@@ -237,16 +238,11 @@ const MessageBubble = ({
         )}
 
         {!message.deleted && message.imageUrls && message.imageUrls.length > 0 && (
-          <div data-slot="message-images" className="flex flex-col gap-1">
-            {message.imageUrls.map((image, index) => (
-              <img
-                key={index}
-                src={image}
-                alt="attachment"
-                className="max-h-72 max-w-full cursor-pointer rounded-2xl object-cover"
-                onClick={() => onOpenImage(image)}
-              />
-            ))}
+          <div data-slot="message-images">
+            <MessageImageGrid
+              images={message.imageUrls}
+              onOpen={(index) => onOpenGallery(message.imageUrls!, index)}
+            />
           </div>
         )}
 

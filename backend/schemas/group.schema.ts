@@ -29,6 +29,11 @@ export const sendGroupMessageSchema = z.object({
 });
 export type SendGroupMessageInput = z.infer<typeof sendGroupMessageSchema>;
 
+export const sendGroupVoiceMessageSchema = z.object({
+  durationSec: z.coerce.number().int().min(1).max(120),
+});
+export type SendGroupVoiceMessageInput = z.infer<typeof sendGroupVoiceMessageSchema>;
+
 export const editGroupMessageSchema = z.object({
   content: z
     .string()

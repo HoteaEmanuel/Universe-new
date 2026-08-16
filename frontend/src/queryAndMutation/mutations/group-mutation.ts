@@ -7,6 +7,7 @@ import type {
   ChatMessagePage,
   GroupVisibility,
   NewMessagePayload,
+  NewVoiceMessagePayload,
 } from "../../features/chat/types";
 import {
   appendOptimisticMessage,
@@ -47,6 +48,45 @@ export const useSendMessageToGroupMutation = (groupId?: string) => {
       const optimisticMessage: ChatMessage = {
         id: `optimistic-${Date.now()}`,
         content: message.messageText || undefined,
+        senderId: user?.id ?? "",
+        groupId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
+        appendOptimisticMessage(old, optimisticMessage),
+      );
+      return { previous };
+    },
+    onError: (_error, _message, context) => {
+      if (groupId && context?.previous) {
+        queryClient.setQueryData(["group-messages", groupId], context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["group-messages", groupId] });
+    },
+  });
+};
+
+export const useSendVoiceMessageToGroupMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { sendVoiceMessageToGroup } = useGroupStore();
+  const { user } = useAuthStore() as { user: { id: string } | null };
+
+  return useMutation({
+    mutationFn: (message: NewVoiceMessagePayload) =>
+      sendVoiceMessageToGroup(groupId as string, message),
+    onMutate: async (message) => {
+      if (!groupId) return;
+      const queryKey = ["group-messages", groupId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous =
+        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
+      const optimisticMessage: ChatMessage = {
+        id: `optimistic-${Date.now()}`,
+        audioUrl: URL.createObjectURL(message.audio),
+        audioDurationSec: message.durationSec,
         senderId: user?.id ?? "",
         groupId,
         createdAt: new Date().toISOString(),

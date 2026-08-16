@@ -1,5 +1,6 @@
 import express from "express";
 import { imageUpload } from "../lib/imageUpload.js";
+import { audioUpload } from "../lib/audioUpload.js";
 import {
   createGroupController,
   deleteGroup,
@@ -8,6 +9,7 @@ import {
   getGroupMessages,
   getGroupMediaController,
   sendMessageToGroupController,
+  sendVoiceMessageToGroupController,
   getGroupMemberById,
   getUsersFromSameUniversityNotInGroup,
   getGroupMembers,
@@ -37,6 +39,7 @@ import {
   createGroupSchema,
   addMemberToGroupSchema,
   sendGroupMessageSchema,
+  sendGroupVoiceMessageSchema,
   editGroupMessageSchema,
   groupMessagesQuerySchema,
   groupMediaQuerySchema,
@@ -93,6 +96,14 @@ router.post(
   imageUpload.any(),
   validate({ body: sendGroupMessageSchema }),
   sendMessageToGroupController,
+);
+router.post(
+  "/:id/send-voice-message",
+  requireGroupMembership,
+  messageRateLimiter,
+  audioUpload.single("audio"),
+  validate({ body: sendGroupVoiceMessageSchema }),
+  sendVoiceMessageToGroupController,
 );
 router.use(groupActionRateLimiter);
 router.patch(

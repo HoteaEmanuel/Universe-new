@@ -318,18 +318,21 @@ model GroupMembers {
 }
 
 model GroupMessage {
-  id             String   @id @default(uuid())
-  groupId        String
-  group          Group    @relation("GroupMessages", fields: [groupId], references: [id], onDelete: Cascade)
-  senderId       String
-  sender         User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  content        String?
-  imageUrls      String[] @default([])
-  imagePublicIds String[] @default([])
-  edited         Boolean  @default(false)
-  deleted        Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id               String   @id @default(uuid())
+  groupId          String
+  group            Group    @relation("GroupMessages", fields: [groupId], references: [id], onDelete: Cascade)
+  senderId         String
+  sender           User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content          String?
+  imageUrls        String[] @default([])
+  imagePublicIds   String[] @default([])
+  audioUrl         String?
+  audioKey         String?
+  audioDurationSec Int?
+  edited           Boolean  @default(false)
+  deleted          Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   lastMessageOf Group? @relation("GroupLastMessage")
   reactions     GroupMessageReaction[]

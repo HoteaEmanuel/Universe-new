@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MessageGroup } from "@/components/ui/message";
 import MessageBubble from "./MessageBubble";
-import FullImageModal from "../../../Modals/FullImageModal";
+import ImageGalleryModal from "../../../Modals/ImageGalleryModal";
 import type { ChatMessage, ChatUser } from "../types";
 
 const MessageSkeletonRow = ({ align }: { align: "start" | "end" }) => (
@@ -72,7 +72,9 @@ const MessageThread = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
-  const [fullImage, setFullImage] = useState<string | null>(null);
+  const [gallery, setGallery] = useState<{ images: string[]; index: number } | null>(
+    null,
+  );
   const prevScrollHeightRef = useRef<number | null>(null);
   const firstMessageIdRef = useRef<string | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
@@ -188,7 +190,9 @@ const MessageThread = ({
                         isFirstInGroup={index === 0}
                         isLastInGroup={index === group.length - 1}
                         showSeen={isLastMessageSeen && message.id === lastMessage?.id}
-                        onOpenImage={setFullImage}
+                        onOpenGallery={(images, imageIndex) =>
+                          setGallery({ images, index: imageIndex })
+                        }
                         onDelete={onDelete}
                         onEdit={onEdit}
                         onReact={onReact}
@@ -221,10 +225,11 @@ const MessageThread = ({
         </Button>
       )}
 
-      <FullImageModal
-        image={fullImage}
-        open={!!fullImage}
-        onClose={() => setFullImage(null)}
+      <ImageGalleryModal
+        images={gallery?.images ?? []}
+        initialIndex={gallery?.index ?? 0}
+        open={!!gallery}
+        onClose={() => setGallery(null)}
       />
     </div>
   );

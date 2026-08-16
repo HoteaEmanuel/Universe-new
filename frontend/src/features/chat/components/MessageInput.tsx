@@ -13,7 +13,10 @@ import {
   useSendMessageMutation,
   useSendVoiceMessageMutation,
 } from "../../../queryAndMutation/mutations/conversation-mutation";
-import { useSendMessageToGroupMutation } from "../../../queryAndMutation/mutations/group-mutation";
+import {
+  useSendMessageToGroupMutation,
+  useSendVoiceMessageToGroupMutation,
+} from "../../../queryAndMutation/mutations/group-mutation";
 import { useAuthStore } from "../../../store/authStore";
 import { getFullName } from "../../../utils/fullName";
 import ImagePickerModal from "./ImagePickerModal";
@@ -49,9 +52,14 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
     variant === "group" ? id : undefined,
   );
   const { mutate, isPending } = variant === "direct" ? directMutation : groupMutation;
-  const { mutate: mutateVoice, isPending: isSendingVoice } = useSendVoiceMessageMutation(
+  const directVoiceMutation = useSendVoiceMessageMutation(
     variant === "direct" ? id : undefined,
   );
+  const groupVoiceMutation = useSendVoiceMessageToGroupMutation(
+    variant === "group" ? id : undefined,
+  );
+  const { mutate: mutateVoice, isPending: isSendingVoice } =
+    variant === "direct" ? directVoiceMutation : groupVoiceMutation;
 
   const canSend = (text.trim().length > 0 || images.length > 0) && !isPending;
 
@@ -195,7 +203,7 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
             </Button>
           }
         />
-        {variant === "direct" && text.trim().length === 0 && images.length === 0 ? (
+        {text.trim().length === 0 && images.length === 0 ? (
           <Button
             type="button"
             variant="ghost"

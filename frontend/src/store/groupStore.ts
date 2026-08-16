@@ -8,6 +8,7 @@ import type {
   GroupConversation,
   GroupMember,
   GroupVisibility,
+  NewVoiceMessagePayload,
 } from "../features/chat/types";
 
 const API_URL =
@@ -32,6 +33,10 @@ type GroupStore = {
   sendMessageToGroup: (
     id: string,
     message: Record<string, unknown>,
+  ) => Promise<ChatMessage>;
+  sendVoiceMessageToGroup: (
+    id: string,
+    message: NewVoiceMessagePayload,
   ) => Promise<ChatMessage>;
   editMessageInGroup: (messageId: string, content: string) => Promise<ChatMessage>;
   deleteMessageInGroup: (messageId: string) => Promise<{ message: string }>;
@@ -125,6 +130,21 @@ export const useGroupStore = create<GroupStore>(() => ({
       return response.data;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not send message"));
+    }
+  },
+  sendVoiceMessageToGroup: async (id, { audio, durationSec }) => {
+    try {
+      const formData = new FormData();
+      formData.append("audio", audio);
+      formData.append("durationSec", String(durationSec));
+      const response = await axios.post(
+        `${API_URL}/groups/${id}/send-voice-message`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not send voice message"));
     }
   },
   editMessageInGroup: async (messageId, content) => {

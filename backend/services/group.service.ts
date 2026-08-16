@@ -138,6 +138,60 @@ export const sendMessage = async (data: {
   return groupMessage;
 };
 
+export const sendVoiceMessage = async (data: {
+  groupId: string;
+  authUserId: string;
+  audio: UploadedImage;
+  durationSec: number;
+}) => {
+  const { groupId, authUserId, audio, durationSec } = data;
+
+  const group = await findGroupById(groupId);
+  if (!group) throw new Error("Group doesnt exist");
+
+  const uploaded = await uploadImage({
+    buffer: audio.buffer,
+    mimeType: audio.mimetype,
+    folder: "message_audio",
+  });
+
+  const groupMessage = await createGroupMessage({
+    senderId: authUserId,
+    groupId,
+    audioUrl: uploaded.url,
+    audioKey: uploaded.key,
+    audioDurationSec: durationSec,
+  });
+
+  await prisma.group.update({
+    where: { id: groupId },
+    data: { lastMessageId: groupMessage.id },
+  });
+
+  const members = await findGroupMembers(groupId);
+  members.forEach((member) => {
+    io.to(getReceiverSocketId(member.memberId)).emit("newGroupMessage", groupMessage);
+  });
+
+  const sender = await findUserById(authUserId);
+  const recipients = members.filter((member) => member.memberId !== authUserId);
+  await Promise.all(
+    recipients.map(async (member) => {
+      const notification = await createGroupMessageNotification({
+        actionUserId: authUserId,
+        userId: member.memberId,
+        title: `New message in ${group.name}`,
+        type: "message",
+        message: `${sender?.firstName || sender?.name}: Voice message`,
+        groupId,
+      });
+      await emitNewNotification(member.memberId, notification);
+    }),
+  );
+
+  return groupMessage;
+};
+
 export const editMessage = async (data: {
   messageId: string;
   content: string;
@@ -168,9 +222,12 @@ export const deleteMessage = async (data: { messageId: string }) => {
     data: { deleted: true },
   });
 
-  if (message.imagePublicIds.length > 0) {
-    deleteImages(message.imagePublicIds).catch((error: unknown) => {
-      console.error(`Failed to delete storage images for group message ${messageId}:`, error);
+  const keysToDelete = message.audioKey
+    ? [...message.imagePublicIds, message.audioKey]
+    : message.imagePublicIds;
+  if (keysToDelete.length > 0) {
+    deleteImages(keysToDelete).catch((error: unknown) => {
+      console.error(`Failed to delete storage objects for group message ${messageId}:`, error);
     });
   }
 

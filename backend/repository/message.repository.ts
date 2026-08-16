@@ -51,10 +51,22 @@ interface CreateGroupMessageInput {
   messageText?: string | null;
   imageUrls?: string[];
   imagePublicIds?: string[];
+  audioUrl?: string | null;
+  audioKey?: string | null;
+  audioDurationSec?: number | null;
 }
 
 export const createGroupMessage = async (data: CreateGroupMessageInput) => {
-  const { senderId, groupId, messageText, imageUrls, imagePublicIds } = data;
+  const {
+    senderId,
+    groupId,
+    messageText,
+    imageUrls,
+    imagePublicIds,
+    audioUrl,
+    audioKey,
+    audioDurationSec,
+  } = data;
 
   return prisma.groupMessage.create({
     data: {
@@ -63,6 +75,9 @@ export const createGroupMessage = async (data: CreateGroupMessageInput) => {
       content: messageText || null,
       imageUrls: imageUrls ?? [],
       imagePublicIds: imagePublicIds ?? [],
+      audioUrl: audioUrl || null,
+      audioKey: audioKey || null,
+      audioDurationSec: audioDurationSec ?? null,
     },
   });
 };

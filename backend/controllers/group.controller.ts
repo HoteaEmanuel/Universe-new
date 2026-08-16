@@ -7,6 +7,7 @@ import {
   editMessage,
   giveAdminRole,
   sendMessage,
+  sendVoiceMessage,
   setGroupMessageReaction,
   updateGroupImage,
   addMemberToGroup,
@@ -154,6 +155,20 @@ export const sendMessageToGroupController = async (req: Request, res: Response) 
     const images = req.files as Express.Multer.File[] | undefined;
 
     const message = await sendMessage({ groupId, images, authUserId, messageText });
+    return res.status(201).json(message);
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const sendVoiceMessageToGroupController = async (req: Request, res: Response) => {
+  try {
+    const groupId = req.params.id as string;
+    const authUserId = req.userId as string;
+    const { durationSec } = req.body;
+    const audio = req.file as Express.Multer.File | undefined;
+    if (!audio) throw new Error("No audio file provided");
+    const message = await sendVoiceMessage({ groupId, authUserId, audio, durationSec });
     return res.status(201).json(message);
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
