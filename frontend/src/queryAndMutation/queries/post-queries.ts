@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { usePostStore } from "../../store/postStore";
-import type { Post, PostAuthor, PostsPage } from "../types";
+import type { Post, PostAuthor, PostsPage, UsersWhoLikedPage } from "../types";
 
 export const useGetPostQuery = (id?: string) => {
   const { getPost } = usePostStore();
@@ -80,11 +80,15 @@ export const useGetRelatedPostsQuery = (tag: string) => {
   });
 };
 
-export const useGetUsersWhoLikedPostQuery = (postId: string) => {
+export const useGetUsersWhoLikedInfiniteQuery = (postId: string) => {
   const { getUsersWhoLikedPost } = usePostStore();
-  return useQuery({
-    queryFn: () => getUsersWhoLikedPost(postId) as Promise<PostAuthor[]>,
+  return useInfiniteQuery<UsersWhoLikedPage>({
     queryKey: ["usersWhoLiked", postId],
+    queryFn: ({ pageParam }) =>
+      getUsersWhoLikedPost(postId, pageParam as string | undefined) as Promise<UsersWhoLikedPage>,
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
   });
 };
 

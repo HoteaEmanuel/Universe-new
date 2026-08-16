@@ -20,3 +20,9 @@ export const unfollowSchema = z.object({
     .uuid("unfollowId must be a valid id"),
 });
 export type UnfollowInput = z.infer<typeof unfollowSchema>;
+
+export const followListQuerySchema = z.object({
+  cursor: z.string().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type FollowListQueryInput = z.infer<typeof followListQuerySchema>;

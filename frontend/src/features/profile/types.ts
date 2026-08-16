@@ -1,11 +1,11 @@
 export type ProfileUser = {
   id: string;
-  firstName?: string;
-  lastName?: string;
-  name?: string;
-  profilePicture?: string;
-  university?: string;
-  major?: string;
-  bio?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  name?: string | null;
+  profilePicture?: string | null;
+  university?: string | null;
+  major?: string | null;
+  bio?: string | null;
   accountType?: "normal" | "business";
 };

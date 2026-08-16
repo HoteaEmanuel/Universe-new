@@ -29,6 +29,7 @@ import {
   postIdSchema,
   deletePostsByNameSchema,
   feedQuerySchema,
+  usersWhoLikedQuerySchema,
 } from "../schemas/post.schema.js";
 
 router.get("/post/:id", getPost);
@@ -43,7 +44,11 @@ router.get("/saved-posts/:id", getSavedPostsController);
 router.get("/check-saved/:id", checkSaved);
 router.get("/related-posts/:tag", getRelatedPosts);
 router.get("/likes/:id", getLikes);
-router.get("/users-who-liked/:id", getUsersWhoLikedPost);
+router.get(
+  "/users-who-liked/:id",
+  validate({ query: usersWhoLikedQuerySchema }),
+  getUsersWhoLikedPost,
+);
 
 router.post(
   "/like-post",

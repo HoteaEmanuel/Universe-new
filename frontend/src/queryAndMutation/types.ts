@@ -69,6 +69,28 @@ export type PostAuthor = {
   profilePicture?: string;
 };
 
+export type UsersWhoLikedPage = {
+  users: PostAuthor[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
+export type FollowUser = {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  profilePicture?: string;
+  university?: string;
+  accountType?: AccountType;
+};
+
+export type FollowListPage = {
+  users: FollowUser[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type PostComment = {
   id: string;
   userId: string;

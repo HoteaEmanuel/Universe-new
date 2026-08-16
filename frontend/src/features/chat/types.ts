@@ -1,10 +1,10 @@
 export type ChatUser = {
   id: string;
-  firstName?: string;
-  lastName?: string;
-  name?: string;
-  profilePicture?: string;
-  university?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  name?: string | null;
+  profilePicture?: string | null;
+  university?: string | null;
   accountType?: string;
 };
 

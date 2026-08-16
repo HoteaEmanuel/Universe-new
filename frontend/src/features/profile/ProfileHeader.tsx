@@ -37,10 +37,8 @@ const ProfileHeader = ({
     "followers" | "following" | null
   >(null);
 
-  const { data: followers, isPending: isPendingFollowers } =
-    useGetFollowersQuery(user.id);
-  const { data: following, isPending: isPendingFollowing } =
-    useGetFollowingQuery(user.id);
+  const { data: followers } = useGetFollowersQuery(user.id);
+  const { data: following } = useGetFollowingQuery(user.id);
 
   const { data: isFollowing } = useIsFollowingQuery(
     isOwnProfile ? undefined : user.id,
@@ -193,16 +191,14 @@ const ProfileHeader = ({
       <FollowListSheet
         open={followListOpen === "followers"}
         onClose={() => setFollowListOpen(null)}
+        userId={user.id}
         title="Followers"
-        users={followers}
-        isLoading={isPendingFollowers}
       />
       <FollowListSheet
         open={followListOpen === "following"}
         onClose={() => setFollowListOpen(null)}
+        userId={user.id}
         title="Following"
-        users={following}
-        isLoading={isPendingFollowing}
       />
     </div>
   );

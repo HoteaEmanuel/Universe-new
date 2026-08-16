@@ -6,6 +6,7 @@ import type {
   PostAuthor,
   PostsPage,
   UpdatePostPayload,
+  UsersWhoLikedPage,
 } from "../queryAndMutation/types";
 
 const API_URL =
@@ -26,7 +27,10 @@ type PostStore = {
   getPosts: (feed: string, cursor?: string) => Promise<PostsPage>;
   getLikes: (postId: string) => Promise<number | undefined>;
   userHasLiked: (postId: string) => Promise<boolean | undefined>;
-  getUsersWhoLikedPost: (postId: string) => Promise<PostAuthor[] | undefined>;
+  getUsersWhoLikedPost: (
+    postId: string,
+    cursor?: string,
+  ) => Promise<UsersWhoLikedPage | undefined>;
   likePost: (args: { postId: string }) => Promise<{ message: string }>;
   unlikePost: (args: { postId: string }) => Promise<{ message: string } | undefined>;
   checkSaved: (id: string) => Promise<{ isSaved: boolean }>;
@@ -207,11 +211,17 @@ export const usePostStore = create<PostStore>((set) => ({
       set({ isLoading: false });
     }
   },
-  getUsersWhoLikedPost: async (postId) => {
+  getUsersWhoLikedPost: async (postId, cursor) => {
     set({ isLoading: true });
     try {
-      const response = await axios.get(`${API_URL}/users-who-liked/${postId}`);
-      return response.data.users;
+      const response = await axios.get(`${API_URL}/users-who-liked/${postId}`, {
+        params: cursor ? { cursor } : undefined,
+      });
+      return {
+        users: response.data.users,
+        nextCursor: response.data.nextCursor,
+        hasMore: response.data.hasMore,
+      };
     } catch (error) {
       set({ error: error });
     } finally {

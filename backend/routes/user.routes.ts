@@ -8,6 +8,8 @@ import {
   followsUser,
   getFollowers,
   getFollowing,
+  getRelevantFollowers,
+  getRelevantFollowing,
   getAllUsers,
   getUsersFromSameUniversity,
   updateBio,
@@ -19,6 +21,7 @@ import {
   updateBioSchema,
   followSchema,
   unfollowSchema,
+  followListQuerySchema,
 } from "../schemas/user.schema.js";
 import { imageUpload } from "../lib/imageUpload.js";
 
@@ -29,6 +32,16 @@ router.get("/users/:id", getUserById);
 router.get("/users-by-name/:name", getUserByName);
 router.get("/followers/:id", getFollowers);
 router.get("/following/:id", getFollowing);
+router.get(
+  "/followers-relevant/:id",
+  validate({ query: followListQuerySchema }),
+  getRelevantFollowers,
+);
+router.get(
+  "/following-relevant/:id",
+  validate({ query: followListQuerySchema }),
+  getRelevantFollowing,
+);
 router.patch("/update-bio", validate({ body: updateBioSchema }), updateBio);
 router.get("/follows-user/:id", followsUser);
 router.get("/users-from-same-university", getUsersFromSameUniversity);

@@ -16,7 +16,7 @@ type ProfileImageModalProps = {
   open: boolean;
   onClose: () => void;
   entityType?: "user" | "group";
-  currentImageUrl?: string;
+  currentImageUrl?: string | null;
 };
 
 const ProfileImageModal = ({

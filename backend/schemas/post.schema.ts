@@ -53,3 +53,9 @@ export const feedQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(10),
 });
 export type FeedQueryInput = z.infer<typeof feedQuerySchema>;
+
+export const usersWhoLikedQuerySchema = z.object({
+  cursor: z.string().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type UsersWhoLikedQueryInput = z.infer<typeof usersWhoLikedQuerySchema>;

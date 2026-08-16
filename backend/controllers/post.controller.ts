@@ -2,6 +2,9 @@ import type { Request, Response } from "express";
 import type {} from "multer";
 import { prisma } from "../database/prisma.js";
 import { findPostsByTag } from "../repository/post.repository.js";
+import { getViewerRelevantUserIds } from "../repository/relevance.repository.js";
+import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
+import type { UsersWhoLikedQueryInput } from "../schemas/post.schema.js";
 import {
   createNewPost,
   deletePost,
@@ -150,21 +153,52 @@ export const getLikes = async (req: Request, res: Response) => {
   }
 };
 
+const LIKE_USER_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  name: true,
+  profilePicture: true,
+} as const;
+
 export const getUsersWhoLikedPost = async (req: Request, res: Response) => {
   const postId = req.params.id as string;
+  const viewerId = req.userId as string;
   try {
     const post = await prisma.post.findUnique({ where: { id: postId } });
     if (!post) return res.status(400).json({ message: "Post not found" });
-    const likes = await prisma.like.findMany({
-      where: { postId },
-      include: {
-        user: {
-          select: { id: true, firstName: true, lastName: true, name: true, profilePicture: true },
-        },
-      },
+
+    const { cursor, limit } = req.query as unknown as UsersWhoLikedQueryInput;
+    const relevantIds = [...(await getViewerRelevantUserIds(viewerId))];
+
+    const { items, nextCursor, hasMore } = await getRelevantFirstPage({
+      cursor,
+      limit,
+      fetchRelevant: () =>
+        relevantIds.length === 0
+          ? Promise.resolve([])
+          : prisma.like.findMany({
+              where: { postId, userId: { in: relevantIds } },
+              orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+              include: { user: { select: LIKE_USER_SELECT } },
+            }),
+      fetchNonRelevant: (cursorId, take) =>
+        prisma.like.findMany({
+          where: {
+            postId,
+            ...(relevantIds.length > 0 ? { userId: { notIn: relevantIds } } : {}),
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take,
+          ...(cursorId ? { cursor: { id: cursorId }, skip: 1 } : {}),
+          include: { user: { select: LIKE_USER_SELECT } },
+        }),
     });
-    const users = likes.map((like) => like.user);
-    return res.status(200).json({ message: "Users who liked the post", users });
+
+    const users = items.map((like) => like.user);
+    return res
+      .status(200)
+      .json({ message: "Users who liked the post", users, nextCursor, hasMore });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

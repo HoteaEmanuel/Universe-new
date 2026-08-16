@@ -6,6 +6,9 @@ import { prisma } from "../database/prisma.js";
 // import { redis } from "../lib/redis.js";
 import { findUserById, updateUser } from "../repository/user.repository.js";
 import { follow, savePost, unfollow } from "../services/user.service.js";
+import { getViewerRelevantUserIds } from "../repository/relevance.repository.js";
+import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
+import type { FollowListQueryInput } from "../schemas/user.schema.js";
 
 const PROFILE_CARD_SELECT = {
   id: true,
@@ -216,6 +219,109 @@ export const getFollowing = async (req: Request, res: Response) => {
     return res.status(200).json({
       message: "Fetched the following",
       following: data,
+    });
+  } catch (error) {
+    return res.status(400).json({ error });
+  }
+};
+
+const FOLLOWING_SELECT = {
+  ...PROFILE_CARD_SELECT,
+  accountType: true,
+  university: true,
+  name: true,
+} as const;
+
+export const getRelevantFollowers = async (req: Request, res: Response) => {
+  const userId = req.params.id as string;
+  const viewerId = req.userId as string;
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error("User not found");
+
+    const { cursor, limit } = req.query as unknown as FollowListQueryInput;
+    const relevantIds = [...(await getViewerRelevantUserIds(viewerId))];
+
+    const { items, nextCursor, hasMore } = await getRelevantFirstPage({
+      cursor,
+      limit,
+      fetchRelevant: () =>
+        relevantIds.length === 0
+          ? Promise.resolve([])
+          : prisma.follow.findMany({
+              where: { followingId: userId, followerId: { in: relevantIds } },
+              orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+              include: { follower: { select: PROFILE_CARD_SELECT } },
+            }),
+      fetchNonRelevant: (cursorId, take) =>
+        prisma.follow.findMany({
+          where: {
+            followingId: userId,
+            ...(relevantIds.length > 0
+              ? { followerId: { notIn: relevantIds } }
+              : {}),
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take,
+          ...(cursorId ? { cursor: { id: cursorId }, skip: 1 } : {}),
+          include: { follower: { select: PROFILE_CARD_SELECT } },
+        }),
+    });
+
+    const followers = items.map((f) => f.follower);
+    return res.status(200).json({
+      message: "Fetched the followers",
+      followers,
+      nextCursor,
+      hasMore,
+    });
+  } catch (error) {
+    return res.status(400).json({ error });
+  }
+};
+
+export const getRelevantFollowing = async (req: Request, res: Response) => {
+  const userId = req.params.id as string;
+  const viewerId = req.userId as string;
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error("User not found");
+
+    const { cursor, limit } = req.query as unknown as FollowListQueryInput;
+    const relevantIds = [...(await getViewerRelevantUserIds(viewerId))];
+
+    const { items, nextCursor, hasMore } = await getRelevantFirstPage({
+      cursor,
+      limit,
+      fetchRelevant: () =>
+        relevantIds.length === 0
+          ? Promise.resolve([])
+          : prisma.follow.findMany({
+              where: { followerId: userId, followingId: { in: relevantIds } },
+              orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+              include: { following: { select: FOLLOWING_SELECT } },
+            }),
+      fetchNonRelevant: (cursorId, take) =>
+        prisma.follow.findMany({
+          where: {
+            followerId: userId,
+            ...(relevantIds.length > 0
+              ? { followingId: { notIn: relevantIds } }
+              : {}),
+          },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take,
+          ...(cursorId ? { cursor: { id: cursorId }, skip: 1 } : {}),
+          include: { following: { select: FOLLOWING_SELECT } },
+        }),
+    });
+
+    const following = items.map((f) => f.following);
+    return res.status(200).json({
+      message: "Fetched the following",
+      following,
+      nextCursor,
+      hasMore,
     });
   } catch (error) {
     return res.status(400).json({ error });
