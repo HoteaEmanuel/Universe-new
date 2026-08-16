@@ -1,6 +1,12 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { usePostStore } from "../../store/postStore";
-import type { Post, PostAuthor, PostsPage, UsersWhoLikedPage } from "../types";
+import type {
+  Post,
+  PostAuthor,
+  PostsPage,
+  RelevantLiker,
+  UsersWhoLikedPage,
+} from "../types";
 
 export const useGetPostQuery = (id?: string) => {
   const { getPost } = usePostStore();
@@ -15,6 +21,14 @@ export const useGetLikesQuery = (postId: string) => {
   return useQuery({
     queryFn: () => getLikes(postId) as Promise<number>,
     queryKey: ["likes", postId],
+  });
+};
+
+export const useGetRelevantLikerQuery = (postId: string) => {
+  const { getRelevantLiker } = usePostStore();
+  return useQuery({
+    queryFn: () => getRelevantLiker(postId) as Promise<RelevantLiker>,
+    queryKey: ["relevantLiker", postId],
   });
 };
 

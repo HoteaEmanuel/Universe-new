@@ -5,6 +5,7 @@ import type {
   Post,
   PostAuthor,
   PostsPage,
+  RelevantLiker,
   UpdatePostPayload,
   UsersWhoLikedPage,
 } from "../queryAndMutation/types";
@@ -26,6 +27,7 @@ type PostStore = {
   getRelatedPosts: (tag: string) => Promise<Post[]>;
   getPosts: (feed: string, cursor?: string) => Promise<PostsPage>;
   getLikes: (postId: string) => Promise<number | undefined>;
+  getRelevantLiker: (postId: string) => Promise<RelevantLiker | undefined>;
   userHasLiked: (postId: string) => Promise<boolean | undefined>;
   getUsersWhoLikedPost: (
     postId: string,
@@ -194,6 +196,17 @@ export const usePostStore = create<PostStore>((set) => ({
     try {
       const response = await axios.get(`${API_URL}/likes/${postId}`);
       return response.data.likes;
+    } catch (error) {
+      set({ error: error });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  getRelevantLiker: async (postId) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get(`${API_URL}/relevant-liker/${postId}`);
+      return response.data.relevantLiker;
     } catch (error) {
       set({ error: error });
     } finally {

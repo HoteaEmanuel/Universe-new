@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store/authStore";
 import {
   useGetLikesQuery,
   useGetPostQuery,
+  useGetRelevantLikerQuery,
   usePostLikedQuery,
   usePostUserQuery,
 } from "@/queryAndMutation/queries/post-queries";
@@ -93,6 +94,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
   const { data: likes, isPending: isPendingLikes } = useGetLikesQuery(
     postId ?? "",
   );
+  const { data: relevantLiker } = useGetRelevantLikerQuery(postId ?? "");
   const { data: commentsCount } = useGetPostCommentsCount(postId);
 
   const likeMutation = useLikeMutation(postId ?? "");
@@ -359,14 +361,40 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
             )}
           </div>
           <div className="flex items-center gap-2 px-4 pt-1.5 text-sm">
-            <button
-              className="font-semibold hover:text-muted-foreground"
-              onClick={() => setSeeLikesModal(true)}
-            >
-              {formatCount(likes ?? 0)} {likes === 1 ? "like" : "likes"}
-            </button>
+            {relevantLiker ? (
+              <button
+                className="flex min-w-0 items-center gap-1.5 hover:text-muted-foreground"
+                onClick={() => setSeeLikesModal(true)}
+              >
+                {relevantLiker.profilePicture ? (
+                  <img
+                    src={relevantLiker.profilePicture}
+                    alt=""
+                    className="size-4 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <FaUserCircle className="size-4 shrink-0 text-muted-foreground" />
+                )}
+                <span className="min-w-0 truncate">
+                  Liked by{" "}
+                  <span className="font-semibold">
+                    {relevantLiker.firstName || relevantLiker.name}
+                  </span>
+                  {!!likes &&
+                    likes > 1 &&
+                    ` and ${formatCount(likes - 1)} other${likes - 1 === 1 ? "" : "s"}`}
+                </span>
+              </button>
+            ) : (
+              <button
+                className="font-semibold hover:text-muted-foreground"
+                onClick={() => setSeeLikesModal(true)}
+              >
+                {formatCount(likes ?? 0)} {likes === 1 ? "like" : "likes"}
+              </button>
+            )}
             {!!commentsCount && (
-              <span className="text-muted-foreground">
+              <span className="shrink-0 text-muted-foreground">
                 · {formatCount(commentsCount)}{" "}
                 {commentsCount === 1 ? "comment" : "comments"}
               </span>

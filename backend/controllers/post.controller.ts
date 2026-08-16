@@ -2,7 +2,10 @@ import type { Request, Response } from "express";
 import type {} from "multer";
 import { prisma } from "../database/prisma.js";
 import { findPostsByTag } from "../repository/post.repository.js";
-import { getViewerRelevantUserIds } from "../repository/relevance.repository.js";
+import {
+  getViewerRelevantUserIds,
+  getFollowConnectedUserIds,
+} from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
 import type { UsersWhoLikedQueryInput } from "../schemas/post.schema.js";
 import {
@@ -199,6 +202,35 @@ export const getUsersWhoLikedPost = async (req: Request, res: Response) => {
     return res
       .status(200)
       .json({ message: "Users who liked the post", users, nextCursor, hasMore });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const getRelevantLiker = async (req: Request, res: Response) => {
+  const postId = req.params.id as string;
+  const viewerId = req.userId as string;
+  try {
+    const post = await prisma.post.findUnique({ where: { id: postId } });
+    if (!post) return res.status(400).json({ message: "Post not found" });
+
+    const connectedIds = [...(await getFollowConnectedUserIds(viewerId))];
+    if (connectedIds.length === 0) {
+      return res
+        .status(200)
+        .json({ message: "No relevant liker", relevantLiker: null });
+    }
+
+    const like = await prisma.like.findFirst({
+      where: { postId, userId: { in: connectedIds } },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      include: { user: { select: LIKE_USER_SELECT } },
+    });
+
+    return res.status(200).json({
+      message: "Relevant liker fetched",
+      relevantLiker: like?.user ?? null,
+    });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

@@ -6,6 +6,7 @@ import {
   getSearchedPostsController,
   getPostUser,
   getLikes,
+  getRelevantLiker,
   userHasLiked,
   getPost,
   updatePostController,
@@ -44,6 +45,7 @@ router.get("/saved-posts/:id", getSavedPostsController);
 router.get("/check-saved/:id", checkSaved);
 router.get("/related-posts/:tag", getRelatedPosts);
 router.get("/likes/:id", getLikes);
+router.get("/relevant-liker/:id", getRelevantLiker);
 router.get(
   "/users-who-liked/:id",
   validate({ query: usersWhoLikedQuerySchema }),

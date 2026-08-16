@@ -57,3 +57,21 @@ export const getViewerRelevantUserIds = async (
   relevantIds.delete(viewerId);
   return relevantIds;
 };
+
+// Strictly the viewer's follow graph (they follow the user, or the user
+// follows them) - narrower than getViewerRelevantUserIds, which also counts
+// non-follow interactions like mutual likes/comments and DM history.
+export const getFollowConnectedUserIds = async (
+  viewerId: string,
+): Promise<Set<string>> => {
+  const rows = await prisma.follow.findMany({
+    where: { OR: [{ followerId: viewerId }, { followingId: viewerId }] },
+    select: { followerId: true, followingId: true },
+  });
+
+  const connectedIds = new Set<string>();
+  rows.forEach((r) =>
+    connectedIds.add(r.followerId === viewerId ? r.followingId : r.followerId),
+  );
+  return connectedIds;
+};

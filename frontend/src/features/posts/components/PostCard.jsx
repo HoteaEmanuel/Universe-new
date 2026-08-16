@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Link, useLocation } from "react-router-dom";
 import {
   useGetLikesQuery,
+  useGetRelevantLikerQuery,
   usePostLikedQuery,
   usePostUserQuery,
 } from "@/queryAndMutation/queries/post-queries";
@@ -64,6 +65,8 @@ const PostCard = ({ post }) => {
   const { data: isFollowing, isPending: isPendingIsFollowing } =
     useIsFollowingQuery(userId);
   const { data: likes, isPending: isPendingLikes } = useGetLikesQuery(postId);
+  const { data: relevantLiker, isPending: isPendingRelevantLiker } =
+    useGetRelevantLikerQuery(postId);
   const { data: commentsCount, isPending: isPendingCommentsCount } =
     useGetPostCommentsCount(postId);
   const likeMutation = useLikeMutation(postId);
@@ -175,6 +178,7 @@ const PostCard = ({ post }) => {
     isPendingIsFollowing ||
     isPendingPostUser ||
     isPendingLikes ||
+    isPendingRelevantLiker ||
     isPendingCommentsCount
   )
     return <PostSkeleton/>;
@@ -344,12 +348,37 @@ const PostCard = ({ post }) => {
       </div>
 
       <div className="px-4 pt-2">
-        <span
-          className="cursor-pointer text-sm font-semibold"
-          onClick={handleSeeLikesModal}
-        >
-          {formatCount(likes)} {likes === 1 ? "like" : "likes"}
-        </span>
+        {relevantLiker ? (
+          <div
+            className="flex cursor-pointer items-center gap-1.5 text-sm"
+            onClick={handleSeeLikesModal}
+          >
+            {relevantLiker.profilePicture ? (
+              <img
+                src={relevantLiker.profilePicture}
+                alt=""
+                className="size-4 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <FaUserCircle className="size-4 shrink-0 text-muted-foreground" />
+            )}
+            <span className="min-w-0 truncate">
+              Liked by{" "}
+              <span className="font-semibold">
+                {relevantLiker.firstName || relevantLiker.name}
+              </span>
+              {likes > 1 &&
+                ` and ${formatCount(likes - 1)} other${likes - 1 === 1 ? "" : "s"}`}
+            </span>
+          </div>
+        ) : (
+          <span
+            className="cursor-pointer text-sm font-semibold"
+            onClick={handleSeeLikesModal}
+          >
+            {formatCount(likes)} {likes === 1 ? "like" : "likes"}
+          </span>
+        )}
         {commentsCount > 0 && (
           <span className="ml-3 text-sm text-muted-foreground">
             {formatCount(commentsCount)}{" "}

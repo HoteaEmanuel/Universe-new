@@ -75,6 +75,8 @@ export type UsersWhoLikedPage = {
   hasMore: boolean;
 };
 
+export type RelevantLiker = PostAuthor | null;
+
 export type FollowUser = {
   id: string;
   firstName?: string;
