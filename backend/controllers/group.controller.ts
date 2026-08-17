@@ -7,6 +7,7 @@ import {
   editMessage,
   giveAdminRole,
   sendMessage,
+  sendFilesMessage,
   sendVoiceMessage,
   setGroupMessageReaction,
   updateGroupImage,
@@ -15,6 +16,7 @@ import {
 } from "../services/group.service.js";
 import { findGroupMembershipsForUser } from "../repository/group-members.repository.js";
 import {
+  getGroupFilesPage,
   getGroupMediaPage,
   getGroupMessagesPage,
 } from "../repository/message.repository.js";
@@ -139,8 +141,12 @@ export const getGroupMessages = async (req: Request, res: Response) => {
 export const getGroupMediaController = async (req: Request, res: Response) => {
   try {
     const groupId = req.params.id as string;
+    const type = req.query.type as "images" | "files";
     const before = req.query.before as string | undefined;
-    const page = await getGroupMediaPage(groupId, before);
+    const page =
+      type === "files"
+        ? await getGroupFilesPage(groupId, before)
+        : await getGroupMediaPage(groupId, before);
     return res.status(200).json({ message: "Fetched the group media", ...page });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
@@ -155,6 +161,20 @@ export const sendMessageToGroupController = async (req: Request, res: Response) 
     const images = req.files as Express.Multer.File[] | undefined;
 
     const message = await sendMessage({ groupId, images, authUserId, messageText });
+    return res.status(201).json(message);
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const sendFilesMessageToGroupController = async (req: Request, res: Response) => {
+  try {
+    const groupId = req.params.id as string;
+    const authUserId = req.userId as string;
+    const { messageText } = req.body;
+    const files = req.files as Express.Multer.File[] | undefined;
+    if (!files || files.length === 0) throw new Error("No files provided");
+    const message = await sendFilesMessage({ groupId, files, authUserId, messageText });
     return res.status(201).json(message);
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });

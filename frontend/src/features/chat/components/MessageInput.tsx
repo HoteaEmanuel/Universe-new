@@ -5,21 +5,26 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { ImagePlus, Mic, SendHorizontal, Smile, X } from "lucide-react";
+import { ImagePlus, Mic, Paperclip, SendHorizontal, Smile, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  useSendFilesMessageMutation,
   useSendMessageMutation,
   useSendVoiceMessageMutation,
 } from "../../../queryAndMutation/mutations/conversation-mutation";
 import {
+  useSendFilesMessageToGroupMutation,
   useSendMessageToGroupMutation,
   useSendVoiceMessageToGroupMutation,
 } from "../../../queryAndMutation/mutations/group-mutation";
 import { useAuthStore } from "../../../store/authStore";
 import { getFullName } from "../../../utils/fullName";
+import { formatFileSize } from "../utils/formatFileSize";
+import { getFileTypeIcon } from "../utils/fileTypeIcon";
 import ImagePickerModal from "./ImagePickerModal";
+import FilePickerModal from "./FilePickerModal";
 import EmojiPickerPopover from "./EmojiPickerPopover";
 import VoiceRecorder from "./VoiceRecorder";
 import type { ChatUser } from "../types";
@@ -35,7 +40,9 @@ const TYPING_EMIT_THROTTLE_MS = 2000;
 const MessageInput = ({ variant, id }: MessageInputProps) => {
   const [text, setText] = useState("");
   const [images, setImages] = useState<File[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [filePickerOpen, setFilePickerOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const { user, socket } = useAuthStore() as {
     user: ChatUser;
@@ -52,6 +59,14 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
     variant === "group" ? id : undefined,
   );
   const { mutate, isPending } = variant === "direct" ? directMutation : groupMutation;
+  const directFilesMutation = useSendFilesMessageMutation(
+    variant === "direct" ? id : undefined,
+  );
+  const groupFilesMutation = useSendFilesMessageToGroupMutation(
+    variant === "group" ? id : undefined,
+  );
+  const { mutate: mutateFiles, isPending: isSendingFiles } =
+    variant === "direct" ? directFilesMutation : groupFilesMutation;
   const directVoiceMutation = useSendVoiceMessageMutation(
     variant === "direct" ? id : undefined,
   );
@@ -61,7 +76,10 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
   const { mutate: mutateVoice, isPending: isSendingVoice } =
     variant === "direct" ? directVoiceMutation : groupVoiceMutation;
 
-  const canSend = (text.trim().length > 0 || images.length > 0) && !isPending;
+  const canSend =
+    (text.trim().length > 0 || images.length > 0 || files.length > 0) &&
+    !isPending &&
+    !isSendingFiles;
 
   const stopTyping = () => {
     if (typingTimeoutRef.current) {
@@ -107,18 +125,36 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
     e.preventDefault();
     if (!canSend) return;
     stopTyping();
-    mutate(
-      { messageText: text.trim(), images },
-      {
-        onError: (error: unknown) => {
-          toast.error(
-            error instanceof Error ? error.message : "Could not send message",
-          );
+    const trimmedText = text.trim();
+    const hasFiles = files.length > 0;
+
+    if (images.length > 0 || !hasFiles) {
+      mutate(
+        { messageText: trimmedText, images },
+        {
+          onError: (error: unknown) => {
+            toast.error(
+              error instanceof Error ? error.message : "Could not send message",
+            );
+          },
         },
-      },
-    );
+      );
+    }
+    if (hasFiles) {
+      mutateFiles(
+        { messageText: images.length > 0 ? "" : trimmedText, files },
+        {
+          onError: (error: unknown) => {
+            toast.error(
+              error instanceof Error ? error.message : "Could not send files",
+            );
+          },
+        },
+      );
+    }
     setText("");
     setImages([]);
+    setFiles([]);
   };
 
   const handleSendVoice = (audio: Blob, durationSec: number) => {
@@ -171,6 +207,37 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
           ))}
         </ul>
       )}
+      {files.length > 0 && (
+        <ul className="flex flex-col gap-1 pb-2">
+          {files.map((file, index) => {
+            const Icon = getFileTypeIcon(file.type);
+            return (
+              <li
+                key={`${file.name}-${index}`}
+                className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 px-2 py-1"
+              >
+                <Icon className="size-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatFileSize(file.size)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFiles((prev) => prev.filter((_, i) => i !== index))
+                  }
+                  aria-label={`Remove ${file.name}`}
+                  className="shrink-0 rounded-full p-1 text-muted-foreground hover:text-destructive"
+                >
+                  <X className="size-4" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <Button
           type="button"
@@ -180,6 +247,15 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
           onClick={() => setPickerOpen(true)}
         >
           <ImagePlus />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Attach files"
+          onClick={() => setFilePickerOpen(true)}
+        >
+          <Paperclip />
         </Button>
         <Input
           ref={inputRef}
@@ -203,7 +279,7 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
             </Button>
           }
         />
-        {text.trim().length === 0 && images.length === 0 ? (
+        {text.trim().length === 0 && images.length === 0 && files.length === 0 ? (
           <Button
             type="button"
             variant="ghost"
@@ -228,6 +304,11 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         setImages={setImages}
+      />
+      <FilePickerModal
+        open={filePickerOpen}
+        onClose={() => setFilePickerOpen(false)}
+        setFiles={setFiles}
       />
     </div>
   );

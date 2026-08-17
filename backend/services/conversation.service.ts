@@ -26,9 +26,11 @@ type UploadedImage = Express.Multer.File;
 const notificationPreviewText = (message: {
   content?: string | null;
   audioUrl?: string | null;
+  attachments?: { fileName: string }[];
 }) => {
   if (message.content) return message.content;
   if (message.audioUrl) return "Voice message";
+  if (message.attachments && message.attachments.length > 0) return "FILE";
   return "IMAGE";
 };
 
@@ -136,6 +138,49 @@ export const sendMessage = async (data: {
   return finalizeNewMessage({ convoId, authUserId, receiverId, message });
 };
 
+export const sendFilesMessage = async (data: {
+  convoId: string;
+  messageText?: string;
+  files: UploadedImage[];
+  authUserId: string;
+}) => {
+  const { convoId, messageText, files, authUserId } = data;
+  const conversation = await findConversationById(convoId);
+  if (!conversation) throw new Error("Conversation doesnt exist");
+
+  const uploaded = await Promise.all(
+    files.map(async (file) => {
+      const { url, key } = await uploadImage({
+        buffer: file.buffer,
+        mimeType: file.mimetype,
+        folder: "message_files",
+      });
+      return {
+        fileUrl: url,
+        fileKey: key,
+        fileName: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+      };
+    }),
+  );
+
+  const receiverId =
+    conversation.participantOneId === authUserId
+      ? conversation.participantTwoId
+      : conversation.participantOneId;
+
+  const message = await createMessage({
+    senderId: authUserId,
+    receiverId,
+    conversationId: convoId,
+    content: messageText,
+    attachments: uploaded,
+  });
+
+  return finalizeNewMessage({ convoId, authUserId, receiverId, message });
+};
+
 export const sendVoiceMessage = async (data: {
   convoId: string;
   authUserId: string;
@@ -196,9 +241,11 @@ export const deleteMessage = async (data: { messageId: string }) => {
   if (!message) throw new Error("Message not found");
   await prisma.message.update({ where: { id: messageId }, data: { deleted: true } });
 
-  const keysToDelete = message.audioKey
-    ? [...message.imagePublicIds, message.audioKey]
-    : message.imagePublicIds;
+  const keysToDelete = [
+    ...message.imagePublicIds,
+    ...(message.audioKey ? [message.audioKey] : []),
+    ...message.attachments.map((attachment) => attachment.fileKey),
+  ];
   if (keysToDelete.length > 0) {
     deleteImages(keysToDelete).catch((error: unknown) => {
       console.error(`Failed to delete storage objects for message ${messageId}:`, error);

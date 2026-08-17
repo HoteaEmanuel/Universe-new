@@ -18,7 +18,8 @@ import MessageActionsMenu from "./MessageActionsMenu";
 import EmojiPickerPopover from "./EmojiPickerPopover";
 import VoiceMessagePlayer from "./VoiceMessagePlayer";
 import MessageImageGrid from "./MessageImageGrid";
-import type { ChatMessage, ChatUser } from "../types";
+import MessageFileList from "./MessageFileList";
+import type { ChatMessage, ChatUser, MessageAttachment } from "../types";
 
 type MessageBubbleProps = {
   message: ChatMessage;
@@ -28,6 +29,7 @@ type MessageBubbleProps = {
   isLastInGroup?: boolean;
   showSeen?: boolean;
   onOpenGallery: (images: string[], index: number) => void;
+  onOpenFiles: (attachments: MessageAttachment[], index: number) => void;
   onDelete: (messageId: string) => void;
   onEdit: (messageId: string, newContent: string) => void;
   onReact: (messageId: string, emoji: string) => void;
@@ -186,6 +188,7 @@ const MessageBubble = ({
   isLastInGroup = true,
   showSeen = false,
   onOpenGallery,
+  onOpenFiles,
   onDelete,
   onEdit,
   onReact,
@@ -246,6 +249,16 @@ const MessageBubble = ({
           </div>
         )}
 
+        {!message.deleted && message.attachments && message.attachments.length > 0 && (
+          <div data-slot="message-files">
+            <MessageFileList
+              attachments={message.attachments}
+              isOwn={isOwn}
+              onOpen={(index) => onOpenFiles(message.attachments!, index)}
+            />
+          </div>
+        )}
+
         {!message.deleted && message.audioUrl && (
           <div
             data-slot="message-audio"
@@ -283,14 +296,16 @@ const MessageBubble = ({
         )}
 
         {!message.deleted && (message.reactions?.length ?? 0) > 0 && (
-          <ReactionsRow
-            reactions={summarizeReactions(message.reactions, currentUserId)}
-            variant={variant}
-            align={isOwn ? "end" : "start"}
-            onReact={(emoji) => onReact(message.id, emoji)}
-            currentUserId={currentUserId}
-            memberLookup={memberLookup}
-          />
+          <div data-slot="message-reactions">
+            <ReactionsRow
+              reactions={summarizeReactions(message.reactions, currentUserId)}
+              variant={variant}
+              align={isOwn ? "end" : "start"}
+              onReact={(emoji) => onReact(message.id, emoji)}
+              currentUserId={currentUserId}
+              memberLookup={memberLookup}
+            />
+          </div>
         )}
 
         <MessageFooter>

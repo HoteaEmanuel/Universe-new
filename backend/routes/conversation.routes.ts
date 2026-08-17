@@ -8,6 +8,7 @@ import {
   startConversationController,
   getConvoUsers,
   sendMessageController,
+  sendFilesMessageController,
   sendVoiceMessageController,
   editMessageController,
   deleteMessageController,
@@ -17,6 +18,7 @@ import {
 } from "../controllers/conversation.controller.js";
 import { imageUpload } from "../lib/imageUpload.js";
 import { audioUpload } from "../lib/audioUpload.js";
+import { fileUpload } from "../lib/fileUpload.js";
 import { messageRateLimiter } from "../middleware/messageRateLimiter.js";
 import { validate } from "../middleware/validate.js";
 import {
@@ -90,6 +92,14 @@ router.post(
   imageUpload.any(),
   validate({ body: sendMessageSchema }),
   sendMessageController,
+);
+router.post(
+  "/:id/send-files-message",
+  requireConversationParticipant,
+  messageRateLimiter,
+  fileUpload.array("files", 10),
+  validate({ body: sendMessageSchema }),
+  sendFilesMessageController,
 );
 router.post(
   "/:id/send-voice-message",

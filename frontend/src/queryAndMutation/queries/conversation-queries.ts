@@ -1,10 +1,11 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useConversationStore } from "../../store/conversationStore";
 import type {
-  ChatMediaPage,
   ChatMessagePage,
+  ChatResourcePage,
   ChatUser,
   DirectConversation,
+  ResourceType,
 } from "../../features/chat/types";
 
 export const useGetUserByConvoId = (id?: string) => {
@@ -36,11 +37,14 @@ export const useGetConvoMessagesInfinite = (id?: string) => {
   });
 };
 
-export const useGetConvoMediaInfinite = (id?: string) => {
-  const { getConvoMedia } = useConversationStore();
-  return useInfiniteQuery<ChatMediaPage>({
-    queryKey: ["conversation-media", id],
-    queryFn: ({ pageParam }) => getConvoMedia(id as string, pageParam as string | undefined),
+export const useGetConvoResourcesInfinite = <T,>(type: ResourceType, id?: string) => {
+  const { getConvoResources } = useConversationStore();
+  return useInfiniteQuery<ChatResourcePage<T>>({
+    queryKey: ["conversation-resources", type, id],
+    queryFn: ({ pageParam }) =>
+      getConvoResources(id as string, type, pageParam as string | undefined) as Promise<
+        ChatResourcePage<T>
+      >,
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,

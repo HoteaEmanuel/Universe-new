@@ -1,12 +1,15 @@
 import axios, { AxiosError } from "axios";
 import { create } from "zustand";
 import type {
+  ChatFilePage,
   ChatMediaPage,
   ChatMessage,
   ChatMessagePage,
   ChatUser,
   DirectConversation,
+  NewFilesMessagePayload,
   NewVoiceMessagePayload,
+  ResourceType,
 } from "../features/chat/types";
 
 const API_URL =
@@ -23,7 +26,11 @@ type ConversationStore = {
   getUserByConvoId: (id: string) => Promise<ChatUser>;
   getMessages: (id: string, cursor?: string) => Promise<ChatMessagePage>;
   markConversationRead: (id: string) => Promise<void>;
-  getConvoMedia: (id: string, before?: string) => Promise<ChatMediaPage>;
+  getConvoResources: (
+    id: string,
+    type: ResourceType,
+    before?: string,
+  ) => Promise<ChatMediaPage | ChatFilePage>;
   getConversationByUsersIds: (id: string) => Promise<DirectConversation | null>;
   getUserConversations: () => Promise<DirectConversation[]>;
   getConvoUsers: () => Promise<ChatUser[]>;
@@ -31,6 +38,10 @@ type ConversationStore = {
   sendMessage: (
     id: string,
     message: Record<string, unknown>,
+  ) => Promise<ChatMessage>;
+  sendFilesMessage: (
+    id: string,
+    message: NewFilesMessagePayload,
   ) => Promise<ChatMessage>;
   sendVoiceMessage: (
     id: string,
@@ -78,10 +89,10 @@ export const useConversationStore = create<ConversationStore>((set) => ({
       throw new Error(errorMessage(error, "Could not mark conversation as read"));
     }
   },
-  getConvoMedia: async (id, before) => {
+  getConvoResources: async (id, type, before) => {
     try {
       const response = await axios.get(`${API_URL}/conversations/${id}/media`, {
-        params: before ? { before } : undefined,
+        params: { type, ...(before ? { before } : {}) },
       });
       return {
         items: response.data.items,
@@ -140,6 +151,24 @@ export const useConversationStore = create<ConversationStore>((set) => ({
       return response.data;
     } catch (error) {
       const messageText = errorMessage(error, "Could not send message");
+      set({ error: messageText });
+      throw new Error(messageText);
+    }
+  },
+  sendFilesMessage: async (id, { messageText, files }) => {
+    try {
+      const formData = new FormData();
+      formData.append("messageText", messageText);
+      files.forEach((file) => formData.append("files", file));
+      const response = await axios.post(
+        `${API_URL}/conversations/${id}/send-files-message`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+      set({ error: null });
+      return response.data;
+    } catch (error) {
+      const messageText = errorMessage(error, "Could not send files");
       set({ error: messageText });
       throw new Error(messageText);
     }

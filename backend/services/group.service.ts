@@ -138,6 +138,70 @@ export const sendMessage = async (data: {
   return groupMessage;
 };
 
+export const sendFilesMessage = async (data: {
+  groupId: string;
+  files: UploadedImage[];
+  authUserId: string;
+  messageText?: string;
+}) => {
+  const { groupId, files, authUserId, messageText } = data;
+
+  const uploaded = await Promise.all(
+    files.map(async (file) => {
+      const { url, key } = await uploadImage({
+        buffer: file.buffer,
+        mimeType: file.mimetype,
+        folder: "message_files",
+      });
+      return {
+        fileUrl: url,
+        fileKey: key,
+        fileName: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+      };
+    }),
+  );
+
+  const group = await findGroupById(groupId);
+  if (!group) throw new Error("Group doesnt exist");
+
+  const groupMessage = await createGroupMessage({
+    senderId: authUserId,
+    groupId,
+    messageText,
+    attachments: uploaded,
+  });
+
+  await prisma.group.update({
+    where: { id: groupId },
+    data: { lastMessageId: groupMessage.id },
+  });
+
+  const members = await findGroupMembers(groupId);
+  members.forEach((member) => {
+    io.to(getReceiverSocketId(member.memberId)).emit("newGroupMessage", groupMessage);
+  });
+
+  const sender = await findUserById(authUserId);
+  const recipients = members.filter((member) => member.memberId !== authUserId);
+  await Promise.all(
+    recipients.map(async (member) => {
+      const notification = await createGroupMessageNotification({
+        actionUserId: authUserId,
+        userId: member.memberId,
+        title: `New message in ${group.name}`,
+        type: "message",
+        message: `${sender?.firstName || sender?.name}: ${groupMessage.content ? groupMessage.content : "FILE"}`,
+        groupId,
+      });
+      await emitNewNotification(member.memberId, notification);
+    }),
+  );
+
+  return groupMessage;
+};
+
 export const sendVoiceMessage = async (data: {
   groupId: string;
   authUserId: string;
@@ -222,9 +286,11 @@ export const deleteMessage = async (data: { messageId: string }) => {
     data: { deleted: true },
   });
 
-  const keysToDelete = message.audioKey
-    ? [...message.imagePublicIds, message.audioKey]
-    : message.imagePublicIds;
+  const keysToDelete = [
+    ...message.imagePublicIds,
+    ...(message.audioKey ? [message.audioKey] : []),
+    ...message.attachments.map((attachment) => attachment.fileKey),
+  ];
   if (keysToDelete.length > 0) {
     deleteImages(keysToDelete).catch((error: unknown) => {
       console.error(`Failed to delete storage objects for group message ${messageId}:`, error);

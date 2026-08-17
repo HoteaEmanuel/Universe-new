@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { create } from "zustand";
 import type {
+  ChatFilePage,
   ChatMediaPage,
   ChatMessage,
   ChatMessagePage,
@@ -8,7 +9,9 @@ import type {
   GroupConversation,
   GroupMember,
   GroupVisibility,
+  NewFilesMessagePayload,
   NewVoiceMessagePayload,
+  ResourceType,
 } from "../features/chat/types";
 
 const API_URL =
@@ -29,10 +32,18 @@ type GroupStore = {
   getDiscoverablePublicGroups: () => Promise<GroupConversation[]>;
   getGroupById: (id: string) => Promise<GroupConversation>;
   getGroupMessages: (id: string, cursor?: string) => Promise<ChatMessagePage>;
-  getGroupMedia: (id: string, before?: string) => Promise<ChatMediaPage>;
+  getGroupResources: (
+    id: string,
+    type: ResourceType,
+    before?: string,
+  ) => Promise<ChatMediaPage | ChatFilePage>;
   sendMessageToGroup: (
     id: string,
     message: Record<string, unknown>,
+  ) => Promise<ChatMessage>;
+  sendFilesMessageToGroup: (
+    id: string,
+    message: NewFilesMessagePayload,
   ) => Promise<ChatMessage>;
   sendVoiceMessageToGroup: (
     id: string,
@@ -106,10 +117,10 @@ export const useGroupStore = create<GroupStore>(() => ({
       throw new Error(errorMessage(error, "Could not load messages"));
     }
   },
-  getGroupMedia: async (id, before) => {
+  getGroupResources: async (id, type, before) => {
     try {
       const response = await axios.get(`${API_URL}/groups/${id}/media`, {
-        params: before ? { before } : undefined,
+        params: { type, ...(before ? { before } : {}) },
       });
       return {
         items: response.data.items,
@@ -130,6 +141,21 @@ export const useGroupStore = create<GroupStore>(() => ({
       return response.data;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not send message"));
+    }
+  },
+  sendFilesMessageToGroup: async (id, { messageText, files }) => {
+    try {
+      const formData = new FormData();
+      formData.append("messageText", messageText);
+      files.forEach((file) => formData.append("files", file));
+      const response = await axios.post(
+        `${API_URL}/groups/${id}/send-files-message`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not send files"));
     }
   },
   sendVoiceMessageToGroup: async (id, { audio, durationSec }) => {

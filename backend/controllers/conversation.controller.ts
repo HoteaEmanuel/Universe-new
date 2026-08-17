@@ -6,6 +6,7 @@ import {
   findConversationReadCursors,
 } from "../repository/conversation.repository.js";
 import {
+  getConversationFilesPage,
   getConversationMediaPage,
   getConversationMessagesPage,
 } from "../repository/message.repository.js";
@@ -16,6 +17,7 @@ import {
   getUserConversations,
   markConversationRead,
   sendMessage,
+  sendFilesMessage,
   sendVoiceMessage,
   startConversation,
   setMessageReaction,
@@ -155,8 +157,12 @@ export const markConversationReadController = async (req: Request, res: Response
 export const getConvoMediaController = async (req: Request, res: Response) => {
   try {
     const convoId = req.params.id as string;
+    const type = req.query.type as "images" | "files";
     const before = req.query.before as string | undefined;
-    const page = await getConversationMediaPage(convoId, before);
+    const page =
+      type === "files"
+        ? await getConversationFilesPage(convoId, before)
+        : await getConversationMediaPage(convoId, before);
     return res.status(200).json({ message: "Fetched the conversation media", ...page });
   } catch (error) {
     return res.status(400).json({ error });
@@ -186,6 +192,21 @@ export const sendMessageController = async (req: Request, res: Response) => {
     const { messageText } = req.body;
     const images = req.files as Express.Multer.File[] | undefined;
     const message = await sendMessage({ convoId, authUserId, messageText, images });
+
+    return res.status(201).json(message);
+  } catch (error) {
+    return res.status(400).json({ error });
+  }
+};
+
+export const sendFilesMessageController = async (req: Request, res: Response) => {
+  try {
+    const convoId = req.params.id as string;
+    const authUserId = req.userId as string;
+    const { messageText } = req.body;
+    const files = req.files as Express.Multer.File[] | undefined;
+    if (!files || files.length === 0) throw new Error("No files provided");
+    const message = await sendFilesMessage({ convoId, authUserId, messageText, files });
 
     return res.status(201).json(message);
   } catch (error) {

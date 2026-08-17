@@ -6,6 +6,7 @@ import type {
   ChatMessage,
   ChatMessagePage,
   GroupVisibility,
+  NewFilesMessagePayload,
   NewMessagePayload,
   NewVoiceMessagePayload,
 } from "../../features/chat/types";
@@ -48,6 +49,51 @@ export const useSendMessageToGroupMutation = (groupId?: string) => {
       const optimisticMessage: ChatMessage = {
         id: `optimistic-${Date.now()}`,
         content: message.messageText || undefined,
+        senderId: user?.id ?? "",
+        groupId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
+        appendOptimisticMessage(old, optimisticMessage),
+      );
+      return { previous };
+    },
+    onError: (_error, _message, context) => {
+      if (groupId && context?.previous) {
+        queryClient.setQueryData(["group-messages", groupId], context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["group-messages", groupId] });
+    },
+  });
+};
+
+export const useSendFilesMessageToGroupMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { sendFilesMessageToGroup } = useGroupStore();
+  const { user } = useAuthStore() as { user: { id: string } | null };
+
+  return useMutation({
+    mutationFn: (message: NewFilesMessagePayload) =>
+      sendFilesMessageToGroup(groupId as string, message),
+    onMutate: async (message) => {
+      if (!groupId) return;
+      const queryKey = ["group-messages", groupId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous =
+        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
+      const optimisticMessage: ChatMessage = {
+        id: `optimistic-${Date.now()}`,
+        content: message.messageText || undefined,
+        attachments: message.files.map((file, index) => ({
+          id: `optimistic-file-${index}`,
+          fileUrl: URL.createObjectURL(file),
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+        })),
         senderId: user?.id ?? "",
         groupId,
         createdAt: new Date().toISOString(),
@@ -189,6 +235,7 @@ export const useDeleteMessageInGroupMutation = (groupId?: string) => {
           deleted: true,
           content: undefined,
           imageUrls: [],
+          attachments: [],
         })),
       );
       return { previous };

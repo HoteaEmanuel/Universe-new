@@ -16,12 +16,21 @@ export type MessageReaction = {
   userId: string;
 };
 
+export type MessageAttachment = {
+  id: string;
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+};
+
 export type ChatMessage = {
   id: string;
   content?: string;
   imageUrls?: string[];
   audioUrl?: string;
   audioDurationSec?: number;
+  attachments?: MessageAttachment[];
   senderId: MessageSender;
   conversationId?: string;
   groupId?: string;
@@ -36,6 +45,7 @@ export type LastMessagePreview = {
   content?: string;
   imageUrls?: string[];
   audioUrl?: string;
+  attachments?: MessageAttachment[];
   senderId?: MessageSender;
 };
 
@@ -64,17 +74,33 @@ export type GroupConversation = {
 
 export type ConversationListEntry = DirectConversation | GroupConversation;
 
+export type ResourceType = "images" | "files"; // extend with "links" etc. as new resource tabs are added
+
+export type ChatResourcePage<T> = {
+  items: T[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type ChatMediaItem = {
   url: string;
   messageId: string;
   createdAt: string;
 };
 
-export type ChatMediaPage = {
-  items: ChatMediaItem[];
-  nextCursor: string | null;
-  hasMore: boolean;
+export type ChatMediaPage = ChatResourcePage<ChatMediaItem>;
+
+export type ChatFileItem = {
+  id: string;
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  messageId: string;
+  createdAt: string;
 };
+
+export type ChatFilePage = ChatResourcePage<ChatFileItem>;
 
 export type ChatMessagePage = {
   messages: ChatMessage[];
@@ -92,6 +118,11 @@ export type GroupMember = {
 export type NewMessagePayload = {
   messageText: string;
   images?: File[];
+};
+
+export type NewFilesMessagePayload = {
+  messageText: string;
+  files: File[];
 };
 
 export type NewVoiceMessagePayload = {

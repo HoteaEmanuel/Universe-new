@@ -1,11 +1,12 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useGroupStore } from "../../store/groupStore";
 import type {
-  ChatMediaPage,
   ChatMessagePage,
+  ChatResourcePage,
   ChatUser,
   GroupConversation,
   GroupMember,
+  ResourceType,
 } from "../../features/chat/types";
 
 export const useGetUserGroups = (userId?: string) => {
@@ -48,11 +49,14 @@ export const useGetGroupMessagesInfinite = (id?: string) => {
   });
 };
 
-export const useGetGroupMediaInfinite = (id?: string) => {
-  const { getGroupMedia } = useGroupStore();
-  return useInfiniteQuery<ChatMediaPage>({
-    queryKey: ["group-media", id],
-    queryFn: ({ pageParam }) => getGroupMedia(id as string, pageParam as string | undefined),
+export const useGetGroupResourcesInfinite = <T,>(type: ResourceType, id?: string) => {
+  const { getGroupResources } = useGroupStore();
+  return useInfiniteQuery<ChatResourcePage<T>>({
+    queryKey: ["group-resources", type, id],
+    queryFn: ({ pageParam }) =>
+      getGroupResources(id as string, type, pageParam as string | undefined) as Promise<
+        ChatResourcePage<T>
+      >,
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,

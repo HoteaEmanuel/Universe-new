@@ -6,7 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageGroup } from "@/components/ui/message";
 import MessageBubble from "./MessageBubble";
 import ImageGalleryModal from "../../../Modals/ImageGalleryModal";
-import type { ChatMessage, ChatUser } from "../types";
+import FilePreviewModal from "../../../Modals/FilePreviewModal";
+import type { ChatMessage, ChatUser, MessageAttachment } from "../types";
 
 const MessageSkeletonRow = ({ align }: { align: "start" | "end" }) => (
   <div className={`flex px-2 py-1 ${align === "end" ? "justify-end" : "justify-start"}`}>
@@ -75,6 +76,10 @@ const MessageThread = ({
   const [gallery, setGallery] = useState<{ images: string[]; index: number } | null>(
     null,
   );
+  const [filePreview, setFilePreview] = useState<{
+    attachments: MessageAttachment[];
+    index: number;
+  } | null>(null);
   const prevScrollHeightRef = useRef<number | null>(null);
   const firstMessageIdRef = useRef<string | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
@@ -193,6 +198,9 @@ const MessageThread = ({
                         onOpenGallery={(images, imageIndex) =>
                           setGallery({ images, index: imageIndex })
                         }
+                        onOpenFiles={(attachments, fileIndex) =>
+                          setFilePreview({ attachments, index: fileIndex })
+                        }
                         onDelete={onDelete}
                         onEdit={onEdit}
                         onReact={onReact}
@@ -230,6 +238,13 @@ const MessageThread = ({
         initialIndex={gallery?.index ?? 0}
         open={!!gallery}
         onClose={() => setGallery(null)}
+      />
+
+      <FilePreviewModal
+        attachments={filePreview?.attachments ?? []}
+        initialIndex={filePreview?.index ?? 0}
+        open={!!filePreview}
+        onClose={() => setFilePreview(null)}
       />
     </div>
   );

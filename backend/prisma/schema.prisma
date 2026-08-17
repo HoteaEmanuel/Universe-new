@@ -263,6 +263,7 @@ model Message {
 
   lastMessageOf Conversation? @relation("ConversationLastMessage")
   reactions     MessageReaction[]
+  attachments   Attachment[]
 
   @@index([senderId, receiverId])
   @@index([conversationId])
@@ -336,9 +337,28 @@ model GroupMessage {
 
   lastMessageOf Group? @relation("GroupLastMessage")
   reactions     GroupMessageReaction[]
+  attachments   Attachment[]
 
   @@index([groupId])
   @@map("group_messages")
+}
+
+model Attachment {
+  id             String        @id @default(uuid())
+  fileUrl        String
+  fileKey        String
+  fileName       String
+  fileSize       Int
+  mimeType       String
+  createdAt      DateTime      @default(now())
+  messageId      String?
+  message        Message?      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  groupMessageId String?
+  groupMessage   GroupMessage? @relation(fields: [groupMessageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([groupMessageId])
+  @@map("attachments")
 }
 
 model GroupMessageReaction {

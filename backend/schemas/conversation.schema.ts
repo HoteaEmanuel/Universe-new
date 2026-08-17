@@ -36,6 +36,7 @@ export const messagesQuerySchema = z.object({
 export type MessagesQueryInput = z.infer<typeof messagesQuerySchema>;
 
 export const mediaQuerySchema = z.object({
+  type: z.enum(["images", "files"]).default("images"),
   before: z.string().min(1).optional(),
 });
 export type MediaQueryInput = z.infer<typeof mediaQuerySchema>;

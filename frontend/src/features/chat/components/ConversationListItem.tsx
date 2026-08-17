@@ -1,4 +1,4 @@
-import { Camera, Mic } from "lucide-react";
+import { Camera, Mic, Paperclip } from "lucide-react";
 import { getFullName } from "../../../utils/fullName";
 import { getAvatarColorClass, getInitials } from "../utils/avatarColor";
 import { formatChatListTime } from "../utils/chatListTime";
@@ -33,6 +33,7 @@ const ConversationListItem = ({
         : "";
   const isImageOnly = !lastMessage?.content && !!lastMessage?.imageUrls?.length;
   const isVoiceOnly = !lastMessage?.content && !!lastMessage?.audioUrl;
+  const isFileOnly = !lastMessage?.content && !!lastMessage?.attachments?.length;
   const time = formatChatListTime(entry.updatedAt);
   const unreadCount = !isGroup ? (entry.unreadCount ?? 0) : 0;
   const hasUnread = unreadCount > 0;
@@ -82,7 +83,7 @@ const ConversationListItem = ({
                 <>
                   <span className="truncate">
                     {prefix}
-                    {isImageOnly || isVoiceOnly ? "" : lastMessage.content}
+                    {isImageOnly || isVoiceOnly || isFileOnly ? "" : lastMessage.content}
                   </span>
                   {isImageOnly && (
                     <span className="inline-flex shrink-0 items-center gap-1">
@@ -92,6 +93,11 @@ const ConversationListItem = ({
                   {isVoiceOnly && (
                     <span className="inline-flex shrink-0 items-center gap-1">
                       <Mic className="size-3.5" /> Voice message
+                    </span>
+                  )}
+                  {isFileOnly && (
+                    <span className="inline-flex shrink-0 items-center gap-1">
+                      <Paperclip className="size-3.5" /> File
                     </span>
                   )}
                 </>
