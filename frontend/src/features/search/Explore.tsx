@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -16,6 +17,7 @@ import PostCard from "@/features/posts/components/PostCard";
 import PostSkeleton from "@/features/posts/components/PostSkeleton";
 import SearchUserRow from "./components/SearchUserRow";
 import SearchGroupRow from "./components/SearchGroupRow";
+import UniversityPersonRow from "./components/UniversityPersonRow";
 import {
   ExploreHeaderAccent,
   NoGroupsIllustration,
@@ -36,12 +38,19 @@ import {
   useSearchPostsInfinite,
   useSearchGroupsInfinite,
 } from "@/queryAndMutation/queries/search-queries";
+import { useUniversityPeopleInfiniteQuery } from "@/queryAndMutation/queries/user-queries";
+import { useAuthStore } from "@/store/authStore";
+import { findScrollableAncestor } from "@/utils/scroll";
 import type { SearchPage } from "@/queryAndMutation/types";
 import {
   useExploreFilters,
   NEWS_TOPICS,
   type TabKey,
 } from "./hooks/useExploreFilters";
+
+const NO_UNIVERSITY_PLACEHOLDER = "No university yet";
+const UNIVERSITY_TEASER_SIZE = 6;
+const SCROLL_FETCH_THRESHOLD = 150;
 
 const SEARCH_DEBOUNCE_MS = 350;
 const OVERVIEW_PREVIEW_SIZE = 5;
@@ -107,6 +116,9 @@ const Explore = () => {
   }, []);
 
   const { filters, setFilters } = useExploreFilters();
+  const { user: authUser } = useAuthStore();
+  const hasUniversity =
+    !!authUser?.university && authUser.university !== NO_UNIVERSITY_PLACEHOLDER;
 
   const [searchTerm, setSearchTerm] = useState(filters.q);
   const debouncedSearch = useDebounce(searchTerm, SEARCH_DEBOUNCE_MS);
@@ -141,6 +153,7 @@ const Explore = () => {
     trimmedQuery,
     isSearching && activeTab === "groups",
   );
+  const universityPeopleQuery = useUniversityPeopleInfiniteQuery(hasUniversity);
 
   const { data: topNews, isPending: isTopNewsPending } = useGetTopNewsQuery();
   const { data: topicNews, isPending: isTopicNewsPending } =
@@ -154,6 +167,46 @@ const Explore = () => {
   const users = usersQuery.data?.pages.flatMap((page) => page.items) ?? [];
   const posts = postsQuery.data?.pages.flatMap((page) => page.items) ?? [];
   const groups = groupsQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const universityPeople =
+    universityPeopleQuery.data?.pages.flatMap((page) => page.people) ?? [];
+  const {
+    hasNextPage: hasNextUniversityPage,
+    isFetchingNextPage: isFetchingNextUniversityPage,
+    fetchNextPage: fetchNextUniversityPage,
+  } = universityPeopleQuery;
+  // Explore doesn't own a scroll container - RootLayout's <section> around
+  // the routed page is what actually scrolls - so the ancestor is found at
+  // runtime the same way CommentsContainer does, rather than assuming a
+  // fixed DOM structure.
+  const universityScrollContainerRef = useRef<HTMLElement | null>(null);
+  const universityListRef = useCallback((node: HTMLUListElement | null) => {
+    universityScrollContainerRef.current = findScrollableAncestor(node);
+  }, []);
+  useEffect(() => {
+    const scrollEl = universityScrollContainerRef.current;
+    if (!scrollEl) return;
+
+    const handleScroll = () => {
+      const distanceFromBottom =
+        scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+      if (
+        hasNextUniversityPage &&
+        !isFetchingNextUniversityPage &&
+        distanceFromBottom < SCROLL_FETCH_THRESHOLD
+      ) {
+        fetchNextUniversityPage();
+      }
+    };
+    scrollEl.addEventListener("scroll", handleScroll);
+    return () => scrollEl.removeEventListener("scroll", handleScroll);
+  }, [
+    hasNextUniversityPage,
+    isFetchingNextUniversityPage,
+    fetchNextUniversityPage,
+    universityPeople.length,
+  ]);
+
+  const showTabsShell = isSearching || activeTab === "people";
 
   const hasAnyOverviewResults =
     !!overview &&
@@ -199,7 +252,7 @@ const Explore = () => {
         )}
       </div>
 
-      {isSearching ? (
+      {showTabsShell ? (
         <Tabs
           value={activeTab}
           onValueChange={(value: unknown) =>
@@ -322,35 +375,80 @@ const Explore = () => {
           </TabsContent>
 
           <TabsContent value="people">
-            <div className="flex flex-col gap-2">
-              {usersQuery.isPending && (
-                <ul className="flex flex-col gap-1">
-                  <RowSkeleton />
-                  <RowSkeleton />
-                  <RowSkeleton />
-                </ul>
-              )}
-              {!usersQuery.isPending && users.length === 0 && (
-                <EmptyState
-                  illustration={<NoPeopleIllustration className="size-32" />}
-                  title="No people found"
-                  subtitle={`Nothing matched "${trimmedQuery}"`}
-                />
-              )}
-              {users.length > 0 && (
-                <ul className="flex flex-col gap-1">
-                  {users.map((user) => (
-                    <SearchUserRow key={user.id} user={user} />
-                  ))}
-                </ul>
-              )}
-              {usersQuery.hasNextPage && (
-                <LoadMoreButton
-                  onClick={() => usersQuery.fetchNextPage()}
-                  isLoading={usersQuery.isFetchingNextPage}
-                />
-              )}
-            </div>
+            {trimmedQuery.length === 0 ? (
+              <div className="flex flex-col gap-2">
+                <h2 className="font-semibold">
+                  People at {authUser?.university}
+                </h2>
+                {!hasUniversity && (
+                  <EmptyState
+                    illustration={<NoPeopleIllustration className="size-32" />}
+                    title="Add a university email to see classmates"
+                    subtitle="We couldn't match your account to a university yet."
+                  />
+                )}
+                {hasUniversity && universityPeopleQuery.isPending && (
+                  <ul className="flex flex-col gap-1">
+                    <RowSkeleton />
+                    <RowSkeleton />
+                    <RowSkeleton />
+                  </ul>
+                )}
+                {hasUniversity &&
+                  !universityPeopleQuery.isPending &&
+                  universityPeople.length === 0 && (
+                    <EmptyState
+                      illustration={
+                        <NoPeopleIllustration className="size-32" />
+                      }
+                      title="No one else here yet"
+                      subtitle={`No one else from ${authUser?.university} has joined yet.`}
+                    />
+                  )}
+                {universityPeople.length > 0 && (
+                  <ul ref={universityListRef} className="flex flex-col gap-1">
+                    {universityPeople.map((user) => (
+                      <UniversityPersonRow key={user.id} user={user} />
+                    ))}
+                  </ul>
+                )}
+                {isFetchingNextUniversityPage && (
+                  <ul className="flex flex-col gap-1">
+                    <RowSkeleton />
+                  </ul>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {usersQuery.isPending && (
+                  <ul className="flex flex-col gap-1">
+                    <RowSkeleton />
+                    <RowSkeleton />
+                    <RowSkeleton />
+                  </ul>
+                )}
+                {!usersQuery.isPending && users.length === 0 && (
+                  <EmptyState
+                    illustration={<NoPeopleIllustration className="size-32" />}
+                    title="No people found"
+                    subtitle={`Nothing matched "${trimmedQuery}"`}
+                  />
+                )}
+                {users.length > 0 && (
+                  <ul className="flex flex-col gap-1">
+                    {users.map((user) => (
+                      <SearchUserRow key={user.id} user={user} />
+                    ))}
+                  </ul>
+                )}
+                {usersQuery.hasNextPage && (
+                  <LoadMoreButton
+                    onClick={() => usersQuery.fetchNextPage()}
+                    isLoading={usersQuery.isFetchingNextPage}
+                  />
+                )}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="groups">
@@ -414,6 +512,29 @@ const Explore = () => {
         </Tabs>
       ) : (
         <div className="flex flex-col gap-6">
+          {hasUniversity && universityPeople.length > 0 && (
+            <section className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold">
+                  People at {authUser?.university}
+                </h2>
+                <button
+                  onClick={() => setFilters({ tab: "people" })}
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  See all
+                </button>
+              </div>
+              <ul className="flex flex-col gap-1">
+                {universityPeople
+                  .slice(0, UNIVERSITY_TEASER_SIZE)
+                  .map((user) => (
+                    <UniversityPersonRow key={user.id} user={user} />
+                  ))}
+              </ul>
+            </section>
+          )}
+
           <div className="flex flex-col gap-3">
             <h2 className="text-lg font-semibold">Topics</h2>
             <ul className="flex flex-wrap gap-2">

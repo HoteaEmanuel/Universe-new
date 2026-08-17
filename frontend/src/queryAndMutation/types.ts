@@ -121,6 +121,12 @@ export type FollowListPage = {
   hasMore: boolean;
 };
 
+export type UniversityPeoplePage = {
+  people: FollowUser[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type PostComment = {
   id: string;
   userId: string;

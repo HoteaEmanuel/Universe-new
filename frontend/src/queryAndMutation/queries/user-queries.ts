@@ -1,6 +1,6 @@
 import { useUserStore } from "../../store/userStore";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import type { FollowListPage } from "../types";
+import type { FollowListPage, UniversityPeoplePage } from "../types";
 
 export const useGetAllUsersQuery = () => {
   const { getAllUsers } = useUserStore();
@@ -60,6 +60,25 @@ export const useGetRelevantFollowingInfiniteQuery = (id?: string) => {
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
     enabled: !!id,
+  });
+};
+
+// Relevance-first, cursor-paginated "people at your university" discovery
+// feed for the Explore People tab's empty-query state — `enabled` is passed
+// in by the caller since knowing whether the viewer even has a real
+// university to match on requires the auth user, not just an id.
+export const useUniversityPeopleInfiniteQuery = (enabled: boolean) => {
+  const { getUniversityPeople } = useUserStore();
+  return useInfiniteQuery<UniversityPeoplePage>({
+    queryKey: ["university-people"],
+    queryFn: ({ pageParam }) =>
+      getUniversityPeople(
+        pageParam as string | undefined,
+      ) as Promise<UniversityPeoplePage>,
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled,
   });
 };
 

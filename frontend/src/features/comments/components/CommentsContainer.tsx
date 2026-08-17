@@ -4,7 +4,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useGetPostCommentsInfinite } from "@/queryAndMutation/queries/comments-queries";
 import { Skeleton } from "@/components/ui/skeleton";
 import Comment from "./Comment";
-import { findScrollableAncestor } from "../utils/scroll";
+import { findScrollableAncestor } from "@/utils/scroll";
 
 const SCROLL_FETCH_THRESHOLD = 150;
 // Comment rows vary with wrapped text and expanded reply threads — this is

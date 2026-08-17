@@ -328,6 +328,86 @@ export const getRelevantFollowing = async (req: Request, res: Response) => {
   }
 };
 
+const UNIVERSITY_PERSON_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  name: true,
+  profilePicture: true,
+  accountType: true,
+  university: true,
+} as const;
+
+// Placeholder set on gmail.com signups (see universityDomains.ts) - not a
+// real university, so it shouldn't be matched against other placeholder rows.
+const NO_UNIVERSITY_PLACEHOLDER = "No university yet";
+
+export const getUniversityPeople = async (req: Request, res: Response) => {
+  try {
+    const viewerId = req.userId as string;
+    const viewer = await prisma.user.findUnique({
+      where: { id: viewerId },
+      select: { university: true },
+    });
+
+    const university = viewer?.university;
+    if (!university || university === NO_UNIVERSITY_PLACEHOLDER) {
+      return res.status(200).json({
+        message: "No university on file",
+        people: [],
+        nextCursor: null,
+        hasMore: false,
+      });
+    }
+
+    const { cursor, limit } = req.query as unknown as FollowListQueryInput;
+
+    const [relevantIdsSet, followingRows] = await Promise.all([
+      getViewerRelevantUserIds(viewerId),
+      prisma.follow.findMany({
+        where: { followerId: viewerId },
+        select: { followingId: true },
+      }),
+    ]);
+    const followingIds = followingRows.map((f) => f.followingId);
+    const followingIdSet = new Set(followingIds);
+    const relevantIds = [...relevantIdsSet].filter(
+      (id) => !followingIdSet.has(id),
+    );
+    const excludeIds = [viewerId, ...followingIds, ...relevantIds];
+
+    const { items, nextCursor, hasMore } = await getRelevantFirstPage({
+      cursor,
+      limit,
+      fetchRelevant: () =>
+        relevantIds.length === 0
+          ? Promise.resolve([])
+          : prisma.user.findMany({
+              where: { university, id: { in: relevantIds } },
+              orderBy: [{ firstName: "asc" }, { id: "asc" }],
+              select: UNIVERSITY_PERSON_SELECT,
+            }),
+      fetchNonRelevant: (cursorId, take) =>
+        prisma.user.findMany({
+          where: { university, id: { notIn: excludeIds } },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take,
+          ...(cursorId ? { cursor: { id: cursorId }, skip: 1 } : {}),
+          select: UNIVERSITY_PERSON_SELECT,
+        }),
+    });
+
+    return res.status(200).json({
+      message: "Fetched people at your university",
+      people: items,
+      nextCursor,
+      hasMore,
+    });
+  } catch (error) {
+    return res.status(400).json({ error });
+  }
+};
+
 export const followsUser = async (req: Request, res: Response) => {
   try {
     const userId = req.userId as string;

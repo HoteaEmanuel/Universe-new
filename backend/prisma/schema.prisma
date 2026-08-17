@@ -73,6 +73,7 @@ model User {
   groupMessageReactions GroupMessageReaction[]
   preferences           UserPreferences?
 
+  @@index([university])
   @@map("users")
 }
 

@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import axios from "axios";
-import type { User, FollowUser, FollowListPage } from "../queryAndMutation/types";
+import type {
+  User,
+  FollowUser,
+  FollowListPage,
+  UniversityPeoplePage,
+} from "../queryAndMutation/types";
 
 const API_URL =
   import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:5000/api";
@@ -30,6 +35,9 @@ type UserStore = {
   ) => Promise<FollowListPage | undefined>;
   isFollowing: (id?: string) => Promise<boolean | undefined>;
   updateBio: (bio: string) => Promise<unknown>;
+  getUniversityPeople: (
+    cursor?: string,
+  ) => Promise<UniversityPeoplePage | undefined>;
 };
 
 export const useUserStore = create<UserStore>((set) => ({
@@ -237,6 +245,24 @@ export const useUserStore = create<UserStore>((set) => ({
     try {
       const response = await axios.patch(`${API_URL}/update-bio`, { bio });
       return response;
+    } catch (error) {
+      set({ error: error });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  getUniversityPeople: async (cursor) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get(`${API_URL}/university-people`, {
+        params: cursor ? { cursor } : undefined,
+      });
+      return {
+        people: response.data.people,
+        nextCursor: response.data.nextCursor,
+        hasMore: response.data.hasMore,
+      };
     } catch (error) {
       set({ error: error });
       throw error;

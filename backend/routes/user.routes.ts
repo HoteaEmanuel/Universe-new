@@ -10,6 +10,7 @@ import {
   getFollowing,
   getRelevantFollowers,
   getRelevantFollowing,
+  getUniversityPeople,
   getAllUsers,
   getUsersFromSameUniversity,
   updateBio,
@@ -41,6 +42,11 @@ router.get(
   "/following-relevant/:id",
   validate({ query: followListQuerySchema }),
   getRelevantFollowing,
+);
+router.get(
+  "/university-people",
+  validate({ query: followListQuerySchema }),
+  getUniversityPeople,
 );
 router.patch("/update-bio", validate({ body: updateBioSchema }), updateBio);
 router.get("/follows-user/:id", followsUser);
