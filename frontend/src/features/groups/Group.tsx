@@ -50,7 +50,7 @@ const Group = () => {
   const { data: activeMembers } = useGetActiveGroupMembers(id);
   const { data: groupMembers } = useGetGroupMembers(id);
   const memberLookup = useMemo(
-    () => new Map(groupMembers?.map((m) => [m.memberId.id, m.memberId])),
+    () => new Map(groupMembers?.map((m) => [m.memberId, m.member])),
     [groupMembers],
   );
   const { mutate: deleteMessage } = useDeleteMessageInGroupMutation(id);

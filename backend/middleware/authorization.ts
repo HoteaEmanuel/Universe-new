@@ -7,6 +7,7 @@ import {
   findGroupMessageById,
 } from "../repository/message.repository.js";
 import { findGroupMember } from "../repository/group-members.repository.js";
+import { findEventById } from "../repository/event.repository.js";
 
 interface AuthorizationOptions<T> {
   getResource: (req: Request) => Promise<T | null | undefined>;
@@ -109,6 +110,26 @@ export const requireGroupMessageMembership = requireAuthorization({
   },
   authorize: () => true,
   notFoundMessage: "Message not found or you are not a member of this group",
+});
+
+// A host is either the event's creator, or (when the event is hosted by a
+// Group) an admin of that Group - see Event.hostGroupId vs Group.eventId in
+// the schema, they are deliberately distinct relations.
+export const requireEventHost = requireAuthorization({
+  getResource: async (req) => {
+    const event = await findEventById(req.params.id as string);
+    if (!event) return null;
+    let isHostGroupAdmin = false;
+    if (event.hostGroupId) {
+      const member = await findGroupMember(event.hostGroupId, req.userId as string);
+      isHostGroupAdmin = member?.role === "admin";
+    }
+    return { event, isHostGroupAdmin };
+  },
+  authorize: (resource, req) =>
+    resource.event.creatorId === req.userId || resource.isHostGroupAdmin,
+  notFoundMessage: "Event not found",
+  forbiddenMessage: "Only the event host can perform this action",
 });
 
 export const requireSelf = (paramName: string) => {

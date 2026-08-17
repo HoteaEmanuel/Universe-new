@@ -37,6 +37,8 @@ import NewConversation from "./features/chat/NewConversation";
 import Group from "./features/groups/Group";
 import EditProfile from "./features/profile/EditProfile";
 import Notifications from "./features/notifications/Notifications.tsx";
+import EventsPage from "./features/events/EventsPage";
+import EventDetails from "./features/events/EventDetails";
 
 const queryClient = new QueryClient();
 
@@ -160,6 +162,8 @@ function App() {
                 element={<NewConversation />}
               />
               <Route path="/groups/:id" element={<Group />} />
+              <Route path="/events" element={<EventsPage />} />
+              <Route path="/events/:id" element={<EventDetails />} />
             </Route>
           </Route>
         </Routes>

@@ -39,7 +39,8 @@ export type ChatMessage = {
   audioDurationSec?: number;
   attachments?: MessageAttachment[];
   sharedPost?: SharedPost | null;
-  senderId: MessageSender;
+  senderId: string;
+  sender?: ChatUser | null;
   conversationId?: string;
   groupId?: string;
   deleted?: boolean;
@@ -121,7 +122,8 @@ export type ChatMessagePage = {
 export type GroupMember = {
   id: string;
   role: "admin" | "member" | string;
-  memberId: ChatUser;
+  memberId: string;
+  member: ChatUser;
 };
 
 export type NewMessagePayload = {

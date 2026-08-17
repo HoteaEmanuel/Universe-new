@@ -54,9 +54,9 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
             <ul className="flex flex-col gap-1 pt-1">
               {groupMembers.map((member) => (
                 <li key={member.id} className="flex items-center gap-3 p-2">
-                  {member.memberId.profilePicture ? (
+                  {member.member.profilePicture ? (
                     <img
-                      src={member.memberId.profilePicture}
+                      src={member.member.profilePicture}
                       className="size-11 shrink-0 rounded-full object-cover"
                     />
                   ) : (
@@ -64,7 +64,7 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">
-                      {getFullName(member.memberId)}
+                      {getFullName(member.member)}
                     </p>
                     {member.role === "admin" && (
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -78,7 +78,7 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
                       size="sm"
                       variant="outline"
                       disabled={isPromoting}
-                      onClick={() => promoteMemberToAdmin(member.memberId.id)}
+                      onClick={() => promoteMemberToAdmin(member.memberId)}
                     >
                       Make admin
                     </Button>

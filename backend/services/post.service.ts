@@ -22,6 +22,7 @@ import {
   createNotification,
   emitNewNotification,
 } from "../repository/notification.repository.js";
+import { toEventDTO } from "./event.service.js";
 
 type UploadedImage = Express.Multer.File;
 
@@ -30,17 +31,22 @@ const withIsSaved = <T extends { id: string }>(
   savedPostIds: Set<string>,
 ) => ({ ...post, isSaved: savedPostIds.has(post.id) });
 
+const withEventDTO = <T extends { event?: Parameters<typeof toEventDTO>[0] | null }>(
+  post: T,
+) => (post.event ? { ...post, event: toEventDTO(post.event) } : post);
+
 export const getUserPosts = async (userId: string) => {
   const user = await findUserById(userId);
   if (!user) throw new Error("User does not exist");
-  return findUserPosts(userId);
+  const posts = await findUserPosts(userId);
+  return posts.map(withEventDTO);
 };
 
 export const getSavedPosts = async (id: string) => {
   const user = await findUserById(id);
   if (!user) throw new Error("User doesnt exist");
   const data = await findUserSavedPosts(id);
-  return data.map((sp) => sp.post);
+  return data.map((sp) => withEventDTO(sp.post));
 };
 
 interface GetPostsInput {
@@ -72,7 +78,7 @@ export const getPosts = async (data: GetPostsInput) => {
 
   return {
     ...page,
-    posts: page.posts.map((post) => withIsSaved(post, savedPostIds)),
+    posts: page.posts.map((post) => withEventDTO(withIsSaved(post, savedPostIds))),
   };
 };
 
@@ -247,9 +253,11 @@ export const deletePost = async (data: { postId: string }) => {
 };
 
 export const getSearchedPosts = async (text: string) => {
-  return findPostsByText(text);
+  const posts = await findPostsByText(text);
+  return posts.map(withEventDTO);
 };
 
 export const getPostsByTag = async (tag: string) => {
-  return findPostsByTag(tag);
+  const posts = await findPostsByTag(tag);
+  return posts.map(withEventDTO);
 };

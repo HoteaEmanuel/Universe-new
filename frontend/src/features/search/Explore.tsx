@@ -7,6 +7,9 @@ import {
   type ReactNode,
 } from "react";
 import { Search, X, Loader2, Compass } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import EventCard from "@/features/events/components/EventCard";
+import { useDiscoverEventsInfiniteQuery } from "@/queryAndMutation/queries/event-queries";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -50,6 +53,7 @@ import {
 
 const NO_UNIVERSITY_PLACEHOLDER = "No university yet";
 const UNIVERSITY_TEASER_SIZE = 6;
+const EVENTS_TEASER_SIZE = 4;
 const SCROLL_FETCH_THRESHOLD = 150;
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -115,6 +119,7 @@ const Explore = () => {
     document.title = "Explore";
   }, []);
 
+  const navigate = useNavigate();
   const { filters, setFilters } = useExploreFilters();
   const { user: authUser } = useAuthStore();
   const hasUniversity =
@@ -154,6 +159,9 @@ const Explore = () => {
     isSearching && activeTab === "groups",
   );
   const universityPeopleQuery = useUniversityPeopleInfiniteQuery(hasUniversity);
+  const discoverEventsQuery = useDiscoverEventsInfiniteQuery(!isSearching);
+  const discoverEvents =
+    discoverEventsQuery.data?.pages.flatMap((page) => page.events) ?? [];
 
   const { data: topNews, isPending: isTopNewsPending } = useGetTopNewsQuery();
   const { data: topicNews, isPending: isTopicNewsPending } =
@@ -532,6 +540,25 @@ const Explore = () => {
                     <UniversityPersonRow key={user.id} user={user} />
                   ))}
               </ul>
+            </section>
+          )}
+
+          {discoverEvents.length > 0 && (
+            <section className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold">Upcoming events</h2>
+                <button
+                  onClick={() => navigate("/events")}
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  See all
+                </button>
+              </div>
+              <div className="flex flex-col gap-3">
+                {discoverEvents.slice(0, EVENTS_TEASER_SIZE).map((event) => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+              </div>
             </section>
           )}
 

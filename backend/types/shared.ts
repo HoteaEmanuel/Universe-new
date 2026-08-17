@@ -12,4 +12,12 @@ export type NotificationType =
   | "post-reply"
   | "comment-like"
   | "follow"
-  | "message";
+  | "message"
+  | "event-update"
+  | "event-cancelled"
+  | "event-waitlist-promoted";
+
+export type EventVisibility = "public" | "private";
+export type EventParticipantStatus = "going" | "interested" | "waitlisted";
+export type EventStatus = "upcoming" | "ongoing" | "completed" | "cancelled";
+export type EventType = "community" | "official";

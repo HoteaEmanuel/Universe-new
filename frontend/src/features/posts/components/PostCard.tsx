@@ -29,6 +29,7 @@ import SharePostModal from "./SharePostModal";
 import { urlPathName } from "@/utils/urlPathFromName";
 import ImageSlider from "./ImageSlider";
 import PostSkeleton from "./PostSkeleton";
+import EventCard from "@/features/events/components/EventCard";
 import type { Post } from "@/queryAndMutation/types";
 
 type PostCardProps = {
@@ -268,6 +269,19 @@ const PostCard = ({ post }: PostCardProps) => {
             ))}
         </div>
       </div>
+
+      {post.event && (
+        <div className="px-4 pt-2">
+          <EventCard
+            event={post.event}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate(`/events/${post.event!.id}`);
+            }}
+          />
+        </div>
+      )}
 
       {!hasImages && captionBlock}
 

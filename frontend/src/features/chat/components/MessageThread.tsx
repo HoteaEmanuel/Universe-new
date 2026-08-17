@@ -39,8 +39,7 @@ const SCROLL_FETCH_THRESHOLD = 100;
 // the group's real rendered height.
 const ESTIMATED_GROUP_HEIGHT = 72;
 
-const getSenderId = (message: ChatMessage) =>
-  typeof message.senderId === "string" ? message.senderId : message.senderId.id;
+const getSenderId = (message: ChatMessage) => message.senderId;
 
 const groupConsecutiveMessages = (messages: ChatMessage[]): ChatMessage[][] => {
   const groups: ChatMessage[][] = [];

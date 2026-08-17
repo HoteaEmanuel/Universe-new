@@ -5,6 +5,7 @@ import {
   PlusSquare,
   Bell,
   Settings,
+  CalendarDays,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -36,6 +37,12 @@ export const SideLinks: SideLink[] = [
     notification: true,
     element: MessageCircle,
     hoverAnimation: "group-hover/menu-button:animate-icon-wiggle",
+  },
+  {
+    link: "/events",
+    text: "Events",
+    element: CalendarDays,
+    hoverAnimation: "group-hover/menu-button:animate-icon-pop-rotate",
   },
   {
     link: "/profile",

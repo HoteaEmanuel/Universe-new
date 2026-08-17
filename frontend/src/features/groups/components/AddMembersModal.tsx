@@ -44,7 +44,7 @@ const MemberCandidateRow = ({
   isAdding,
 }: MemberCandidateRowProps) => {
   const alreadyMember = groupMembers?.some(
-    (member) => member.memberId.id === candidate.id,
+    (member) => member.memberId === candidate.id,
   );
 
   return (

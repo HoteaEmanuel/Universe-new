@@ -197,9 +197,8 @@ const MessageBubble = ({
 }: MessageBubbleProps) => {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
-  const sender = message.senderId;
-  const senderId = typeof sender === "string" ? sender : sender.id;
-  const senderUser: ChatUser | null = typeof sender === "string" ? null : sender;
+  const senderId = message.senderId;
+  const senderUser: ChatUser | null = message.sender ?? null;
   const isOwn = senderId === currentUserId;
   const isGroupChat = variant === "group" && !isOwn;
   const showHeader = isGroupChat && isFirstInGroup;

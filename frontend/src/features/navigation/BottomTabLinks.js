@@ -3,7 +3,7 @@ import { FaHome } from "react-icons/fa";
 import { IoMdSettings } from "react-icons/io";
 import { IoChatboxEllipses } from "react-icons/io5";
 import { IoAddCircleSharp } from "react-icons/io5";
-import { MdExplore } from "react-icons/md";
+import { MdExplore, MdEvent } from "react-icons/md";
 export const BottomTabLinks = [
   {
     link: "/home",
@@ -18,7 +18,11 @@ export const BottomTabLinks = [
     text: "Chat",
     element:IoChatboxEllipses
   },
-  
+  {
+    link: "/events",
+    text: "Events",
+    element:MdEvent
+  },
   {
     link: "/create-post",
     text: "Create post",

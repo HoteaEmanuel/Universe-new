@@ -48,7 +48,7 @@ const SideSection = () => {
       user.role === "admin" &&
       !SideLinks.some((item) => item.link === "/admin")
     ) {
-      SideLinks.splice(4, 0, {
+      SideLinks.splice(5, 0, {
         link: "/admin",
         text: "Admin",
         element: ShieldCheck,

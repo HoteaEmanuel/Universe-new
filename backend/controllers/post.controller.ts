@@ -2,6 +2,8 @@ import type { Request, Response } from "express";
 import type {} from "multer";
 import { prisma } from "../database/prisma.js";
 import { findPostsByTag } from "../repository/post.repository.js";
+import { EVENT_INCLUDE } from "../repository/event.repository.js";
+import { toEventDTO } from "../services/event.service.js";
 import {
   getViewerRelevantUserIds,
   getFollowConnectedUserIds,
@@ -29,14 +31,22 @@ const errorMessage = (error: unknown) =>
 export const getPost = async (req: Request, res: Response) => {
   const id = req.params.id as string;
   try {
-    const post = await prisma.post.findUnique({ where: { id } });
+    const post = await prisma.post.findUnique({
+      where: { id },
+      include: { event: { include: EVENT_INCLUDE } },
+    });
     if (!post) throw new Error("Post not found");
     const savedPost = await prisma.savedPost.findUnique({
       where: { userId_postId: { userId: req.userId as string, postId: id } },
     });
-    return res
-      .status(200)
-      .json({ message: "Succes", post: { ...post, isSaved: !!savedPost } });
+    return res.status(200).json({
+      message: "Succes",
+      post: {
+        ...post,
+        event: post.event ? toEventDTO(post.event) : null,
+        isSaved: !!savedPost,
+      },
+    });
   } catch (error) {
     return res.status(400).json({ message: "Error, no post found" });
   }

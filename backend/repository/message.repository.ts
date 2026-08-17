@@ -23,6 +23,20 @@ const MESSAGE_INCLUDE = {
   sharedPost: { select: SHARED_POST_SELECT },
 } as const;
 
+const GROUP_MESSAGE_SENDER_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  profilePicture: true,
+  accountType: true,
+  name: true,
+} as const;
+
+const GROUP_MESSAGE_INCLUDE = {
+  ...MESSAGE_INCLUDE,
+  sender: { select: GROUP_MESSAGE_SENDER_SELECT },
+} as const;
+
 interface CreateMessageInput {
   conversationId: string;
   senderId: string;
@@ -120,14 +134,14 @@ export const createGroupMessage = async (data: CreateGroupMessageInput) => {
           ? { create: attachments }
           : undefined,
     },
-    include: MESSAGE_INCLUDE,
+    include: GROUP_MESSAGE_INCLUDE,
   });
 };
 
 export const findGroupMessageById = async (id: string) => {
   return prisma.groupMessage.findUnique({
     where: { id },
-    include: MESSAGE_INCLUDE,
+    include: GROUP_MESSAGE_INCLUDE,
   });
 };
 
@@ -204,18 +218,8 @@ export const getGroupMessagesPage = async (
     take: limit + 1,
     orderBy: GROUP_MESSAGE_ORDER_BY,
     include: {
-      sender: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          profilePicture: true,
-          accountType: true,
-          name: true,
-        },
-      },
       reactions: { select: { id: true, emoji: true, userId: true } },
-      ...MESSAGE_INCLUDE,
+      ...GROUP_MESSAGE_INCLUDE,
     },
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });

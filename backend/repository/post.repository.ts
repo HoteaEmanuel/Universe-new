@@ -1,8 +1,13 @@
 import { prisma } from "../database/prisma.js";
 import type { Prisma } from "../generated/prisma/client.js";
+import { EVENT_INCLUDE } from "./event.repository.js";
+
+const POST_INCLUDE = {
+  event: { include: EVENT_INCLUDE },
+} satisfies Prisma.PostInclude;
 
 export const findPostById = async (id: string) => {
-  return prisma.post.findUnique({ where: { id } });
+  return prisma.post.findUnique({ where: { id }, include: POST_INCLUDE });
 };
 
 const FEED_ORDER_BY: Prisma.PostOrderByWithRelationInput[] = [
@@ -33,6 +38,7 @@ export const findAllPosts = async (cursor?: string, limit = 10) => {
   const posts = await prisma.post.findMany({
     take: limit + 1,
     orderBy: FEED_ORDER_BY,
+    include: POST_INCLUDE,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
   return toFeedPage(posts, limit);
@@ -47,6 +53,7 @@ export const findFollowingPosts = async (
     where: { userId: { in: followingIds } },
     take: limit + 1,
     orderBy: FEED_ORDER_BY,
+    include: POST_INCLUDE,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
   return toFeedPage(posts, limit);
@@ -61,6 +68,7 @@ export const findUniversityPosts = async (
     where: { user: { university } },
     take: limit + 1,
     orderBy: FEED_ORDER_BY,
+    include: POST_INCLUDE,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
   return toFeedPage(posts, limit);
@@ -70,6 +78,7 @@ export const findUserPosts = async (userId: string) => {
   return prisma.post.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
+    include: POST_INCLUDE,
   });
 };
 
@@ -77,7 +86,7 @@ export const findUserSavedPosts = async (userId: string) => {
   return prisma.savedPost.findMany({
     where: { userId },
     orderBy: { savedAt: "desc" },
-    include: { post: true },
+    include: { post: { include: POST_INCLUDE } },
   });
 };
 
@@ -123,12 +132,14 @@ export const findPostsByText = async (text: string) => {
         { body: { contains: text, mode: "insensitive" } },
       ],
     },
+    include: POST_INCLUDE,
   });
 };
 
 export const findPostsByTag = async (tag: string) => {
   return prisma.post.findMany({
     where: { tags: { some: { name: tag } } },
+    include: POST_INCLUDE,
   });
 };
 

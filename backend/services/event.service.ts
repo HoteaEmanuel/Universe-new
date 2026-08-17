@@ -1,0 +1,303 @@
+import {
+  createEvent,
+  findEventById,
+  updateEvent,
+  cancelEvent,
+  setEventCoverImage,
+  setEventCoordinationGroupId,
+  createEventAnnouncementPost,
+  findDiscoverableEvents,
+  findMyEvents,
+  findEventParticipant,
+  countGoingParticipants,
+  countParticipantsByStatus,
+  upsertEventParticipant,
+  deleteEventParticipant,
+  findOldestWaitlistedParticipant,
+  findEventParticipantsPage,
+  findAllActiveParticipantUserIds,
+} from "../repository/event.repository.js";
+import { findGroupMember } from "../repository/group-members.repository.js";
+import { createGroup } from "../repository/group.repository.js";
+import { createGroupMember } from "../repository/group-members.repository.js";
+import { getFollowConnectedUserIds } from "../repository/relevance.repository.js";
+import {
+  createNotification,
+  emitNewNotification,
+} from "../repository/notification.repository.js";
+import { uploadImage, deleteImages } from "../lib/storage.js";
+import { buildIcsCalendar } from "../lib/ics.js";
+import type {
+  EventVisibility,
+  EventParticipantStatus,
+} from "../generated/prisma/client.js";
+import type { EventStatus, EventType } from "../types/shared.js";
+
+type UploadedImage = Express.Multer.File;
+type EventWithRelations = NonNullable<Awaited<ReturnType<typeof findEventById>>>;
+
+export const deriveEventStatus = (event: {
+  cancelledAt: Date | null;
+  startAt: Date;
+  endAt: Date | null;
+}): EventStatus => {
+  if (event.cancelledAt) return "cancelled";
+  const now = Date.now();
+  const effectiveEnd = (event.endAt ?? event.startAt).getTime();
+  if (now < event.startAt.getTime()) return "upcoming";
+  if (now <= effectiveEnd) return "ongoing";
+  return "completed";
+};
+
+export const deriveEventType = (creator: {
+  accountType: string;
+  identityVerified: string;
+}): EventType => {
+  return creator.accountType === "business" && creator.identityVerified === "true"
+    ? "official"
+    : "community";
+};
+
+export const toEventDTO = (event: EventWithRelations) => ({
+  ...event,
+  status: deriveEventStatus(event),
+  eventType: deriveEventType(event.creator),
+});
+
+interface CreateEventServiceInput {
+  creatorId: string;
+  hostGroupId?: string;
+  title: string;
+  description?: string;
+  location?: string;
+  virtualUrl?: string;
+  startAt: Date;
+  endAt?: Date;
+  visibility?: EventVisibility;
+  capacity?: number;
+}
+
+export const createEventService = async (data: CreateEventServiceInput) => {
+  const { creatorId, hostGroupId } = data;
+
+  if (hostGroupId) {
+    const member = await findGroupMember(hostGroupId, creatorId);
+    if (!member || member.role !== "admin") {
+      throw new Error("Only group admins can host an event as this group");
+    }
+  }
+
+  const event = await createEvent(data);
+
+  // A private event cannot have an announcement post - it would leak an
+  // event the visibility rules say is hidden into the public feed.
+  if (event.visibility === "public") {
+    await createEventAnnouncementPost(event);
+  }
+
+  const created = await findEventById(event.id);
+  return toEventDTO(created as EventWithRelations);
+};
+
+export const getEventService = async (eventId: string, viewerId: string) => {
+  const event = await findEventById(eventId);
+  if (!event) throw new Error("Event not found");
+
+  if (event.visibility === "private") {
+    const isHost =
+      event.creatorId === viewerId ||
+      (event.hostGroupId && (await findGroupMember(event.hostGroupId, viewerId))?.role === "admin");
+    const participant = isHost ? null : await findEventParticipant(eventId, viewerId);
+    if (!isHost && !participant) {
+      throw new Error("This event is private");
+    }
+  }
+
+  const [counts, viewerParticipation] = await Promise.all([
+    countParticipantsByStatus(eventId),
+    findEventParticipant(eventId, viewerId),
+  ]);
+
+  return { ...toEventDTO(event), counts, viewerParticipation };
+};
+
+interface UpdateEventServiceInput {
+  title?: string;
+  description?: string;
+  location?: string;
+  virtualUrl?: string;
+  startAt?: Date;
+  endAt?: Date;
+  capacity?: number;
+}
+
+export const updateEventService = async (eventId: string, data: UpdateEventServiceInput) => {
+  const before = await findEventById(eventId);
+  if (!before) throw new Error("Event not found");
+
+  const updated = await updateEvent(eventId, data);
+
+  const timeOrLocationChanged =
+    (data.startAt && data.startAt.getTime() !== before.startAt.getTime()) ||
+    (data.endAt && data.endAt.getTime() !== (before.endAt?.getTime() ?? -1)) ||
+    (data.location !== undefined && data.location !== before.location) ||
+    (data.virtualUrl !== undefined && data.virtualUrl !== before.virtualUrl);
+
+  if (timeOrLocationChanged) {
+    await notifyParticipants(eventId, updated.creatorId, {
+      type: "event-update",
+      title: "Event updated",
+      message: `${updated.title} was updated - check the new details.`,
+    });
+  }
+
+  return toEventDTO(updated);
+};
+
+export const cancelEventService = async (eventId: string) => {
+  const event = await cancelEvent(eventId);
+  await notifyParticipants(eventId, event.creatorId, {
+    type: "event-cancelled",
+    title: "Event cancelled",
+    message: `${event.title} has been cancelled.`,
+  });
+  return toEventDTO(event);
+};
+
+const notifyParticipants = async (
+  eventId: string,
+  actionUserId: string,
+  payload: { type: "event-update" | "event-cancelled"; title: string; message: string },
+) => {
+  const participantUserIds = await findAllActiveParticipantUserIds(eventId);
+  await Promise.all(
+    participantUserIds.map(async (userId) => {
+      const notification = await createNotification({
+        userId,
+        actionUserId,
+        type: payload.type,
+        title: payload.title,
+        message: payload.message,
+      });
+      await emitNewNotification(userId, notification);
+    }),
+  );
+};
+
+export const updateEventCoverImageService = async (data: { image?: UploadedImage; eventId: string }) => {
+  const { image, eventId } = data;
+  if (!image?.buffer) throw new Error("No image provided");
+
+  const event = await findEventById(eventId);
+  if (!event) throw new Error("Event not found");
+
+  const uploaded = await uploadImage({ buffer: image.buffer, mimeType: image.mimetype, folder: "event_covers" });
+  await setEventCoverImage(eventId, uploaded.url, uploaded.key);
+
+  if (event.coverImageKey) {
+    deleteImages([event.coverImageKey]).catch(() => {});
+  }
+};
+
+export const discoverEventsService = async (viewerId: string, cursor: string | undefined, limit: number) => {
+  const connectedUserIds = Array.from(await getFollowConnectedUserIds(viewerId));
+  const { items, nextCursor, hasMore } = await findDiscoverableEvents({ connectedUserIds, cursor, limit });
+  return { events: items.map(toEventDTO), nextCursor, hasMore };
+};
+
+export const myEventsService = async (
+  userId: string,
+  scope: "hosting" | "going" | "interested" | "waitlisted",
+  cursor: string | undefined,
+  limit: number,
+) => {
+  const { items, nextCursor, hasMore } = await findMyEvents({ userId, scope, cursor, limit });
+  return { events: items.map(toEventDTO), nextCursor, hasMore };
+};
+
+export const rsvpEventService = async (
+  eventId: string,
+  userId: string,
+  requestedStatus: "going" | "interested",
+) => {
+  const event = await findEventById(eventId);
+  if (!event) throw new Error("Event not found");
+  if (deriveEventStatus(event) === "cancelled") throw new Error("This event has been cancelled");
+
+  let status: EventParticipantStatus = requestedStatus;
+  if (requestedStatus === "going" && event.capacity) {
+    const existing = await findEventParticipant(eventId, userId);
+    const alreadyGoing = existing?.status === "going";
+    const goingCount = await countGoingParticipants(eventId);
+    if (!alreadyGoing && goingCount >= event.capacity) {
+      status = "waitlisted";
+    }
+  }
+
+  const participant = await upsertEventParticipant(eventId, userId, status);
+  return participant;
+};
+
+export const cancelRsvpService = async (eventId: string, userId: string) => {
+  const existing = await findEventParticipant(eventId, userId);
+  if (!existing) return;
+
+  await deleteEventParticipant(eventId, userId);
+
+  if (existing.status !== "going") return;
+
+  const promoted = await findOldestWaitlistedParticipant(eventId);
+  if (!promoted) return;
+
+  await upsertEventParticipant(eventId, promoted.userId, "going");
+
+  const event = await findEventById(eventId);
+  const notification = await createNotification({
+    userId: promoted.userId,
+    actionUserId: userId,
+    type: "event-waitlist-promoted",
+    title: "You're off the waitlist!",
+    message: `A spot opened up for ${event?.title ?? "an event"} - you're going.`,
+  });
+  await emitNewNotification(promoted.userId, notification);
+};
+
+export const getEventParticipantsService = async (
+  eventId: string,
+  status: EventParticipantStatus | undefined,
+  cursor: string | undefined,
+  limit: number,
+) => {
+  return findEventParticipantsPage({ eventId, status, cursor, limit });
+};
+
+export const joinEventChatService = async (eventId: string, userId: string) => {
+  const event = await findEventById(eventId);
+  if (!event) throw new Error("Event not found");
+
+  const isHost = event.creatorId === userId;
+  const participant = await findEventParticipant(eventId, userId);
+  if (!isHost && !participant) {
+    throw new Error("You must RSVP to the event before joining its chat");
+  }
+
+  let groupId = event.coordinationGroup?.id;
+  if (!groupId) {
+    const group = await createGroup({ name: `${event.title} - Chat`, visibility: "private" });
+    await createGroupMember({ groupId: group.id, userId, role: "admin" });
+    await setEventCoordinationGroupId(eventId, group.id);
+    return group;
+  }
+
+  const existingMember = await findGroupMember(groupId, userId);
+  if (!existingMember) {
+    await createGroupMember({ groupId, userId, role: "member" });
+  }
+  return { id: groupId };
+};
+
+export const buildEventIcsService = async (eventId: string) => {
+  const event = await findEventById(eventId);
+  if (!event) throw new Error("Event not found");
+  return buildIcsCalendar(event);
+};

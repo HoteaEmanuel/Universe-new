@@ -27,6 +27,17 @@ enum GroupRole {
   admin
 }
 
+enum EventVisibility {
+  public
+  private
+}
+
+enum EventParticipantStatus {
+  going
+  interested
+  waitlisted
+}
+
 model User {
   id                        String                   @id @default(uuid())
   firstName                 String?
@@ -72,6 +83,8 @@ model User {
   messageReactions      MessageReaction[]
   groupMessageReactions GroupMessageReaction[]
   preferences           UserPreferences?
+  createdEvents         Event[]                @relation("EventCreator")
+  eventParticipations   EventParticipant[]
 
   @@index([university])
   @@map("users")
@@ -102,6 +115,9 @@ model Post {
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
   searchVector    Unsupported("tsvector")?
+
+  eventId String? @unique
+  event   Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
   comments Comment[]
   likes    Like[]
@@ -216,6 +232,8 @@ model Notification {
   conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   groupId        String?
   group          Group?        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  eventId        String?
+  event          Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   userAvatar     String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -303,9 +321,13 @@ model Group {
   updatedAt          DateTime                 @updatedAt
   searchVector       Unsupported("tsvector")?
 
+  eventId String? @unique
+  event   Event?  @relation("EventCoordinationGroup", fields: [eventId], references: [id], onDelete: SetNull)
+
   members       GroupMembers[]
   messages      GroupMessage[] @relation("GroupMessages")
   notifications Notification[]
+  hostedEvents  Event[]        @relation("GroupHostedEvents")
 
   @@map("groups")
 }
@@ -381,4 +403,52 @@ model GroupMessageReaction {
   @@unique([groupMessageId, userId])
   @@index([groupMessageId])
   @@map("group_message_reactions")
+}
+
+model Event {
+  id            String   @id @default(uuid())
+  creatorId     String
+  creator       User     @relation("EventCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  hostGroupId   String?
+  hostGroup     Group?   @relation("GroupHostedEvents", fields: [hostGroupId], references: [id], onDelete: SetNull)
+
+  title         String
+  description   String?
+  location      String?
+  virtualUrl    String?
+  coverImageUrl String?
+  coverImageKey String?
+  startAt       DateTime
+  endAt         DateTime?
+  visibility    EventVisibility          @default(public)
+  capacity      Int?
+  cancelledAt   DateTime?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  searchVector  Unsupported("tsvector")?
+
+  participants      EventParticipant[]
+  announcementPost  Post?          @relation
+  coordinationGroup Group?         @relation("EventCoordinationGroup")
+  notifications     Notification[]
+
+  @@index([startAt])
+  @@index([hostGroupId])
+  @@map("events")
+}
+
+model EventParticipant {
+  id        String                 @id @default(uuid())
+  eventId   String
+  event     Event                  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    EventParticipantStatus @default(going)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@map("event_participants")
 }
