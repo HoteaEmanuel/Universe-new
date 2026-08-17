@@ -1,7 +1,7 @@
-import React from "react";
 import { useAuthStore } from "@/store/authStore";
 import { FaUserCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
+
 const ProfileCard = () => {
   const { user } = useAuthStore();
   return (

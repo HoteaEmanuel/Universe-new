@@ -1,12 +1,12 @@
-import React from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetBusinessRegistrationsQuery } from "../queryAndMutation/queries/auth-queries";
 import {
   useAcceptBusinessRegistrationMutation,
   useRejectBusinessRegistrationMutation,
 } from "../queryAndMutation/mutations/auth-mutation";
-import { formatToLocalDate } from "../utils/formatDateToLocal";
-import { useEffect } from "react";
+import { formatToLocalDate } from "../utils/formatDatetoLocal";
+
 const Admin = () => {
   useEffect(() => {
     document.title = "Admin Page";
@@ -20,7 +20,6 @@ const Admin = () => {
   const { mutate: rejectBusinessRegistration } =
     useRejectBusinessRegistrationMutation();
   if (isLoading) return <p>Loading...</p>;
-  console.log(businessRegistrations);
   return (
     <div className="h-screen">
       <h1 className="text-5xl p-5">Admin Page</h1>
@@ -34,7 +33,7 @@ const Admin = () => {
               <p>{registration.name + " " + registration.email}</p>
               <p>
                 Requested on:{" "}
-                {formatToLocalDate(new Date(registration.createdAt))}
+                {formatToLocalDate(new Date(registration.createdAt ?? ""))}
               </p>
               <div className="flex gap-5 justify-end ml-auto">
                 <button

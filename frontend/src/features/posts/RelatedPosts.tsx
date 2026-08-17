@@ -1,16 +1,15 @@
-import React from "react";
+import { useEffect } from "react";
 import { useGetRelatedPostsQuery } from "@/queryAndMutation/queries/post-queries";
 import { useParams } from "react-router-dom";
 import PostCard from "./components/PostCard";
-import { useEffect } from "react";
+
 const RelatedPosts = () => {
   useEffect(() => {
     document.title = "Related Posts";
   }, []);
-  const tag = useParams().tag;
-  console.log(tag);
+  const { tag } = useParams();
   const { data: posts, isLoading: isLoadingRecentPosts } =
-    useGetRelatedPostsQuery(tag);
+    useGetRelatedPostsQuery(tag ?? "");
   if (isLoadingRecentPosts) return <p>Loading...</p>;
   return (
     <div className="p-10">

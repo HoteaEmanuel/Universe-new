@@ -1,4 +1,4 @@
-import { Camera, Mic, Paperclip } from "lucide-react";
+import { Camera, Mic, Paperclip, Send } from "lucide-react";
 import { getFullName } from "../../../utils/fullName";
 import { getAvatarColorClass, getInitials } from "../utils/avatarColor";
 import { formatChatListTime } from "../utils/chatListTime";
@@ -34,8 +34,9 @@ const ConversationListItem = ({
   const isImageOnly = !lastMessage?.content && !!lastMessage?.imageUrls?.length;
   const isVoiceOnly = !lastMessage?.content && !!lastMessage?.audioUrl;
   const isFileOnly = !lastMessage?.content && !!lastMessage?.attachments?.length;
+  const isSharedPostOnly = !lastMessage?.content && !!lastMessage?.sharedPostId;
   const time = formatChatListTime(entry.updatedAt);
-  const unreadCount = !isGroup ? (entry.unreadCount ?? 0) : 0;
+  const unreadCount = "unreadCount" in entry ? (entry.unreadCount ?? 0) : 0;
   const hasUnread = unreadCount > 0;
 
   return (
@@ -83,7 +84,9 @@ const ConversationListItem = ({
                 <>
                   <span className="truncate">
                     {prefix}
-                    {isImageOnly || isVoiceOnly || isFileOnly ? "" : lastMessage.content}
+                    {isImageOnly || isVoiceOnly || isFileOnly || isSharedPostOnly
+                      ? ""
+                      : lastMessage.content}
                   </span>
                   {isImageOnly && (
                     <span className="inline-flex shrink-0 items-center gap-1">
@@ -98,6 +101,11 @@ const ConversationListItem = ({
                   {isFileOnly && (
                     <span className="inline-flex shrink-0 items-center gap-1">
                       <Paperclip className="size-3.5" /> File
+                    </span>
+                  )}
+                  {isSharedPostOnly && (
+                    <span className="inline-flex shrink-0 items-center gap-1">
+                      <Send className="size-3.5" /> Shared a post
                     </span>
                   )}
                 </>

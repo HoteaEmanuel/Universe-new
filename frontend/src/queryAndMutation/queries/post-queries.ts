@@ -4,7 +4,9 @@ import type {
   Post,
   PostAuthor,
   PostsPage,
+  PublicPost,
   RelevantLiker,
+  ShareRecipient,
   UsersWhoLikedPage,
 } from "../types";
 
@@ -119,5 +121,24 @@ export const useGetPostsByNameQuery = (name: string) => {
   return useQuery({
     queryFn: () => getPostsByName(name) as Promise<Post[]>,
     queryKey: ["postsByName", name],
+  });
+};
+
+export const useGetPublicPostQuery = (id?: string) => {
+  const { getPublicPost } = usePostStore();
+  return useQuery({
+    queryFn: async () => (await getPublicPost(id)) as PublicPost,
+    queryKey: ["publicPost", id],
+    enabled: !!id,
+    retry: false,
+  });
+};
+
+export const useGetShareRecipientsQuery = (enabled: boolean) => {
+  const { getShareRecipients } = usePostStore();
+  return useQuery({
+    queryFn: () => getShareRecipients() as Promise<ShareRecipient[]>,
+    queryKey: ["shareRecipients"],
+    enabled,
   });
 };

@@ -1,4 +1,10 @@
-import { useCallback, useState } from "react";
+import {
+  useCallback,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
 import { useDropzone } from "react-dropzone";
 import { ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
@@ -6,18 +12,28 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import FullImageModal from "@/Modals/FullImageModal";
 
-const MultipleImagesUploader = ({
+type FileItem = File | string;
+
+type MultipleImagesUploaderProps<T extends FileItem> = {
+  setFiles: Dispatch<SetStateAction<T[]>>;
+  files: T[];
+  classes?: string;
+  children?: ReactNode;
+  maxImages?: number;
+};
+
+function MultipleImagesUploader<T extends FileItem>({
   setFiles,
   files,
   classes = "",
   children = null,
   maxImages = 10,
-}) => {
+}: MultipleImagesUploaderProps<T>) {
   const count = files?.length ?? 0;
   const atLimit = count >= maxImages;
 
   const onDrop = useCallback(
-    (acceptedFiles) => {
+    (acceptedFiles: File[]) => {
       const droppedFiles = acceptedFiles.map((file) =>
         Object.assign(file, {
           preview: URL.createObjectURL(file),
@@ -28,12 +44,12 @@ const MultipleImagesUploader = ({
         toast.error(`You can only upload up to ${maxImages} images`);
         return;
       }
-      setFiles((prev) => [...prev, ...droppedFiles]);
+      setFiles((prev) => [...prev, ...droppedFiles] as T[]);
     },
     [setFiles, count, maxImages],
   );
 
-  const [fullImage, setFullImage] = useState(null);
+  const [fullImage, setFullImage] = useState<FileItem | null>(null);
   const [openFullImageModal, setOpenFullImageModal] = useState(false);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -43,7 +59,7 @@ const MultipleImagesUploader = ({
     },
   });
 
-  const handleRemoveImage = (image) => {
+  const handleRemoveImage = (image: T) => {
     setFiles((prev) => prev.filter((file) => file !== image));
   };
 
@@ -87,9 +103,11 @@ const MultipleImagesUploader = ({
       {count > 0 && (
         <ul className="flex flex-wrap justify-center gap-3">
           {files.map((file) => {
-            const preview = file?.path ? URL.createObjectURL(file) : file;
+            const preview =
+              typeof file !== "string" ? URL.createObjectURL(file) : file;
+            const key = typeof file === "string" ? file : file.name;
             return (
-              <li key={file?.name ?? file}>
+              <li key={key}>
                 <div className="relative">
                   <button
                     type="button"
@@ -121,6 +139,6 @@ const MultipleImagesUploader = ({
       <div className="flex w-full justify-center gap-5">{children}</div>
     </div>
   );
-};
+}
 
 export default MultipleImagesUploader;

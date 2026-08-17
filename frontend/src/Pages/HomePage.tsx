@@ -2,8 +2,7 @@ import PostCard from "@/features/posts/components/PostCard";
 import PostSkeleton from "@/features/posts/components/PostSkeleton";
 import { useGetPostsInfiniteQuery } from "../queryAndMutation/queries/post-queries";
 import { useAuthStore } from "../store/authStore";
-import { useState, useRef } from "react";
-import { useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useGetFollowingQuery } from "../queryAndMutation/queries/user-queries";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/utils";
@@ -18,9 +17,9 @@ const HomePage = () => {
     document.title = "Home";
   }, []);
   const { user } = useAuthStore();
-  const { isPending: isPendingFollowing } = useGetFollowingQuery(user.id);
+  const { isPending: isPendingFollowing } = useGetFollowingQuery(user?.id);
   const [feedSelector, setFeedSelector] = useState("Global");
-  const scrollRef = useRef(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const {
     data,

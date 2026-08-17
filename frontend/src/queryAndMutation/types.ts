@@ -77,6 +77,34 @@ export type UsersWhoLikedPage = {
 
 export type RelevantLiker = PostAuthor | null;
 
+export type ShareRecipient = {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  name?: string | null;
+  profilePicture?: string | null;
+  lastInteractionAt: string;
+};
+
+export type SharedPostPreview = {
+  id: string;
+  title: string;
+  imagesUrls: string[];
+  user: PostAuthor;
+};
+
+export type PublicPost = {
+  id: string;
+  title: string;
+  body?: string;
+  location?: string;
+  imagesUrls: string[];
+  createdAt: string;
+  tags: { name: string }[];
+  user: PostAuthor;
+  _count: { likes: number; comments: number };
+};
+
 export type FollowUser = {
   id: string;
   firstName?: string;

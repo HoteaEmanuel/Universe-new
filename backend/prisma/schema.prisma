@@ -106,6 +106,9 @@ model Post {
   likes    Like[]
   savedBy  SavedPost[]
 
+  sharedInMessages      Message[]
+  sharedInGroupMessages GroupMessage[]
+
   @@index([userId])
   @@map("posts")
 }
@@ -258,6 +261,8 @@ model Message {
   audioUrl       String?
   audioKey       String?
   audioDurationSec Int?
+  sharedPostId   String?
+  sharedPost     Post?        @relation(fields: [sharedPostId], references: [id], onDelete: SetNull)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -330,6 +335,8 @@ model GroupMessage {
   audioUrl         String?
   audioKey         String?
   audioDurationSec Int?
+  sharedPostId     String?
+  sharedPost       Post?    @relation(fields: [sharedPostId], references: [id], onDelete: SetNull)
   edited           Boolean  @default(false)
   deleted          Boolean  @default(false)
   createdAt        DateTime @default(now())

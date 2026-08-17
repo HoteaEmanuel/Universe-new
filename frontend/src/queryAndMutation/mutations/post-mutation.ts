@@ -56,6 +56,19 @@ export const useUpdatePostMutation = (userId?: string) => {
   });
 };
 
+export const useSharePostMutation = (postId: string) => {
+  const { sharePost } = usePostStore();
+  return useMutation({
+    mutationFn: (recipientIds: string[]) => sharePost(postId, recipientIds),
+    onSuccess: () => {
+      toast.success("Post sent");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message);
+    },
+  });
+};
+
 export const useDeletePostMutation = (postId: string, userId?: string) => {
   const queryClient = useQueryClient();
   const { deletePost } = usePostStore();

@@ -1,11 +1,8 @@
-import React from "react";
-import Logo from "@/components/Logo";
 import { Link } from "react-router-dom";
-import { CiLogout } from "react-icons/ci";
 import { FaUserCircle } from "react-icons/fa";
 import { useAuthStore } from "@/store/authStore";
-import { MdDarkMode, MdLightMode } from "react-icons/md";
 import logo from "@/assets/logo_1.png";
+
 const TopBar = () => {
   const { user } = useAuthStore();
   return (
@@ -22,9 +19,9 @@ const TopBar = () => {
 
       <div className="flex items-center gap-5">
         <Link to={`/profile`}>
-          {user.profilePicture ? (
+          {user?.profilePicture ? (
             <img
-              src={user?.profilePicture}
+              src={user.profilePicture}
               alt="user profile picture"
               className="size-10 rounded-full"
             />
@@ -32,9 +29,6 @@ const TopBar = () => {
             <FaUserCircle className="h-10 w-8 text-violet-950" />
           )}
         </Link>
-        {/* <Link to="/logout">
-          <CiLogout className="h-8 w-10 text-violet-950 font-bold m-2 float-right" />
-        </Link> */}
       </div>
     </section>
   );

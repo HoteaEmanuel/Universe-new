@@ -18,6 +18,7 @@ import {
   emitNewNotification,
 } from "../repository/notification.repository.js";
 import { findUserById } from "../repository/user.repository.js";
+import { findPostById } from "../repository/post.repository.js";
 
 import { getActiveConversationUsers } from "../lib/socket.js";
 
@@ -27,8 +28,10 @@ const notificationPreviewText = (message: {
   content?: string | null;
   audioUrl?: string | null;
   attachments?: { fileName: string }[];
+  sharedPost?: { id: string } | null;
 }) => {
   if (message.content) return message.content;
+  if (message.sharedPost) return "Shared a post";
   if (message.audioUrl) return "Voice message";
   if (message.attachments && message.attachments.length > 0) return "FILE";
   return "IMAGE";
@@ -212,6 +215,43 @@ export const sendVoiceMessage = async (data: {
   });
 
   return finalizeNewMessage({ convoId, authUserId, receiverId, message });
+};
+
+export const sharePostToUsers = async (data: {
+  authUserId: string;
+  postId: string;
+  recipientIds: string[];
+}) => {
+  const { authUserId, postId, recipientIds } = data;
+  const post = await findPostById(postId);
+  if (!post) throw new Error("Post not found");
+
+  const uniqueRecipientIds = Array.from(new Set(recipientIds)).filter(
+    (id) => id !== authUserId,
+  );
+  if (uniqueRecipientIds.length === 0) throw new Error("No recipients provided");
+
+  return Promise.all(
+    uniqueRecipientIds.map(async (receiverId) => {
+      const conversation =
+        (await findConversationByParticipants(authUserId, receiverId)) ??
+        (await createConversation({ authUserId, otherUserId: receiverId }));
+
+      const message = await createMessage({
+        senderId: authUserId,
+        receiverId,
+        conversationId: conversation.id,
+        sharedPostId: postId,
+      });
+
+      return finalizeNewMessage({
+        convoId: conversation.id,
+        authUserId,
+        receiverId,
+        message,
+      });
+    }),
+  );
 };
 
 export const markConversationRead = async (data: { convoId: string; userId: string }) => {

@@ -20,10 +20,13 @@ import {
   unlikePostController,
   createPostController,
   getPostsByTagController,
+  getShareRecipientsController,
+  sharePostController,
 } from "../controllers/post.controller.js";
 import { imageUpload } from "../lib/imageUpload.js";
 import { validate } from "../middleware/validate.js";
 import { requirePostOwner } from "../middleware/authorization.js";
+import { messageRateLimiter } from "../middleware/messageRateLimiter.js";
 import {
   createPostSchema,
   updatePostSchema,
@@ -31,9 +34,17 @@ import {
   deletePostsByNameSchema,
   feedQuerySchema,
   usersWhoLikedQuerySchema,
+  sharePostSchema,
 } from "../schemas/post.schema.js";
 
 router.get("/post/:id", getPost);
+router.get("/share-recipients", getShareRecipientsController);
+router.post(
+  "/post/:id/share",
+  messageRateLimiter,
+  validate({ body: sharePostSchema }),
+  sharePostController,
+);
 router.get(
   "/posts/:feed",
   validate({ query: feedQuerySchema }),

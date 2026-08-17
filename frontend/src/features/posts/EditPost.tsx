@@ -8,7 +8,7 @@ import {
 } from "@/queryAndMutation/mutations/post-mutation";
 import { useGetPostQuery } from "@/queryAndMutation/queries/post-queries";
 import { useAuthStore } from "@/store/authStore";
-import MultipleImagesUploader from "./components/MultipleImagesUploader.jsx";
+import MultipleImagesUploader from "./components/MultipleImagesUploader";
 import PostFormCard from "./components/PostFormCard";
 import FormField from "@/components/FormField";
 import LocationAutocompleteField from "./components/LocationAutocompleteField";

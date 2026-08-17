@@ -25,7 +25,7 @@ const Settings = () => {
         <ul className="h-full flex flex-col gap-5">
           <li className="w-full h-20 flex items-center justify-between rounded-2xl p-10 border-2 border-violet-950">
             <h1>Toggle Theme</h1>
-            <label class="switch">
+            <label className="switch">
               <input
                 type="checkbox"
                 className="input"
@@ -59,13 +59,13 @@ const Settings = () => {
           <li className="w-full h-20 flex items-center justify-between rounded-2xl p-10 border-2 border-violet-950">
             <h1>Toggle Notifications </h1>
             <span className="font-bold text-lg">{notificationsOn ? "ON" : "OFF"}</span>
-            <label class="switch1">
+            <label className="switch1">
               <input
                 type="checkbox"
                 checked={notificationsOn}
                 onChange={toggleNotifications}
               />
-              <span class="slider1"></span>
+              <span className="slider1"></span>
             </label>
           </li>
         </ul>

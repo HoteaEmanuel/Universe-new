@@ -15,14 +15,7 @@ const VerifyEmail = () => {
   const navigate = useNavigate();
   const { isLoading, error } = useAuthStore();
   const [code, setCode] = useState("");
-  // useVerifyEmailMutation lives in a plain .js file, so its inferred
-  // mutation-variable type defaults to `void` — cast to the shape it
-  // actually accepts at runtime (out of scope to convert that file here).
-  const { mutateAsync: verifyEmail, isError } =
-    useVerifyEmailMutation() as unknown as {
-      mutateAsync: (code: string) => Promise<unknown>;
-      isError: boolean;
-    };
+  const { mutateAsync: verifyEmail, isError } = useVerifyEmailMutation();
   const [submitError, setSubmitError] = useState<string | undefined>(
     undefined,
   );

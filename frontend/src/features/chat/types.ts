@@ -24,6 +24,13 @@ export type MessageAttachment = {
   mimeType: string;
 };
 
+export type SharedPost = {
+  id: string;
+  title: string;
+  imagesUrls: string[];
+  user: ChatUser;
+};
+
 export type ChatMessage = {
   id: string;
   content?: string;
@@ -31,6 +38,7 @@ export type ChatMessage = {
   audioUrl?: string;
   audioDurationSec?: number;
   attachments?: MessageAttachment[];
+  sharedPost?: SharedPost | null;
   senderId: MessageSender;
   conversationId?: string;
   groupId?: string;
@@ -46,6 +54,7 @@ export type LastMessagePreview = {
   imageUrls?: string[];
   audioUrl?: string;
   attachments?: MessageAttachment[];
+  sharedPostId?: string | null;
   senderId?: MessageSender;
 };
 

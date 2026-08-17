@@ -7,7 +7,7 @@ import {
 } from "@/queryAndMutation/mutations/post-mutation";
 import { useGetAiHashtagsQuery } from "@/queryAndMutation/queries/ai-queries";
 import { useDebounce } from "@/hooks/Debounce";
-import MultipleImagesUploader from "./components/MultipleImagesUploader.jsx";
+import MultipleImagesUploader from "./components/MultipleImagesUploader";
 import PostFormCard from "./components/PostFormCard";
 import FormField from "@/components/FormField";
 import LocationAutocompleteField from "./components/LocationAutocompleteField";

@@ -1,18 +1,22 @@
-import { useRef } from "react";
-import { useState } from "react";
+import { useRef, useState, type MouseEvent, type TouchEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-function ImageSlider({ images }) {
+
+type ImageSliderProps = {
+  images: string[];
+};
+
+function ImageSlider({ images }: ImageSliderProps) {
   const [index, setIndex] = useState(1);
 
-  const touchStartX = useRef(null);
+  const touchStartX = useRef<number | null>(null);
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = (e: TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
 
-  const handleTouchEnd = (e) => {
+  const handleTouchEnd = (e: TouchEvent) => {
     const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartX.current - touchEndX;
+    const diff = (touchStartX.current ?? touchEndX) - touchEndX;
 
     if (diff > 50) {
       // swiped left → next
@@ -27,16 +31,16 @@ function ImageSlider({ images }) {
     }
   };
 
-  const mouseStartX = useRef(null);
+  const mouseStartX = useRef<number | null>(null);
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (e: MouseEvent) => {
     e.preventDefault();
     mouseStartX.current = e.clientX;
   };
 
-  const handleMouseUp = (e) => {
+  const handleMouseUp = (e: MouseEvent) => {
     e.preventDefault();
-    const diff = mouseStartX.current - e.clientX;
+    const diff = (mouseStartX.current ?? e.clientX) - e.clientX;
 
     if (diff > 50) {
       let newIndex = index + 1;
@@ -49,7 +53,7 @@ function ImageSlider({ images }) {
     }
   };
 
-  const handlePrevious = (e) => {
+  const handlePrevious = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     let newIndex = index - 1;
@@ -57,7 +61,7 @@ function ImageSlider({ images }) {
     setIndex(newIndex);
   };
 
-  const handleNext = (e) => {
+  const handleNext = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     let newIndex = index + 1;
@@ -65,7 +69,7 @@ function ImageSlider({ images }) {
     setIndex(newIndex);
   };
 
-  const handleDotClick = (e, dotIndex) => {
+  const handleDotClick = (e: MouseEvent, dotIndex: number) => {
     e.preventDefault();
     e.stopPropagation();
     setIndex(dotIndex + 1);

@@ -9,6 +9,20 @@ interface AttachmentInput {
   mimeType: string;
 }
 
+const SHARED_POST_SELECT = {
+  id: true,
+  title: true,
+  imagesUrls: true,
+  user: {
+    select: { id: true, firstName: true, lastName: true, name: true, profilePicture: true },
+  },
+} as const;
+
+const MESSAGE_INCLUDE = {
+  attachments: true,
+  sharedPost: { select: SHARED_POST_SELECT },
+} as const;
+
 interface CreateMessageInput {
   conversationId: string;
   senderId: string;
@@ -20,6 +34,7 @@ interface CreateMessageInput {
   audioKey?: string | null;
   audioDurationSec?: number | null;
   attachments?: AttachmentInput[];
+  sharedPostId?: string | null;
 }
 
 export const createMessage = async (data: CreateMessageInput) => {
@@ -34,6 +49,7 @@ export const createMessage = async (data: CreateMessageInput) => {
     audioKey,
     audioDurationSec,
     attachments,
+    sharedPostId,
   } = data;
 
   return prisma.message.create({
@@ -47,17 +63,18 @@ export const createMessage = async (data: CreateMessageInput) => {
       audioUrl: audioUrl || null,
       audioKey: audioKey || null,
       audioDurationSec: audioDurationSec ?? null,
+      sharedPostId: sharedPostId ?? null,
       attachments:
         attachments && attachments.length > 0
           ? { create: attachments }
           : undefined,
     },
-    include: { attachments: true },
+    include: MESSAGE_INCLUDE,
   });
 };
 
 export const findMessageById = async (id: string) => {
-  return prisma.message.findUnique({ where: { id }, include: { attachments: true } });
+  return prisma.message.findUnique({ where: { id }, include: MESSAGE_INCLUDE });
 };
 
 interface CreateGroupMessageInput {
@@ -70,6 +87,7 @@ interface CreateGroupMessageInput {
   audioKey?: string | null;
   audioDurationSec?: number | null;
   attachments?: AttachmentInput[];
+  sharedPostId?: string | null;
 }
 
 export const createGroupMessage = async (data: CreateGroupMessageInput) => {
@@ -83,6 +101,7 @@ export const createGroupMessage = async (data: CreateGroupMessageInput) => {
     audioKey,
     audioDurationSec,
     attachments,
+    sharedPostId,
   } = data;
 
   return prisma.groupMessage.create({
@@ -95,19 +114,20 @@ export const createGroupMessage = async (data: CreateGroupMessageInput) => {
       audioUrl: audioUrl || null,
       audioKey: audioKey || null,
       audioDurationSec: audioDurationSec ?? null,
+      sharedPostId: sharedPostId ?? null,
       attachments:
         attachments && attachments.length > 0
           ? { create: attachments }
           : undefined,
     },
-    include: { attachments: true },
+    include: MESSAGE_INCLUDE,
   });
 };
 
 export const findGroupMessageById = async (id: string) => {
   return prisma.groupMessage.findUnique({
     where: { id },
-    include: { attachments: true },
+    include: MESSAGE_INCLUDE,
   });
 };
 
@@ -152,7 +172,7 @@ export const getConversationMessagesPage = async (
     orderBy: MESSAGE_ORDER_BY,
     include: {
       reactions: { select: { id: true, emoji: true, userId: true } },
-      attachments: true,
+      ...MESSAGE_INCLUDE,
     },
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
@@ -195,7 +215,7 @@ export const getGroupMessagesPage = async (
         },
       },
       reactions: { select: { id: true, emoji: true, userId: true } },
-      attachments: true,
+      ...MESSAGE_INCLUDE,
     },
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });

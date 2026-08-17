@@ -75,3 +75,90 @@ export const getFollowConnectedUserIds = async (
   );
   return connectedIds;
 };
+
+interface ShareRecipientUser {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  name: string | null;
+  profilePicture: string | null;
+}
+
+export interface ShareRecipient extends ShareRecipientUser {
+  lastInteractionAt: Date;
+}
+
+const SHARE_RECIPIENT_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  name: true,
+  profilePicture: true,
+} as const;
+
+// Candidate pool for the "Send post to" picker: the viewer's follow graph,
+// DM partners, and group co-members - deduped, each ranked by the most
+// recent of whichever of those signals applies to them.
+export const getShareRecipients = async (viewerId: string): Promise<ShareRecipient[]> => {
+  const myGroupIds = (
+    await prisma.groupMembers.findMany({
+      where: { memberId: viewerId },
+      select: { groupId: true },
+    })
+  ).map((m) => m.groupId);
+
+  const [followRows, conversationRows, coMemberRows] = await Promise.all([
+    prisma.follow.findMany({
+      where: { OR: [{ followerId: viewerId }, { followingId: viewerId }] },
+      select: {
+        followerId: true,
+        createdAt: true,
+        follower: { select: SHARE_RECIPIENT_SELECT },
+        following: { select: SHARE_RECIPIENT_SELECT },
+      },
+    }),
+    prisma.conversation.findMany({
+      where: { OR: [{ participantOneId: viewerId }, { participantTwoId: viewerId }] },
+      select: {
+        participantOneId: true,
+        updatedAt: true,
+        participantOne: { select: SHARE_RECIPIENT_SELECT },
+        participantTwo: { select: SHARE_RECIPIENT_SELECT },
+      },
+    }),
+    myGroupIds.length > 0
+      ? prisma.groupMembers.findMany({
+          where: { groupId: { in: myGroupIds }, memberId: { not: viewerId } },
+          select: {
+            createdAt: true,
+            member: { select: SHARE_RECIPIENT_SELECT },
+          },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const byId = new Map<string, ShareRecipient>();
+  const bump = (user: ShareRecipientUser, at: Date) => {
+    const existing = byId.get(user.id);
+    if (!existing || at > existing.lastInteractionAt) {
+      byId.set(user.id, { ...user, lastInteractionAt: at });
+    }
+  };
+
+  followRows.forEach((row) => {
+    const other = row.followerId === viewerId ? row.following : row.follower;
+    bump(other, row.createdAt);
+  });
+  conversationRows.forEach((row) => {
+    const other = row.participantOneId === viewerId ? row.participantTwo : row.participantOne;
+    bump(other, row.updatedAt);
+  });
+  coMemberRows.forEach((row) => {
+    bump(row.member, row.createdAt);
+  });
+
+  byId.delete(viewerId);
+  return Array.from(byId.values()).sort(
+    (a, b) => b.lastInteractionAt.getTime() - a.lastInteractionAt.getTime(),
+  );
+};

@@ -1,6 +1,5 @@
-import React from "react";
 import { Link } from "react-router-dom";
-import { Users, CalendarDays, Sparkles } from "lucide-react";
+import { Users, CalendarDays, Sparkles, type LucideIcon } from "lucide-react";
 import logo from "../assets/logo_1.png";
 import group_image from "../assets/alta_imagine.png";
 import { buttonVariants } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import "../stars.css";
 
-const features = [
+const features: { icon: LucideIcon; title: string; description: string }[] = [
   {
     icon: Users,
     title: "Find your community",

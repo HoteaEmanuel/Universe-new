@@ -19,6 +19,7 @@ import EmojiPickerPopover from "./EmojiPickerPopover";
 import VoiceMessagePlayer from "./VoiceMessagePlayer";
 import MessageImageGrid from "./MessageImageGrid";
 import MessageFileList from "./MessageFileList";
+import SharedPostCard from "./SharedPostCard";
 import type { ChatMessage, ChatUser, MessageAttachment } from "../types";
 
 type MessageBubbleProps = {
@@ -256,6 +257,12 @@ const MessageBubble = ({
               isOwn={isOwn}
               onOpen={(index) => onOpenFiles(message.attachments!, index)}
             />
+          </div>
+        )}
+
+        {!message.deleted && message.sharedPost && (
+          <div data-slot="message-shared-post">
+            <SharedPostCard post={message.sharedPost} isOwn={isOwn} />
           </div>
         )}
 

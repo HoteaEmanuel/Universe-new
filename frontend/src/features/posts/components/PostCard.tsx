@@ -1,11 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { useRef } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { FaUserCircle } from "react-icons/fa";
-import { Heart, MessageCircle, Bookmark, BookmarkCheck } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, BookmarkCheck, Send } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { useNavigate } from "react-router-dom";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   useGetLikesQuery,
   useGetRelevantLikerQuery,
@@ -27,21 +25,30 @@ import {
 import { formatDateDetailed } from "@/utils/formatDate";
 import { formatCount } from "@/utils/formatCount";
 import LikesModal from "./LikesModal";
+import SharePostModal from "./SharePostModal";
 import { urlPathName } from "@/utils/urlPathFromName";
 import ImageSlider from "./ImageSlider";
 import PostSkeleton from "./PostSkeleton";
-const PostCard = ({ post }) => {
+import type { Post } from "@/queryAndMutation/types";
+
+type PostCardProps = {
+  post: Post;
+};
+
+const PostCard = ({ post }: PostCardProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const user_ = user!;
   const { userId } = post;
   const postId = post.id;
   const [showMore, setShowMore] = useState(false);
   const [isClamped, setIsClamped] = useState(false);
   const [isSaved, setIsSaved] = useState(post.isSaved);
-  const bodyRef = useRef(null);
+  const bodyRef = useRef<HTMLSpanElement>(null);
   const [showLikesModal, setShowLikesModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [likePop, setLikePop] = useState(false);
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showHeartBurst, setShowHeartBurst] = useState(false);
@@ -71,29 +78,28 @@ const PostCard = ({ post }) => {
     useGetPostCommentsCount(postId);
   const likeMutation = useLikeMutation(postId);
   const unlikeMutation = useUnlikeMutation(postId);
-  const { mutate: savePostMutation } = useSavePostMutation(postId, user.id);
-  const followMutation = useFollowMutation(userId, user.id);
-  const unfollowMutation = useUnfollowMutation(userId, user.id);
+  const { mutate: savePostMutation } = useSavePostMutation(postId, user_.id);
+  const followMutation = useFollowMutation(userId, user_.id);
+  const unfollowMutation = useUnfollowMutation(userId, user_.id);
   const { mutate: unsavePostMutation } = useUnsavePostMutation(
     postId,
-    user.id,
+    user_.id,
   );
 
-  const [showSaveOption, setShowSaveOption] = useState(false);
+  const [showSaveOption, setShowSaveOption] = useState<string | false>(false);
   const postTime = formatDateDetailed(post.createdAt.toString());
-  const handleLike = (e) => {
+  const handleLike = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     const prevLikes =
-      queryClient.getQueryData(["likes", postId]) ?? post.likes.length;
+      queryClient.getQueryData<number>(["likes", postId]) ?? post.likes.length;
     const prevLiked =
-      queryClient.getQueryData(["userLiked", postId]) ?? !!liked;
+      queryClient.getQueryData<boolean>(["userLiked", postId]) ?? !!liked;
 
-    queryClient.setQueryData(
+    queryClient.setQueryData<number>(
       ["likes", postId],
-      (old) =>
-        (typeof old === "number" ? old : prevLikes) + (prevLiked ? -1 : 1),
+      (old) => (old ?? prevLikes) + (prevLiked ? -1 : 1),
     );
     queryClient.setQueryData(["userLiked", postId], !prevLiked);
 
@@ -115,29 +121,29 @@ const PostCard = ({ post }) => {
     }
   };
   const fullName = urlPathName(creator);
-  const handleProfileClick = (e) => {
+  const handleProfileClick = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (userId !== user.id) {
+    if (userId !== user_.id) {
       navigate(`/users/${fullName}`);
     } else {
       navigate("/profile");
     }
   };
 
-  const handleFollowClick = (e) => {
+  const handleFollowClick = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    followMutation.mutate(userId);
+    followMutation.mutate();
   };
 
-  const handleUnfollowClick = (e) => {
+  const handleUnfollowClick = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    unfollowMutation.mutate(userId);
+    unfollowMutation.mutate();
   };
 
-  const handleSaveClick = (e) => {
+  const handleSaveClick = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsSaved(true);
@@ -148,22 +154,27 @@ const PostCard = ({ post }) => {
     });
   };
 
-  const handleSeeMoreClick = (e) => {
+  const handleSeeMoreClick = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setShowMore(!showMore);
   };
-  const handleSeeRelated = (e, tag) => {
+  const handleSeeRelated = (e: MouseEvent, tag: string) => {
     e.preventDefault();
     e.stopPropagation();
     navigate(`/related-posts/${tag}`);
   };
-  const handleSeeLikesModal = (e) => {
+  const handleSeeLikesModal = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setShowLikesModal(true);
   };
-  const handleUnSavePostClick = (e) => {
+  const handleShareClick = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowShareModal(true);
+  };
+  const handleUnSavePostClick = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsSaved(false);
@@ -181,7 +192,7 @@ const PostCard = ({ post }) => {
     isPendingRelevantLiker ||
     isPendingCommentsCount
   )
-    return <PostSkeleton/>;
+    return <PostSkeleton />;
   if (!creator) return null;
   const { firstName, name, lastName, profilePicture } = creator;
   const hasImages = !!post.imagesUrls?.length;
@@ -239,7 +250,7 @@ const PostCard = ({ post }) => {
             </p>
           </div>
 
-          {(!isFollowing && userId !== user.id && (
+          {(!isFollowing && userId !== user_.id && (
             <button
               className="rounded-full px-2 py-1 text-xs font-semibold text-primary transition-transform duration-200 ease-in hover:scale-105"
               onClick={handleFollowClick}
@@ -247,7 +258,7 @@ const PostCard = ({ post }) => {
               Follow
             </button>
           )) ||
-            (userId !== user.id && isFollowing && (
+            (userId !== user_.id && isFollowing && (
               <button
                 className="rounded-full px-2 py-1 text-xs text-muted-foreground transition-transform duration-200 ease-in hover:scale-105"
                 onClick={handleUnfollowClick}
@@ -319,8 +330,15 @@ const PostCard = ({ post }) => {
         <button aria-label="Comments">
           <MessageCircle className="size-6 text-foreground/80 hover:text-foreground" />
         </button>
+        <button
+          className="transition-transform duration-150 hover:scale-110"
+          onClick={handleShareClick}
+          aria-label="Send post"
+        >
+          <Send className="size-6 text-foreground/80 hover:text-foreground" />
+        </button>
         <div className="relative ml-auto">
-          {userId !== user.id && !isSaved && (
+          {userId !== user_.id && !isSaved && (
             <Bookmark
               className="size-6 text-foreground/80 hover:scale-110 hover:text-foreground cursor-pointer transition-transform duration-150"
               onClick={handleSaveClick}
@@ -329,7 +347,7 @@ const PostCard = ({ post }) => {
               aria-label="Save post"
             />
           )}
-          {userId !== user.id && isSaved && (
+          {userId !== user_.id && isSaved && (
             <BookmarkCheck
               className="size-6 text-foreground hover:scale-110 cursor-pointer transition-transform duration-150"
               fill="currentColor"
@@ -367,7 +385,8 @@ const PostCard = ({ post }) => {
               <span className="font-semibold">
                 {relevantLiker.firstName || relevantLiker.name}
               </span>
-              {likes > 1 &&
+              {!!likes &&
+                likes > 1 &&
                 ` and ${formatCount(likes - 1)} other${likes - 1 === 1 ? "" : "s"}`}
             </span>
           </div>
@@ -376,10 +395,10 @@ const PostCard = ({ post }) => {
             className="cursor-pointer text-sm font-semibold"
             onClick={handleSeeLikesModal}
           >
-            {formatCount(likes)} {likes === 1 ? "like" : "likes"}
+            {formatCount(likes ?? 0)} {likes === 1 ? "like" : "likes"}
           </span>
         )}
-        {commentsCount > 0 && (
+        {!!commentsCount && commentsCount > 0 && (
           <span className="ml-3 text-sm text-muted-foreground">
             {formatCount(commentsCount)}{" "}
             {commentsCount === 1 ? "comment" : "comments"}
@@ -387,10 +406,18 @@ const PostCard = ({ post }) => {
         )}
       </div>
 
-      {showLikesModal && likes > 0 && (
+      {showLikesModal && !!likes && likes > 0 && (
         <LikesModal
           open={showLikesModal}
           onClose={() => setShowLikesModal(false)}
+          postId={postId}
+        />
+      )}
+
+      {showShareModal && (
+        <SharePostModal
+          open={showShareModal}
+          onClose={() => setShowShareModal(false)}
           postId={postId}
         />
       )}

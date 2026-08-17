@@ -28,6 +28,7 @@ import { formatToLocalDate } from "@/utils/formatDatetoLocal";
 import {
   useGetTopNewsQuery,
   useGetNewsByCategoryQuery,
+  type NewsArticle,
 } from "@/queryAndMutation/queries/news-queries";
 import {
   useSearchOverviewQuery,
@@ -51,14 +52,6 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "posts", label: "Posts" },
   { key: "groups", label: "Groups" },
 ];
-
-type NewsArticle = {
-  title: string;
-  url: string;
-  image?: string;
-  description?: string;
-  publishedAt: string;
-};
 
 const countLabel = (page?: SearchPage<unknown>) =>
   page ? `${page.items.length}${page.hasMore ? "+" : ""}` : null;
@@ -153,8 +146,9 @@ const Explore = () => {
   const { data: topicNews, isPending: isTopicNewsPending } =
     useGetNewsByCategoryQuery(selectedTopic ?? "");
 
-  const newsToShow = (selectedTopic ? topicNews : topNews) as
-    NewsArticle[] | undefined;
+  const newsToShow: NewsArticle[] | undefined = selectedTopic
+    ? topicNews
+    : topNews;
   const isNewsPending = selectedTopic ? isTopicNewsPending : isTopNewsPending;
 
   const users = usersQuery.data?.pages.flatMap((page) => page.items) ?? [];

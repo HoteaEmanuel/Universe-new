@@ -5,7 +5,9 @@ import type {
   Post,
   PostAuthor,
   PostsPage,
+  PublicPost,
   RelevantLiker,
+  ShareRecipient,
   UpdatePostPayload,
   UsersWhoLikedPage,
 } from "../queryAndMutation/types";
@@ -38,6 +40,9 @@ type PostStore = {
   checkSaved: (id: string) => Promise<{ isSaved: boolean }>;
   getPostsByName: (name: string) => Promise<Post[]>;
   getPostsByTag: (tag: string) => Promise<Post[]>;
+  getPublicPost: (id?: string) => Promise<PublicPost>;
+  getShareRecipients: () => Promise<ShareRecipient[]>;
+  sharePost: (postId: string, recipientIds: string[]) => Promise<void>;
 };
 
 export const usePostStore = create<PostStore>((set) => ({
@@ -302,5 +307,16 @@ export const usePostStore = create<PostStore>((set) => ({
     } finally {
       set({ isLoading: false });
     }
+  },
+  getPublicPost: async (id) => {
+    const response = await axios.get(`${API_URL}/public/post/${id}`);
+    return response.data.post;
+  },
+  getShareRecipients: async () => {
+    const response = await axios.get(`${API_URL}/share-recipients`);
+    return response.data.recipients;
+  },
+  sharePost: async (postId, recipientIds) => {
+    await axios.post(`${API_URL}/post/${postId}/share`, { recipientIds });
   },
 }));

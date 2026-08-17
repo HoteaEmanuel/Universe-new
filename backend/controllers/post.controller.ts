@@ -5,9 +5,10 @@ import { findPostsByTag } from "../repository/post.repository.js";
 import {
   getViewerRelevantUserIds,
   getFollowConnectedUserIds,
+  getShareRecipients,
 } from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
-import type { UsersWhoLikedQueryInput } from "../schemas/post.schema.js";
+import type { UsersWhoLikedQueryInput, SharePostInput } from "../schemas/post.schema.js";
 import {
   createNewPost,
   deletePost,
@@ -20,6 +21,7 @@ import {
   unlikePost,
   updatePost,
 } from "../services/post.service.js";
+import { sharePostToUsers } from "../services/conversation.service.js";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong";
@@ -113,6 +115,28 @@ export const getPostsTags = async (req: Request, res: Response) => {
     return res
       .status(200)
       .json({ tags, message: "Fetched the tags succesfully" });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const getShareRecipientsController = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId as string;
+    const recipients = await getShareRecipients(userId);
+    return res.status(200).json({ message: "Fetched share recipients", recipients });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const sharePostController = async (req: Request, res: Response) => {
+  try {
+    const postId = req.params.id as string;
+    const authUserId = req.userId as string;
+    const { recipientIds } = req.body as SharePostInput;
+    const messages = await sharePostToUsers({ authUserId, postId, recipientIds });
+    return res.status(201).json({ message: "Post shared", messages });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

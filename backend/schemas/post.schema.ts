@@ -59,3 +59,11 @@ export const usersWhoLikedQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 export type UsersWhoLikedQueryInput = z.infer<typeof usersWhoLikedQuerySchema>;
+
+export const sharePostSchema = z.object({
+  recipientIds: z
+    .array(z.string().uuid("recipientIds must be valid ids"))
+    .min(1, "Select at least one recipient")
+    .max(20, "You can share with at most 20 people at once"),
+});
+export type SharePostInput = z.infer<typeof sharePostSchema>;

@@ -1,12 +1,10 @@
 import {
-  BrowserRouter,
-  Link,
   Navigate,
   Route,
   Routes,
   useLocation,
 } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
 import HomePage from "./Pages/HomePage";
 import LandingPage from "./Pages/LandingPage";
@@ -26,6 +24,7 @@ import CreatePost from "./features/posts/CreatePost";
 import EditPost from "./features/posts/EditPost";
 import Explore from "./features/search/Explore";
 import PostDetails from "./features/posts/PostDetails";
+import PublicPost from "./features/posts/PublicPost";
 import PostDetailsModal from "./features/posts/components/PostDetailsModal";
 import ChatContainer from "./features/chat/ChatContainer";
 import Conversation from "./features/chat/Conversation";
@@ -37,33 +36,33 @@ import NotFound from "./Pages/NotFound";
 import NewConversation from "./features/chat/NewConversation";
 import Group from "./features/groups/Group";
 import EditProfile from "./features/profile/EditProfile";
-import Background from "./components/Background.jsx";
 import Notifications from "./features/notifications/Notifications.tsx";
+
 const queryClient = new QueryClient();
-const ProtectedRoute = ({ children }) => {
+
+const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
   if (isCheckingAuth) return <p>Loading...</p>;
   if (!isAuthenticated) return <Navigate to={"/login"} replace />;
-  if (!isAuthenticated && !user.isVerified)
-    return <Navigate to={"/signup"} replace />;
+  if (!user?.isVerified) return <Navigate to={"/signup"} replace />;
   return children;
 };
-const ProtectedAdminRoute = ({ children }) => {
+
+const ProtectedAdminRoute = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
   if (isCheckingAuth) return <p>Loading...</p>;
   if (!isAuthenticated) return <Navigate to={"/login"} replace />;
-  if (!isAuthenticated && !user.isVerified)
-    return <Navigate to={"/signup"} replace />;
-
+  if (!user?.isVerified) return <Navigate to={"/signup"} replace />;
   if (user.role !== "admin") return <Navigate to={"/home"} replace />;
   return children;
 };
-const AuthenticatedUser = ({ children }) => {
-  const { isAuthenticated, user } = useAuthStore();
-  console.log("USERUL: " + user);
+
+const AuthenticatedUser = ({ children }: { children: ReactNode }) => {
+  const { isAuthenticated } = useAuthStore();
   if (isAuthenticated) return <Navigate to={"/home"} />;
   return children;
 };
+
 function App() {
   const { checkAuth } = useAuthStore();
   const location = useLocation();
@@ -82,7 +81,6 @@ function App() {
         expand={true}
         richColors={true}
         toastOptions={{
-          // Stil general
           style: {
             background: "#1f2937",
             color: "#fff",
@@ -90,22 +88,6 @@ function App() {
             borderRadius: "12px",
             padding: "16px",
             fontSize: "14px",
-          },
-
-          // Stiluri specifice per tip
-          success: {
-            style: {
-              background: "#10b981",
-              border: "1px solid #059669",
-            },
-            icon: "✅",
-          },
-          error: {
-            style: {
-              background: "#ef4444",
-              border: "1px solid #dc2626",
-            },
-            icon: "❌",
           },
         }}
       />
@@ -120,6 +102,7 @@ function App() {
               </AuthenticatedUser>
             }
           />
+          <Route path="/p/:id" element={<PublicPost />} />
           <Route path="*" element={<NotFound />} />
           <Route
             element={
@@ -178,7 +161,6 @@ function App() {
               />
               <Route path="/groups/:id" element={<Group />} />
             </Route>
-            {/* <Route path="/test" element={<Background />} /> */}
           </Route>
         </Routes>
 
