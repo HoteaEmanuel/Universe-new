@@ -10,6 +10,7 @@ import type {
   GroupMember,
   GroupVisibility,
   NewFilesMessagePayload,
+  NewPollMessagePayload,
   NewVoiceMessagePayload,
   ResourceType,
 } from "../features/chat/types";
@@ -48,6 +49,10 @@ type GroupStore = {
   sendVoiceMessageToGroup: (
     id: string,
     message: NewVoiceMessagePayload,
+  ) => Promise<ChatMessage>;
+  sendPollMessageToGroup: (
+    id: string,
+    message: NewPollMessagePayload,
   ) => Promise<ChatMessage>;
   editMessageInGroup: (messageId: string, content: string) => Promise<ChatMessage>;
   deleteMessageInGroup: (messageId: string) => Promise<{ message: string }>;
@@ -171,6 +176,18 @@ export const useGroupStore = create<GroupStore>(() => ({
       return response.data;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not send voice message"));
+    }
+  },
+  sendPollMessageToGroup: async (id, { question, options, closesAt }) => {
+    try {
+      const response = await axios.post(`${API_URL}/groups/${id}/send-poll-message`, {
+        question,
+        options,
+        closesAt,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not send poll"));
     }
   },
   editMessageInGroup: async (messageId, content) => {

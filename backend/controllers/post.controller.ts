@@ -4,6 +4,8 @@ import { prisma } from "../database/prisma.js";
 import { findPostsByTag } from "../repository/post.repository.js";
 import { EVENT_INCLUDE } from "../repository/event.repository.js";
 import { toEventDTO } from "../services/event.service.js";
+import { POLL_INCLUDE } from "../repository/poll.repository.js";
+import { toPollDTO } from "../services/poll.service.js";
 import {
   getViewerRelevantUserIds,
   getFollowConnectedUserIds,
@@ -33,7 +35,10 @@ export const getPost = async (req: Request, res: Response) => {
   try {
     const post = await prisma.post.findUnique({
       where: { id },
-      include: { event: { include: EVENT_INCLUDE } },
+      include: {
+        event: { include: EVENT_INCLUDE },
+        poll: { include: POLL_INCLUDE },
+      },
     });
     if (!post) throw new Error("Post not found");
     const savedPost = await prisma.savedPost.findUnique({
@@ -44,6 +49,7 @@ export const getPost = async (req: Request, res: Response) => {
       post: {
         ...post,
         event: post.event ? toEventDTO(post.event) : null,
+        poll: post.poll ? toPollDTO(post.poll) : null,
         isSaved: !!savedPost,
       },
     });

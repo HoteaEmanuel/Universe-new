@@ -30,6 +30,7 @@ import { urlPathName } from "@/utils/urlPathFromName";
 import ImageSlider from "./ImageSlider";
 import PostSkeleton from "./PostSkeleton";
 import EventCard from "@/features/events/components/EventCard";
+import PollBlock from "@/features/polls/components/PollBlock";
 import type { Post } from "@/queryAndMutation/types";
 
 type PostCardProps = {
@@ -280,6 +281,12 @@ const PostCard = ({ post }: PostCardProps) => {
               navigate(`/events/${post.event!.id}`);
             }}
           />
+        </div>
+      )}
+
+      {post.poll && (
+        <div className="px-4 pt-2">
+          <PollBlock poll={post.poll} invalidateKeys={[["posts"], ["post", postId]]} />
         </div>
       )}
 

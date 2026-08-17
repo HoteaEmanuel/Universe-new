@@ -15,6 +15,7 @@ import TextareaField from "@/components/TextareaField";
 import SubmitButton from "@/components/SubmitButton";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import PollComposeFields from "@/features/polls/components/PollComposeFields";
 import {
   TITLE_MAX_LENGTH,
   BODY_MAX_LENGTH,
@@ -50,11 +51,25 @@ const CreatePost = () => {
 
   const { mutateAsync: createPost } = useCreatePostMutation();
   const [files, setFiles] = useState<File[]>([]);
+  const [showPoll, setShowPoll] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
   const watchedValues = watch();
   const tagsValue = watchedValues.tags || "";
 
+  const handleTogglePoll = () => {
+    setShowPoll((prev) => !prev);
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+  };
+
   const onSubmit = async (data: PostFormValues) => {
-    const payload: CreatePostPayload = { ...data, images: files };
+    const trimmedOptions = pollOptions.map((option) => option.trim()).filter(Boolean);
+    const poll =
+      showPoll && pollQuestion.trim() && trimmedOptions.length >= 2
+        ? { question: pollQuestion.trim(), options: trimmedOptions }
+        : undefined;
+    const payload: CreatePostPayload = { ...data, images: files, poll };
     await createPost(payload);
     navigate("/home");
   };
@@ -94,15 +109,17 @@ const CreatePost = () => {
 
           <TextareaField
             id="body"
-            label="Description"
+            label="Description (optional)"
             maxLength={BODY_MAX_LENGTH}
             currentLength={watchedValues.body?.length ?? 0}
             error={errors.body?.message}
             placeholder="Write something..."
             registration={register("body", {
               validate: (v) => {
-                if (v.length > BODY_MAX_LENGTH || v.length < 5)
+                if (v.length > BODY_MAX_LENGTH)
                   return `The body should have less than ${BODY_MAX_LENGTH} characters`;
+                if (v.length > 0 && v.length < 5)
+                  return "The body should have at least 5 characters";
                 return true;
               },
             })}
@@ -112,6 +129,38 @@ const CreatePost = () => {
           <div className="flex flex-col gap-1.5">
             <Label className="">Images</Label>
             <MultipleImagesUploader setFiles={setFiles} files={files} />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            {!showPoll ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-fit"
+                onClick={handleTogglePoll}
+              >
+                Add a poll
+              </Button>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <Label>Poll</Label>
+                  <button
+                    type="button"
+                    onClick={handleTogglePoll}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Remove poll
+                  </button>
+                </div>
+                <PollComposeFields
+                  question={pollQuestion}
+                  onQuestionChange={setPollQuestion}
+                  options={pollOptions}
+                  onOptionsChange={setPollOptions}
+                />
+              </>
+            )}
           </div>
 
           <LocationAutocompleteField

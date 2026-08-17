@@ -25,12 +25,39 @@ export type User = {
   updatedAt?: string;
 };
 
+export type PollStatus = "open" | "closed";
+
+export type PollOption = {
+  id: string;
+  text: string;
+  position: number;
+  voteCount: number;
+};
+
+export type Poll = {
+  id: string;
+  question: string;
+  authorId: string;
+  closesAt?: string | null;
+  closedAt?: string | null;
+  status: PollStatus;
+  totalVotes: number;
+  options: PollOption[];
+};
+
+export type CreatePollFields = {
+  question: string;
+  options: string[];
+  closesAt?: string;
+};
+
 export type CreatePostPayload = {
   title: string;
   body?: string;
   location?: string;
   tags: string;
   images: File[];
+  poll?: CreatePollFields;
 };
 
 export type UpdatePostPayload = {
@@ -54,6 +81,7 @@ export type Post = {
   isSaved?: boolean;
   createdAt: string;
   event?: EventSummary | null;
+  poll?: Poll | null;
 };
 
 export type EventVisibility = "public" | "private";

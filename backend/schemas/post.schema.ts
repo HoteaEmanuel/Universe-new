@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { pollQuestionSchema, pollOptionTextSchema } from "./poll.schema.js";
 
 const title = z
   .string()
@@ -17,12 +18,35 @@ const location = z
 
 const tags = z.string().max(100, "Tags should have less than 100 characters");
 
-export const createPostSchema = z.object({
-  title,
-  body,
-  location,
-  tags: tags.min(1, "Add a tag"),
-});
+// Multipart form-data has no native array type - repeated "pollOptions" form
+// fields arrive as either a single string or an array, same shape as
+// updatePostSchema's "images" field below.
+const pollOptions = z
+  .union([pollOptionTextSchema, z.array(pollOptionTextSchema)])
+  .transform((value) => (Array.isArray(value) ? value : [value]));
+
+export const createPostSchema = z
+  .object({
+    title,
+    body: body.optional(),
+    location,
+    tags: tags.min(1, "Add a tag"),
+    pollQuestion: pollQuestionSchema.optional(),
+    pollOptions: pollOptions.optional(),
+    pollClosesAt: z.coerce.date().optional(),
+  })
+  .refine((data) => !data.pollOptions || !!data.pollQuestion, {
+    message: "A poll needs a question",
+    path: ["pollQuestion"],
+  })
+  .refine((data) => !data.pollOptions || data.pollOptions.length >= 2, {
+    message: "A poll needs at least 2 options",
+    path: ["pollOptions"],
+  })
+  .refine((data) => !data.pollOptions || data.pollOptions.length <= 6, {
+    message: "A poll can have at most 6 options",
+    path: ["pollOptions"],
+  });
 export type CreatePostInput = z.infer<typeof createPostSchema>;
 
 export const updatePostSchema = z.object({

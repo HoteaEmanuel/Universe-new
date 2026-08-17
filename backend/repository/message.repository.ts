@@ -1,5 +1,6 @@
 import { prisma } from "../database/prisma.js";
 import type { Prisma } from "../generated/prisma/client.js";
+import { POLL_INCLUDE } from "./poll.repository.js";
 
 interface AttachmentInput {
   fileUrl: string;
@@ -35,6 +36,7 @@ const GROUP_MESSAGE_SENDER_SELECT = {
 const GROUP_MESSAGE_INCLUDE = {
   ...MESSAGE_INCLUDE,
   sender: { select: GROUP_MESSAGE_SENDER_SELECT },
+  poll: { include: POLL_INCLUDE },
 } as const;
 
 interface CreateMessageInput {
@@ -91,6 +93,13 @@ export const findMessageById = async (id: string) => {
   return prisma.message.findUnique({ where: { id }, include: MESSAGE_INCLUDE });
 };
 
+interface GroupMessagePollInput {
+  authorId: string;
+  question: string;
+  options: string[];
+  closesAt?: Date | null;
+}
+
 interface CreateGroupMessageInput {
   senderId: string;
   groupId: string;
@@ -102,6 +111,7 @@ interface CreateGroupMessageInput {
   audioDurationSec?: number | null;
   attachments?: AttachmentInput[];
   sharedPostId?: string | null;
+  poll?: GroupMessagePollInput;
 }
 
 export const createGroupMessage = async (data: CreateGroupMessageInput) => {
@@ -116,6 +126,7 @@ export const createGroupMessage = async (data: CreateGroupMessageInput) => {
     audioDurationSec,
     attachments,
     sharedPostId,
+    poll,
   } = data;
 
   return prisma.groupMessage.create({
@@ -133,6 +144,21 @@ export const createGroupMessage = async (data: CreateGroupMessageInput) => {
         attachments && attachments.length > 0
           ? { create: attachments }
           : undefined,
+      poll: poll
+        ? {
+            create: {
+              authorId: poll.authorId,
+              question: poll.question,
+              closesAt: poll.closesAt ?? null,
+              options: {
+                create: poll.options.map((text, position) => ({
+                  text,
+                  position,
+                })),
+              },
+            },
+          }
+        : undefined,
     },
     include: GROUP_MESSAGE_INCLUDE,
   });

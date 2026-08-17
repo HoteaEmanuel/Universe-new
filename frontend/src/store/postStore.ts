@@ -120,6 +120,15 @@ export const usePostStore = create<PostStore>((set) => ({
       post.images.forEach((image) => {
         formData.append("images", image);
       });
+      if (post.poll) {
+        formData.append("pollQuestion", post.poll.question);
+        post.poll.options.forEach((option) => {
+          formData.append("pollOptions", option);
+        });
+        if (post.poll.closesAt) {
+          formData.append("pollClosesAt", post.poll.closesAt);
+        }
+      }
       console.log("FORM DATA: ");
       console.log(formData);
       await axios.post(`${API_URL}/posts`, formData, {

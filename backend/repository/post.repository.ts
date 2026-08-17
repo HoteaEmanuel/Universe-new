@@ -1,9 +1,11 @@
 import { prisma } from "../database/prisma.js";
 import type { Prisma } from "../generated/prisma/client.js";
 import { EVENT_INCLUDE } from "./event.repository.js";
+import { POLL_INCLUDE } from "./poll.repository.js";
 
 const POST_INCLUDE = {
   event: { include: EVENT_INCLUDE },
+  poll: { include: POLL_INCLUDE },
 } satisfies Prisma.PostInclude;
 
 export const findPostById = async (id: string) => {
@@ -98,11 +100,20 @@ interface CreatePostInput {
   location?: string;
   imageUrls?: string[];
   imagePublicIds?: string[];
+  poll?: { question: string; options: string[]; closesAt?: Date };
 }
 
 export const createPost = async (data: CreatePostInput) => {
-  const { userId, body, title, tags, location, imageUrls, imagePublicIds } =
-    data;
+  const {
+    userId,
+    body,
+    title,
+    tags,
+    location,
+    imageUrls,
+    imagePublicIds,
+    poll,
+  } = data;
 
   return prisma.post.create({
     data: {
@@ -118,6 +129,21 @@ export const createPost = async (data: CreatePostInput) => {
               where: { name },
               create: { name },
             })),
+          }
+        : undefined,
+      poll: poll
+        ? {
+            create: {
+              authorId: userId,
+              question: poll.question,
+              closesAt: poll.closesAt ?? null,
+              options: {
+                create: poll.options.map((text, position) => ({
+                  text,
+                  position,
+                })),
+              },
+            },
           }
         : undefined,
     },

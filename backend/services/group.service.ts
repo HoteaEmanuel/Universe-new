@@ -22,8 +22,15 @@ import { prisma } from "../database/prisma.js";
 import { uploadImage, deleteImages } from "../lib/storage.js";
 import type { GroupVisibility } from "../generated/prisma/client.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
+import { toPollDTO } from "./poll.service.js";
 
 type UploadedImage = Express.Multer.File;
+
+export const withGroupMessagePollDTO = <
+  T extends { poll?: Parameters<typeof toPollDTO>[0] | null },
+>(
+  message: T,
+) => (message.poll ? { ...message, poll: toPollDTO(message.poll) } : message);
 
 export const createGroupService = async (data: {
   name: string;
@@ -135,7 +142,7 @@ export const sendMessage = async (data: {
     }),
   );
 
-  return groupMessage;
+  return withGroupMessagePollDTO(groupMessage);
 };
 
 export const sendFilesMessage = async (data: {
@@ -199,7 +206,7 @@ export const sendFilesMessage = async (data: {
     }),
   );
 
-  return groupMessage;
+  return withGroupMessagePollDTO(groupMessage);
 };
 
 export const sendVoiceMessage = async (data: {
@@ -253,7 +260,54 @@ export const sendVoiceMessage = async (data: {
     }),
   );
 
-  return groupMessage;
+  return withGroupMessagePollDTO(groupMessage);
+};
+
+export const sendPollMessage = async (data: {
+  groupId: string;
+  authUserId: string;
+  question: string;
+  options: string[];
+  closesAt?: Date;
+}) => {
+  const { groupId, authUserId, question, options, closesAt } = data;
+
+  const group = await findGroupById(groupId);
+  if (!group) throw new Error("Group doesnt exist");
+
+  const groupMessage = await createGroupMessage({
+    senderId: authUserId,
+    groupId,
+    poll: { authorId: authUserId, question, options, closesAt },
+  });
+
+  await prisma.group.update({
+    where: { id: groupId },
+    data: { lastMessageId: groupMessage.id },
+  });
+
+  const members = await findGroupMembers(groupId);
+  members.forEach((member) => {
+    io.to(getReceiverSocketId(member.memberId)).emit("newGroupMessage", groupMessage);
+  });
+
+  const sender = await findUserById(authUserId);
+  const recipients = members.filter((member) => member.memberId !== authUserId);
+  await Promise.all(
+    recipients.map(async (member) => {
+      const notification = await createGroupMessageNotification({
+        actionUserId: authUserId,
+        userId: member.memberId,
+        title: `New message in ${group.name}`,
+        type: "message",
+        message: `${sender?.firstName || sender?.name}: Poll · ${question}`,
+        groupId,
+      });
+      await emitNewNotification(member.memberId, notification);
+    }),
+  );
+
+  return withGroupMessagePollDTO(groupMessage);
 };
 
 export const editMessage = async (data: {

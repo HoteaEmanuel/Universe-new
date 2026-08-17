@@ -20,6 +20,7 @@ import VoiceMessagePlayer from "./VoiceMessagePlayer";
 import MessageImageGrid from "./MessageImageGrid";
 import MessageFileList from "./MessageFileList";
 import SharedPostCard from "./SharedPostCard";
+import PollBlock from "@/features/polls/components/PollBlock";
 import type { ChatMessage, ChatUser, MessageAttachment } from "../types";
 
 type MessageBubbleProps = {
@@ -262,6 +263,15 @@ const MessageBubble = ({
         {!message.deleted && message.sharedPost && (
           <div data-slot="message-shared-post">
             <SharedPostCard post={message.sharedPost} isOwn={isOwn} />
+          </div>
+        )}
+
+        {!message.deleted && message.poll && (
+          <div data-slot="message-poll">
+            <PollBlock
+              poll={message.poll}
+              invalidateKeys={[["group-messages", message.groupId]]}
+            />
           </div>
         )}
 

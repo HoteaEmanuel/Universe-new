@@ -12,6 +12,7 @@ import {
   sendMessageToGroupController,
   sendFilesMessageToGroupController,
   sendVoiceMessageToGroupController,
+  sendPollMessageToGroupController,
   getGroupMemberById,
   getUsersFromSameUniversityNotInGroup,
   getGroupMembers,
@@ -47,6 +48,7 @@ import {
   groupMediaQuerySchema,
   reactToGroupMessageSchema,
 } from "../schemas/group.schema.js";
+import { sendGroupPollMessageSchema } from "../schemas/poll.schema.js";
 const router = express.Router();
 
 const groupActionRateLimiter = createRateLimiter({
@@ -114,6 +116,13 @@ router.post(
   audioUpload.single("audio"),
   validate({ body: sendGroupVoiceMessageSchema }),
   sendVoiceMessageToGroupController,
+);
+router.post(
+  "/:id/send-poll-message",
+  requireGroupMembership,
+  messageRateLimiter,
+  validate({ body: sendGroupPollMessageSchema }),
+  sendPollMessageToGroupController,
 );
 router.use(groupActionRateLimiter);
 router.patch(

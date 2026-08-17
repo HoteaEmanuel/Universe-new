@@ -21,3 +21,5 @@ export type EventVisibility = "public" | "private";
 export type EventParticipantStatus = "going" | "interested" | "waitlisted";
 export type EventStatus = "upcoming" | "ongoing" | "completed" | "cancelled";
 export type EventType = "community" | "official";
+
+export type PollStatus = "open" | "closed";

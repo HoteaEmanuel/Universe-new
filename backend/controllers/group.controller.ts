@@ -9,6 +9,8 @@ import {
   sendMessage,
   sendFilesMessage,
   sendVoiceMessage,
+  sendPollMessage,
+  withGroupMessagePollDTO,
   setGroupMessageReaction,
   updateGroupImage,
   addMemberToGroup,
@@ -130,9 +132,11 @@ export const getGroupMessages = async (req: Request, res: Response) => {
       cursor,
       limit,
     );
-    return res
-      .status(200)
-      .json({ groupMessages: messages, nextCursor, hasMore });
+    return res.status(200).json({
+      groupMessages: messages.map(withGroupMessagePollDTO),
+      nextCursor,
+      hasMore,
+    });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }
@@ -189,6 +193,24 @@ export const sendVoiceMessageToGroupController = async (req: Request, res: Respo
     const audio = req.file as Express.Multer.File | undefined;
     if (!audio) throw new Error("No audio file provided");
     const message = await sendVoiceMessage({ groupId, authUserId, audio, durationSec });
+    return res.status(201).json(message);
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const sendPollMessageToGroupController = async (req: Request, res: Response) => {
+  try {
+    const groupId = req.params.id as string;
+    const authUserId = req.userId as string;
+    const { question, options, closesAt } = req.body;
+    const message = await sendPollMessage({
+      groupId,
+      authUserId,
+      question,
+      options,
+      closesAt,
+    });
     return res.status(201).json(message);
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });

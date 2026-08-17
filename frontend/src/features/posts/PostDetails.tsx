@@ -27,6 +27,7 @@ import CommentsContainer from "@/features/comments/components/CommentsContainer"
 import CommentInput from "@/features/comments/components/CommentInput";
 import { useGetPostCommentsCount } from "@/queryAndMutation/queries/comments-queries";
 import LikesModal from "./components/LikesModal";
+import PollBlock from "@/features/polls/components/PollBlock";
 import { formatDateDetailed } from "@/utils/formatDate";
 import { formatCount } from "@/utils/formatCount";
 import { getFullName } from "@/utils/fullName";
@@ -318,6 +319,12 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
                 </li>
               ))}
             </ul>
+          )}
+
+          {post.poll && (
+            <div className="px-4 pb-2 pl-[46px]">
+              <PollBlock poll={post.poll} invalidateKeys={[["posts"], ["post", postId]]} />
+            </div>
           )}
 
           <div className="px-4">

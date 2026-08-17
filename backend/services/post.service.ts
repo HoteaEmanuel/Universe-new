@@ -23,6 +23,7 @@ import {
   emitNewNotification,
 } from "../repository/notification.repository.js";
 import { toEventDTO } from "./event.service.js";
+import { toPollDTO } from "./poll.service.js";
 
 type UploadedImage = Express.Multer.File;
 
@@ -35,18 +36,22 @@ const withEventDTO = <T extends { event?: Parameters<typeof toEventDTO>[0] | nul
   post: T,
 ) => (post.event ? { ...post, event: toEventDTO(post.event) } : post);
 
+const withPollDTO = <T extends { poll?: Parameters<typeof toPollDTO>[0] | null }>(
+  post: T,
+) => (post.poll ? { ...post, poll: toPollDTO(post.poll) } : post);
+
 export const getUserPosts = async (userId: string) => {
   const user = await findUserById(userId);
   if (!user) throw new Error("User does not exist");
   const posts = await findUserPosts(userId);
-  return posts.map(withEventDTO);
+  return posts.map((post) => withPollDTO(withEventDTO(post)));
 };
 
 export const getSavedPosts = async (id: string) => {
   const user = await findUserById(id);
   if (!user) throw new Error("User doesnt exist");
   const data = await findUserSavedPosts(id);
-  return data.map((sp) => withEventDTO(sp.post));
+  return data.map((sp) => withPollDTO(withEventDTO(sp.post)));
 };
 
 interface GetPostsInput {
@@ -78,18 +83,29 @@ export const getPosts = async (data: GetPostsInput) => {
 
   return {
     ...page,
-    posts: page.posts.map((post) => withEventDTO(withIsSaved(post, savedPostIds))),
+    posts: page.posts.map((post) =>
+      withPollDTO(withEventDTO(withIsSaved(post, savedPostIds))),
+    ),
   };
 };
 
 interface CreatePostInput {
-  body: { title: string; body?: string; location?: string; tags: string };
+  body: {
+    title: string;
+    body?: string;
+    location?: string;
+    tags: string;
+    pollQuestion?: string;
+    pollOptions?: string[];
+    pollClosesAt?: Date;
+  };
   userId: string;
   images?: UploadedImage[];
 }
 
 export const createNewPost = async (data: CreatePostInput) => {
-  const { title, body, location, tags } = data.body;
+  const { title, body, location, tags, pollQuestion, pollOptions, pollClosesAt } =
+    data.body;
   const userId = data.userId;
   const images = data.images;
 
@@ -115,6 +131,10 @@ export const createNewPost = async (data: CreatePostInput) => {
     tags: tagsArray,
     imageUrls: uploaded.map((u) => u.url),
     imagePublicIds: uploaded.map((u) => u.key),
+    poll:
+      pollQuestion && pollOptions
+        ? { question: pollQuestion, options: pollOptions, closesAt: pollClosesAt }
+        : undefined,
   });
 };
 
@@ -254,10 +274,10 @@ export const deletePost = async (data: { postId: string }) => {
 
 export const getSearchedPosts = async (text: string) => {
   const posts = await findPostsByText(text);
-  return posts.map(withEventDTO);
+  return posts.map((post) => withPollDTO(withEventDTO(post)));
 };
 
 export const getPostsByTag = async (tag: string) => {
   const posts = await findPostsByTag(tag);
-  return posts.map(withEventDTO);
+  return posts.map((post) => withPollDTO(withEventDTO(post)));
 };

@@ -5,7 +5,15 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { ImagePlus, Mic, Paperclip, SendHorizontal, Smile, X } from "lucide-react";
+import {
+  BarChart3,
+  ImagePlus,
+  Mic,
+  Paperclip,
+  SendHorizontal,
+  Smile,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +25,7 @@ import {
 import {
   useSendFilesMessageToGroupMutation,
   useSendMessageToGroupMutation,
+  useSendPollMessageToGroupMutation,
   useSendVoiceMessageToGroupMutation,
 } from "../../../queryAndMutation/mutations/group-mutation";
 import { useAuthStore } from "../../../store/authStore";
@@ -25,6 +34,7 @@ import { formatFileSize } from "../utils/formatFileSize";
 import { getFileTypeIcon } from "../utils/fileTypeIcon";
 import ImagePickerModal from "./ImagePickerModal";
 import FilePickerModal from "./FilePickerModal";
+import CreatePollModal from "./CreatePollModal";
 import EmojiPickerPopover from "./EmojiPickerPopover";
 import VoiceRecorder from "./VoiceRecorder";
 import type { ChatUser } from "../types";
@@ -43,6 +53,7 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
   const [files, setFiles] = useState<File[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [filePickerOpen, setFilePickerOpen] = useState(false);
+  const [pollModalOpen, setPollModalOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const { user, socket } = useAuthStore() as {
     user: ChatUser;
@@ -75,6 +86,8 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
   );
   const { mutate: mutateVoice, isPending: isSendingVoice } =
     variant === "direct" ? directVoiceMutation : groupVoiceMutation;
+  const { mutate: mutatePoll, isPending: isSendingPoll } =
+    useSendPollMessageToGroupMutation(variant === "group" ? id : undefined);
 
   const canSend =
     (text.trim().length > 0 || images.length > 0 || files.length > 0) &&
@@ -171,6 +184,17 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
     setIsRecording(false);
   };
 
+  const handleSendPoll = (data: { question: string; options: string[] }) => {
+    mutatePoll(data, {
+      onError: (error: unknown) => {
+        toast.error(
+          error instanceof Error ? error.message : "Could not send poll",
+        );
+      },
+    });
+    setPollModalOpen(false);
+  };
+
   if (isRecording) {
     return (
       <div className="border-t border-border bg-background px-3 py-2">
@@ -257,6 +281,17 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
         >
           <Paperclip />
         </Button>
+        {variant === "group" && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Create a poll"
+            onClick={() => setPollModalOpen(true)}
+          >
+            <BarChart3 />
+          </Button>
+        )}
         <Input
           ref={inputRef}
           type="text"
@@ -310,6 +345,14 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
         onClose={() => setFilePickerOpen(false)}
         setFiles={setFiles}
       />
+      {variant === "group" && (
+        <CreatePollModal
+          open={pollModalOpen}
+          onClose={() => setPollModalOpen(false)}
+          onSend={handleSendPoll}
+          isSending={isSendingPoll}
+        />
+      )}
     </div>
   );
 };
