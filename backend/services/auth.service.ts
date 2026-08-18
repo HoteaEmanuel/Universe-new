@@ -11,6 +11,7 @@ import {
 } from "../repository/user.repository.js";
 import { universityEmailDomains } from "../utils/universityDomain.js";
 import { universityDomains } from "../utils/universityDomains.js";
+import { parseNameFromEmail } from "../utils/parseNameFromEmail.js";
 import { generateVerificationToken } from "../utils/generateVerificationCode.js";
 import {
   resetPasswordEmailQueue,
@@ -92,6 +93,17 @@ export const signUp = async (body: SignUpBody) => {
   let user;
 
   if (accountType === "normal") {
+    if (domain !== "gmail.com") {
+      const parsed = parseNameFromEmail(email.split("@")[0]);
+      if (parsed) {
+        firstName = parsed.firstName;
+        lastName = parsed.lastName;
+      }
+    }
+    if (!firstName || !lastName) {
+      throw new Error("Enter your first and last name");
+    }
+
     user = await createNormalAccount({
       firstName,
       lastName,

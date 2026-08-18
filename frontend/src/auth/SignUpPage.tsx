@@ -13,6 +13,7 @@ import ErrorBanner from "../components/ErrorBanner";
 import SubmitButton from "../components/SubmitButton";
 import { Button } from "@/components/ui/button";
 import { normalSignupSchema, businessSignupSchema } from "./schemas";
+import { parseNameFromEmail } from "./parseNameFromEmail";
 
 type AccountType = "normal" | "business";
 
@@ -38,6 +39,8 @@ const SignUpPage = () => {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(
@@ -45,6 +48,21 @@ const SignUpPage = () => {
     ) as unknown as Resolver<SignupFormValues>,
   });
   const { signUp, isLoading, error } = useAuthStore();
+
+  const emailValue = watch("email");
+  const domain = emailValue?.split("@")[1]?.toLowerCase();
+  const parsedName =
+    accountType === "normal" && domain && domain !== "gmail.com"
+      ? parseNameFromEmail(emailValue.split("@")[0])
+      : null;
+
+  useEffect(() => {
+    if (parsedName) {
+      setValue("first-name", parsedName.firstName);
+      setValue("last-name", parsedName.lastName);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsedName?.firstName, parsedName?.lastName]);
   const onSubmit = async (data: SignupFormValues) => {
     const formData = {
       firstName: data["first-name"] || "",
@@ -118,15 +136,23 @@ const SignUpPage = () => {
         />
 
         {accountType === "normal" ? (
-          <FormField
-            id="first-name"
-            label="First Name"
-            icon={FaUser}
-            placeholder="First Name"
-            autoComplete="given-name"
-            error={errors["first-name"]?.message}
-            registration={register("first-name")}
-          />
+          <div className="flex flex-col gap-1">
+            <FormField
+              id="first-name"
+              label="First Name"
+              icon={FaUser}
+              placeholder="First Name"
+              autoComplete="given-name"
+              error={errors["first-name"]?.message}
+              registration={register("first-name")}
+              disabled={!!parsedName}
+            />
+            {parsedName && (
+              <p className="text-xs text-muted-foreground">
+                Detected from your university email and can't be edited.
+              </p>
+            )}
+          </div>
         ) : (
           <FormField
             id="name"
@@ -148,6 +174,7 @@ const SignUpPage = () => {
             autoComplete="family-name"
             error={errors["last-name"]?.message}
             registration={register("last-name")}
+            disabled={!!parsedName}
           />
         )}
 

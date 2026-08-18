@@ -25,10 +25,25 @@ export const useCreateGroupMutation = () => {
       name: string;
       description?: string;
       visibility?: GroupVisibility;
+      courseTag?: string;
     }) => createGroup(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-groups"] });
       toast.success("Group created");
+    },
+  });
+};
+
+export const useSetGroupCourseTagMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { setGroupCourseTag } = useGroupStore();
+  return useMutation({
+    mutationFn: (courseTag: string | null) =>
+      setGroupCourseTag(groupId as string, courseTag),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+      queryClient.invalidateQueries({ queryKey: ["user-groups"] });
+      toast.success("Course updated");
     },
   });
 };

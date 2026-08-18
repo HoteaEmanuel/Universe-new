@@ -27,6 +27,8 @@ import {
   getActiveGroupUsersOnConversation,
   getDiscoverableGroupsController,
   reactToGroupMessageController,
+  getCourseCatalogController,
+  setGroupCourseTagController,
 } from "../controllers/group.controller.js";
 import { createRateLimiter } from "../middleware/rateLimiter.js";
 import { messageRateLimiter } from "../middleware/messageRateLimiter.js";
@@ -47,6 +49,8 @@ import {
   groupMessagesQuerySchema,
   groupMediaQuerySchema,
   reactToGroupMessageSchema,
+  setGroupCourseTagSchema,
+  discoverGroupsQuerySchema,
 } from "../schemas/group.schema.js";
 import { sendGroupPollMessageSchema } from "../schemas/poll.schema.js";
 const router = express.Router();
@@ -61,7 +65,18 @@ const groupActionRateLimiter = createRateLimiter({
 router.post("/", validate({ body: createGroupSchema }), createGroupController);
 router.delete("/:id", requireGroupAdmin, deleteGroup);
 router.get("/user/:userId", requireSelf("userId"), getUserGroups);
-router.get("/discover/public", getDiscoverableGroupsController);
+router.get("/course-catalog", getCourseCatalogController);
+router.get(
+  "/discover/public",
+  validate({ query: discoverGroupsQuerySchema }),
+  getDiscoverableGroupsController,
+);
+router.patch(
+  "/:id/course-tag",
+  requireGroupAdmin,
+  validate({ body: setGroupCourseTagSchema }),
+  setGroupCourseTagController,
+);
 router.get("/:id", requireGroupMembership, getGroupById);
 router.get("/:id/members", requireGroupMembership, getGroupMembers);
 router.get("/:id/auth-user", getGroupMemberById);

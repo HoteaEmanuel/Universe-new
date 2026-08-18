@@ -37,6 +37,11 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             user = await prisma.user.findUnique({ where: { email } });
 
             if (user) {
+              if (!user.isVerified) {
+                return done(null, false, {
+                  message: "Please verify your email before continuing",
+                });
+              }
               user = await prisma.user.update({
                 where: { id: user.id },
                 data: { googleId: profile.id },
@@ -54,6 +59,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                 },
               });
             }
+          }
+
+          if (!user.isVerified) {
+            return done(null, false, {
+              message: "Please verify your email before continuing",
+            });
           }
 
           return done(null, user);

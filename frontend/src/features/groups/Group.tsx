@@ -142,6 +142,11 @@ const Group = () => {
                 <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                   {group.visibility === "public" ? "Public" : "Private"}
                 </span>
+                {group.courseTag && (
+                  <span className="shrink-0 truncate rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                    {group.courseTag}
+                  </span>
+                )}
               </div>
               <p className="truncate text-xs text-muted-foreground">
                 {activeMembers?.length ?? 0} active

@@ -97,6 +97,8 @@ export type GroupConversation = {
   description?: string;
   coverImageUrl?: string;
   visibility?: GroupVisibility;
+  university?: string | null;
+  courseTag?: string | null;
   createdAt: string;
   updatedAt: string;
   lastMessage?: LastMessagePreview;

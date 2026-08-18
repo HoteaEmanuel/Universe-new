@@ -10,8 +10,19 @@ export const createGroupSchema = z.object({
     .max(300, "Description should have less than 300 characters")
     .optional(),
   visibility: z.enum(["public", "private"]).optional(),
+  courseTag: z.string().min(1).max(100).optional(),
 });
 export type CreateGroupInput = z.infer<typeof createGroupSchema>;
+
+export const setGroupCourseTagSchema = z.object({
+  courseTag: z.string().min(1).max(100).nullable().optional(),
+});
+export type SetGroupCourseTagInput = z.infer<typeof setGroupCourseTagSchema>;
+
+export const discoverGroupsQuerySchema = z.object({
+  courseTag: z.string().min(1).max(100).optional(),
+});
+export type DiscoverGroupsQueryInput = z.infer<typeof discoverGroupsQuerySchema>;
 
 export const addMemberToGroupSchema = z.object({
   userId: z

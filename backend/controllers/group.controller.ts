@@ -15,6 +15,8 @@ import {
   updateGroupImage,
   addMemberToGroup,
   getDiscoverablePublicGroups,
+  getCourseCatalogForUser,
+  setGroupCourseTagService,
 } from "../services/group.service.js";
 import { findGroupMembershipsForUser } from "../repository/group-members.repository.js";
 import {
@@ -39,16 +41,43 @@ const MEMBER_SELECT = {
 
 export const createGroupController = async (req: Request, res: Response) => {
   try {
-    const { name, description, visibility } = req.body;
+    const { name, description, visibility, courseTag } = req.body;
     const newGroup = await createGroupService({
       name,
       description,
       visibility,
+      courseTag,
       userId: req.userId as string,
     });
     return res
       .status(201)
       .json({ message: "Group created successfully", group: newGroup });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const getCourseCatalogController = async (req: Request, res: Response) => {
+  try {
+    const groupId = req.query.groupId as string | undefined;
+    const courses = await getCourseCatalogForUser(req.userId as string, groupId);
+    return res.status(200).json({ courses });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const setGroupCourseTagController = async (req: Request, res: Response) => {
+  try {
+    const groupId = req.params.id as string;
+    const { courseTag } = req.body;
+    const group = await setGroupCourseTagService({
+      groupId,
+      courseTag: courseTag ?? null,
+    });
+    return res
+      .status(200)
+      .json({ message: "Course tag updated successfully", group });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }
@@ -75,7 +104,8 @@ export const addMemberToGroupController = async (req: Request, res: Response) =>
 
 export const getDiscoverableGroupsController = async (req: Request, res: Response) => {
   try {
-    const groups = await getDiscoverablePublicGroups(req.userId as string);
+    const courseTag = req.query.courseTag as string | undefined;
+    const groups = await getDiscoverablePublicGroups(req.userId as string, courseTag);
     return res.status(200).json({ groups });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });

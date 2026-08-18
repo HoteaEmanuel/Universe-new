@@ -28,9 +28,12 @@ type GroupStore = {
     name: string;
     description?: string;
     visibility?: GroupVisibility;
+    courseTag?: string;
   }) => Promise<GroupConversation>;
   getUserGroups: (userId: string) => Promise<GroupConversation[]>;
-  getDiscoverablePublicGroups: () => Promise<GroupConversation[]>;
+  getDiscoverablePublicGroups: (courseTag?: string) => Promise<GroupConversation[]>;
+  getCourseCatalog: (groupId?: string) => Promise<string[]>;
+  setGroupCourseTag: (groupId: string, courseTag: string | null) => Promise<GroupConversation>;
   getGroupById: (id: string) => Promise<GroupConversation>;
   getGroupMessages: (id: string, cursor?: string) => Promise<ChatMessagePage>;
   getGroupResources: (
@@ -72,12 +75,13 @@ type GroupStore = {
 };
 
 export const useGroupStore = create<GroupStore>(() => ({
-  createGroup: async ({ name, description, visibility }) => {
+  createGroup: async ({ name, description, visibility, courseTag }) => {
     try {
       const response = await axios.post(`${API_URL}/groups`, {
         name,
         description,
         visibility,
+        courseTag,
       });
       return response.data.group;
     } catch (error) {
@@ -92,12 +96,35 @@ export const useGroupStore = create<GroupStore>(() => ({
       throw new Error(errorMessage(error, "Could not load groups"));
     }
   },
-  getDiscoverablePublicGroups: async () => {
+  getDiscoverablePublicGroups: async (courseTag) => {
     try {
-      const response = await axios.get(`${API_URL}/groups/discover/public`);
+      const response = await axios.get(`${API_URL}/groups/discover/public`, {
+        params: courseTag ? { courseTag } : undefined,
+      });
       return response.data.groups;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load groups"));
+    }
+  },
+  getCourseCatalog: async (groupId) => {
+    try {
+      const response = await axios.get(`${API_URL}/groups/course-catalog`, {
+        params: groupId ? { groupId } : undefined,
+      });
+      return response.data.courses;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not load course catalog"));
+    }
+  },
+  setGroupCourseTag: async (groupId, courseTag) => {
+    try {
+      const response = await axios.patch(
+        `${API_URL}/groups/${groupId}/course-tag`,
+        { courseTag },
+      );
+      return response.data.group;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not update course tag"));
     }
   },
   getGroupById: async (id) => {

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users } from "lucide-react";
 import {
@@ -8,10 +9,22 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuthStore } from "@/store/authStore";
-import { useGetDiscoverablePublicGroups } from "@/queryAndMutation/queries/group-queries";
+import {
+  useGetCourseCatalog,
+  useGetDiscoverablePublicGroups,
+} from "@/queryAndMutation/queries/group-queries";
 import { useAddMemberToGroupMutation } from "@/queryAndMutation/mutations/group-mutation";
 import type { GroupConversation } from "@/features/chat/types";
+
+const ALL_COURSES = "__all__";
 
 type DiscoverGroupsModalProps = {
   open: boolean;
@@ -42,7 +55,14 @@ const DiscoverGroupRow = ({ group, onJoined }: DiscoverGroupRowProps) => {
           </div>
         )}
         <div className="min-w-0">
-          <p className="truncate font-medium">{group.name}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="truncate font-medium">{group.name}</p>
+            {group.courseTag && (
+              <span className="shrink-0 truncate rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                {group.courseTag}
+              </span>
+            )}
+          </div>
           {group.description && (
             <p className="truncate text-xs text-muted-foreground">
               {group.description}
@@ -65,7 +85,17 @@ const DiscoverGroupRow = ({ group, onJoined }: DiscoverGroupRowProps) => {
 
 const DiscoverGroupsModal = ({ open, onClose }: DiscoverGroupsModalProps) => {
   const navigate = useNavigate();
-  const { data: groups, isPending } = useGetDiscoverablePublicGroups(open);
+  const { user } = useAuthStore() as {
+    user: { university?: string | null } | null;
+  };
+  const hasUniversity =
+    !!user?.university && user.university !== "No university yet";
+  const { data: courses } = useGetCourseCatalog(open && hasUniversity);
+  const [courseTag, setCourseTag] = useState<string>(ALL_COURSES);
+  const { data: groups, isPending } = useGetDiscoverablePublicGroups(
+    open,
+    courseTag === ALL_COURSES ? undefined : courseTag,
+  );
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
@@ -77,6 +107,28 @@ const DiscoverGroupsModal = ({ open, onClose }: DiscoverGroupsModalProps) => {
           <SheetHeader className="border-b border-border pb-3">
             <SheetTitle>Discover public groups</SheetTitle>
           </SheetHeader>
+          {hasUniversity && courses && courses.length > 0 && (
+            <div className="px-4 pt-3">
+              <Select
+                value={courseTag}
+                onValueChange={(value: unknown) =>
+                  setCourseTag((value as string) ?? ALL_COURSES)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All courses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_COURSES}>All courses</SelectItem>
+                  {courses.map((course) => (
+                    <SelectItem key={course} value={course}>
+                      {course}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto px-4 pb-4">
             {isPending && (
               <ul className="flex flex-col gap-3 pt-1">

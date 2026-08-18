@@ -3,6 +3,8 @@ import axios from "axios";
 import { prisma } from "../database/prisma.js";
 import { generateToken } from "../utils/generateTokenJwt.js";
 import { generateJwtMobile } from "../utils/generateJwtMobile.js";
+import { universityEmailDomains } from "../utils/universityDomain.js";
+import { universityDomains } from "../utils/universityDomains.js";
 
 import {
   login,
@@ -233,10 +235,33 @@ export const authWithGoogleMobile = async (req: Request, res: Response) => {
 
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
+      const domain = email?.split("@")[1];
+      const domainValid = universityEmailDomains.find(
+        (Unidomain) => Unidomain == domain,
+      );
+      if (!email || domainValid === undefined) {
+        res.redirect("mobileapp://auth-callback?error=invalid_domain");
+        return;
+      }
+      const universityName = universityDomains[domain];
+
       user = await prisma.user.create({
-        data: { email, name, profilePicture: picture, googleId },
+        data: {
+          email,
+          name,
+          profilePicture: picture,
+          googleId,
+          university: universityName,
+          isVerified: true,
+        },
       });
     }
+
+    if (!user.isVerified) {
+      res.redirect("mobileapp://auth-callback?error=email_not_verified");
+      return;
+    }
+
     const token = await generateJwtMobile(user.id);
 
     const userData = encodeURIComponent(

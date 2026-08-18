@@ -23,8 +23,11 @@ const signupShared = {
 
 export const normalSignupSchema = z
   .object({
-    "first-name": z.string().min(1, "Enter your first name"),
-    "last-name": z.string().min(1, "Enter your last name"),
+    // Optional here: for university emails that follow the
+    // firstname.lastname convention, the backend derives these from the
+    // verified email instead. Only enforced server-side when it can't.
+    "first-name": z.string().optional(),
+    "last-name": z.string().optional(),
     ...signupShared,
   })
   .refine((data) => data.password === data["confirm-password"], {

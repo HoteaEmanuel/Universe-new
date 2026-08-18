@@ -8,7 +8,9 @@ import {
   createGroup,
   findGroupById,
   findPublicGroupsNotJoined,
+  setGroupCourseTag,
 } from "../repository/group.repository.js";
+import { courseCatalog } from "../utils/courseCatalog.js";
 import {
   createGroupMessage,
   findGroupMessageById,
@@ -37,13 +39,49 @@ export const createGroupService = async (data: {
   description?: string;
   userId: string;
   visibility?: GroupVisibility;
+  courseTag?: string;
 }) => {
-  const { name, description, userId, visibility } = data;
+  const { name, description, userId, visibility, courseTag } = data;
 
-  const newGroup = await createGroup({ name, description, visibility });
+  const creator = await findUserById(userId);
+  const university = creator?.university ?? null;
+
+  if (courseTag) {
+    const availableCourses = university ? (courseCatalog[university] ?? []) : [];
+    if (!availableCourses.includes(courseTag)) {
+      throw new Error("Selected course is not available for your university");
+    }
+  }
+
+  const newGroup = await createGroup({
+    name,
+    description,
+    visibility,
+    university,
+    courseTag: courseTag ?? null,
+  });
   // When new group is created, the user that created that group is the admin
   await createGroupMember({ userId, groupId: newGroup.id, role: "admin" });
   return newGroup;
+};
+
+export const setGroupCourseTagService = async (data: {
+  groupId: string;
+  courseTag: string | null;
+}) => {
+  const { groupId, courseTag } = data;
+
+  if (courseTag) {
+    const group = await findGroupById(groupId);
+    const availableCourses = group?.university
+      ? (courseCatalog[group.university] ?? [])
+      : [];
+    if (!availableCourses.includes(courseTag)) {
+      throw new Error("Selected course is not available for this group's university");
+    }
+  }
+
+  return setGroupCourseTag(groupId, courseTag);
 };
 
 export const addMemberToGroup = async (data: {
@@ -75,10 +113,22 @@ export const addMemberToGroup = async (data: {
   return createGroupMember({ groupId, userId, role: "member" });
 };
 
-export const getDiscoverablePublicGroups = async (userId: string) => {
+export const getDiscoverablePublicGroups = async (
+  userId: string,
+  courseTag?: string,
+) => {
   const memberships = await findGroupMembershipsForUser(userId);
   const joinedGroupIds = memberships.map((membership) => membership.groupId);
-  return findPublicGroupsNotJoined(joinedGroupIds);
+  return findPublicGroupsNotJoined(joinedGroupIds, courseTag);
+};
+
+export const getCourseCatalogForUser = async (userId: string, groupId?: string) => {
+  if (groupId) {
+    const group = await findGroupById(groupId);
+    return group?.university ? (courseCatalog[group.university] ?? []) : [];
+  }
+  const user = await findUserById(userId);
+  return user?.university ? (courseCatalog[user.university] ?? []) : [];
 };
 
 export const sendMessage = async (data: {

@@ -319,6 +319,8 @@ model Group {
   coverImageUrl      String?
   coverImagePublicId String?
   visibility         GroupVisibility          @default(private)
+  university         String?
+  courseTag          String?
   lastMessageId      String?                  @unique
   lastMessage        GroupMessage?            @relation("GroupLastMessage", fields: [lastMessageId], references: [id])
   createdAt          DateTime                 @default(now())
@@ -333,6 +335,7 @@ model Group {
   notifications Notification[]
   hostedEvents  Event[]        @relation("GroupHostedEvents")
 
+  @@index([university, courseTag])
   @@map("groups")
 }
 

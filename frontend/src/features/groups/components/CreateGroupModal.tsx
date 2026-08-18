@@ -10,10 +10,21 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import FormField from "@/components/FormField";
 import TextareaField from "@/components/TextareaField";
 import { useCreateGroupMutation } from "@/queryAndMutation/mutations/group-mutation";
+import { useGetCourseCatalog } from "@/queryAndMutation/queries/group-queries";
+import { useAuthStore } from "@/store/authStore";
 import type { GroupVisibility } from "@/features/chat/types";
+
+const NO_COURSE = "__none__";
 
 type CreateGroupModalProps = {
   open: boolean;
@@ -33,11 +44,19 @@ const CreateGroupModal = ({ open, onClose }: CreateGroupModalProps) => {
     formState: { errors },
   } = useForm<CreateGroupFormValues>();
   const [visibility, setVisibility] = useState<GroupVisibility>("private");
+  const [courseTag, setCourseTag] = useState<string>(NO_COURSE);
   const { mutate: createGroup, isPending } = useCreateGroupMutation();
+  const { user } = useAuthStore() as {
+    user: { university?: string | null } | null;
+  };
+  const hasUniversity =
+    !!user?.university && user.university !== "No university yet";
+  const { data: courses } = useGetCourseCatalog(open && hasUniversity);
 
   const closeAndReset = () => {
     reset();
     setVisibility("private");
+    setCourseTag(NO_COURSE);
     onClose();
   };
 
@@ -46,6 +65,7 @@ const CreateGroupModal = ({ open, onClose }: CreateGroupModalProps) => {
       name: data.groupName,
       description: data.groupDescription,
       visibility,
+      courseTag: courseTag === NO_COURSE ? undefined : courseTag,
     });
     closeAndReset();
   };
@@ -80,6 +100,29 @@ const CreateGroupModal = ({ open, onClose }: CreateGroupModalProps) => {
             placeholder="What's this group about?"
             rows={3}
           />
+          {hasUniversity && courses && courses.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <Label>Course (optional)</Label>
+              <Select
+                value={courseTag}
+                onValueChange={(value: unknown) =>
+                  setCourseTag((value as string) ?? NO_COURSE)
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="No course" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_COURSE}>No course</SelectItem>
+                  {courses.map((course) => (
+                    <SelectItem key={course} value={course}>
+                      {course}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <Label>Visibility</Label>
             <div className="flex gap-2">

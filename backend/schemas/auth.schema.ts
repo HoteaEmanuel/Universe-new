@@ -11,8 +11,11 @@ const password = z
 
 const normalSignupSchema = z.object({
   accountType: z.literal("normal"),
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  // Required for gmail.com signups; auto-derived from the email for
+  // university domains that follow the firstname.lastname convention (see
+  // parseNameFromEmail) — actual requiredness is enforced in auth.service.
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
   email,
   password,
   major: z.string().optional(),

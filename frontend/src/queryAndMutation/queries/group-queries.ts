@@ -18,11 +18,20 @@ export const useGetUserGroups = (userId?: string) => {
   });
 };
 
-export const useGetDiscoverablePublicGroups = (enabled = true) => {
+export const useGetDiscoverablePublicGroups = (enabled = true, courseTag?: string) => {
   const { getDiscoverablePublicGroups } = useGroupStore();
   return useQuery<GroupConversation[]>({
-    queryFn: () => getDiscoverablePublicGroups(),
-    queryKey: ["discoverable-public-groups"],
+    queryFn: () => getDiscoverablePublicGroups(courseTag),
+    queryKey: ["discoverable-public-groups", courseTag],
+    enabled,
+  });
+};
+
+export const useGetCourseCatalog = (enabled = true, groupId?: string) => {
+  const { getCourseCatalog } = useGroupStore();
+  return useQuery<string[]>({
+    queryFn: () => getCourseCatalog(groupId),
+    queryKey: ["course-catalog", groupId],
     enabled,
   });
 };
