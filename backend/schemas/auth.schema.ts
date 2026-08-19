@@ -41,6 +41,7 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const verifyEmailSchema = z.object({
+  email,
   verificationCode: z.string().min(1, "Verification code is required"),
 });
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
@@ -69,3 +70,8 @@ export const googleMobileExchangeSchema = z.object({
   code: z.string().min(1, "code is required"),
 });
 export type GoogleMobileExchangeInput = z.infer<typeof googleMobileExchangeSchema>;
+
+export const refreshMobileSchema = z.object({
+  refreshToken: z.string().min(1, "refreshToken is required"),
+});
+export type RefreshMobileInput = z.infer<typeof refreshMobileSchema>;

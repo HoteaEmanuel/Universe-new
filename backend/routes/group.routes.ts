@@ -2,6 +2,7 @@ import express from "express";
 import { imageUpload } from "../lib/imageUpload.js";
 import { audioUpload } from "../lib/audioUpload.js";
 import { fileUpload } from "../lib/fileUpload.js";
+import { verifyUploadedFiles } from "../lib/validateUpload.js";
 import {
   createGroupController,
   deleteGroup,
@@ -113,6 +114,7 @@ router.post(
   requireGroupMembership,
   messageRateLimiter,
   imageUpload.any(),
+  verifyUploadedFiles("image"),
   validate({ body: sendGroupMessageSchema }),
   sendMessageToGroupController,
 );
@@ -121,6 +123,7 @@ router.post(
   requireGroupMembership,
   messageRateLimiter,
   fileUpload.array("files", 10),
+  verifyUploadedFiles("file"),
   validate({ body: sendGroupMessageSchema }),
   sendFilesMessageToGroupController,
 );
@@ -129,6 +132,7 @@ router.post(
   requireGroupMembership,
   messageRateLimiter,
   audioUpload.single("audio"),
+  verifyUploadedFiles("audio"),
   validate({ body: sendGroupVoiceMessageSchema }),
   sendVoiceMessageToGroupController,
 );
@@ -164,6 +168,7 @@ router.post(
   "/:id/change-group-image",
   requireGroupAdmin,
   imageUpload.single("image"),
+  verifyUploadedFiles("image"),
   updateGroupCoverImageController,
 );
 

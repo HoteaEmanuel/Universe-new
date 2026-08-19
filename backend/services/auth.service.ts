@@ -5,7 +5,7 @@ import {
   createUniversityAccount,
   findUserByEmail,
   findUserByPasswordResetToken,
-  findUserByVerificationCode,
+  recordFailedVerificationAttempt,
   updateUser,
   verifyUser,
 } from "../repository/user.repository.js";
@@ -134,18 +134,42 @@ export const signUp = async (body: SignUpBody) => {
   return user;
 };
 
-export const verifyEmail = async (code: string) => {
-  const user = await findUserByVerificationCode(code);
+const MAX_VERIFICATION_ATTEMPTS = 5;
+const VERIFICATION_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
+export const verifyEmail = async (email: string, code: string) => {
+  const user = await findUserByEmail(email);
   if (!user) {
     throw new Error("Verification code is wrong");
   }
+
+  if (
+    user.verificationCooldownUntil &&
+    user.verificationCooldownUntil > new Date()
+  ) {
+    throw new Error(
+      "Too many failed attempts. Please wait a few minutes and try again.",
+    );
+  }
+
+  if (!user.verificationCode || user.verificationCode !== code) {
+    const attempts = user.verificationAttempts + 1;
+    const cooldownUntil =
+      attempts >= MAX_VERIFICATION_ATTEMPTS
+        ? new Date(Date.now() + VERIFICATION_COOLDOWN_MS)
+        : null;
+    await recordFailedVerificationAttempt(user.id, cooldownUntil);
+    throw new Error("Verification code is wrong");
+  }
+
   if (
     user.verificationCodeExpiresAt &&
     user.verificationCodeExpiresAt < new Date()
   ) {
     throw new Error("Verification code is expired, try again!");
   }
-  await verifyUser(code);
+
+  await verifyUser(user.id);
   const data = {
     email: user.email,
     name: user?.firstName || user?.name,
@@ -163,6 +187,8 @@ export const sendVerificationEmail = async (email: string) => {
   await updateUser(user.id, {
     verificationCode,
     verificationCodeExpiresAt: new Date(Date.now() + 1000 * 60 * 15),
+    verificationAttempts: 0,
+    verificationCooldownUntil: null,
   });
   await verifyEmailQueue.add("sendVerificationEmail", {
     to: user.email,
@@ -178,14 +204,19 @@ export const forgotPassword = async (email: string) => {
   }
 
   const resetPassToken = crypto.randomBytes(20).toString("hex");
-  const hashedToken = await bcryptjs.hash(resetPassToken, 10);
+  // The raw token is a full-entropy random value (unlike a user password), so
+  // a fast SHA-256 hash is appropriate here — bcrypt's slow hashing adds
+  // nothing and, unlike SHA-256, can't be looked up by a plain equality
+  // query. Only the hash is ever stored; the raw token is what gets emailed
+  // and is never persisted anywhere.
+  const hashedToken = crypto.createHash("sha256").update(resetPassToken).digest("hex");
 
   await updateUser(user.id, {
     resetPasswordToken: hashedToken,
     resetPasswordExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
   });
 
-  const encodedToken = encodeURIComponent(hashedToken);
+  const encodedToken = encodeURIComponent(resetPassToken);
   await resetPasswordEmailQueue.add("resetPasswordEmail", {
     email,
     token: encodedToken,
@@ -193,9 +224,16 @@ export const forgotPassword = async (email: string) => {
 };
 
 export const resetPassword = async (password: string, token: string) => {
-  const user = await findUserByPasswordResetToken(token);
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const user = await findUserByPasswordResetToken(hashedToken);
   if (!user) {
     throw new Error("Something went wrong");
+  }
+  if (
+    user.resetPasswordExpiresAt &&
+    user.resetPasswordExpiresAt < new Date()
+  ) {
+    throw new Error("Reset link has expired, please request a new one");
   }
 
   const salt = await bcryptjs.genSalt(10);
@@ -204,6 +242,10 @@ export const resetPassword = async (password: string, token: string) => {
     password: hashedPassword,
     resetPasswordToken: null,
     resetPasswordExpiresAt: null,
+    // A password reset means any existing session's refresh token should
+    // stop working too — otherwise a stolen refresh token survives the
+    // exact event meant to lock the attacker out.
+    refreshToken: null,
   });
 };
 

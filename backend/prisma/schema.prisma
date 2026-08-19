@@ -61,6 +61,8 @@ model User {
   refreshToken              String?
   verificationCode          String?
   verificationCodeExpiresAt DateTime?
+  verificationAttempts      Int                      @default(0)
+  verificationCooldownUntil DateTime?
   createdAt                 DateTime                 @default(now())
   updatedAt                 DateTime                 @updatedAt
   searchVector              Unsupported("tsvector")?

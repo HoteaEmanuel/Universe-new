@@ -5,7 +5,8 @@ import { toast } from "sonner";
 export const useVerifyEmailMutation = () => {
   const { verifyEmail } = useAuthStore();
   return useMutation({
-    mutationFn: async (code: string) => await verifyEmail(code),
+    mutationFn: async ({ email, code }: { email: string; code: string }) =>
+      await verifyEmail(email, code),
     mutationKey: [],
     onError: () => {
       toast.error("Verification process went wrong");

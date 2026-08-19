@@ -36,7 +36,7 @@ type AuthStore = {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
   sendVerificationEmail: (email: string) => Promise<void>;
-  verifyEmail: (verificationCode: string) => Promise<void>;
+  verifyEmail: (email: string, verificationCode: string) => Promise<void>;
   logOut: () => Promise<void>;
   checkAuth: () => Promise<void>;
   connectSocket: () => void;
@@ -62,7 +62,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     accountType,
   }) => {
     set({ isLoading: true, error: null });
-    console.log(firstName, lastName, name, major, email, password, accountType);
     try {
       const response = await axios.post(`${API_URL}/auth/signup`, {
         firstName,
@@ -181,7 +180,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   resetPassword: async (token, password) => {
     set({ isLoading: true, error: null });
     try {
-      console.log(token, password);
       await axios.post(`${API_URL}/auth/reset-password/${token}`, { password });
     } catch (eroare) {
       const err = eroare as { response: { data: { message?: string } } };
@@ -206,10 +204,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: false });
     }
   },
-  verifyEmail: async (verificationCode) => {
+  verifyEmail: async (email, verificationCode) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${API_URL}/auth/verify-email`, { verificationCode });
+      await axios.post(`${API_URL}/auth/verify-email`, { email, verificationCode });
       set({ isVerified: true, isLoading: false });
     } catch (eroare) {
       const err = eroare as { response: { data: { message?: string } } };

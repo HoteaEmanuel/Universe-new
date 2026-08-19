@@ -1,11 +1,13 @@
-import jwt from "jsonwebtoken";
 import type { Response } from "express";
 import { updateUser } from "../repository/user.repository.js";
+import {
+  hashRefreshToken,
+  signAccessToken,
+  signRefreshToken,
+} from "../lib/authTokens.js";
 
 export const generateToken = async (res: Response, userId: string) => {
-  const token = jwt.sign({ userId }, process.env.JWT_KEY, {
-    expiresIn: "15m",
-  });
+  const token = signAccessToken(userId);
 
   res.cookie("accessToken", token, {
     httpOnly: true,
@@ -13,9 +15,7 @@ export const generateToken = async (res: Response, userId: string) => {
     sameSite: "strict",
     maxAge: 1 * 1000 * 60 * 15, // 15 minutes
   });
-  const refreshToken = jwt.sign({ userId }, process.env.JWT_KEY, {
-    expiresIn: "30d",
-  });
+  const refreshToken = signRefreshToken(userId);
 
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
@@ -24,6 +24,8 @@ export const generateToken = async (res: Response, userId: string) => {
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 
-  await updateUser(userId, { refreshToken });
+  // Store only the hash — the DB is never a bearer credential on its own,
+  // matching the reset-token fix (see auth.service.ts's forgotPassword).
+  await updateUser(userId, { refreshToken: hashRefreshToken(refreshToken) });
   return token;
 };

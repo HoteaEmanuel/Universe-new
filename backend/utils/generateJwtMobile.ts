@@ -1,14 +1,16 @@
-import jwt from "jsonwebtoken";
+import { updateUser } from "../repository/user.repository.js";
+import {
+  hashRefreshToken,
+  signAccessToken,
+  signRefreshToken,
+} from "../lib/authTokens.js";
 
 export const generateJwtMobile = async (userId: string) => {
   try {
-    const accessToken = jwt.sign({ userId }, process.env.JWT_KEY, {
-      expiresIn: "15m",
-    });
+    const accessToken = signAccessToken(userId);
+    const refreshToken = signRefreshToken(userId);
 
-    const refreshToken = jwt.sign({ userId }, process.env.JWT_KEY, {
-      expiresIn: "30d",
-    });
+    await updateUser(userId, { refreshToken: hashRefreshToken(refreshToken) });
 
     return { accessToken, refreshToken };
   } catch (error) {

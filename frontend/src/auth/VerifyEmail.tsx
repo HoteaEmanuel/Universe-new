@@ -1,10 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { useVerifyEmailMutation } from "../queryAndMutation/mutations/auth-mutation";
-import { useState, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import AuthCard from "./components/AuthCard";
 import ErrorBanner from "../components/ErrorBanner";
 import SubmitButton from "../components/SubmitButton";
+import { Input } from "@/components/ui/input";
 import {
   InputOTP,
   InputOTPGroup,
@@ -13,7 +14,11 @@ import {
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoading, error } = useAuthStore();
+  const [email, setEmail] = useState(
+    (location.state as { email?: string } | null)?.email ?? "",
+  );
   const [code, setCode] = useState("");
   const { mutateAsync: verifyEmail, isError } = useVerifyEmailMutation();
   const [submitError, setSubmitError] = useState<string | undefined>(
@@ -24,11 +29,15 @@ const VerifyEmail = () => {
     e.preventDefault();
 
     try {
+      if (!email) {
+        setSubmitError("Enter the email you signed up with");
+        throw new Error("Enter the email you signed up with");
+      }
       if (code.length !== 6) {
         setSubmitError("The verification code has 6 digits");
         throw new Error("The verification code has 6 digits");
       }
-      await verifyEmail(code);
+      await verifyEmail({ email, code });
       if (!isError) navigate("/login");
     } catch (error) {
       console.log(error);
@@ -43,6 +52,15 @@ const VerifyEmail = () => {
         </p>
         <ErrorBanner>{submitError}</ErrorBanner>
         <ErrorBanner>{error}</ErrorBanner>
+
+        <Input
+          type="email"
+          placeholder="Email"
+          autoComplete="email"
+          className="h-10"
+          value={email}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+        />
 
         <InputOTP
           maxLength={6}

@@ -1,5 +1,6 @@
 import express from "express";
 import { imageUpload } from "../lib/imageUpload.js";
+import { verifyUploadedFiles } from "../lib/validateUpload.js";
 import { validate } from "../middleware/validate.js";
 import { requireEventHost } from "../middleware/authorization.js";
 import {
@@ -37,6 +38,7 @@ router.post(
   "/:id/change-cover-image",
   requireEventHost,
   imageUpload.single("image"),
+  verifyUploadedFiles("image"),
   updateEventCoverImageController,
 );
 router.post("/:id/rsvp", validate({ body: rsvpEventSchema }), rsvpEventController);

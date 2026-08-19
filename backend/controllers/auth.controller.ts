@@ -8,6 +8,12 @@ import {
   createMobileAuthExchangeCode,
   consumeMobileAuthExchangeCode,
 } from "../lib/oauthExchange.js";
+import { verifyAuthToken } from "../lib/authTokens.js";
+import {
+  RefreshTokenReuseError,
+  rotateRefreshToken,
+} from "../services/refreshToken.service.js";
+import { updateUser } from "../repository/user.repository.js";
 import { universityEmailDomains } from "../utils/universityDomain.js";
 import { universityDomains } from "../utils/universityDomains.js";
 
@@ -131,10 +137,10 @@ export const sendVerificationEmailController = async (
 };
 
 export const verifyEmailController = async (req: Request, res: Response) => {
-  const { verificationCode } = req.body;
+  const { email, verificationCode } = req.body;
 
   try {
-    await verifyEmail(verificationCode);
+    await verifyEmail(email, verificationCode);
     return res.status(200).json({ message: "Email verified :)" });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
@@ -195,10 +201,39 @@ export const resetPasswordController = async (req: Request, res: Response) => {
   }
 };
 
-export const logout = (req: Request, res: Response) => {
+export const logout = async (req: Request, res: Response) => {
+  // Best-effort: revoke the stored refresh-token hash so a copy of it
+  // (cookie theft, SecureStore extraction) stops working the moment the
+  // user logs out, not just when its 30-day lifetime happens to expire.
+  // Web sends it as a cookie; mobile (bearer-token based, no cookies) sends
+  // it in the body instead.
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+  if (refreshToken) {
+    const decoded = verifyAuthToken(refreshToken, "refresh");
+    if (decoded) {
+      await updateUser(decoded.userId, { refreshToken: null }).catch(() => {});
+    }
+  }
+
   res.clearCookie("refreshToken");
   res.clearCookie("accessToken");
   res.status(200).json({ success: true, message: "Logged out successfully" });
+};
+
+export const refreshMobileController = async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.body;
+    const rotated = await rotateRefreshToken(refreshToken);
+    return res.status(200).json({
+      accessToken: rotated.accessToken,
+      refreshToken: rotated.refreshToken,
+    });
+  } catch (error) {
+    if (error instanceof RefreshTokenReuseError) {
+      return res.status(401).json({ message: errorMessage(error) });
+    }
+    return res.status(400).json({ message: "Could not refresh session" });
+  }
 };
 
 export const authWithGoogle = async (req: Request, res: Response) => {

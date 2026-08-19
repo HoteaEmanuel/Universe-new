@@ -25,6 +25,7 @@ import {
   followListQuerySchema,
 } from "../schemas/user.schema.js";
 import { imageUpload } from "../lib/imageUpload.js";
+import { verifyUploadedFiles } from "../lib/validateUpload.js";
 
 const router = express.Router();
 
@@ -54,6 +55,7 @@ router.get("/users-from-same-university", getUsersFromSameUniversity);
 router.put(
   "/update-profile-image",
   imageUpload.single("image"),
+  verifyUploadedFiles("image"),
   updateUserImage,
 );
 router.post("/posts/save/:id", savePostController);

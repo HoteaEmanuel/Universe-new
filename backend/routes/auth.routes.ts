@@ -16,6 +16,7 @@ import {
   loginMobile,
   authWithGoogleMobile,
   exchangeGoogleMobileCodeController,
+  refreshMobileController,
 } from "../controllers/auth.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { requireAdmin } from "../middleware/authorization.js";
@@ -29,6 +30,7 @@ import {
   resetPasswordSchema,
   googleMobileSchema,
   googleMobileExchangeSchema,
+  refreshMobileSchema,
 } from "../schemas/auth.schema.js";
 const router = express.Router();
 router.post("/check-auth", verifyToken, checkAuth);
@@ -74,6 +76,11 @@ router.post(
 );
 router.post("/login", validate({ body: loginSchema }), loginWeb);
 router.post("/login/mobile", validate({ body: loginSchema }), loginMobile);
+router.post(
+  "/refresh-mobile",
+  validate({ body: refreshMobileSchema }),
+  refreshMobileController,
+);
 
 router.get("/google/mobile-init", (req, res) => {
   const redirect_uri =

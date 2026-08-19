@@ -24,6 +24,7 @@ import {
   sharePostController,
 } from "../controllers/post.controller.js";
 import { imageUpload } from "../lib/imageUpload.js";
+import { verifyUploadedFiles } from "../lib/validateUpload.js";
 import { validate } from "../middleware/validate.js";
 import { requirePostOwner } from "../middleware/authorization.js";
 import { messageRateLimiter } from "../middleware/messageRateLimiter.js";
@@ -77,6 +78,7 @@ router.get("/user-liked/:id", userHasLiked);
 router.post(
   "/posts",
   imageUpload.array("images"),
+  verifyUploadedFiles("image"),
   validate({ body: createPostSchema }),
   createPostController,
 );
@@ -84,6 +86,7 @@ router.patch(
   "/posts/:id",
   requirePostOwner,
   imageUpload.array("images"),
+  verifyUploadedFiles("image"),
   validate({ body: updatePostSchema }),
   updatePostController,
 );

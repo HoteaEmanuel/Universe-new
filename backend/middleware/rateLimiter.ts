@@ -10,6 +10,18 @@ interface RateLimiterOptions {
 const ipKey = (req: Request) =>
   (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || "unknown";
 
+// Combines IP with the request's email/account identifier where the body has
+// one, so spoofing the IP alone (trivial via X-Forwarded-For, since this app
+// has no reverse proxy configured to strip it) doesn't fully bypass throttling
+// on auth routes like login/signup/forgot-password/verify-email.
+const authKey = (req: Request) => {
+  const ip = ipKey(req);
+  const email = req.body?.email;
+  return typeof email === "string" && email.length > 0
+    ? `${ip}:${email.toLowerCase()}`
+    : ip;
+};
+
 export const createRateLimiter = ({
   windowMs,
   max,
@@ -36,4 +48,8 @@ export const createRateLimiter = ({
   };
 };
 
-export const rateLimiter = createRateLimiter({ windowMs: 10_000, max: 5 });
+export const rateLimiter = createRateLimiter({
+  windowMs: 10_000,
+  max: 5,
+  keyFn: authKey,
+});

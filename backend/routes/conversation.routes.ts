@@ -19,6 +19,7 @@ import {
 import { imageUpload } from "../lib/imageUpload.js";
 import { audioUpload } from "../lib/audioUpload.js";
 import { fileUpload } from "../lib/fileUpload.js";
+import { verifyUploadedFiles } from "../lib/validateUpload.js";
 import { messageRateLimiter } from "../middleware/messageRateLimiter.js";
 import { validate } from "../middleware/validate.js";
 import {
@@ -90,6 +91,7 @@ router.post(
   requireConversationParticipant,
   messageRateLimiter,
   imageUpload.any(),
+  verifyUploadedFiles("image"),
   validate({ body: sendMessageSchema }),
   sendMessageController,
 );
@@ -98,6 +100,7 @@ router.post(
   requireConversationParticipant,
   messageRateLimiter,
   fileUpload.array("files", 10),
+  verifyUploadedFiles("file"),
   validate({ body: sendMessageSchema }),
   sendFilesMessageController,
 );
@@ -106,6 +109,7 @@ router.post(
   requireConversationParticipant,
   messageRateLimiter,
   audioUpload.single("audio"),
+  verifyUploadedFiles("audio"),
   validate({ body: sendVoiceMessageSchema }),
   sendVoiceMessageController,
 );

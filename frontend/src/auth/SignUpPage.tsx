@@ -75,7 +75,7 @@ const SignUpPage = () => {
     };
     try {
       await signUp(formData);
-      navigate("/verify-email");
+      navigate("/verify-email", { state: { email: data.email } });
     } catch (error) {
       console.log(error);
     }

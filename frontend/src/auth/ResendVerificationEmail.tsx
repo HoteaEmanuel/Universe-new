@@ -30,7 +30,7 @@ const ResendVerificationEmail = () => {
       toast.success("Verification email sent! Check your inbox.", {
         duration: 5000,
       });
-      navigate("/verify-email");
+      navigate("/verify-email", { state: { email: data.email } });
     } catch (error) {
       console.log(error);
     }

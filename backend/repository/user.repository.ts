@@ -31,10 +31,6 @@ export const findUserByEmail = async (email: string) => {
   return prisma.user.findUnique({ where: { email } });
 };
 
-export const findUserByVerificationCode = async (code: string) => {
-  return prisma.user.findFirst({ where: { verificationCode: code } });
-};
-
 export const findUserByName = async (name: string) => {
   return prisma.user.findFirst({ where: { name } });
 };
@@ -43,15 +39,33 @@ export const findUserByPasswordResetToken = async (token: string) => {
   return prisma.user.findFirst({ where: { resetPasswordToken: token } });
 };
 
-export const verifyUser = async (code: string) => {
-  const user = await findUserByVerificationCode(code);
-  if (!user) return null;
+export const verifyUser = async (userId: string) => {
   return prisma.user.update({
-    where: { id: user.id },
+    where: { id: userId },
     data: {
       verificationCode: null,
       verificationCodeExpiresAt: null,
+      verificationAttempts: 0,
+      verificationCooldownUntil: null,
       isVerified: true,
+    },
+  });
+};
+
+// Called on a wrong/expired verification code so an attacker can't brute-force
+// the 6-digit space against a known email indefinitely — after enough wrong
+// guesses, further attempts are cooled down for a short window rather than
+// locking the account out entirely (a full lockout would force a resend for
+// one honest typo).
+export const recordFailedVerificationAttempt = async (
+  userId: string,
+  cooldownUntil: Date | null,
+) => {
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      verificationAttempts: { increment: 1 },
+      verificationCooldownUntil: cooldownUntil,
     },
   });
 };
