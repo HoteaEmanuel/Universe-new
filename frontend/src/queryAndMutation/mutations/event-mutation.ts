@@ -74,6 +74,7 @@ export const useRsvpEventMutation = (eventId?: string) => {
             : "Marked as interested",
       );
     },
+    onError: (error: Error) => toast.error(error.message),
   });
 };
 
@@ -98,5 +99,34 @@ export const useJoinEventChatMutation = (eventId?: string) => {
     onSuccess: () => {
       toast.success("Joined the event chat");
     },
+  });
+};
+
+export const useBanEventParticipantMutation = (eventId?: string) => {
+  const queryClient = useQueryClient();
+  const { banEventParticipant } = useEventStore();
+  return useMutation({
+    mutationFn: ({ userId, reason }: { userId: string; reason?: string }) =>
+      banEventParticipant(eventId as string, userId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["event-participants", eventId] });
+      queryClient.invalidateQueries({ queryKey: ["event-bans", eventId] });
+      toast.success("Participant removed and banned");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
+
+export const useUnbanEventParticipantMutation = (eventId?: string) => {
+  const queryClient = useQueryClient();
+  const { unbanEventParticipant } = useEventStore();
+  return useMutation({
+    mutationFn: (userId: string) => unbanEventParticipant(eventId as string, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["event-bans", eventId] });
+      toast.success("Participant unbanned");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 };

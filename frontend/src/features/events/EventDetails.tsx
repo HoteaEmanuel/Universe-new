@@ -35,6 +35,7 @@ import {
 } from "@/queryAndMutation/mutations/event-mutation";
 import { formatEventDateTime, buildGoogleCalendarUrl } from "./utils/formatEventDate";
 import { urlPathName } from "@/utils/urlPathFromName";
+import EventParticipantsModal from "./components/EventParticipantsModal";
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -47,6 +48,7 @@ const EventDetails = () => {
   const cancelEventMutation = useCancelEventMutation(id);
   const joinChatMutation = useJoinEventChatMutation(id);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showParticipants, setShowParticipants] = useState(false);
 
   useEffect(() => {
     if (event) document.title = event.title;
@@ -145,13 +147,17 @@ const EventDetails = () => {
             <ExternalLink className="size-3" />
           </a>
         )}
-        <p className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setShowParticipants(true)}
+          className="flex items-center gap-2 text-left hover:text-primary"
+        >
           <Users className="size-4 shrink-0 text-muted-foreground" />
           {event.counts.going} going
           {event.capacity ? ` / ${event.capacity} spots` : ""}
           {event.counts.interested > 0 && ` · ${event.counts.interested} interested`}
           {event.counts.waitlisted > 0 && ` · ${event.counts.waitlisted} waitlisted`}
-        </p>
+        </button>
       </div>
 
       {!isCancelled && (
@@ -252,6 +258,13 @@ const EventDetails = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EventParticipantsModal
+        open={showParticipants}
+        onClose={() => setShowParticipants(false)}
+        eventId={event.id}
+        isHost={isHost}
+      />
     </div>
   );
 };

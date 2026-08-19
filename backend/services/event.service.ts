@@ -11,15 +11,23 @@ import {
   findEventParticipant,
   countGoingParticipants,
   countParticipantsByStatus,
-  upsertEventParticipant,
   deleteEventParticipant,
+  acquireEventParticipant,
   findOldestWaitlistedParticipant,
   findEventParticipantsPage,
   findAllActiveParticipantUserIds,
+  banEventParticipant,
+  deleteEventBan,
+  findEventBansPage,
+  EventBannedError,
 } from "../repository/event.repository.js";
-import { findGroupMember } from "../repository/group-members.repository.js";
+import {
+  findGroupMember,
+  createGroupMember,
+  acquireGroupMember,
+  GroupBannedError,
+} from "../repository/group-members.repository.js";
 import { createGroup } from "../repository/group.repository.js";
-import { createGroupMember } from "../repository/group-members.repository.js";
 import { getFollowConnectedUserIds } from "../repository/relevance.repository.js";
 import {
   createNotification,
@@ -32,6 +40,8 @@ import type {
   EventParticipantStatus,
 } from "../generated/prisma/client.js";
 import type { EventStatus, EventType } from "../types/shared.js";
+
+export { EventBannedError };
 
 type UploadedImage = Express.Multer.File;
 type EventWithRelations = NonNullable<Awaited<ReturnType<typeof findEventById>>>;
@@ -99,6 +109,16 @@ export const createEventService = async (data: CreateEventServiceInput) => {
   return toEventDTO(created as EventWithRelations);
 };
 
+const isEventHost = async (
+  event: Pick<EventWithRelations, "creatorId" | "hostGroupId">,
+  userId: string,
+) => {
+  if (event.creatorId === userId) return true;
+  if (!event.hostGroupId) return false;
+  const member = await findGroupMember(event.hostGroupId, userId);
+  return member?.role === "admin";
+};
+
 // A private event has no invite list - the unguessable eventId link is
 // itself the access control, and rsvpEventService deliberately stays
 // ungated so a link recipient can RSVP their way into "participant" status.
@@ -110,10 +130,7 @@ const assertEventVisible = async (
   viewerId: string,
 ) => {
   if (event.visibility !== "private") return;
-  const isHost =
-    event.creatorId === viewerId ||
-    (event.hostGroupId && (await findGroupMember(event.hostGroupId, viewerId))?.role === "admin");
-  if (isHost) return;
+  if (await isEventHost(event, viewerId)) return;
   const participant = await findEventParticipant(event.id, viewerId);
   if (!participant) throw new Error("This event is private");
 };
@@ -244,7 +261,7 @@ export const rsvpEventService = async (
     }
   }
 
-  const participant = await upsertEventParticipant(eventId, userId, status);
+  const participant = await acquireEventParticipant(eventId, userId, status);
   return participant;
 };
 
@@ -259,7 +276,16 @@ export const cancelRsvpService = async (eventId: string, userId: string) => {
   const promoted = await findOldestWaitlistedParticipant(eventId);
   if (!promoted) return;
 
-  await upsertEventParticipant(eventId, promoted.userId, "going");
+  try {
+    await acquireEventParticipant(eventId, promoted.userId, "going");
+  } catch (error) {
+    // The waitlisted user was banned in between being waitlisted and being
+    // promoted - leave the spot open rather than handing them a participant
+    // row (or falling through to the next waitlisted person, which would
+    // need its own retry loop for a rare edge case).
+    if (error instanceof EventBannedError) return;
+    throw error;
+  }
 
   const event = await findEventById(eventId);
   const notification = await createNotification({
@@ -306,7 +332,14 @@ export const joinEventChatService = async (eventId: string, userId: string) => {
 
   const existingMember = await findGroupMember(groupId, userId);
   if (!existingMember) {
-    await createGroupMember({ groupId, userId, role: "member" });
+    try {
+      await acquireGroupMember({ groupId, userId, role: "member" });
+    } catch (error) {
+      if (error instanceof GroupBannedError) {
+        throw new Error("You've been removed from this event's chat and can't rejoin");
+      }
+      throw error;
+    }
   }
   return { id: groupId };
 };
@@ -316,4 +349,48 @@ export const buildEventIcsService = async (eventId: string, viewerId: string) =>
   if (!event) throw new Error("Event not found");
   await assertEventVisible(event, viewerId);
   return buildIcsCalendar(event);
+};
+
+export const banEventParticipantService = async (
+  eventId: string,
+  targetUserId: string,
+  bannedByUserId: string,
+  reason: string | undefined,
+) => {
+  const event = await findEventById(eventId);
+  if (!event) throw new Error("Event not found");
+  if (await isEventHost(event, targetUserId)) {
+    throw new Error("Event hosts can't be banned - remove their host access first");
+  }
+
+  const ban = await banEventParticipant({
+    eventId,
+    userId: targetUserId,
+    bannedByUserId,
+    reason,
+    coordinationGroupId: event.coordinationGroup?.id,
+  });
+
+  const notification = await createNotification({
+    userId: targetUserId,
+    actionUserId: bannedByUserId,
+    type: "event-banned",
+    title: "Removed from event",
+    message: `You were removed from ${event.title} and can no longer rejoin.`,
+  });
+  await emitNewNotification(targetUserId, notification);
+
+  return ban;
+};
+
+export const unbanEventParticipantService = async (eventId: string, targetUserId: string) => {
+  await deleteEventBan(eventId, targetUserId);
+};
+
+export const getEventBansService = async (
+  eventId: string,
+  cursor: string | undefined,
+  limit: number,
+) => {
+  return findEventBansPage({ eventId, cursor, limit });
 };

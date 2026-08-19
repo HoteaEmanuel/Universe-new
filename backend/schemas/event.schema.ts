@@ -81,3 +81,14 @@ export const eventParticipantsQuerySchema = z.object({
   status: z.enum(["going", "interested", "waitlisted"]).optional(),
 });
 export type EventParticipantsQueryInput = z.infer<typeof eventParticipantsQuerySchema>;
+
+export const banEventParticipantSchema = z.object({
+  reason: z.string().max(500, "Reason should have less than 500 characters").optional(),
+});
+export type BanEventParticipantInput = z.infer<typeof banEventParticipantSchema>;
+
+export const eventBansQuerySchema = z.object({
+  cursor: z.string().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(30),
+});
+export type EventBansQueryInput = z.infer<typeof eventBansQuerySchema>;

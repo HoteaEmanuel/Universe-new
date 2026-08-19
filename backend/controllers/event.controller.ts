@@ -13,11 +13,17 @@ import {
   getEventParticipantsService,
   joinEventChatService,
   buildEventIcsService,
+  banEventParticipantService,
+  unbanEventParticipantService,
+  getEventBansService,
+  EventBannedError,
 } from "../services/event.service.js";
 import type {
   DiscoverEventsQueryInput,
   MyEventsQueryInput,
   EventParticipantsQueryInput,
+  BanEventParticipantInput,
+  EventBansQueryInput,
 } from "../schemas/event.schema.js";
 
 const errorMessage = (error: unknown) =>
@@ -99,6 +105,9 @@ export const rsvpEventController = async (req: Request, res: Response) => {
     );
     return res.status(200).json({ message: "RSVP saved", participant });
   } catch (error) {
+    if (error instanceof EventBannedError) {
+      return res.status(403).json({ message: errorMessage(error) });
+    }
     return res.status(400).json({ message: errorMessage(error) });
   }
 };
@@ -145,5 +154,39 @@ export const getEventCalendarIcsController = async (req: Request, res: Response)
     return res.status(200).send(ics);
   } catch (error) {
     return res.status(404).json({ message: errorMessage(error) });
+  }
+};
+
+export const banEventParticipantController = async (req: Request, res: Response) => {
+  try {
+    const { reason } = req.body as BanEventParticipantInput;
+    await banEventParticipantService(
+      req.params.id as string,
+      req.params.userId as string,
+      req.userId as string,
+      reason,
+    );
+    return res.status(200).json({ message: "Participant removed and banned" });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const unbanEventParticipantController = async (req: Request, res: Response) => {
+  try {
+    await unbanEventParticipantService(req.params.id as string, req.params.userId as string);
+    return res.status(200).json({ message: "Participant unbanned" });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const getEventBansController = async (req: Request, res: Response) => {
+  try {
+    const { cursor, limit } = req.query as unknown as EventBansQueryInput;
+    const page = await getEventBansService(req.params.id as string, cursor, limit);
+    return res.status(200).json(page);
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };

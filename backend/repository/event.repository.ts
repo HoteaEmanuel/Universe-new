@@ -1,6 +1,9 @@
 import { prisma } from "../database/prisma.js";
 import type { EventVisibility, EventParticipantStatus, Prisma } from "../generated/prisma/client.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
+import { runSerializable } from "../lib/serializableTransaction.js";
+
+export class EventBannedError extends Error {}
 
 export const EVENT_CREATOR_SELECT = {
   id: true,
@@ -210,8 +213,88 @@ export const upsertEventParticipant = async (
   });
 };
 
+// The one write path that's allowed to create/update an EventParticipant row.
+// Every caller that can hand someone a participant row - RSVP, and waitlist
+// auto-promotion in cancelRsvpService - must go through this instead of
+// upsertEventParticipant directly, otherwise a banned user can regain a row
+// through whichever path didn't get a ban check (see the Codex design review
+// in current-feature.md: waitlist promotion was the original spec's blind
+// spot). Runs serializable so a concurrent ban can't race past the check.
+export const acquireEventParticipant = async (
+  eventId: string,
+  userId: string,
+  status: EventParticipantStatus,
+) => {
+  return runSerializable(async (tx) => {
+    const ban = await tx.eventBan.findUnique({ where: { eventId_userId: { eventId, userId } } });
+    if (ban) throw new EventBannedError("You have been removed from this event");
+    return tx.eventParticipant.upsert({
+      where: { eventId_userId: { eventId, userId } },
+      create: { eventId, userId, status },
+      update: { status },
+    });
+  });
+};
+
 export const deleteEventParticipant = async (eventId: string, userId: string) => {
   return prisma.eventParticipant.delete({ where: { eventId_userId: { eventId, userId } } });
+};
+
+export const findEventBan = async (eventId: string, userId: string) => {
+  return prisma.eventBan.findUnique({ where: { eventId_userId: { eventId, userId } } });
+};
+
+interface BanEventParticipantInput {
+  eventId: string;
+  userId: string;
+  bannedByUserId: string;
+  reason?: string;
+  coordinationGroupId?: string;
+}
+
+// Kick + ban as one atomic action: drop any existing participant row and
+// coordination-group membership, then record the ban - all under the same
+// serializable transaction acquireEventParticipant checks against, so a
+// concurrent RSVP can't slip in while the ban is being written.
+export const banEventParticipant = async (data: BanEventParticipantInput) => {
+  const { eventId, userId, bannedByUserId, reason, coordinationGroupId } = data;
+  return runSerializable(async (tx) => {
+    await tx.eventParticipant.deleteMany({ where: { eventId, userId } });
+    if (coordinationGroupId) {
+      await tx.groupMembers.deleteMany({ where: { groupId: coordinationGroupId, memberId: userId } });
+    }
+    return tx.eventBan.upsert({
+      where: { eventId_userId: { eventId, userId } },
+      create: { eventId, userId, bannedByUserId, reason },
+      update: { bannedByUserId, reason, createdAt: new Date() },
+    });
+  });
+};
+
+export const deleteEventBan = async (eventId: string, userId: string) => {
+  return prisma.eventBan.deleteMany({ where: { eventId, userId } });
+};
+
+interface FindEventBansInput {
+  eventId: string;
+  cursor?: string;
+  limit: number;
+}
+
+export const findEventBansPage = async ({ eventId, cursor, limit }: FindEventBansInput) => {
+  const rows = await prisma.eventBan.findMany({
+    where: { eventId },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    include: {
+      user: { select: EVENT_CREATOR_SELECT },
+      bannedBy: { select: EVENT_CREATOR_SELECT },
+    },
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    take: limit + 1,
+  });
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  return { items: page, nextCursor: hasMore ? page[page.length - 1]?.id ?? null : null, hasMore };
 };
 
 export const findOldestWaitlistedParticipant = async (eventId: string) => {

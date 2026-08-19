@@ -4,6 +4,7 @@ import type {
   ChatMessagePage,
   ChatResourcePage,
   ChatUser,
+  GroupBanPage,
   GroupConversation,
   GroupMember,
   ResourceType,
@@ -117,5 +118,18 @@ export const useCheckUserIsAdminQuery = (groupId?: string, userId?: string) => {
     queryFn: () => checkUserIsAdmin(groupId as string, userId as string),
     queryKey: ["checkUserIsAdmin", groupId, userId],
     enabled: !!groupId && !!userId,
+  });
+};
+
+export const useGetGroupBansInfinite = (groupId?: string, enabled = true) => {
+  const { getGroupBans } = useGroupStore();
+  return useInfiniteQuery<GroupBanPage>({
+    queryKey: ["group-bans", groupId],
+    queryFn: ({ pageParam }) =>
+      getGroupBans(groupId as string, pageParam as string | undefined),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled: !!groupId && enabled,
   });
 };

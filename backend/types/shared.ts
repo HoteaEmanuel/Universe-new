@@ -15,7 +15,9 @@ export type NotificationType =
   | "message"
   | "event-update"
   | "event-cancelled"
-  | "event-waitlist-promoted";
+  | "event-waitlist-promoted"
+  | "event-banned"
+  | "group-banned";
 
 export type EventVisibility = "public" | "private";
 export type EventParticipantStatus = "going" | "interested" | "waitlisted";

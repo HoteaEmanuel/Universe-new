@@ -69,3 +69,14 @@ export const reactToGroupMessageSchema = z.object({
   emoji: z.string().min(1, "emoji is required").max(32, "Invalid emoji"),
 });
 export type ReactToGroupMessageInput = z.infer<typeof reactToGroupMessageSchema>;
+
+export const banGroupMemberSchema = z.object({
+  reason: z.string().max(500, "Reason should have less than 500 characters").optional(),
+});
+export type BanGroupMemberInput = z.infer<typeof banGroupMemberSchema>;
+
+export const groupBansQuerySchema = z.object({
+  cursor: z.string().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(30),
+});
+export type GroupBansQueryInput = z.infer<typeof groupBansQuerySchema>;

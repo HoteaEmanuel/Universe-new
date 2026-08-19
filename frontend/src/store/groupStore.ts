@@ -6,6 +6,7 @@ import type {
   ChatMessage,
   ChatMessagePage,
   ChatUser,
+  GroupBanPage,
   GroupConversation,
   GroupMember,
   GroupVisibility,
@@ -70,6 +71,13 @@ type GroupStore = {
   getUsersFromSameUniversityNotInGroup: (groupId: string) => Promise<ChatUser[]>;
   leaveGroup: (groupId: string) => Promise<{ message: string }>;
   makeUserAdmin: (groupId: string, userId: string) => Promise<unknown>;
+  banGroupMember: (
+    groupId: string,
+    userId: string,
+    reason?: string,
+  ) => Promise<{ message: string }>;
+  unbanGroupMember: (groupId: string, userId: string) => Promise<{ message: string }>;
+  getGroupBans: (groupId: string, cursor?: string) => Promise<GroupBanPage>;
   updateGroupImage: (groupId: string, image: File) => Promise<unknown>;
   getActiveMembers: (id: string) => Promise<ChatUser[]>;
 };
@@ -316,6 +324,37 @@ export const useGroupStore = create<GroupStore>(() => ({
       return response.data;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not update admin"));
+    }
+  },
+  banGroupMember: async (groupId, userId, reason) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/groups/${groupId}/members/${userId}/ban`,
+        { reason },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not ban member"));
+    }
+  },
+  unbanGroupMember: async (groupId, userId) => {
+    try {
+      const response = await axios.delete(
+        `${API_URL}/groups/${groupId}/bans/${userId}`,
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not unban member"));
+    }
+  },
+  getGroupBans: async (groupId, cursor) => {
+    try {
+      const response = await axios.get(`${API_URL}/groups/${groupId}/bans`, {
+        params: cursor ? { cursor } : undefined,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not load banned users"));
     }
   },
   updateGroupImage: async (groupId, image) => {

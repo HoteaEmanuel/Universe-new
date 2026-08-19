@@ -9,6 +9,7 @@ import type {
   EventParticipant,
   EventParticipantsPage,
   EventParticipantStatus,
+  EventBansPage,
 } from "../queryAndMutation/types";
 
 const API_URL =
@@ -41,6 +42,13 @@ type EventStore = {
   ) => Promise<EventParticipantsPage>;
   joinEventChat: (id: string) => Promise<{ id: string }>;
   downloadEventIcs: (id: string, title: string) => Promise<void>;
+  banEventParticipant: (
+    id: string,
+    userId: string,
+    reason?: string,
+  ) => Promise<{ message: string }>;
+  unbanEventParticipant: (id: string, userId: string) => Promise<{ message: string }>;
+  getEventBans: (id: string, cursor?: string) => Promise<EventBansPage>;
 };
 
 export const useEventStore = create<EventStore>(() => ({
@@ -159,6 +167,35 @@ export const useEventStore = create<EventStore>(() => ({
       URL.revokeObjectURL(objectUrl);
     } catch (error) {
       throw new Error(errorMessage(error, "Could not download calendar file"));
+    }
+  },
+  banEventParticipant: async (id, userId, reason) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/events/${id}/participants/${userId}/ban`,
+        { reason },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not ban participant"));
+    }
+  },
+  unbanEventParticipant: async (id, userId) => {
+    try {
+      const response = await axios.delete(`${API_URL}/events/${id}/bans/${userId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not unban participant"));
+    }
+  },
+  getEventBans: async (id, cursor) => {
+    try {
+      const response = await axios.get(`${API_URL}/events/${id}/bans`, {
+        params: cursor ? { cursor } : undefined,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not load banned users"));
     }
   },
 }));

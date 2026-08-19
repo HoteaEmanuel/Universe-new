@@ -161,6 +161,23 @@ export type EventParticipantsPage = {
   hasMore: boolean;
 };
 
+export type EventBan = {
+  id: string;
+  eventId: string;
+  userId: string;
+  bannedByUserId: string | null;
+  reason?: string | null;
+  createdAt: string;
+  user: EventPerson;
+  bannedBy: EventPerson | null;
+};
+
+export type EventBansPage = {
+  items: EventBan[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type CreateEventPayload = {
   title: string;
   description?: string;

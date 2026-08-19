@@ -5,6 +5,7 @@ import type {
   EventsPage,
   EventParticipantsPage,
   EventParticipantStatus,
+  EventBansPage,
 } from "../types";
 
 export const useGetEventQuery = (id?: string) => {
@@ -45,6 +46,7 @@ export const useMyEventsInfiniteQuery = (scope: MyEventsScope, enabled = true) =
 export const useGetEventParticipantsInfiniteQuery = (
   id?: string,
   status?: EventParticipantStatus,
+  enabled = true,
 ) => {
   const { getEventParticipants } = useEventStore();
   return useInfiniteQuery<EventParticipantsPage>({
@@ -54,6 +56,18 @@ export const useGetEventParticipantsInfiniteQuery = (
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
-    enabled: !!id,
+    enabled: !!id && enabled,
+  });
+};
+
+export const useGetEventBansInfiniteQuery = (id?: string, enabled = true) => {
+  const { getEventBans } = useEventStore();
+  return useInfiniteQuery<EventBansPage>({
+    queryKey: ["event-bans", id],
+    queryFn: ({ pageParam }) => getEventBans(id as string, pageParam as string | undefined),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled: !!id && enabled,
   });
 };

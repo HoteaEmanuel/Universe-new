@@ -1,8 +1,13 @@
 import {
   createGroupMember,
+  acquireGroupMember,
   findGroupMember,
   findGroupMembers,
   findGroupMembershipsForUser,
+  banGroupMember,
+  deleteGroupBan,
+  findGroupBansPage,
+  GroupBannedError,
 } from "../repository/group-members.repository.js";
 import {
   createGroup,
@@ -110,7 +115,48 @@ export const addMemberToGroup = async (data: {
     throw new Error("User is already a member of this group");
   }
 
-  return createGroupMember({ groupId, userId, role: "member" });
+  return acquireGroupMember({ groupId, userId, role: "member" });
+};
+
+export { GroupBannedError };
+
+export const banGroupMemberService = async (
+  groupId: string,
+  targetUserId: string,
+  bannedByUserId: string,
+  reason: string | undefined,
+) => {
+  const target = await findGroupMember(groupId, targetUserId);
+  if (target?.role === "admin") {
+    throw new Error("Group admins can't be banned - demote them first");
+  }
+
+  const ban = await banGroupMember({ groupId, userId: targetUserId, bannedByUserId, reason });
+
+  const group = await findGroupById(groupId);
+  const notification = await createGroupMessageNotification({
+    userId: targetUserId,
+    actionUserId: bannedByUserId,
+    type: "group-banned",
+    title: "Removed from group",
+    message: `You were removed from ${group?.name ?? "the group"} and can no longer rejoin.`,
+    groupId,
+  });
+  await emitNewNotification(targetUserId, notification);
+
+  return ban;
+};
+
+export const unbanGroupMemberService = async (groupId: string, targetUserId: string) => {
+  await deleteGroupBan(groupId, targetUserId);
+};
+
+export const getGroupBansService = async (
+  groupId: string,
+  cursor: string | undefined,
+  limit: number,
+) => {
+  return findGroupBansPage({ groupId, cursor, limit });
 };
 
 export const getDiscoverablePublicGroups = async (

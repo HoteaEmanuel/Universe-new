@@ -10,6 +10,8 @@ import {
   discoverEventsQuerySchema,
   myEventsQuerySchema,
   eventParticipantsQuerySchema,
+  banEventParticipantSchema,
+  eventBansQuerySchema,
 } from "../schemas/event.schema.js";
 import {
   createEventController,
@@ -24,6 +26,9 @@ import {
   getEventParticipantsController,
   joinEventChatController,
   getEventCalendarIcsController,
+  banEventParticipantController,
+  unbanEventParticipantController,
+  getEventBansController,
 } from "../controllers/event.controller.js";
 
 const router = express.Router();
@@ -50,5 +55,18 @@ router.get(
 );
 router.post("/:id/join-chat", joinEventChatController);
 router.get("/:id/calendar.ics", getEventCalendarIcsController);
+router.post(
+  "/:id/participants/:userId/ban",
+  requireEventHost,
+  validate({ body: banEventParticipantSchema }),
+  banEventParticipantController,
+);
+router.get(
+  "/:id/bans",
+  requireEventHost,
+  validate({ query: eventBansQuerySchema }),
+  getEventBansController,
+);
+router.delete("/:id/bans/:userId", requireEventHost, unbanEventParticipantController);
 
 export default router;

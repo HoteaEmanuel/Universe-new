@@ -149,6 +149,23 @@ export type GroupMember = {
   member: ChatUser;
 };
 
+export type GroupBan = {
+  id: string;
+  groupId: string;
+  userId: string;
+  bannedByUserId: string | null;
+  reason?: string | null;
+  createdAt: string;
+  user: ChatUser;
+  bannedBy: ChatUser | null;
+};
+
+export type GroupBanPage = {
+  items: GroupBan[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type NewMessagePayload = {
   messageText: string;
   images?: File[];

@@ -19,6 +19,9 @@ import {
   getGroupMembers,
   leaveGroup,
   kickMemberFromGroup,
+  banGroupMemberController,
+  unbanGroupMemberController,
+  getGroupBansController,
   checkUserIsAdmin,
   editMessageController,
   deleteMessageController,
@@ -52,6 +55,8 @@ import {
   reactToGroupMessageSchema,
   setGroupCourseTagSchema,
   discoverGroupsQuerySchema,
+  banGroupMemberSchema,
+  groupBansQuerySchema,
 } from "../schemas/group.schema.js";
 import { sendGroupPollMessageSchema } from "../schemas/poll.schema.js";
 const router = express.Router();
@@ -164,6 +169,19 @@ router.post(
 router.post("/:id/make-admin/:userId", requireGroupAdmin, makeUserAdminController);
 router.post("/:id/leave-group", leaveGroup);
 router.post("/:id/kick-member/:userId", requireGroupAdmin, kickMemberFromGroup);
+router.post(
+  "/:id/members/:userId/ban",
+  requireGroupAdmin,
+  validate({ body: banGroupMemberSchema }),
+  banGroupMemberController,
+);
+router.get(
+  "/:id/bans",
+  requireGroupAdmin,
+  validate({ query: groupBansQuerySchema }),
+  getGroupBansController,
+);
+router.delete("/:id/bans/:userId", requireGroupAdmin, unbanGroupMemberController);
 router.post(
   "/:id/change-group-image",
   requireGroupAdmin,

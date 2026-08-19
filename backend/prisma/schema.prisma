@@ -87,6 +87,10 @@ model User {
   preferences           UserPreferences?
   createdEvents         Event[]                @relation("EventCreator")
   eventParticipations   EventParticipant[]
+  eventBansReceived     EventBan[]             @relation("EventBannedUser")
+  eventBansIssued       EventBan[]             @relation("EventBanIssuedBy")
+  groupBansReceived     GroupBan[]             @relation("GroupBannedUser")
+  groupBansIssued       GroupBan[]             @relation("GroupBanIssuedBy")
   polls                 Poll[]
   pollVotes             PollVote[]
 
@@ -336,9 +340,26 @@ model Group {
   messages      GroupMessage[] @relation("GroupMessages")
   notifications Notification[]
   hostedEvents  Event[]        @relation("GroupHostedEvents")
+  bans          GroupBan[]
 
   @@index([university, courseTag])
   @@map("groups")
+}
+
+model GroupBan {
+  id             String   @id @default(uuid())
+  groupId        String
+  group          Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation("GroupBannedUser", fields: [userId], references: [id], onDelete: Cascade)
+  bannedByUserId String?
+  bannedBy       User?    @relation("GroupBanIssuedBy", fields: [bannedByUserId], references: [id], onDelete: SetNull)
+  reason         String?
+  createdAt      DateTime @default(now())
+
+  @@unique([groupId, userId])
+  @@index([userId])
+  @@map("group_bans")
 }
 
 model GroupMembers {
@@ -442,6 +463,7 @@ model Event {
   announcementPost  Post?          @relation
   coordinationGroup Group?         @relation("EventCoordinationGroup")
   notifications     Notification[]
+  bans              EventBan[]
 
   @@index([startAt])
   @@index([hostGroupId])
@@ -461,6 +483,22 @@ model EventParticipant {
   @@unique([eventId, userId])
   @@index([userId])
   @@map("event_participants")
+}
+
+model EventBan {
+  id             String   @id @default(uuid())
+  eventId        String
+  event          Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation("EventBannedUser", fields: [userId], references: [id], onDelete: Cascade)
+  bannedByUserId String?
+  bannedBy       User?    @relation("EventBanIssuedBy", fields: [bannedByUserId], references: [id], onDelete: SetNull)
+  reason         String?
+  createdAt      DateTime @default(now())
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@map("event_bans")
 }
 
 model Poll {

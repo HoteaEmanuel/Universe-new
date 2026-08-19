@@ -334,6 +334,7 @@ export const useAddMemberToGroupMutation = (groupId?: string) => {
       });
       toast.success("Member added to group");
     },
+    onError: (error: Error) => toast.error(error.message),
   });
 };
 
@@ -360,6 +361,34 @@ export const usePromoteMemberToAdminMutation = (groupId?: string) => {
       queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
       toast.success("Member promoted to admin");
     },
+  });
+};
+
+export const useBanGroupMemberMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { banGroupMember } = useGroupStore();
+  return useMutation({
+    mutationFn: ({ userId, reason }: { userId: string; reason?: string }) =>
+      banGroupMember(groupId as string, userId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
+      queryClient.invalidateQueries({ queryKey: ["group-bans", groupId] });
+      toast.success("Member removed and banned");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
+
+export const useUnbanGroupMemberMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { unbanGroupMember } = useGroupStore();
+  return useMutation({
+    mutationFn: (userId: string) => unbanGroupMember(groupId as string, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["group-bans", groupId] });
+      toast.success("Member unbanned");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 };
 

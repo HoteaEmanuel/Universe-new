@@ -17,6 +17,10 @@ import {
   getDiscoverablePublicGroups,
   getCourseCatalogForUser,
   setGroupCourseTagService,
+  banGroupMemberService,
+  unbanGroupMemberService,
+  getGroupBansService,
+  GroupBannedError,
 } from "../services/group.service.js";
 import { findGroupMembershipsForUser } from "../repository/group-members.repository.js";
 import {
@@ -25,6 +29,7 @@ import {
   getGroupMessagesPage,
 } from "../repository/message.repository.js";
 import { getActiveConversationUsers } from "../lib/socket.js";
+import type { BanGroupMemberInput, GroupBansQueryInput } from "../schemas/group.schema.js";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong";
@@ -98,6 +103,9 @@ export const addMemberToGroupController = async (req: Request, res: Response) =>
       data: groupMember,
     });
   } catch (error) {
+    if (error instanceof GroupBannedError) {
+      return res.status(403).json({ message: errorMessage(error) });
+    }
     return res.status(400).json({ message: errorMessage(error) });
   }
 };
@@ -355,6 +363,40 @@ export const kickMemberFromGroup = async (req: Request, res: Response) => {
       .json({ message: "Member kicked from the group successfully" });
   } catch (error) {
     return res.status(400).json({ message: "Could not kick member from group" });
+  }
+};
+
+export const banGroupMemberController = async (req: Request, res: Response) => {
+  try {
+    const { reason } = req.body as BanGroupMemberInput;
+    await banGroupMemberService(
+      req.params.id as string,
+      req.params.userId as string,
+      req.userId as string,
+      reason,
+    );
+    return res.status(200).json({ message: "Member removed and banned" });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const unbanGroupMemberController = async (req: Request, res: Response) => {
+  try {
+    await unbanGroupMemberService(req.params.id as string, req.params.userId as string);
+    return res.status(200).json({ message: "Member unbanned" });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const getGroupBansController = async (req: Request, res: Response) => {
+  try {
+    const { cursor, limit } = req.query as unknown as GroupBansQueryInput;
+    const page = await getGroupBansService(req.params.id as string, cursor, limit);
+    return res.status(200).json(page);
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 

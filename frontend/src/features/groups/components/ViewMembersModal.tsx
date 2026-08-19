@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { ShieldCheck } from "lucide-react";
@@ -16,6 +17,8 @@ import {
 } from "@/queryAndMutation/queries/group-queries";
 import { usePromoteMemberToAdminMutation } from "@/queryAndMutation/mutations/group-mutation";
 import type { ChatUser } from "@/features/chat/types";
+import BanGroupMemberDialog from "./BanGroupMemberDialog";
+import BannedGroupMembersModal from "./BannedGroupMembersModal";
 
 type ViewMembersModalProps = {
   open: boolean;
@@ -29,6 +32,10 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
   const { data: isAdmin } = useCheckUserIsAdminQuery(groupId, user.id);
   const { mutate: promoteMemberToAdmin, isPending: isPromoting } =
     usePromoteMemberToAdminMutation(groupId);
+  const [banTarget, setBanTarget] = useState<{ userId: string; name: string } | null>(
+    null,
+  );
+  const [bannedListOpen, setBannedListOpen] = useState(false);
 
   return (
     <Sheet open={open} onOpenChange={(next: boolean) => !next && onClose()}>
@@ -36,8 +43,13 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
         side="bottom"
         className="mx-auto flex max-h-[70vh] w-full flex-col rounded-t-2xl sm:max-w-md"
       >
-        <SheetHeader className="border-b border-border pb-3">
+        <SheetHeader className="flex-row items-center justify-between border-b border-border pb-3">
           <SheetTitle>Group members</SheetTitle>
+          {isAdmin && (
+            <Button variant="ghost" size="sm" onClick={() => setBannedListOpen(true)}>
+              Banned users
+            </Button>
+          )}
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           {isPending && (
@@ -74,14 +86,29 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
                     )}
                   </div>
                   {member.role === "member" && isAdmin && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={isPromoting}
-                      onClick={() => promoteMemberToAdmin(member.memberId)}
-                    >
-                      Make admin
-                    </Button>
+                    <div className="flex shrink-0 gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isPromoting}
+                        onClick={() => promoteMemberToAdmin(member.memberId)}
+                      >
+                        Make admin
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() =>
+                          setBanTarget({
+                            userId: member.memberId,
+                            name: getFullName(member.member),
+                          })
+                        }
+                      >
+                        Ban
+                      </Button>
+                    </div>
                   )}
                 </li>
               ))}
@@ -89,6 +116,17 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
           )}
         </div>
       </SheetContent>
+      <BanGroupMemberDialog
+        open={!!banTarget}
+        onClose={() => setBanTarget(null)}
+        groupId={groupId}
+        userId={banTarget?.userId}
+        userName={banTarget?.name}
+      />
+      <BannedGroupMembersModal
+        open={bannedListOpen}
+        onClose={() => setBannedListOpen(false)}
+      />
     </Sheet>
   );
 };
