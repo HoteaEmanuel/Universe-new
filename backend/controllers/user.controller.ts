@@ -4,7 +4,11 @@ import { uploadImage, deleteImages } from "../lib/storage.js";
 import { prisma } from "../database/prisma.js";
 // Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
 // import { redis } from "../lib/redis.js";
-import { findUserById, updateUser } from "../repository/user.repository.js";
+import {
+  findUserById,
+  updateUser,
+  PUBLIC_USER_SELECT,
+} from "../repository/user.repository.js";
 import { follow, savePost, unfollow } from "../services/user.service.js";
 import { getViewerRelevantUserIds } from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
@@ -39,7 +43,7 @@ export const getUserById = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     const user = await prisma.user.findUnique({
       where: { id },
-      omit: { password: true },
+      select: PUBLIC_USER_SELECT,
     });
     if (!user) throw new Error("User not found");
     return res.status(200).json({ message: "User found", user });
@@ -55,11 +59,13 @@ export const getUserByName = async (req: Request, res: Response) => {
 
     let userWithName = await prisma.user.findFirst({
       where: { name: { equals: name, mode: "insensitive" } },
+      select: PUBLIC_USER_SELECT,
     });
 
     if (!userWithName) {
       const candidates = await prisma.user.findMany({
         where: { firstName: { not: null }, lastName: { not: null } },
+        select: PUBLIC_USER_SELECT,
       });
       userWithName =
         candidates.find(

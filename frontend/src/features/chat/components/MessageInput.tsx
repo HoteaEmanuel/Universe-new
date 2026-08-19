@@ -100,7 +100,7 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
       typingTimeoutRef.current = null;
     }
     if (lastTypingEmitRef.current) {
-      socket.emit("stopTyping", { id, userId: user.id });
+      socket.emit("stopTyping", { id });
       lastTypingEmitRef.current = 0;
     }
   };
@@ -114,7 +114,7 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
     setText(e.target.value);
     const now = Date.now();
     if (now - lastTypingEmitRef.current > TYPING_EMIT_THROTTLE_MS) {
-      socket.emit("typing", { id, userId: user.id, name: getFullName(user) });
+      socket.emit("typing", { id, name: getFullName(user) });
       lastTypingEmitRef.current = now;
     }
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);

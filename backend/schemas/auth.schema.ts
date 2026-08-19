@@ -64,3 +64,8 @@ export const googleMobileSchema = z.object({
   idToken: z.string().min(1, "idToken is required"),
 });
 export type GoogleMobileInput = z.infer<typeof googleMobileSchema>;
+
+export const googleMobileExchangeSchema = z.object({
+  code: z.string().min(1, "code is required"),
+});
+export type GoogleMobileExchangeInput = z.infer<typeof googleMobileExchangeSchema>;

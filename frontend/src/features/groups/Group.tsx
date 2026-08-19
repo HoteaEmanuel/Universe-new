@@ -79,10 +79,10 @@ const Group = () => {
   }, [socket, queryClient, id]);
 
   useEffect(() => {
-    socket.emit("view_conversation", id, user.id);
+    socket.emit("view_conversation", id);
     seeNewMessages();
     return () => {
-      socket.emit("leave_conversation", id, user.id);
+      socket.emit("leave_conversation", id);
     };
   }, [socket, seeNewMessages, user, id]);
 

@@ -77,11 +77,11 @@ const Conversation = () => {
   }, [socket, queryClient, convoId]);
 
   useEffect(() => {
-    socket.emit("view_conversation", convoId, authUser.id);
+    socket.emit("view_conversation", convoId);
     seeNewMessages();
     markConversationRead();
     return () => {
-      socket.emit("leave_conversation", convoId, authUser.id);
+      socket.emit("leave_conversation", convoId);
     };
   }, [seeNewMessages, markConversationRead, socket, authUser, convoId]);
 

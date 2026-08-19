@@ -1,8 +1,13 @@
 import type { Request, Response } from "express";
 import axios from "axios";
 import { prisma } from "../database/prisma.js";
+import { PUBLIC_USER_SELECT, findUserById } from "../repository/user.repository.js";
 import { generateToken } from "../utils/generateTokenJwt.js";
 import { generateJwtMobile } from "../utils/generateJwtMobile.js";
+import {
+  createMobileAuthExchangeCode,
+  consumeMobileAuthExchangeCode,
+} from "../lib/oauthExchange.js";
 import { universityEmailDomains } from "../utils/universityDomain.js";
 import { universityDomains } from "../utils/universityDomains.js";
 
@@ -40,11 +45,12 @@ export const checkAuth = async (req: Request, res: Response) => {
   }
 };
 
-/** Gets the business registrations */
+/** Gets the business registrations. Route requires verifyToken + requireAdmin. */
 export const businessRegistrations = async (req: Request, res: Response) => {
   try {
     const users = await prisma.user.findMany({
       where: { accountType: "business", identityVerified: "false" },
+      select: PUBLIC_USER_SELECT,
     });
     return res.status(200).json({ succes: true, businessRegistrations: users });
   } catch (error) {
@@ -54,15 +60,11 @@ export const businessRegistrations = async (req: Request, res: Response) => {
   }
 };
 
-/** The admin accepts a registration */
+/** The admin accepts a registration. Route requires verifyToken + requireAdmin. */
 export const acceptBusinessRegistration = async (req: Request, res: Response) => {
   const id = req.params.id as string; // single named :id param, never an array
   try {
     const user = await prisma.user.findUnique({ where: { id } });
-    const authUser = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (authUser?.role !== "admin") {
-      return res.status(403).json({ message: "Forbidden" });
-    }
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -80,16 +82,13 @@ export const acceptBusinessRegistration = async (req: Request, res: Response) =>
   }
 };
 
+/** Route requires verifyToken + requireAdmin. */
 export const rejectBusinessRegistration = async (req: Request, res: Response) => {
   const id = req.params.id as string; // single named :id param, never an array
   try {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
-    }
-    const authUser = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (authUser?.role !== "admin") {
-      return res.status(403).json({ message: "Forbidden" });
     }
 
     await prisma.user.update({
@@ -262,27 +261,49 @@ export const authWithGoogleMobile = async (req: Request, res: Response) => {
       return;
     }
 
-    const token = await generateJwtMobile(user.id);
+    const tokens = await generateJwtMobile(user.id);
+    if (!tokens) throw new Error("Could not generate tokens");
 
-    const userData = encodeURIComponent(
-      JSON.stringify({
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profilePicture: user.profilePicture,
-        university: user.university,
-        major: user.major,
-        bio: user.bio,
-        accountType: user.accountType,
-      }),
-    );
+    // Real tokens never touch the deep-link URL (OS logs, crash reporters,
+    // and deep-link history can all see it) - only a single-use, 60s-lived
+    // exchange code does. The app redeems it over HTTPS in exchangeGoogleMobileCode.
+    const exchangeCode = createMobileAuthExchangeCode({
+      userId: user.id,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
 
-    const deepLink = `exp://192.168.1.129:8081/--/auth-callback?token=${encodeURIComponent(JSON.stringify(token))}&user=${userData}`;
+    const deepLink = `exp://192.168.1.129:8081/--/auth-callback?code=${encodeURIComponent(exchangeCode)}`;
     res.redirect(deepLink);
   } catch (error) {
     console.error("Google auth error:", error);
     res.redirect("mobileapp://auth-callback?error=auth_failed");
+  }
+};
+
+export const exchangeGoogleMobileCodeController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const { code } = req.body;
+    const exchange = consumeMobileAuthExchangeCode(code);
+    if (!exchange) {
+      return res.status(400).json({ message: "Invalid or expired code" });
+    }
+
+    const user = await findUserById(exchange.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
+      message: "Logged in successfully",
+      user,
+      accessToken: JSON.stringify(exchange.accessToken),
+      refreshToken: JSON.stringify(exchange.refreshToken),
+    });
+  } catch (error) {
+    return res.status(400).json({ message: "Could not log in" });
   }
 };

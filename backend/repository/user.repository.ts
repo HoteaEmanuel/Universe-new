@@ -1,6 +1,28 @@
 import { prisma } from "../database/prisma.js";
 import type { Prisma, AccountType } from "../generated/prisma/client.js";
 
+// Allowlist, not a denylist: new sensitive columns added to the User model
+// later default to excluded here instead of silently leaking to clients.
+export const PUBLIC_USER_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  name: true,
+  email: true,
+  lastLogin: true,
+  isVerified: true,
+  profilePicture: true,
+  profilePictureKey: true,
+  university: true,
+  major: true,
+  bio: true,
+  role: true,
+  accountType: true,
+  identityVerified: true,
+  createdAt: true,
+  updatedAt: true,
+} as const satisfies Prisma.UserSelect;
+
 export const findUserById = async (id: string) => {
   return prisma.user.findUnique({ where: { id }, omit: { password: true } });
 };

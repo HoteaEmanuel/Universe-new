@@ -15,8 +15,10 @@ import {
   loginWeb,
   loginMobile,
   authWithGoogleMobile,
+  exchangeGoogleMobileCodeController,
 } from "../controllers/auth.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
+import { requireAdmin } from "../middleware/authorization.js";
 import { validate } from "../middleware/validate.js";
 import {
   signupSchema,
@@ -26,6 +28,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   googleMobileSchema,
+  googleMobileExchangeSchema,
 } from "../schemas/auth.schema.js";
 const router = express.Router();
 router.post("/check-auth", verifyToken, checkAuth);
@@ -52,7 +55,12 @@ router.get(
   authWithGoogle,
 );
 
-router.post("/reject-business-registrations/:id", rejectBusinessRegistration);
+router.post(
+  "/reject-business-registrations/:id",
+  verifyToken,
+  requireAdmin,
+  rejectBusinessRegistration,
+);
 router.post("/signup", validate({ body: signupSchema }), signUpController);
 router.post(
   "/verify-email",
@@ -84,6 +92,11 @@ router.get("/google/mobile-init", (req, res) => {
 
 router.get("/google/mobile-callback", authWithGoogleMobile);
 router.post(
+  "/google/mobile-exchange",
+  validate({ body: googleMobileExchangeSchema }),
+  exchangeGoogleMobileCodeController,
+);
+router.post(
   "/reset-password/:token",
   validate({ body: resetPasswordSchema }),
   resetPasswordController,
@@ -95,6 +108,16 @@ router.post(
   forgotPasswordController,
 );
 
-router.get("/business-account-registrations", businessRegistrations);
-router.post("/accept-business-registrations/:id", acceptBusinessRegistration);
+router.get(
+  "/business-account-registrations",
+  verifyToken,
+  requireAdmin,
+  businessRegistrations,
+);
+router.post(
+  "/accept-business-registrations/:id",
+  verifyToken,
+  requireAdmin,
+  acceptBusinessRegistration,
+);
 export default router;

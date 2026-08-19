@@ -115,7 +115,13 @@ export const cancelRsvpController = async (req: Request, res: Response) => {
 export const getEventParticipantsController = async (req: Request, res: Response) => {
   try {
     const { cursor, limit, status } = req.query as unknown as EventParticipantsQueryInput;
-    const page = await getEventParticipantsService(req.params.id as string, status, cursor, limit);
+    const page = await getEventParticipantsService(
+      req.params.id as string,
+      req.userId as string,
+      status,
+      cursor,
+      limit,
+    );
     return res.status(200).json(page);
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
@@ -133,7 +139,7 @@ export const joinEventChatController = async (req: Request, res: Response) => {
 
 export const getEventCalendarIcsController = async (req: Request, res: Response) => {
   try {
-    const ics = await buildEventIcsService(req.params.id as string);
+    const ics = await buildEventIcsService(req.params.id as string, req.userId as string);
     res.setHeader("Content-Type", "text/calendar; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="event-${req.params.id}.ics"`);
     return res.status(200).send(ics);

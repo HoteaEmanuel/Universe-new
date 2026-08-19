@@ -132,6 +132,14 @@ export const requireEventHost = requireAuthorization({
   forbiddenMessage: "Only the event host can perform this action",
 });
 
+export const requireAdmin = requireAuthorization({
+  getResource: (req) =>
+    prisma.user.findUnique({ where: { id: req.userId as string } }),
+  authorize: (user) => user.role === "admin",
+  notFoundMessage: "User not found",
+  forbiddenMessage: "Admin access required",
+});
+
 export const requireSelf = (paramName: string) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (req.params[paramName] !== req.userId) {

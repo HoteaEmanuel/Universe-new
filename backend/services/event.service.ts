@@ -99,19 +99,29 @@ export const createEventService = async (data: CreateEventServiceInput) => {
   return toEventDTO(created as EventWithRelations);
 };
 
+// A private event has no invite list - the unguessable eventId link is
+// itself the access control, and rsvpEventService deliberately stays
+// ungated so a link recipient can RSVP their way into "participant" status.
+// This gate protects everything *past* that front door: the full detail
+// view, the participant list, and the calendar export all require already
+// being the host or an existing participant.
+const assertEventVisible = async (
+  event: Pick<EventWithRelations, "id" | "visibility" | "creatorId" | "hostGroupId">,
+  viewerId: string,
+) => {
+  if (event.visibility !== "private") return;
+  const isHost =
+    event.creatorId === viewerId ||
+    (event.hostGroupId && (await findGroupMember(event.hostGroupId, viewerId))?.role === "admin");
+  if (isHost) return;
+  const participant = await findEventParticipant(event.id, viewerId);
+  if (!participant) throw new Error("This event is private");
+};
+
 export const getEventService = async (eventId: string, viewerId: string) => {
   const event = await findEventById(eventId);
   if (!event) throw new Error("Event not found");
-
-  if (event.visibility === "private") {
-    const isHost =
-      event.creatorId === viewerId ||
-      (event.hostGroupId && (await findGroupMember(event.hostGroupId, viewerId))?.role === "admin");
-    const participant = isHost ? null : await findEventParticipant(eventId, viewerId);
-    if (!isHost && !participant) {
-      throw new Error("This event is private");
-    }
-  }
+  await assertEventVisible(event, viewerId);
 
   const [counts, viewerParticipation] = await Promise.all([
     countParticipantsByStatus(eventId),
@@ -264,10 +274,15 @@ export const cancelRsvpService = async (eventId: string, userId: string) => {
 
 export const getEventParticipantsService = async (
   eventId: string,
+  viewerId: string,
   status: EventParticipantStatus | undefined,
   cursor: string | undefined,
   limit: number,
 ) => {
+  const event = await findEventById(eventId);
+  if (!event) throw new Error("Event not found");
+  await assertEventVisible(event, viewerId);
+
   return findEventParticipantsPage({ eventId, status, cursor, limit });
 };
 
@@ -296,8 +311,9 @@ export const joinEventChatService = async (eventId: string, userId: string) => {
   return { id: groupId };
 };
 
-export const buildEventIcsService = async (eventId: string) => {
+export const buildEventIcsService = async (eventId: string, viewerId: string) => {
   const event = await findEventById(eventId);
   if (!event) throw new Error("Event not found");
+  await assertEventVisible(event, viewerId);
   return buildIcsCalendar(event);
 };
