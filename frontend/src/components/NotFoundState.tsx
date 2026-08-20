@@ -23,7 +23,7 @@ const NotFoundState = ({
         compact ? "h-full py-10" : "min-h-[60vh] py-20",
       )}
     >
-      <span className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+      <span className="flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-brand-400/15 dark:text-brand-100">
         <Icon className="size-8" />
       </span>
       <div className="flex flex-col gap-2">

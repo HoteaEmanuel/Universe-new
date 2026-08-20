@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
+import UserAvatar from "@/components/UserAvatar";
 import { useAuthStore } from "../store/authStore";
 import { urlPathName } from "../utils/urlPathFromName";
+import { getFullName } from "@/utils/fullName";
 
 type ListedUser = {
   id: string;
@@ -16,6 +17,8 @@ const UserListElement = ({ user }: { user: ListedUser }) => {
   const navigate = useNavigate();
   const { user: authUser } = useAuthStore();
   const fullName = urlPathName(user);
+  const displayName = user.id === authUser?.id ? "You" : getFullName(user);
+
   return (
     <div
       className="flex hoverGray w-full  rounded-lg cursor-pointer p-2 items-center gap-4"
@@ -25,19 +28,13 @@ const UserListElement = ({ user }: { user: ListedUser }) => {
           : navigate(`/users/${fullName}`)
       }
     >
-      {user.profilePicture ? (
-        <img src={user.profilePicture} className="size-12 rounded-full" />
-      ) : (
-        <FaUserCircle className="size-12" />
-      )}
-      <h1>
-        {user.id === authUser?.id ? "You" : user.firstName}{" "}
-        {user.id === authUser?.id
-          ? ""
-          : user.accountType === "normal"
-            ? user.lastName
-            : user.name}
-      </h1>
+      <UserAvatar
+        user={user}
+        name={displayName}
+        className="size-12"
+        fallbackClassName="text-foreground"
+      />
+      <h1>{displayName}</h1>
     </div>
   );
 };

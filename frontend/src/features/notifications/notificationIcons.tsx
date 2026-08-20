@@ -1,4 +1,15 @@
-import { Heart, MessageCircle, Reply, UserPlus, Mail } from "lucide-react";
+import {
+  Ban,
+  CalendarCheck,
+  CalendarClock,
+  CalendarX,
+  Heart,
+  Mail,
+  MessageCircle,
+  Reply,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import type { Notification } from "@/queryAndMutation/types";
 
 const TYPE_ICON: Record<string, typeof Heart> = {
@@ -6,6 +17,11 @@ const TYPE_ICON: Record<string, typeof Heart> = {
   "comment-like": Heart,
   "post-comment": MessageCircle,
   "post-reply": Reply,
+  "event-banned": Ban,
+  "group-banned": Users,
+  "event-update": CalendarClock,
+  "event-cancelled": CalendarX,
+  "event-waitlist-promoted": CalendarCheck,
   follow: UserPlus,
   message: Mail,
 };

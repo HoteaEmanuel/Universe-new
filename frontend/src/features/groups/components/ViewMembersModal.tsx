@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
-import { ShieldCheck } from "lucide-react";
+import { Ban, ShieldCheck } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -9,6 +8,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import UserAvatar from "@/components/UserAvatar";
 import { getFullName } from "@/utils/fullName";
 import { useAuthStore } from "@/store/authStore";
 import {
@@ -32,10 +32,29 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
   const { data: isAdmin } = useCheckUserIsAdminQuery(groupId, user.id);
   const { mutate: promoteMemberToAdmin, isPending: isPromoting } =
     usePromoteMemberToAdminMutation(groupId);
+  const [promotingUserIds, setPromotingUserIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [banTarget, setBanTarget] = useState<{ userId: string; name: string } | null>(
     null,
   );
   const [bannedListOpen, setBannedListOpen] = useState(false);
+
+  const setUserPromoting = (userId: string, pending: boolean) => {
+    setPromotingUserIds((current) => {
+      const next = new Set(current);
+      if (pending) next.add(userId);
+      else next.delete(userId);
+      return next;
+    });
+  };
+
+  const handlePromote = (userId: string) => {
+    setUserPromoting(userId, true);
+    promoteMemberToAdmin(userId, {
+      onSettled: () => setUserPromoting(userId, false),
+    });
+  };
 
   return (
     <Sheet open={open} onOpenChange={(next: boolean) => !next && onClose()}>
@@ -64,54 +83,51 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
           )}
           {!isPending && groupMembers && groupMembers.length > 0 && (
             <ul className="flex flex-col gap-1 pt-1">
-              {groupMembers.map((member) => (
-                <li key={member.id} className="flex items-center gap-3 p-2">
-                  {member.member.profilePicture ? (
-                    <img
-                      src={member.member.profilePicture}
-                      className="size-11 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <FaUserCircle className="size-11 shrink-0 text-muted-foreground" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">
-                      {getFullName(member.member)}
-                    </p>
-                    {member.role === "admin" && (
-                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <ShieldCheck className="size-3" />
-                        Admin
-                      </p>
-                    )}
-                  </div>
-                  {member.role === "member" && isAdmin && (
-                    <div className="flex shrink-0 gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={isPromoting}
-                        onClick={() => promoteMemberToAdmin(member.memberId)}
-                      >
-                        Make admin
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() =>
-                          setBanTarget({
-                            userId: member.memberId,
-                            name: getFullName(member.member),
-                          })
-                        }
-                      >
-                        Ban
-                      </Button>
+              {groupMembers.map((member) => {
+                const memberName = getFullName(member.member);
+                const isRowPromoting =
+                  isPromoting && promotingUserIds.has(member.memberId);
+
+                return (
+                  <li key={member.id} className="flex items-start gap-3 p-2">
+                    <UserAvatar user={member.member} name={memberName} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{memberName}</p>
+                      {member.role === "admin" && (
+                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <ShieldCheck className="size-3" />
+                          Admin
+                        </p>
+                      )}
                     </div>
-                  )}
-                </li>
-              ))}
+                    {member.role === "member" && isAdmin && (
+                      <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={isRowPromoting}
+                          onClick={() => handlePromote(member.memberId)}
+                        >
+                          {isRowPromoting ? "Promoting..." : "Make admin"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() =>
+                            setBanTarget({
+                              userId: member.memberId,
+                              name: memberName,
+                            })
+                          }
+                        >
+                          <Ban className="size-3.5" />
+                          Ban
+                        </Button>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

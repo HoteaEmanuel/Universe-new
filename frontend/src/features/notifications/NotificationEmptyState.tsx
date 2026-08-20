@@ -14,7 +14,7 @@ const NotificationEmptyState = ({
     className={`flex flex-col items-center justify-center gap-3 text-center ${compact ? "py-8" : "py-14"}`}
   >
     <span
-      className={`flex items-center justify-center rounded-full bg-primary/10 text-primary ${compact ? "size-12" : "size-16"}`}
+      className={`flex items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-brand-400/15 dark:text-brand-100 ${compact ? "size-12" : "size-16"}`}
     >
       <Icon className={compact ? "size-6" : "size-8"} />
     </span>

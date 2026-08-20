@@ -225,7 +225,7 @@ const Explore = () => {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 pt-4 pb-24 md:pb-10">
       <div className="flex items-center gap-3">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-brand-400/15 dark:text-brand-100">
           <Compass className="size-5" />
         </span>
         <div className="flex flex-col">
@@ -576,7 +576,7 @@ const Explore = () => {
                     className={cn(
                       "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
                       selectedTopic === topic
-                        ? "border-primary bg-primary/10 text-primary"
+                        ? "border-primary bg-primary/10 text-primary dark:border-brand-300/60 dark:bg-brand-400/15 dark:text-brand-100"
                         : "border-border text-muted-foreground hover:text-foreground",
                     )}
                   >

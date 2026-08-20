@@ -51,7 +51,7 @@ const LandingPage = () => {
 
       <main className="relative z-10 mx-auto flex max-w-6xl flex-col items-center gap-16 px-6 pt-10 pb-24 sm:px-10">
         <div className="flex flex-col items-center gap-6 text-center">
-          <span className="rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-semibold tracking-wide text-primary uppercase">
+          <span className="rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-semibold tracking-wide text-primary uppercase dark:border-brand-300/40 dark:bg-brand-400/15 dark:text-brand-100">
             For university students
           </span>
 
@@ -90,7 +90,7 @@ const LandingPage = () => {
               className="border-border/60 bg-card/60 backdrop-blur-sm transition-colors hover:border-primary/40"
             >
               <CardContent className="flex flex-col items-center gap-3 px-6 py-8 text-center">
-                <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-brand-400/15 dark:text-brand-100">
                   <Icon className="size-5" />
                 </span>
                 <h3 className="font-semibold text-foreground">{title}</h3>

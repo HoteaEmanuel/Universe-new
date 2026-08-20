@@ -96,7 +96,7 @@ const EventDetails = () => {
       )}
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary dark:bg-brand-400/15 dark:text-brand-100">
           <CalendarDays className="size-3.5" />
           {formatEventDateTime(event.startAt, event.endAt)}
         </span>

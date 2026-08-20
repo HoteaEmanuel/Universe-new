@@ -1,6 +1,5 @@
 import { useMemo, useState, type ChangeEvent } from "react";
 import { useParams } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
 import {
   Sheet,
   SheetContent,
@@ -9,6 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import UserAvatar from "@/components/UserAvatar";
 import { getFullName } from "@/utils/fullName";
 import { useDebounce } from "@/hooks/Debounce";
 import { useAuthStore } from "@/store/authStore";
@@ -49,14 +49,7 @@ const MemberCandidateRow = ({
 
   return (
     <li className="flex items-center gap-3 p-2">
-      {candidate.profilePicture ? (
-        <img
-          src={candidate.profilePicture}
-          className="size-11 shrink-0 rounded-full object-cover"
-        />
-      ) : (
-        <FaUserCircle className="size-11 shrink-0 text-muted-foreground" />
-      )}
+      <UserAvatar user={candidate} />
       <p className="min-w-0 flex-1 truncate font-medium">
         {getFullName(candidate)}
       </p>

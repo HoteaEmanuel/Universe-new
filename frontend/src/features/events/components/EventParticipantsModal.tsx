@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaUserCircle } from "react-icons/fa";
+import { Ban } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -7,6 +7,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import UserAvatar from "@/components/UserAvatar";
 import { getFullName } from "@/utils/fullName";
 import { useGetEventParticipantsInfiniteQuery } from "@/queryAndMutation/queries/event-queries";
 import BanEventParticipantDialog from "./BanEventParticipantDialog";
@@ -75,41 +76,37 @@ const EventParticipantsModal = ({
           )}
           {!isPending && participants.length > 0 && (
             <ul className="flex flex-col gap-1 pt-1">
-              {participants.map((participant) => (
-                <li key={participant.id} className="flex items-center gap-3 p-2">
-                  {participant.user.profilePicture ? (
-                    <img
-                      src={participant.user.profilePicture}
-                      className="size-11 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <FaUserCircle className="size-11 shrink-0 text-muted-foreground" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">
-                      {getFullName(participant.user)}
-                    </p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {participant.status}
-                    </p>
-                  </div>
-                  {isHost && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="shrink-0 text-destructive hover:text-destructive"
-                      onClick={() =>
-                        setBanTarget({
-                          userId: participant.userId,
-                          name: getFullName(participant.user),
-                        })
-                      }
-                    >
-                      Ban
-                    </Button>
-                  )}
-                </li>
-              ))}
+              {participants.map((participant) => {
+                const participantName = getFullName(participant.user);
+
+                return (
+                  <li key={participant.id} className="flex items-start gap-3 p-2">
+                    <UserAvatar user={participant.user} name={participantName} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{participantName}</p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {participant.status}
+                      </p>
+                    </div>
+                    {isHost && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="shrink-0"
+                        onClick={() =>
+                          setBanTarget({
+                            userId: participant.userId,
+                            name: participantName,
+                          })
+                        }
+                      >
+                        <Ban className="size-3.5" />
+                        Ban
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

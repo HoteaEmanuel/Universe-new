@@ -112,7 +112,7 @@ const ReactionPill = ({
   <span
     className={`flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs ${
       reactedByMe
-        ? "border-primary bg-primary/10 text-primary"
+        ? "border-primary bg-primary/10 text-primary dark:border-brand-300/60 dark:bg-brand-400/15 dark:text-brand-100"
         : "border-border bg-background text-foreground"
     }`}
   >

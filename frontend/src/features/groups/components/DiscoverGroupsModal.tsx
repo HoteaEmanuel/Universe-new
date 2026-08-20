@@ -58,7 +58,7 @@ const DiscoverGroupRow = ({ group, onJoined }: DiscoverGroupRowProps) => {
           <div className="flex items-center gap-1.5">
             <p className="truncate font-medium">{group.name}</p>
             {group.courseTag && (
-              <span className="shrink-0 truncate rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+              <span className="shrink-0 truncate rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary dark:bg-brand-400/15 dark:text-brand-100">
                 {group.courseTag}
               </span>
             )}

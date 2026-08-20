@@ -2,6 +2,8 @@
 .env.*
 *.mhtml
 .claude/
+.codex/
+.agents/skills/
 context/
 .playwright-mcp/
 backend/generated/
