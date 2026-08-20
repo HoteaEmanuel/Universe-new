@@ -51,7 +51,7 @@ const LoginPage = () => {
   };
 
   return (
-    <AuthCard title="Welcome back">
+    <AuthCard title="Welcome back" variant="login">
       <form
         onSubmit={handleSubmit(onSubmit)}
         method="POST"

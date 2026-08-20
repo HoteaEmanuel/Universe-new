@@ -85,7 +85,7 @@ const SignUpPage = () => {
   };
 
   return (
-    <AuthCard title="Sign Up" maxWidthClass="sm:w-2/3 md:w-1/3 max-w-lg">
+    <AuthCard title="Sign Up" variant="signup">
       <form
         onSubmit={handleSubmit(onSubmit)}
         method="POST"

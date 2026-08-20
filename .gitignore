@@ -10,3 +10,8 @@ backend/generated/
 backend/dist/
 node_modules/
 uploads/
+.impeccable/
+design-explorations/
+/login_fixed.png
+/signup_fixed.png
+/signup_now.png
