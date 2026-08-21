@@ -30,6 +30,7 @@ import {
 } from "../../../queryAndMutation/mutations/group-mutation";
 import { useAuthStore } from "../../../store/authStore";
 import { getFullName } from "../../../utils/fullName";
+import { insertEmojiAtSelection } from "../../../utils/insertEmojiAtSelection";
 import { formatFileSize } from "../utils/formatFileSize";
 import { getFileTypeIcon } from "../utils/fileTypeIcon";
 import ImagePickerModal from "./ImagePickerModal";
@@ -122,15 +123,11 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
   };
 
   const handleEmojiPick = (emoji: string) => {
-    const input = inputRef.current;
-    const start = input?.selectionStart ?? text.length;
-    const end = input?.selectionEnd ?? text.length;
-    const next = text.slice(0, start) + emoji + text.slice(end);
-    setText(next);
-    requestAnimationFrame(() => {
-      const caret = start + emoji.length;
-      input?.focus();
-      input?.setSelectionRange(caret, caret);
+    insertEmojiAtSelection({
+      input: inputRef.current,
+      value: text,
+      emoji,
+      onChange: setText,
     });
   };
 
