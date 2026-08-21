@@ -15,7 +15,7 @@ type UserStore = {
   isLoading: boolean;
   error: unknown;
   getAllUsers: () => Promise<User[]>;
-  getUserByName: (name: string) => Promise<User | undefined>;
+  getUserByUsername: (username: string) => Promise<User | undefined>;
   getUsersFromSameUniversity: () => Promise<User[] | undefined>;
   getUserById: (id: string) => Promise<User | undefined>;
   updateProfilePicture: (image: File) => Promise<unknown>;
@@ -35,6 +35,8 @@ type UserStore = {
   ) => Promise<FollowListPage | undefined>;
   isFollowing: (id?: string) => Promise<boolean | undefined>;
   updateBio: (bio: string) => Promise<unknown>;
+  updateUsername: (username: string) => Promise<{ id: string; username: string }>;
+  checkUsernameAvailability: (username: string) => Promise<{ username: string; available: boolean; reason?: string }>;
   getUniversityPeople: (
     cursor?: string,
   ) => Promise<UniversityPeoplePage | undefined>;
@@ -55,13 +57,13 @@ export const useUserStore = create<UserStore>((set) => ({
       set({ isLoading: false });
     }
   },
-  getUserByName: async (name) => {
+  getUserByUsername: async (username) => {
     set({ isLoading: true });
     try {
-      const response = await axios.get(`${API_URL}/users-by-name/${name}`);
+      const response = await axios.get(`${API_URL}/u/${encodeURIComponent(username)}`);
       return response.data.user;
     } catch (error) {
-      set({ error: error });
+      set({ error });
       throw error;
     } finally {
       set({ isLoading: false });
@@ -251,6 +253,24 @@ export const useUserStore = create<UserStore>((set) => ({
     } finally {
       set({ isLoading: false });
     }
+  },
+  updateUsername: async (username) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.patch(`${API_URL}/username`, { username });
+      return response.data.user;
+    } catch (error) {
+      set({ error });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  checkUsernameAvailability: async (username) => {
+    const response = await axios.get(`${API_URL}/username-availability`, {
+      params: { username },
+    });
+    return response.data;
   },
   getUniversityPeople: async (cursor) => {
     set({ isLoading: true });

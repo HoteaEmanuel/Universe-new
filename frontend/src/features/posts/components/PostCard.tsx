@@ -127,7 +127,7 @@ const PostCard = ({ post }: PostCardProps) => {
     e.preventDefault();
     e.stopPropagation();
     if (userId !== user_.id) {
-      navigate(`/users/${fullName}`);
+      navigate(`/u/${fullName}`);
     } else {
       navigate("/profile");
     }

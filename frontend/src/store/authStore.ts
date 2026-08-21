@@ -29,6 +29,7 @@ type AuthStore = {
   clearError: () => void;
   signUp: (payload: SignUpPayload) => Promise<void>;
   changeProfilePicture: (image: string) => Promise<void>;
+  updateCurrentUser: (updates: Partial<User>) => void;
   getBusinessRegistrations: () => Promise<User[] | undefined>;
   acceptBusinessRegistration: (id: string) => Promise<unknown>;
   rejectBusinessRegistration: (id: string) => Promise<unknown>;
@@ -107,6 +108,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: false });
     }
   },
+  updateCurrentUser: (updates) =>
+    set((state) => ({
+      user: state.user ? { ...state.user, ...updates } : null,
+    })),
   getBusinessRegistrations: async () => {
     try {
       const response = await axios.get(

@@ -36,6 +36,7 @@ const errorMessage = (error: unknown) =>
 
 const MEMBER_SELECT = {
   id: true,
+  username: true,
   firstName: true,
   lastName: true,
   profilePicture: true,

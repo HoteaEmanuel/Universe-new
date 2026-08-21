@@ -3,6 +3,7 @@ export type AccountType = "normal" | "business";
 
 export type User = {
   id: string;
+  username: string;
   firstName?: string | null;
   lastName?: string | null;
   name?: string | null;
@@ -91,6 +92,7 @@ export type EventType = "community" | "official";
 
 export type EventPerson = {
   id: string;
+  username?: string;
   firstName?: string | null;
   lastName?: string | null;
   name?: string | null;
@@ -202,6 +204,7 @@ export type PostsPage = {
 
 export type PostAuthor = {
   id: string;
+  username?: string;
   firstName?: string;
   lastName?: string;
   name?: string;
@@ -246,6 +249,7 @@ export type PublicPost = {
 
 export type FollowUser = {
   id: string;
+  username?: string;
   firstName?: string;
   lastName?: string;
   name?: string;
@@ -291,6 +295,7 @@ export type SearchPage<T> = {
 
 export type NotificationActionUser = {
   id: string;
+  username?: string;
   firstName?: string;
   lastName?: string;
   name?: string;

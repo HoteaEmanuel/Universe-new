@@ -89,7 +89,7 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
         isReply ? "gap-2 py-1 text-xs" : "gap-2.5 py-1.5 text-sm"
       }`}
     >
-      <Link to={isOwnComment ? "/profile" : `/users/${fullName}`}>
+      <Link to={isOwnComment ? "/profile" : `/u/${fullName}`}>
         {user.profilePicture ? (
           <img
             src={user.profilePicture}
@@ -104,7 +104,7 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
       <div className="min-w-0 flex-1">
         <p className="wrap-break-word">
           <Link
-            to={isOwnComment ? "/profile" : `/users/${fullName}`}
+            to={isOwnComment ? "/profile" : `/u/${fullName}`}
             className="font-semibold"
           >
             {isOwnComment ? "You" : getFullName(user)}

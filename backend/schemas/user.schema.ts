@@ -5,6 +5,20 @@ export const updateBioSchema = z.object({
 });
 export type UpdateBioInput = z.infer<typeof updateBioSchema>;
 
+const usernamePattern = /^[a-z0-9_]{3,30}$/;
+export const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(usernamePattern, "Username must be 3–30 lowercase letters, numbers, or underscores");
+
+export const updateUsernameSchema = z.object({ username: usernameSchema });
+export type UpdateUsernameInput = z.infer<typeof updateUsernameSchema>;
+
+export const usernameAvailabilityQuerySchema = z.object({
+  username: z.string().trim().toLowerCase(),
+});
+
 export const followSchema = z.object({
   followerId: z
     .string()

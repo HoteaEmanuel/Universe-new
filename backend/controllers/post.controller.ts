@@ -163,7 +163,7 @@ export const getPostUser = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     const user = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, firstName: true, lastName: true, name: true, profilePicture: true },
+      select: { id: true, username: true, firstName: true, lastName: true, name: true, profilePicture: true },
     });
     return res.status(200).json({ user, message: "Fetched user succesfully" });
   } catch (error) {
@@ -198,6 +198,7 @@ export const getLikes = async (req: Request, res: Response) => {
 
 const LIKE_USER_SELECT = {
   id: true,
+  username: true,
   firstName: true,
   lastName: true,
   name: true,

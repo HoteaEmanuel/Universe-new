@@ -12,7 +12,7 @@ const SearchUserRow = ({ user }: { user: ChatUser }) => {
   const displayName = isSelf ? "You" : getFullName(user);
 
   const goToProfile = () =>
-    isSelf ? navigate("/profile") : navigate(`/users/${urlPathName(user)}`);
+    isSelf ? navigate("/profile") : navigate(`/u/${urlPathName(user)}`);
 
   return (
     <li>

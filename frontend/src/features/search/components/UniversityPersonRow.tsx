@@ -23,7 +23,7 @@ const UniversityPersonRow = ({ user }: { user: FollowUser }) => {
     <li className="flex items-center gap-3 rounded-xl p-2 hover:bg-muted">
       <button
         type="button"
-        onClick={() => navigate(`/users/${urlPathName(user)}`)}
+        onClick={() => navigate(`/u/${urlPathName(user)}`)}
         className="flex min-w-0 flex-1 items-center gap-3 text-left cursor-pointer"
       >
         {user.profilePicture ? (

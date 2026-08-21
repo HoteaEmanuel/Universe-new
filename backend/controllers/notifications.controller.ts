@@ -33,7 +33,7 @@ export const getUnreadMessageNotifications = async (req: Request, res: Response)
       orderBy: { createdAt: "desc" },
       include: {
         actionUser: {
-          select: { id: true, profilePicture: true, firstName: true, lastName: true, name: true },
+          select: { id: true, username: true, profilePicture: true, firstName: true, lastName: true, name: true },
         },
       },
     });
@@ -51,7 +51,7 @@ export const getUnreadNotifications = async (req: Request, res: Response) => {
       orderBy: { createdAt: "desc" },
       include: {
         actionUser: {
-          select: { id: true, profilePicture: true, firstName: true, lastName: true, name: true },
+          select: { id: true, username: true, profilePicture: true, firstName: true, lastName: true, name: true },
         },
       },
     });

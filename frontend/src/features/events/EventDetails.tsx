@@ -116,7 +116,7 @@ const EventDetails = () => {
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold text-foreground">{event.title}</h1>
         <Link
-          to={event.hostGroup ? `/groups/${event.hostGroup.id}` : `/users/${urlPathName(event.creator)}`}
+          to={event.hostGroup ? `/groups/${event.hostGroup.id}` : `/u/${urlPathName(event.creator)}`}
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <Users className="size-3.5" />

@@ -4,6 +4,7 @@ import { getReceiverSocketId, io } from "../lib/socket.js";
 
 const NOTIFICATION_ACTION_USER_SELECT = {
   id: true,
+  username: true,
   profilePicture: true,
   firstName: true,
   lastName: true,

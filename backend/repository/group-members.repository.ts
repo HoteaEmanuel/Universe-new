@@ -6,6 +6,7 @@ export class GroupBannedError extends Error {}
 
 export const GROUP_BAN_USER_SELECT = {
   id: true,
+  username: true,
   firstName: true,
   lastName: true,
   name: true,

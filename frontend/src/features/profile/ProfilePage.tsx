@@ -9,7 +9,7 @@ import {
   useGetSavedPostsQuery,
   useGetUserPostsQuery,
 } from "../../queryAndMutation/queries/post-queries";
-import { useGetUserByNameQuery } from "../../queryAndMutation/queries/user-queries";
+import { useGetUserByUsernameQuery } from "../../queryAndMutation/queries/user-queries";
 import { getFullName } from "../../utils/fullName";
 import ProfileHeader from "./ProfileHeader";
 import ProfilePostGrid from "./ProfilePostGrid";
@@ -17,7 +17,7 @@ import ProfileSkeleton from "./ProfileSkeleton";
 import type { ProfileUser } from "./types";
 
 const ProfilePage = () => {
-  const { name } = useParams();
+  const { username } = useParams();
   const { user: authUser } = useAuthStore() as { user?: ProfileUser };
   const [tab, setTab] = useState<"posts" | "saved">("posts");
 
@@ -25,9 +25,9 @@ const ProfilePage = () => {
     data: otherUser,
     isPending: isPendingOtherUser,
     isError: isOtherUserError,
-  } = useGetUserByNameQuery(name);
+  } = useGetUserByUsernameQuery(username);
 
-  const profileUser: ProfileUser | undefined = name ? otherUser : authUser;
+  const profileUser: ProfileUser | undefined = username ? otherUser : authUser;
   const isOwnProfile = !!profileUser && profileUser.id === authUser?.id;
 
   useEffect(() => {
@@ -40,7 +40,7 @@ const ProfilePage = () => {
   const { data: savedPosts, isPending: isPendingSaved } =
     useGetSavedPostsQuery(authUser?.id ?? "");
 
-  if (name && !isPendingOtherUser && isOtherUserError) {
+  if (username && !isPendingOtherUser && isOtherUserError) {
     return (
       <NotFoundState
         icon={UserX}

@@ -32,7 +32,7 @@ const NotificationSocketListener = () => {
         } else if (notification.type === "message" && notification.groupId) {
           navigate(`/groups/${notification.groupId}`);
         } else if (notification.type === "follow" && notification.actionUser) {
-          navigate(`/users/${urlPathName(notification.actionUser)}`);
+          navigate(`/u/${urlPathName(notification.actionUser)}`);
         } else {
           navigate("/notifications");
         }

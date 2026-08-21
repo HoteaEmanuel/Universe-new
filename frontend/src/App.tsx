@@ -142,11 +142,8 @@ function App() {
             <Route element={<ContentLayout />}>
               <Route path="/home" element={<HomePage />} />
               <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/users/:name" element={<ProfilePage />} />
-              <Route
-                path="/users/:name/edit-profile"
-                element={<EditProfile />}
-              />
+              <Route path="/u/:username" element={<ProfilePage />} />
+              <Route path="/profile/edit-profile" element={<EditProfile />} />
               <Route path="/create-post" element={<CreatePost />} />
               <Route path="/edit-post/:id" element={<EditPost />} />
               <Route path="/post/:id" element={<PostDetails />} />

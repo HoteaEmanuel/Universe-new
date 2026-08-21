@@ -1,7 +1,11 @@
 import type { Request, Response } from "express";
 import axios from "axios";
 import { prisma } from "../database/prisma.js";
-import { PUBLIC_USER_SELECT, findUserById } from "../repository/user.repository.js";
+import {
+  PUBLIC_USER_SELECT,
+  createUserWithGeneratedUsername,
+  findUserById,
+} from "../repository/user.repository.js";
 import { generateToken } from "../utils/generateTokenJwt.js";
 import { generateJwtMobile } from "../utils/generateJwtMobile.js";
 import {
@@ -279,8 +283,8 @@ export const authWithGoogleMobile = async (req: Request, res: Response) => {
       }
       const universityName = universityDomains[domain];
 
-      user = await prisma.user.create({
-        data: {
+      user = await createUserWithGeneratedUsername(
+        {
           email,
           name,
           profilePicture: picture,
@@ -288,7 +292,8 @@ export const authWithGoogleMobile = async (req: Request, res: Response) => {
           university: universityName,
           isVerified: true,
         },
-      });
+        name,
+      );
     }
 
     if (!user.isVerified) {

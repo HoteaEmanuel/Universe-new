@@ -15,7 +15,7 @@ type ChatUserHeaderProps = {
 
 const ChatUserHeader = ({ user, isOnline, actions }: ChatUserHeaderProps) => {
   const navigate = useNavigate();
-  const goToProfile = () => navigate(`/users/${urlPathName(user)}`);
+  const goToProfile = () => navigate(`/u/${urlPathName(user)}`);
 
   return (
     <div className="flex items-center gap-3 border-b border-border px-4 py-3">
