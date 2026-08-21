@@ -1,14 +1,6 @@
-# Current Feature
+# This file has moved
 
-## Status
-Not Started
+Read and write `context/current-feature.md` at the repo root instead — that is now the single shared feature-tracking file for both Claude Code and Codex in this project. This file (`.Codex/context/current-feature.md`) is kept only as a redirect stub at the path your `/feature` skill was pointing at; if you have a saved prompt or command definition hardcoding this path, update it to `context/current-feature.md`.
 
-## Goals
-<!-- What does success look like? -->
+The content that used to live here (a stale copy, last synced 2026-08-21 with only the emoji-picker feature) has been superseded by the fuller, actively-maintained history in `context/current-feature.md`.
 
-## Notes
-<!-- Context, constraints, details from spec -->
-
-## History
-- **Emoji Picker in Comment and Reply Inputs** (2026-08-21): Added the existing theme-aware emoji picker to comment and reply fields, inserting at the cursor or replacing a selected range while preserving react-hook-form validation and dirty state. Extracted the shared selection/caret behavior into `frontend/src/utils/insertEmojiAtSelection.ts` and adopted it in chat too, keeping emoji insertion consistent across chat, comments, and replies. Frontend TypeScript and `git diff --check` passed; live browser verification was unavailable in this workspace. Merged to `main` as `2b25fc0` (`feat: add emoji picker to comment inputs`).
-- **Add Unique Usernames** (2026-08-21): Added canonical, unique username storage with a staged Prisma migration that backfilled 15 active users before enforcing non-null uniqueness. New password and Google accounts receive safe generated handles; profile edits include advisory availability feedback and database-authoritative `USERNAME_TAKEN` conflicts. Public profiles now use `/u/:username`; username validation rejects reserved/restricted handles and common leetspeak, separator, and repeated-letter bypasses. Backend tests, type-check/build, Prisma validation, frontend build, and migration verification passed. Merged to `main` as `d53476c` (`feat: add unique usernames`).
