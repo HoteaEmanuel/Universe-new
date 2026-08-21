@@ -145,7 +145,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
   const fullName = urlPathName(creator);
   const handleProfileClick = () => {
     if (userId !== user.id) {
-      navigate(`/users/${fullName}`);
+      navigate(`/u/${fullName}`);
     } else {
       navigate("/profile");
     }

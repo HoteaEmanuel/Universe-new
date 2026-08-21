@@ -90,6 +90,7 @@ export interface ShareRecipient extends ShareRecipientUser {
 
 const SHARE_RECIPIENT_SELECT = {
   id: true,
+  username: true,
   firstName: true,
   lastName: true,
   name: true,

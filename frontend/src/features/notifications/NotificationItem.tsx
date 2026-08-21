@@ -19,7 +19,7 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
       }
     }
     if (notification.actionUser) {
-      navigate(`/users/${urlPathName(notification.actionUser)}`);
+      navigate(`/u/${urlPathName(notification.actionUser)}`);
     }
   };
 

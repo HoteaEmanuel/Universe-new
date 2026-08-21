@@ -1,5 +1,9 @@
 import { prisma } from "../database/prisma.js";
 import type { Prisma, AccountType } from "../generated/prisma/client.js";
+import {
+  generateDefaultUsername,
+  isUsernameUniqueConstraintError,
+} from "../utils/username.js";
 
 // Allowlist, not a denylist: new sensitive columns added to the User model
 // later default to excluded here instead of silently leaking to clients.
@@ -8,6 +12,7 @@ export const PUBLIC_USER_SELECT = {
   firstName: true,
   lastName: true,
   name: true,
+  username: true,
   email: true,
   lastLogin: true,
   isVerified: true,
@@ -33,6 +38,27 @@ export const findUserByEmail = async (email: string) => {
 
 export const findUserByName = async (name: string) => {
   return prisma.user.findFirst({ where: { name } });
+};
+
+export const findUserByUsername = async (username: string) =>
+  prisma.user.findUnique({ where: { username } });
+
+export const createUserWithGeneratedUsername = async (
+  data: Omit<Prisma.UserCreateInput, "username">,
+  displayName?: string,
+) => {
+  // The unique index remains authoritative. A retry handles the extremely rare
+  // collision without pre-checking a value that can become stale before insert.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await prisma.user.create({
+        data: { ...data, username: generateDefaultUsername(displayName) },
+      });
+    } catch (error) {
+      if (!isUsernameUniqueConstraintError(error) || attempt === 2) throw error;
+    }
+  }
+  throw new Error("Could not allocate a username");
 };
 
 export const findUserByPasswordResetToken = async (token: string) => {
@@ -93,8 +119,8 @@ export const createNormalAccount = async (body: CreateNormalAccountInput) => {
     major,
   } = body;
 
-  return prisma.user.create({
-    data: {
+  return createUserWithGeneratedUsername(
+    {
       firstName,
       lastName,
       email,
@@ -106,7 +132,8 @@ export const createNormalAccount = async (body: CreateNormalAccountInput) => {
       accountType,
       verificationCodeExpiresAt: new Date(Date.now() + 1000 * 60 * 15),
     },
-  });
+    [firstName, lastName].filter(Boolean).join(" "),
+  );
 };
 
 interface CreateUniversityAccountInput {
@@ -130,8 +157,8 @@ export const createUniversityAccount = async (
     accountType,
   } = body;
 
-  return prisma.user.create({
-    data: {
+  return createUserWithGeneratedUsername(
+    {
       name,
       email,
       password: hashedPassword,
@@ -140,7 +167,8 @@ export const createUniversityAccount = async (
       accountType,
       verificationCodeExpiresAt: new Date(Date.now() + 1000 * 60 * 15),
     },
-  });
+    name,
+  );
 };
 
 export const updateUser = async (

@@ -3,6 +3,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { prisma } from "../database/prisma.js";
 import { universityEmailDomains } from "../utils/universityDomain.js";
 import { universityDomains } from "../utils/universityDomains.js";
+import { createUserWithGeneratedUsername } from "../repository/user.repository.js";
 
 // passport-google-oauth20's Strategy constructor throws synchronously if
 // clientID/clientSecret are missing, which would otherwise crash the whole
@@ -47,8 +48,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                 data: { googleId: profile.id },
               });
             } else {
-              user = await prisma.user.create({
-                data: {
+              user = await createUserWithGeneratedUsername(
+                {
                   googleId: profile.id,
                   email,
                   firstName: profile.name?.givenName,
@@ -57,7 +58,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                   profilePicture: profile.photos?.[0]?.value,
                   isVerified: true,
                 },
-              });
+                [profile.name?.givenName, profile.name?.familyName]
+                  .filter(Boolean)
+                  .join(" "),
+              );
             }
           }
 

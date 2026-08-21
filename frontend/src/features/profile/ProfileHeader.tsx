@@ -149,7 +149,7 @@ const ProfileHeader = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/users/${user.id}/edit-profile`)}
+              onClick={() => navigate("/profile/edit-profile")}
             >
               Edit profile
             </Button>

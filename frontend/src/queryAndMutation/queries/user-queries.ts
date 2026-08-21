@@ -91,11 +91,11 @@ export const useIsFollowingQuery = (id?: string) => {
   });
 };
 
-export const useGetUserByNameQuery = (name?: string) => {
-  const { getUserByName } = useUserStore();
+export const useGetUserByUsernameQuery = (username?: string) => {
+  const { getUserByUsername } = useUserStore();
   return useQuery({
-    queryFn: async () => await getUserByName(name as string),
-    queryKey: ["userByName", name],
-    enabled: !!name,
+    queryFn: async () => await getUserByUsername(username as string),
+    queryKey: ["userByUsername", username],
+    enabled: !!username,
   });
 };

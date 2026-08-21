@@ -15,7 +15,7 @@ const SHARED_POST_SELECT = {
   title: true,
   imagesUrls: true,
   user: {
-    select: { id: true, firstName: true, lastName: true, name: true, profilePicture: true },
+    select: { id: true, username: true, firstName: true, lastName: true, name: true, profilePicture: true },
   },
 } as const;
 
@@ -26,6 +26,7 @@ const MESSAGE_INCLUDE = {
 
 const GROUP_MESSAGE_SENDER_SELECT = {
   id: true,
+  username: true,
   firstName: true,
   lastName: true,
   profilePicture: true,

@@ -6,6 +6,7 @@ import { getFullName } from "@/utils/fullName";
 
 type ListedUser = {
   id: string;
+  username?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   name?: string | null;
@@ -25,7 +26,7 @@ const UserListElement = ({ user }: { user: ListedUser }) => {
       onClick={() =>
         user.id === authUser?.id
           ? navigate("/profile")
-          : navigate(`/users/${fullName}`)
+          : navigate(`/u/${fullName}`)
       }
     >
       <UserAvatar

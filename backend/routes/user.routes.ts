@@ -14,7 +14,9 @@ import {
   getAllUsers,
   getUsersFromSameUniversity,
   updateBio,
-  getUserByName,
+  getUserByUsername,
+  checkUsernameAvailability,
+  updateUsername,
   savePostController,
 } from "../controllers/user.controller.js";
 import { validate } from "../middleware/validate.js";
@@ -23,6 +25,8 @@ import {
   followSchema,
   unfollowSchema,
   followListQuerySchema,
+  updateUsernameSchema,
+  usernameAvailabilityQuerySchema,
 } from "../schemas/user.schema.js";
 import { imageUpload } from "../lib/imageUpload.js";
 import { verifyUploadedFiles } from "../lib/validateUpload.js";
@@ -31,7 +35,17 @@ const router = express.Router();
 
 router.get("/users", getAllUsers);
 router.get("/users/:id", getUserById);
-router.get("/users-by-name/:name", getUserByName);
+router.get("/u/:username", getUserByUsername);
+router.get(
+  "/username-availability",
+  validate({ query: usernameAvailabilityQuerySchema }),
+  checkUsernameAvailability,
+);
+router.patch(
+  "/username",
+  validate({ body: updateUsernameSchema }),
+  updateUsername,
+);
 router.get("/followers/:id", getFollowers);
 router.get("/following/:id", getFollowing);
 router.get(

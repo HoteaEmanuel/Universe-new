@@ -13,9 +13,16 @@ import { follow, savePost, unfollow } from "../services/user.service.js";
 import { getViewerRelevantUserIds } from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
 import type { FollowListQueryInput } from "../schemas/user.schema.js";
+import {
+  canonicalizeUsername,
+  isValidUsername,
+  isUsernameUniqueConstraintError,
+  usernameValidationMessage,
+} from "../utils/username.js";
 
 const PROFILE_CARD_SELECT = {
   id: true,
+  username: true,
   profilePicture: true,
   firstName: true,
   lastName: true,
@@ -28,6 +35,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
         firstName: true,
         lastName: true,
         id: true,
+        username: true,
         profilePicture: true,
         accountType: true,
         university: true,
@@ -78,6 +86,63 @@ export const getUserByName = async (req: Request, res: Response) => {
     return res.status(200).json({ message: "User found", user: userWithName });
   } catch (error) {
     return res.status(400).json({ error });
+  }
+};
+
+export const getUserByUsername = async (req: Request, res: Response) => {
+  try {
+    const username = canonicalizeUsername(req.params.username as string);
+    const user = await prisma.user.findUnique({
+      where: { username },
+      select: PUBLIC_USER_SELECT,
+    });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    return res.status(200).json({ message: "User found", user });
+  } catch {
+    return res.status(404).json({ message: "User not found" });
+  }
+};
+
+export const checkUsernameAvailability = async (req: Request, res: Response) => {
+  const username = canonicalizeUsername(req.query.username as string);
+  const validationError = usernameValidationMessage(username);
+  if (validationError) {
+    return res.status(200).json({ username, available: false, reason: validationError });
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { username },
+    select: { id: true },
+  });
+  return res.status(200).json({
+    username,
+    available: !existingUser || existingUser.id === req.userId,
+  });
+};
+
+export const updateUsername = async (req: Request, res: Response) => {
+  const username = canonicalizeUsername(req.body.username as string);
+  if (!isValidUsername(username)) {
+    return res.status(400).json({
+      code: "INVALID_USERNAME",
+      message: usernameValidationMessage(username) ?? "Invalid username",
+    });
+  }
+
+  try {
+    const user = await updateUser(req.userId as string, { username });
+    return res.status(200).json({
+      message: "Username updated successfully",
+      user: { id: user.id, username: user.username },
+    });
+  } catch (error) {
+    if (isUsernameUniqueConstraintError(error)) {
+      return res.status(409).json({
+        code: "USERNAME_TAKEN",
+        message: "That username is already taken",
+      });
+    }
+    return res.status(400).json({ message: "Could not update username" });
   }
 };
 
@@ -336,6 +401,7 @@ export const getRelevantFollowing = async (req: Request, res: Response) => {
 
 const UNIVERSITY_PERSON_SELECT = {
   id: true,
+  username: true,
   firstName: true,
   lastName: true,
   name: true,
@@ -455,6 +521,7 @@ export const getUsersFromSameUniversity = async (
         profilePicture: true,
         accountType: true,
         id: true,
+        username: true,
         university: true,
       },
     });

@@ -7,6 +7,7 @@ export class EventBannedError extends Error {}
 
 export const EVENT_CREATOR_SELECT = {
   id: true,
+  username: true,
   firstName: true,
   lastName: true,
   name: true,

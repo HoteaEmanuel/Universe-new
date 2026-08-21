@@ -217,7 +217,7 @@ const MessageBubble = ({
           <MessageAvatar>
             <button
               type="button"
-              onClick={() => navigate(`/users/${urlPathName(senderUser)}`)}
+              onClick={() => navigate(`/u/${urlPathName(senderUser)}`)}
               aria-label={`View ${getFullName(senderUser)}'s profile`}
               className="cursor-pointer"
             >
