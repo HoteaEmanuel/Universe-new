@@ -104,7 +104,13 @@ const CommentsContainer = () => {
               key={virtualItem.key}
               data-index={virtualItem.index}
               ref={virtualizer.measureElement}
-              className="absolute top-0 left-0 w-full"
+              // Each row is its own `position: absolute` stacking sibling, so a
+              // reply's mention popup (z-50, but scoped to this row's context)
+              // would otherwise paint underneath any later comment row. Raising
+              // this row above its siblings while a child input is focused —
+              // i.e. while the mention popup can actually be open — fixes that
+              // without needing a portal.
+              className="absolute top-0 left-0 w-full focus-within:z-10"
               style={{ transform: `translateY(${virtualItem.start}px)` }}
             >
               <Comment comment={comment} scrollContainerRef={scrollContainerRef} />
