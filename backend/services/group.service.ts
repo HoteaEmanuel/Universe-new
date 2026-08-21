@@ -26,6 +26,7 @@ import {
   emitNewNotification,
 } from "../repository/notification.repository.js";
 import { findUserById } from "../repository/user.repository.js";
+import { findPostById } from "../repository/post.repository.js";
 import { prisma } from "../database/prisma.js";
 import { uploadImage, deleteImages } from "../lib/storage.js";
 import type { GroupVisibility } from "../generated/prisma/client.js";
@@ -421,6 +422,63 @@ export const sendPollMessage = async (data: {
   );
 
   return withGroupMessagePollDTO(groupMessage);
+};
+
+export const sharePostToGroups = async (data: {
+  authUserId: string;
+  postId: string;
+  groupIds: string[];
+}) => {
+  const { authUserId, postId, groupIds } = data;
+  const post = await findPostById(postId);
+  if (!post) throw new Error("Post not found");
+
+  const uniqueGroupIds = Array.from(new Set(groupIds));
+  if (uniqueGroupIds.length === 0) throw new Error("No groups provided");
+
+  return Promise.all(
+    uniqueGroupIds.map(async (groupId) => {
+      const membership = await findGroupMember(groupId, authUserId);
+      if (!membership) throw new Error("You are not a member of this group");
+
+      const group = await findGroupById(groupId);
+      if (!group) throw new Error("Group doesnt exist");
+
+      const groupMessage = await createGroupMessage({
+        senderId: authUserId,
+        groupId,
+        sharedPostId: postId,
+      });
+
+      await prisma.group.update({
+        where: { id: groupId },
+        data: { lastMessageId: groupMessage.id },
+      });
+
+      const members = await findGroupMembers(groupId);
+      members.forEach((member) => {
+        io.to(getReceiverSocketId(member.memberId)).emit("newGroupMessage", groupMessage);
+      });
+
+      const sender = await findUserById(authUserId);
+      const recipients = members.filter((member) => member.memberId !== authUserId);
+      await Promise.all(
+        recipients.map(async (member) => {
+          const notification = await createGroupMessageNotification({
+            actionUserId: authUserId,
+            userId: member.memberId,
+            title: `New message in ${group.name}`,
+            type: "message",
+            message: `${sender?.firstName || sender?.name}: Shared a post`,
+            groupId,
+          });
+          await emitNewNotification(member.memberId, notification);
+        }),
+      );
+
+      return withGroupMessagePollDTO(groupMessage);
+    }),
+  );
 };
 
 export const editMessage = async (data: {

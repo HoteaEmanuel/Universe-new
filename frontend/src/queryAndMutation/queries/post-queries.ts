@@ -6,7 +6,7 @@ import type {
   PostsPage,
   PublicPost,
   RelevantLiker,
-  ShareRecipient,
+  ShareRecipientsResponse,
   UsersWhoLikedPage,
 } from "../types";
 
@@ -129,7 +129,7 @@ export const useGetPublicPostQuery = (id?: string) => {
 export const useGetShareRecipientsQuery = (enabled: boolean) => {
   const { getShareRecipients } = usePostStore();
   return useQuery({
-    queryFn: () => getShareRecipients() as Promise<ShareRecipient[]>,
+    queryFn: () => getShareRecipients() as Promise<ShareRecipientsResponse>,
     queryKey: ["shareRecipients"],
     enabled,
   });

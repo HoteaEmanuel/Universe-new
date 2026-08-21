@@ -22,13 +22,12 @@ const ConversationListItem = ({
   const title = isGroup ? entry.name : getFullName(entry.user);
 
   const lastMessage = entry.lastMessage;
-  const lastSender = lastMessage?.senderId;
-  const lastSenderId =
-    typeof lastSender === "string" ? lastSender : lastSender?.id;
+  const lastSenderId = lastMessage?.senderId;
+  const lastSender = lastMessage?.sender;
   const prefix =
     lastSenderId === currentUserId
       ? "You: "
-      : isGroup && lastSender && typeof lastSender !== "string"
+      : isGroup && lastSender
         ? `${getFullName(lastSender)}: `
         : "";
   const isImageOnly = !lastMessage?.content && !!lastMessage?.imageUrls?.length;

@@ -6,6 +6,7 @@ import {
   getViewerRelevantUserIds,
   getFollowConnectedUserIds,
   getShareRecipients,
+  getShareRecipientGroups,
 } from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
 import type { UsersWhoLikedQueryInput, SharePostInput } from "../schemas/post.schema.js";
@@ -23,6 +24,7 @@ import {
   toPostDTO,
 } from "../services/post.service.js";
 import { sharePostToUsers } from "../services/conversation.service.js";
+import { sharePostToGroups } from "../services/group.service.js";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong";
@@ -138,8 +140,11 @@ export const getPostsTags = async (req: Request, res: Response) => {
 export const getShareRecipientsController = async (req: Request, res: Response) => {
   try {
     const userId = req.userId as string;
-    const recipients = await getShareRecipients(userId);
-    return res.status(200).json({ message: "Fetched share recipients", recipients });
+    const [recipients, groups] = await Promise.all([
+      getShareRecipients(userId),
+      getShareRecipientGroups(userId),
+    ]);
+    return res.status(200).json({ message: "Fetched share recipients", recipients, groups });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }
@@ -149,9 +154,16 @@ export const sharePostController = async (req: Request, res: Response) => {
   try {
     const postId = req.params.id as string;
     const authUserId = req.userId as string;
-    const { recipientIds } = req.body as SharePostInput;
-    const messages = await sharePostToUsers({ authUserId, postId, recipientIds });
-    return res.status(201).json({ message: "Post shared", messages });
+    const { recipientIds, groupIds } = req.body as SharePostInput;
+    const [messages, groupMessages] = await Promise.all([
+      recipientIds.length > 0
+        ? sharePostToUsers({ authUserId, postId, recipientIds })
+        : Promise.resolve([]),
+      groupIds.length > 0
+        ? sharePostToGroups({ authUserId, postId, groupIds })
+        : Promise.resolve([]),
+    ]);
+    return res.status(201).json({ message: "Post shared", messages, groupMessages });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

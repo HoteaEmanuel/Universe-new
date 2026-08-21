@@ -139,7 +139,22 @@ export const getUserGroups = async (req: Request, res: Response) => {
     const groupIds = memberships.map((membership) => membership.groupId);
     const groups = await prisma.group.findMany({
       where: { id: { in: groupIds } },
-      include: { lastMessage: true },
+      include: {
+        lastMessage: {
+          include: {
+            sender: {
+              select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                name: true,
+                profilePicture: true,
+              },
+            },
+          },
+        },
+      },
       orderBy: { updatedAt: "desc" },
     });
 

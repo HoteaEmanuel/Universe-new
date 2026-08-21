@@ -238,6 +238,19 @@ export type ShareRecipient = {
   lastInteractionAt: string;
 };
 
+export type ShareRecipientGroup = {
+  id: string;
+  name: string;
+  coverImageUrl: string | null;
+  visibility: "public" | "private";
+  lastActivityAt: string;
+};
+
+export type ShareRecipientsResponse = {
+  recipients: ShareRecipient[];
+  groups: ShareRecipientGroup[];
+};
+
 export type SharedPostPreview = {
   id: string;
   title: string;

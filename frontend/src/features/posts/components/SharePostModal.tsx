@@ -1,7 +1,6 @@
 import { useMemo, useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
 import { Check, Link2, Share2 } from "lucide-react";
-import { FaUserCircle } from "react-icons/fa";
 import {
   Sheet,
   SheetContent,
@@ -11,9 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getFullName } from "@/utils/fullName";
+import UserAvatar from "@/components/UserAvatar";
 import { useGetShareRecipientsQuery } from "@/queryAndMutation/queries/post-queries";
 import { useSharePostMutation } from "@/queryAndMutation/mutations/post-mutation";
-import type { ShareRecipient } from "@/queryAndMutation/types";
 
 type SharePostModalProps = {
   open: boolean;
@@ -21,12 +20,21 @@ type SharePostModalProps = {
   postId: string;
 };
 
-const RecipientRow = ({
-  recipient,
+type ShareTarget = {
+  key: string;
+  kind: "user" | "group";
+  id: string;
+  label: string;
+  avatarUrl: string | null;
+  activityAt: number;
+};
+
+const TargetRow = ({
+  target,
   selected,
   onToggle,
 }: {
-  recipient: ShareRecipient;
+  target: ShareTarget;
   selected: boolean;
   onToggle: () => void;
 }) => (
@@ -36,17 +44,8 @@ const RecipientRow = ({
       onClick={onToggle}
       className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-muted"
     >
-      {recipient.profilePicture ? (
-        <img
-          src={recipient.profilePicture}
-          className="size-11 shrink-0 rounded-full object-cover"
-        />
-      ) : (
-        <FaUserCircle className="size-11 shrink-0 text-muted-foreground" />
-      )}
-      <p className="min-w-0 flex-1 truncate font-medium">
-        {getFullName(recipient)}
-      </p>
+      <UserAvatar user={{ profilePicture: target.avatarUrl, name: target.label }} />
+      <p className="min-w-0 flex-1 truncate font-medium">{target.label}</p>
       <span
         className={`flex size-5 shrink-0 items-center justify-center rounded-full border ${
           selected
@@ -62,34 +61,54 @@ const RecipientRow = ({
 
 const SharePostModal = ({ open, onClose, postId }: SharePostModalProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
 
-  const { data: recipients, isPending } = useGetShareRecipientsQuery(open);
+  const { data, isPending } = useGetShareRecipientsQuery(open);
   const { mutate: sharePost, isPending: isSending } =
     useSharePostMutation(postId);
 
   const shareUrl = `${window.location.origin}/p/${postId}`;
 
-  const filteredRecipients = useMemo(() => {
-    if (!recipients) return [];
-    const query = searchTerm.trim().toLowerCase();
-    if (!query) return recipients;
-    return recipients.filter((recipient) =>
-      getFullName(recipient).toLowerCase().includes(query),
+  const targets = useMemo<ShareTarget[]>(() => {
+    if (!data) return [];
+    const userTargets: ShareTarget[] = data.recipients.map((recipient) => ({
+      key: `user:${recipient.id}`,
+      kind: "user",
+      id: recipient.id,
+      label: getFullName(recipient),
+      avatarUrl: recipient.profilePicture ?? null,
+      activityAt: new Date(recipient.lastInteractionAt).getTime(),
+    }));
+    const groupTargets: ShareTarget[] = data.groups.map((group) => ({
+      key: `group:${group.id}`,
+      kind: "group",
+      id: group.id,
+      label: group.name,
+      avatarUrl: group.coverImageUrl,
+      activityAt: new Date(group.lastActivityAt).getTime(),
+    }));
+    return [...userTargets, ...groupTargets].sort(
+      (a, b) => b.activityAt - a.activityAt,
     );
-  }, [recipients, searchTerm]);
+  }, [data]);
+
+  const filteredTargets = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return targets;
+    return targets.filter((target) => target.label.toLowerCase().includes(query));
+  }, [targets, searchTerm]);
 
   const handleClose = () => {
     setSearchTerm("");
-    setSelectedIds(new Set());
+    setSelectedKeys(new Set());
     onClose();
   };
 
-  const toggleRecipient = (id: string) => {
-    setSelectedIds((prev) => {
+  const toggleTarget = (key: string) => {
+    setSelectedKeys((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
@@ -112,7 +131,14 @@ const SharePostModal = ({ open, onClose, postId }: SharePostModalProps) => {
   };
 
   const handleSend = () => {
-    sharePost(Array.from(selectedIds), { onSuccess: handleClose });
+    const recipientIds: string[] = [];
+    const groupIds: string[] = [];
+    selectedKeys.forEach((key) => {
+      const [kind, id] = key.split(":");
+      if (kind === "group") groupIds.push(id);
+      else recipientIds.push(id);
+    });
+    sharePost({ recipientIds, groupIds }, { onSuccess: handleClose });
   };
 
   return (
@@ -137,7 +163,7 @@ const SharePostModal = ({ open, onClose, postId }: SharePostModalProps) => {
 
             <Input
               type="text"
-              placeholder="Search people..."
+              placeholder="Search people and groups..."
               value={searchTerm}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
             />
@@ -148,29 +174,29 @@ const SharePostModal = ({ open, onClose, postId }: SharePostModalProps) => {
               </p>
             )}
 
-            {!isPending && filteredRecipients.length === 0 && (
+            {!isPending && filteredTargets.length === 0 && (
               <p className="pt-4 text-center text-sm text-muted-foreground">
                 No one to show here yet.
               </p>
             )}
 
-            {!isPending && filteredRecipients.length > 0 && (
+            {!isPending && filteredTargets.length > 0 && (
               <ul className="flex flex-col gap-1">
-                {filteredRecipients.map((recipient) => (
-                  <RecipientRow
-                    key={recipient.id}
-                    recipient={recipient}
-                    selected={selectedIds.has(recipient.id)}
-                    onToggle={() => toggleRecipient(recipient.id)}
+                {filteredTargets.map((target) => (
+                  <TargetRow
+                    key={target.key}
+                    target={target}
+                    selected={selectedKeys.has(target.key)}
+                    onToggle={() => toggleTarget(target.key)}
                   />
                 ))}
               </ul>
             )}
           </div>
-          {selectedIds.size > 0 && (
+          {selectedKeys.size > 0 && (
             <div className="border-t border-border p-4">
               <Button className="w-full" disabled={isSending} onClick={handleSend}>
-                Send{selectedIds.size > 1 ? ` to ${selectedIds.size} people` : ""}
+                Send{selectedKeys.size > 1 ? ` to ${selectedKeys.size}` : ""}
               </Button>
             </div>
           )}

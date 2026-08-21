@@ -59,7 +59,13 @@ export const useUpdatePostMutation = (userId?: string) => {
 export const useSharePostMutation = (postId: string) => {
   const { sharePost } = usePostStore();
   return useMutation({
-    mutationFn: (recipientIds: string[]) => sharePost(postId, recipientIds),
+    mutationFn: ({
+      recipientIds,
+      groupIds,
+    }: {
+      recipientIds: string[];
+      groupIds: string[];
+    }) => sharePost(postId, recipientIds, groupIds),
     onSuccess: () => {
       toast.success("Post sent");
     },

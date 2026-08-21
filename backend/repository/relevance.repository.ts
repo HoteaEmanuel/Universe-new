@@ -1,4 +1,5 @@
 import { prisma } from "../database/prisma.js";
+import type { GroupVisibility } from "../generated/prisma/client.js";
 
 // "Relevant to the viewer" = people the viewer follows, plus anyone the
 // viewer has interacted with: likes/comments exchanged on each other's
@@ -162,4 +163,38 @@ export const getShareRecipients = async (viewerId: string): Promise<ShareRecipie
   return Array.from(byId.values()).sort(
     (a, b) => b.lastInteractionAt.getTime() - a.lastInteractionAt.getTime(),
   );
+};
+
+export interface ShareRecipientGroup {
+  id: string;
+  name: string;
+  coverImageUrl: string | null;
+  visibility: GroupVisibility;
+  lastActivityAt: Date;
+}
+
+// Candidate pool for the "Send post to" picker's group side: every group the
+// viewer belongs to, most recently active first (Group.updatedAt is bumped
+// whenever a new message lands, so this doubles as "most recently active").
+export const getShareRecipientGroups = async (
+  viewerId: string,
+): Promise<ShareRecipientGroup[]> => {
+  const memberships = await prisma.groupMembers.findMany({
+    where: { memberId: viewerId },
+    select: {
+      group: {
+        select: { id: true, name: true, coverImageUrl: true, visibility: true, updatedAt: true },
+      },
+    },
+  });
+
+  return memberships
+    .map(({ group }) => ({
+      id: group.id,
+      name: group.name,
+      coverImageUrl: group.coverImageUrl,
+      visibility: group.visibility,
+      lastActivityAt: group.updatedAt,
+    }))
+    .sort((a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime());
 };

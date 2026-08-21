@@ -9,8 +9,6 @@ export type ChatUser = {
   accountType?: string;
 };
 
-export type MessageSender = ChatUser | string;
-
 export type MessageReaction = {
   id: string;
   emoji: string;
@@ -79,7 +77,8 @@ export type LastMessagePreview = {
   audioUrl?: string;
   attachments?: MessageAttachment[];
   sharedPostId?: string | null;
-  senderId?: MessageSender;
+  senderId?: string;
+  sender?: ChatUser | null;
 };
 
 export type DirectConversation = {

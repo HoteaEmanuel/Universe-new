@@ -84,10 +84,17 @@ export const usersWhoLikedQuerySchema = z.object({
 });
 export type UsersWhoLikedQueryInput = z.infer<typeof usersWhoLikedQuerySchema>;
 
-export const sharePostSchema = z.object({
-  recipientIds: z
-    .array(z.string().uuid("recipientIds must be valid ids"))
-    .min(1, "Select at least one recipient")
-    .max(20, "You can share with at most 20 people at once"),
-});
+export const sharePostSchema = z
+  .object({
+    recipientIds: z.array(z.string().uuid("recipientIds must be valid ids")).default([]),
+    groupIds: z.array(z.string().uuid("groupIds must be valid ids")).default([]),
+  })
+  .refine((data) => data.recipientIds.length + data.groupIds.length > 0, {
+    message: "Select at least one recipient",
+    path: ["recipientIds"],
+  })
+  .refine((data) => data.recipientIds.length + data.groupIds.length <= 20, {
+    message: "You can share with at most 20 people or groups at once",
+    path: ["recipientIds"],
+  });
 export type SharePostInput = z.infer<typeof sharePostSchema>;
