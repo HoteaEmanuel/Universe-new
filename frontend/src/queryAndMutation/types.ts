@@ -83,6 +83,16 @@ export type Post = {
   createdAt: string;
   event?: EventSummary | null;
   poll?: Poll | null;
+  mentionedUsers: MentionUser[];
+};
+
+export type MentionUser = {
+  id: string;
+  username: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  name?: string | null;
+  profilePicture?: string | null;
 };
 
 export type EventVisibility = "public" | "private";
@@ -280,6 +290,7 @@ export type PostComment = {
   isLiked: boolean;
   parentId?: string | null;
   repliesCount?: number;
+  mentionedUsers: MentionUser[];
 };
 
 export type PostCommentsPage = {
@@ -312,6 +323,8 @@ export type Notification = {
   conversationId?: string | null;
   groupId?: string | null;
   eventId?: string | null;
+  postId?: string | null;
+  commentId?: string | null;
   actionUser?: NotificationActionUser | null;
 };
 

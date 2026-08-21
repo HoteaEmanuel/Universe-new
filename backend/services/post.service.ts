@@ -24,6 +24,8 @@ import {
 } from "../repository/notification.repository.js";
 import { toEventDTO } from "./event.service.js";
 import { toPollDTO } from "./poll.service.js";
+import { extractHashtagsFromText } from "../utils/hashtags.js";
+import { resolveMentionedUsers } from "./mention.service.js";
 
 type UploadedImage = Express.Multer.File;
 
@@ -40,18 +42,24 @@ const withPollDTO = <T extends { poll?: Parameters<typeof toPollDTO>[0] | null }
   post: T,
 ) => (post.poll ? { ...post, poll: toPollDTO(post.poll) } : post);
 
+const withTagNames = <T extends { tags?: { name: string }[] }>(post: T) =>
+  post.tags ? { ...post, tags: post.tags.map((tag) => tag.name) } : post;
+
+export const toPostDTO = <T extends { event?: Parameters<typeof toEventDTO>[0] | null; poll?: Parameters<typeof toPollDTO>[0] | null; tags?: { name: string }[] }>(post: T) =>
+  withTagNames(withPollDTO(withEventDTO(post)));
+
 export const getUserPosts = async (userId: string) => {
   const user = await findUserById(userId);
   if (!user) throw new Error("User does not exist");
   const posts = await findUserPosts(userId);
-  return posts.map((post) => withPollDTO(withEventDTO(post)));
+  return posts.map(toPostDTO);
 };
 
 export const getSavedPosts = async (id: string) => {
   const user = await findUserById(id);
   if (!user) throw new Error("User doesnt exist");
   const data = await findUserSavedPosts(id);
-  return data.map((sp) => withPollDTO(withEventDTO(sp.post)));
+  return data.map((sp) => toPostDTO(sp.post));
 };
 
 interface GetPostsInput {
@@ -84,7 +92,7 @@ export const getPosts = async (data: GetPostsInput) => {
   return {
     ...page,
     posts: page.posts.map((post) =>
-      withPollDTO(withEventDTO(withIsSaved(post, savedPostIds))),
+      toPostDTO(withIsSaved(post, savedPostIds)),
     ),
   };
 };
@@ -121,9 +129,13 @@ export const createNewPost = async (data: CreatePostInput) => {
       ),
     );
   }
-  const tagsArray = tags.split(" ").filter(Boolean).map((tag) => tag.toLowerCase());
+  const tagsArray = [...new Set([
+    ...tags.split(" ").filter(Boolean).map((tag) => tag.toLowerCase()),
+    ...extractHashtagsFromText(body),
+  ])];
+  const mentionedUsers = await resolveMentionedUsers(body, userId);
 
-  return createPost({
+  const post = await createPost({
     userId,
     title,
     body,
@@ -131,11 +143,25 @@ export const createNewPost = async (data: CreatePostInput) => {
     tags: tagsArray,
     imageUrls: uploaded.map((u) => u.url),
     imagePublicIds: uploaded.map((u) => u.key),
+    mentionedUserIds: mentionedUsers.map((user) => user.id),
     poll:
       pollQuestion && pollOptions
         ? { question: pollQuestion, options: pollOptions, closesAt: pollClosesAt }
         : undefined,
   });
+  const author = await findUserById(userId);
+  await Promise.all(mentionedUsers.map(async (mentionedUser) => {
+    const notification = await createNotification({
+      actionUserId: userId,
+      userId: mentionedUser.id,
+      title: "New post mention",
+      type: "post-mention",
+      message: `${author?.firstName || author?.name} mentioned you in a post`,
+      postId: post.id,
+    });
+    await emitNewNotification(mentionedUser.id, notification);
+  }));
+  return post;
 };
 
 export const likePost = async (data: { postId: string; userId: string }) => {
@@ -229,10 +255,10 @@ export const updatePost = async (data: UpdatePostInput) => {
     (key) => !existingKeys.includes(key),
   );
 
-  const tagsArray = (postData.tags ?? "")
-    .split(" ")
-    .filter(Boolean)
-    .map((tag) => tag.toLowerCase());
+  const tagsArray = [...new Set([
+    ...(postData.tags ?? "").split(" ").filter(Boolean).map((tag) => tag.toLowerCase()),
+    ...extractHashtagsFromText(postData.body),
+  ])];
 
   await prisma.post.update({
     where: { id: postId },
@@ -274,10 +300,10 @@ export const deletePost = async (data: { postId: string }) => {
 
 export const getSearchedPosts = async (text: string) => {
   const posts = await findPostsByText(text);
-  return posts.map((post) => withPollDTO(withEventDTO(post)));
+  return posts.map(toPostDTO);
 };
 
 export const getPostsByTag = async (tag: string) => {
   const posts = await findPostsByTag(tag);
-  return posts.map((post) => withPollDTO(withEventDTO(post)));
+  return posts.map(toPostDTO);
 };

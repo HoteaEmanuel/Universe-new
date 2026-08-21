@@ -14,6 +14,7 @@ import { formatCount } from "@/utils/formatCount";
 import { urlPathName } from "@/utils/urlPathFromName";
 import { getFullName } from "@/utils/fullName";
 import type { PostComment } from "@/queryAndMutation/types";
+import MentionText from "@/components/MentionText";
 import CommentReplies from "./CommentReplies";
 import ReplyInput from "./ReplyInput";
 import {
@@ -109,7 +110,7 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
           >
             {isOwnComment ? "You" : getFullName(user)}
           </Link>{" "}
-          <span>{comment.text}</span>
+          <MentionText text={comment.text} mentionedUsers={comment.mentionedUsers ?? []} />
         </p>
         <div className="flex items-center gap-3 pt-0.5 text-xs text-muted-foreground">
           <span>{formatDateDetailed(comment.createdAt)}</span>

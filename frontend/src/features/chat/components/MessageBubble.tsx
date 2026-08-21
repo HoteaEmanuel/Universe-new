@@ -21,6 +21,7 @@ import MessageImageGrid from "./MessageImageGrid";
 import MessageFileList from "./MessageFileList";
 import SharedPostCard from "./SharedPostCard";
 import PollBlock from "@/features/polls/components/PollBlock";
+import MentionText from "@/components/MentionText";
 import type { ChatMessage, ChatUser, MessageAttachment } from "../types";
 
 type MessageBubbleProps = {
@@ -306,7 +307,11 @@ const MessageBubble = ({
                 This message was deleted
               </span>
             ) : (
-              message.content
+              <MentionText
+                text={message.content}
+                mentionedUsers={message.mentionedUsers ?? []}
+                variant={isOwn ? "on-accent" : "default"}
+              />
             )}
           </div>
         )}

@@ -1,11 +1,7 @@
 import type { Request, Response } from "express";
 import type {} from "multer";
 import { prisma } from "../database/prisma.js";
-import { findPostsByTag } from "../repository/post.repository.js";
-import { EVENT_INCLUDE } from "../repository/event.repository.js";
-import { toEventDTO } from "../services/event.service.js";
-import { POLL_INCLUDE } from "../repository/poll.repository.js";
-import { toPollDTO } from "../services/poll.service.js";
+import { POST_INCLUDE } from "../repository/post.repository.js";
 import {
   getViewerRelevantUserIds,
   getFollowConnectedUserIds,
@@ -24,6 +20,7 @@ import {
   likePost,
   unlikePost,
   updatePost,
+  toPostDTO,
 } from "../services/post.service.js";
 import { sharePostToUsers } from "../services/conversation.service.js";
 
@@ -36,8 +33,7 @@ export const getPost = async (req: Request, res: Response) => {
     const post = await prisma.post.findUnique({
       where: { id },
       include: {
-        event: { include: EVENT_INCLUDE },
-        poll: { include: POLL_INCLUDE },
+        ...POST_INCLUDE,
       },
     });
     if (!post) throw new Error("Post not found");
@@ -47,9 +43,7 @@ export const getPost = async (req: Request, res: Response) => {
     return res.status(200).json({
       message: "Succes",
       post: {
-        ...post,
-        event: post.event ? toEventDTO(post.event) : null,
-        poll: post.poll ? toPollDTO(post.poll) : null,
+        ...toPostDTO(post),
         isSaved: !!savedPost,
       },
     });
@@ -127,7 +121,12 @@ export const getPostsController = async (req: Request, res: Response) => {
 
 export const getPostsTags = async (req: Request, res: Response) => {
   try {
-    const tags = await prisma.tag.findMany();
+    const q = (req.query.q as string | undefined)?.toLowerCase() ?? "";
+    const tags = await prisma.tag.findMany({
+      where: q ? { name: { startsWith: q } } : undefined,
+      orderBy: { name: "asc" },
+      take: 20,
+    });
     return res
       .status(200)
       .json({ tags, message: "Fetched the tags succesfully" });
@@ -174,7 +173,7 @@ export const getPostUser = async (req: Request, res: Response) => {
 export const getRelatedPosts = async (req: Request, res: Response) => {
   try {
     const tag = req.params.tag as string;
-    const relatedPosts = await findPostsByTag(tag);
+    const relatedPosts = await getPostsByTag(tag);
     return res.status(200).json({
       posts: relatedPosts,
       message: "Fetched related posts succesfully",
@@ -343,16 +342,6 @@ export const getSearchedPostsController = async (req: Request, res: Response) =>
     const name = (req.params.name as string).toLowerCase();
     const posts = await getSearchedPosts(name);
     return res.status(200).json({ message: "Fetched posts by name", posts });
-  } catch (error) {
-    return res.status(400).json({ message: errorMessage(error) });
-  }
-};
-
-export const getPostsByTagController = async (req: Request, res: Response) => {
-  try {
-    const tag = (req.params.tag as string).toLowerCase();
-    const posts = await getPostsByTag(tag);
-    return res.status(200).json({ message: "Fetched posts by tag", posts });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

@@ -9,6 +9,7 @@ import type {
   GroupMember,
   ResourceType,
 } from "../../features/chat/types";
+import type { MentionUser } from "../types";
 
 export const useGetUserGroups = (userId?: string) => {
   const { getUserGroups } = useGroupStore();
@@ -131,5 +132,19 @@ export const useGetGroupBansInfinite = (groupId?: string, enabled = true) => {
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
     enabled: !!groupId && enabled,
+  });
+};
+
+export const useGroupMentionSearchUsersQuery = (
+  groupId: string | undefined,
+  query: string,
+  enabled: boolean,
+) => {
+  const { getGroupMentionSearchUsers } = useGroupStore();
+  return useQuery<MentionUser[]>({
+    queryKey: ["group-mention-search", groupId, query],
+    queryFn: () => getGroupMentionSearchUsers(groupId as string, query),
+    enabled: !!groupId && enabled,
+    staleTime: 30_000,
   });
 };

@@ -1,6 +1,6 @@
 import { useUserStore } from "../../store/userStore";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import type { FollowListPage, UniversityPeoplePage } from "../types";
+import type { FollowListPage, MentionUser, UniversityPeoplePage } from "../types";
 
 export const useGetAllUsersQuery = () => {
   const { getAllUsers } = useUserStore();
@@ -97,5 +97,15 @@ export const useGetUserByUsernameQuery = (username?: string) => {
     queryFn: async () => await getUserByUsername(username as string),
     queryKey: ["userByUsername", username],
     enabled: !!username,
+  });
+};
+
+export const useMentionSearchUsersQuery = (query: string, enabled: boolean) => {
+  const { getMentionSearchUsers } = useUserStore();
+  return useQuery({
+    queryKey: ["mention-search", query],
+    queryFn: () => getMentionSearchUsers(query) as Promise<MentionUser[]>,
+    enabled,
+    staleTime: 30_000,
   });
 };

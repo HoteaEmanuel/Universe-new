@@ -4,6 +4,7 @@ import {
   useState,
   type ChangeEvent,
   type FormEvent,
+  type KeyboardEvent,
 } from "react";
 import {
   BarChart3,
@@ -16,7 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useSendFilesMessageMutation,
   useSendMessageMutation,
@@ -31,6 +32,10 @@ import {
 import { useAuthStore } from "../../../store/authStore";
 import { getFullName } from "../../../utils/fullName";
 import { insertEmojiAtSelection } from "../../../utils/insertEmojiAtSelection";
+import { insertMentionAtCursor } from "@/utils/insertMentionAtCursor";
+import { useGroupMentionAutocomplete } from "@/hooks/useGroupMentionAutocomplete";
+import { useAutosizeTextarea } from "@/hooks/useAutosizeTextarea";
+import MentionAutocomplete from "@/components/MentionAutocomplete";
 import { formatFileSize } from "../utils/formatFileSize";
 import { getFileTypeIcon } from "../utils/fileTypeIcon";
 import ImagePickerModal from "./ImagePickerModal";
@@ -62,7 +67,12 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
   };
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingEmitRef = useRef(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useAutosizeTextarea(text);
+  const groupMentionAutocomplete = useGroupMentionAutocomplete({
+    groupId: variant === "group" ? id : undefined,
+    inputRef,
+    value: text,
+  });
 
   const directMutation = useSendMessageMutation(
     variant === "direct" ? id : undefined,
@@ -111,7 +121,7 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const handleTextChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value);
     const now = Date.now();
     if (now - lastTypingEmitRef.current > TYPING_EMIT_THROTTLE_MS) {
@@ -120,6 +130,13 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
     }
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(stopTyping, TYPING_IDLE_MS);
+  };
+
+  const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
   };
 
   const handleEmojiPick = (emoji: string) => {
@@ -289,15 +306,33 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
             <BarChart3 />
           </Button>
         )}
-        <Input
-          ref={inputRef}
-          type="text"
-          value={text}
-          onChange={handleTextChange}
-          onBlur={stopTyping}
-          placeholder="Send a message"
-          className="flex-1"
-        />
+        <div className="relative flex-1">
+          <Textarea
+            ref={inputRef}
+            rows={1}
+            value={text}
+            onChange={handleTextChange}
+            onKeyDown={handleComposerKeyDown}
+            onKeyUp={variant === "group" ? groupMentionAutocomplete.refresh : undefined}
+            onClick={variant === "group" ? groupMentionAutocomplete.refresh : undefined}
+            onBlur={stopTyping}
+            placeholder="Send a message"
+            className="min-h-9 max-h-24 w-full resize-none overflow-y-hidden py-2 leading-5"
+          />
+          {variant === "group" && groupMentionAutocomplete.isOpen && (
+            <MentionAutocomplete
+              placement="above"
+              users={groupMentionAutocomplete.users}
+              isLoading={groupMentionAutocomplete.isLoading}
+              onSelect={(user) => insertMentionAtCursor({
+                input: inputRef.current,
+                value: text,
+                username: user.username,
+                onChange: setText,
+              })}
+            />
+          )}
+        </div>
         <EmojiPickerPopover
           onPick={handleEmojiPick}
           trigger={

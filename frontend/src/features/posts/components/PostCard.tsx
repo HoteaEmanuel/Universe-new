@@ -32,6 +32,7 @@ import PostSkeleton from "./PostSkeleton";
 import EventCard from "@/features/events/components/EventCard";
 import PollBlock from "@/features/polls/components/PollBlock";
 import type { Post } from "@/queryAndMutation/types";
+import MentionText from "@/components/MentionText";
 
 type PostCardProps = {
   post: Post;
@@ -208,7 +209,7 @@ const PostCard = ({ post }: PostCardProps) => {
           className={`text-sm wrap-break-word ${!showMore && "line-clamp-3"}`}
           ref={bodyRef}
         >
-          {post.body}
+          <MentionText text={post.body} mentionedUsers={post.mentionedUsers ?? []} />
         </span>
       )}
       {isClamped && (

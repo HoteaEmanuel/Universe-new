@@ -31,6 +31,7 @@ export const useSendCommentMutation = (postId?: string) => {
         createdAt: new Date().toISOString(),
         likesCount: 0,
         isLiked: false,
+        mentionedUsers: [],
       };
 
       queryClient.setQueryData<CommentsCache>(["comments", postId], (old) =>
@@ -78,6 +79,7 @@ export const useSendReplyMutation = (postId?: string, parentId?: string) => {
         createdAt: new Date().toISOString(),
         likesCount: 0,
         isLiked: false,
+        mentionedUsers: [],
         parentId,
       };
 

@@ -8,6 +8,7 @@ import {
   deleteGroup,
   getUserGroups,
   getGroupById,
+  searchGroupMentionUsersController,
   getGroupMessages,
   getGroupMediaController,
   sendMessageToGroupController,
@@ -51,6 +52,7 @@ import {
   sendGroupVoiceMessageSchema,
   editGroupMessageSchema,
   groupMessagesQuerySchema,
+  groupMentionSearchQuerySchema,
   groupMediaQuerySchema,
   reactToGroupMessageSchema,
   setGroupCourseTagSchema,
@@ -82,6 +84,12 @@ router.patch(
   requireGroupAdmin,
   validate({ body: setGroupCourseTagSchema }),
   setGroupCourseTagController,
+);
+router.get(
+  "/:id/mention-search",
+  requireGroupMembership,
+  validate({ query: groupMentionSearchQuerySchema }),
+  searchGroupMentionUsersController,
 );
 router.get("/:id", requireGroupMembership, getGroupById);
 router.get("/:id/members", requireGroupMembership, getGroupMembers);

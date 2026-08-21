@@ -1,6 +1,19 @@
 import { prisma } from "../database/prisma.js";
 import type { Prisma } from "../generated/prisma/client.js";
 
+const COMMENT_INCLUDE = {
+  mentionedUsers: {
+    select: {
+      id: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      name: true,
+      profilePicture: true,
+    },
+  },
+} satisfies Prisma.CommentInclude;
+
 const COMMENT_ORDER_BY: Prisma.CommentOrderByWithRelationInput[] = [
   { likesCount: "desc" },
   { createdAt: "desc" },
@@ -36,6 +49,7 @@ export const getPostCommentsPage = async (
     orderBy: COMMENT_ORDER_BY,
     take: limit + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    include: COMMENT_INCLUDE,
   });
   return toCommentPage(rows, limit);
 };
@@ -57,6 +71,7 @@ export const getCommentRepliesPage = async (
     orderBy: COMMENT_ORDER_BY,
     take: limit + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    include: COMMENT_INCLUDE,
   });
   return toCommentPage(rows, limit);
 };
@@ -82,8 +97,9 @@ export const createCommentTx = async (data: {
   userId: string;
   text: string;
   parentId?: string;
+  mentionedUserIds?: string[];
 }) => {
-  const { postId, userId, text, parentId } = data;
+  const { postId, userId, text, parentId, mentionedUserIds } = data;
   return prisma.$transaction(async (tx) => {
     if (parentId) {
       const parent = await tx.comment.findUnique({ where: { id: parentId } });
@@ -95,7 +111,15 @@ export const createCommentTx = async (data: {
     }
 
     const comment = await tx.comment.create({
-      data: { postId, userId, text, parentId: parentId ?? null },
+      data: {
+        postId,
+        userId,
+        text,
+        parentId: parentId ?? null,
+        mentionedUsers: mentionedUserIds?.length
+          ? { connect: mentionedUserIds.map((id) => ({ id })) }
+          : undefined,
+      },
     });
 
     if (parentId) {

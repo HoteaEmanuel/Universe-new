@@ -43,6 +43,21 @@ export const findUserByName = async (name: string) => {
 export const findUserByUsername = async (username: string) =>
   prisma.user.findUnique({ where: { username } });
 
+export const findUsersByUsernames = async (usernames: string[]) =>
+  usernames.length === 0
+    ? []
+    : prisma.user.findMany({
+        where: { username: { in: [...new Set(usernames)] } },
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          name: true,
+          profilePicture: true,
+        },
+      });
+
 export const createUserWithGeneratedUsername = async (
   data: Omit<Prisma.UserCreateInput, "username">,
   displayName?: string,

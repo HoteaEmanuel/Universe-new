@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useCreatePostMutation,
@@ -16,6 +16,9 @@ import SubmitButton from "@/components/SubmitButton";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import PollComposeFields from "@/features/polls/components/PollComposeFields";
+import MentionAutocomplete from "@/components/MentionAutocomplete";
+import { useMentionAutocomplete } from "@/hooks/useMentionAutocomplete";
+import { insertMentionAtCursor } from "@/utils/insertMentionAtCursor";
 import {
   TITLE_MAX_LENGTH,
   BODY_MAX_LENGTH,
@@ -36,6 +39,7 @@ const CreatePost = () => {
   }, []);
   const navigate = useNavigate();
   const [caption, setCaption] = useState("");
+  const bodyInputRef = useRef<HTMLTextAreaElement>(null);
   const {
     register,
     handleSubmit,
@@ -56,6 +60,10 @@ const CreatePost = () => {
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const watchedValues = watch();
   const tagsValue = watchedValues.tags || "";
+  const mentionAutocomplete = useMentionAutocomplete({
+    inputRef: bodyInputRef,
+    value: watchedValues.body ?? "",
+  });
 
   const handleTogglePoll = () => {
     setShowPoll((prev) => !prev);
@@ -107,24 +115,44 @@ const CreatePost = () => {
             })}
           />
 
-          <TextareaField
-            id="body"
-            label="Description (optional)"
-            maxLength={BODY_MAX_LENGTH}
-            currentLength={watchedValues.body?.length ?? 0}
-            error={errors.body?.message}
-            placeholder="Write something..."
-            registration={register("body", {
-              validate: (v) => {
-                if (v.length > BODY_MAX_LENGTH)
-                  return `The body should have less than ${BODY_MAX_LENGTH} characters`;
-                if (v.length > 0 && v.length < 5)
-                  return "The body should have at least 5 characters";
-                return true;
-              },
-            })}
-            onChange={(e) => setCaption(e.target.value)}
-          />
+          <div className="relative">
+            <TextareaField
+              id="body"
+              label="Description (optional)"
+              maxLength={BODY_MAX_LENGTH}
+              currentLength={watchedValues.body?.length ?? 0}
+              error={errors.body?.message}
+              placeholder="Write something... Use @ to mention someone"
+              inputRef={bodyInputRef}
+              registration={register("body", {
+                validate: (v) => {
+                  if (v.length > BODY_MAX_LENGTH)
+                    return `The body should have less than ${BODY_MAX_LENGTH} characters`;
+                  if (v.length > 0 && v.length < 5)
+                    return "The body should have at least 5 characters";
+                  return true;
+                },
+              })}
+              onChange={(e) => setCaption(e.target.value)}
+              onKeyUp={mentionAutocomplete.refresh}
+              onClick={mentionAutocomplete.refresh}
+            />
+            {mentionAutocomplete.isOpen && (
+              <MentionAutocomplete
+                users={mentionAutocomplete.users}
+                isLoading={mentionAutocomplete.isLoading}
+                onSelect={(user) => insertMentionAtCursor({
+                  input: bodyInputRef.current,
+                  value: watchedValues.body ?? "",
+                  username: user.username,
+                  onChange: (body) => {
+                    setValue("body", body, { shouldValidate: true, shouldDirty: true });
+                    setCaption(body);
+                  },
+                })}
+              />
+            )}
+          </div>
 
           <div className="flex flex-col gap-1.5">
             <Label className="">Images</Label>

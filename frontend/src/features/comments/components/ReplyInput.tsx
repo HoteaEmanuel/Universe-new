@@ -1,11 +1,15 @@
-import { useRef } from "react";
+import { type KeyboardEvent } from "react";
 import { useForm } from "react-hook-form";
 import { SendHorizonal, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import EmojiPickerPopover from "@/features/chat/components/EmojiPickerPopover";
 import { useSendReplyMutation } from "@/queryAndMutation/mutations/comment-mutation";
 import { insertEmojiAtSelection } from "@/utils/insertEmojiAtSelection";
+import MentionAutocomplete from "@/components/MentionAutocomplete";
+import { useMentionAutocomplete } from "@/hooks/useMentionAutocomplete";
+import { insertMentionAtCursor } from "@/utils/insertMentionAtCursor";
+import { useAutosizeTextarea } from "@/hooks/useAutosizeTextarea";
 
 type ReplyFormValues = {
   reply: string;
@@ -26,12 +30,16 @@ const ReplyInput = ({ postId, parentId, onSent }: ReplyInputProps) => {
     setValue,
     watch,
   } = useForm<ReplyFormValues>();
-  const replyInputRef = useRef<HTMLInputElement>(null);
   const { mutate: sendReplyMutation, isPending } = useSendReplyMutation(
     postId,
     parentId,
   );
   const replyValue = watch("reply");
+  const replyInputRef = useAutosizeTextarea(replyValue ?? "");
+  const mentionAutocomplete = useMentionAutocomplete({
+    inputRef: replyInputRef,
+    value: replyValue ?? "",
+  });
   const { ref: replyFieldRef, ...replyField } = register("reply", {
     required: true,
     validate: (reply) => reply.trim() !== "",
@@ -53,23 +61,47 @@ const ReplyInput = ({ postId, parentId, onSent }: ReplyInputProps) => {
     });
   };
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
+  };
+
   return (
     <form
       className="mt-1.5 flex items-center gap-2"
       onSubmit={handleSubmit(onSubmit)}
     >
-      <Input
-        type="text"
-        className="h-7 flex-1 rounded-full border-none bg-muted px-3 text-xs focus-visible:ring-1"
-        {...replyField}
-        ref={(input: HTMLInputElement | null) => {
-          replyFieldRef(input);
-          replyInputRef.current = input;
-        }}
-        placeholder="Write a reply..."
-        autoComplete="off"
-        autoFocus
-      />
+      <div className="relative flex-1">
+        <Textarea
+          rows={1}
+          className="min-h-7 max-h-24 w-full resize-none overflow-y-hidden rounded-xl border-none bg-muted px-3 py-1 text-xs leading-4 focus-visible:ring-1"
+          {...replyField}
+          ref={(input: HTMLTextAreaElement | null) => {
+            replyFieldRef(input);
+            replyInputRef.current = input;
+          }}
+          onKeyUp={mentionAutocomplete.refresh}
+          onClick={mentionAutocomplete.refresh}
+          onKeyDown={handleKeyDown}
+          placeholder="Write a reply..."
+          autoComplete="off"
+          autoFocus
+        />
+        {mentionAutocomplete.isOpen && (
+          <MentionAutocomplete
+            users={mentionAutocomplete.users}
+            isLoading={mentionAutocomplete.isLoading}
+            onSelect={(user) => insertMentionAtCursor({
+              input: replyInputRef.current,
+              value: getValues("reply") ?? "",
+              username: user.username,
+              onChange: (reply) => setValue("reply", reply, { shouldValidate: true, shouldDirty: true }),
+            })}
+          />
+        )}
+      </div>
       <EmojiPickerPopover
         onPick={handleEmojiPick}
         trigger={

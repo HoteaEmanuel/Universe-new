@@ -12,6 +12,7 @@ import {
   getRelevantFollowing,
   getUniversityPeople,
   getAllUsers,
+  mentionSearchUsers,
   getUsersFromSameUniversity,
   updateBio,
   getUserByUsername,
@@ -27,6 +28,7 @@ import {
   followListQuerySchema,
   updateUsernameSchema,
   usernameAvailabilityQuerySchema,
+  mentionSearchQuerySchema,
 } from "../schemas/user.schema.js";
 import { imageUpload } from "../lib/imageUpload.js";
 import { verifyUploadedFiles } from "../lib/validateUpload.js";
@@ -34,6 +36,11 @@ import { verifyUploadedFiles } from "../lib/validateUpload.js";
 const router = express.Router();
 
 router.get("/users", getAllUsers);
+router.get(
+  "/users/mention-search",
+  validate({ query: mentionSearchQuerySchema }),
+  mentionSearchUsers,
+);
 router.get("/users/:id", getUserById);
 router.get("/u/:username", getUserByUsername);
 router.get(

@@ -59,6 +59,10 @@ export const groupMessagesQuerySchema = z.object({
 });
 export type GroupMessagesQueryInput = z.infer<typeof groupMessagesQuerySchema>;
 
+export const groupMentionSearchQuerySchema = z.object({
+  q: z.string().trim().toLowerCase().max(30),
+});
+
 export const groupMediaQuerySchema = z.object({
   type: z.enum(["images", "files"]).default("images"),
   before: z.string().min(1).optional(),

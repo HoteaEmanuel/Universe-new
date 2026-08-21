@@ -6,7 +6,20 @@ import { POLL_INCLUDE } from "./poll.repository.js";
 const POST_INCLUDE = {
   event: { include: EVENT_INCLUDE },
   poll: { include: POLL_INCLUDE },
+  tags: { select: { name: true } },
+  mentionedUsers: {
+    select: {
+      id: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      name: true,
+      profilePicture: true,
+    },
+  },
 } satisfies Prisma.PostInclude;
+
+export { POST_INCLUDE };
 
 export const findPostById = async (id: string) => {
   return prisma.post.findUnique({ where: { id }, include: POST_INCLUDE });
@@ -100,6 +113,7 @@ interface CreatePostInput {
   location?: string;
   imageUrls?: string[];
   imagePublicIds?: string[];
+  mentionedUserIds?: string[];
   poll?: { question: string; options: string[]; closesAt?: Date };
 }
 
@@ -112,6 +126,7 @@ export const createPost = async (data: CreatePostInput) => {
     location,
     imageUrls,
     imagePublicIds,
+    mentionedUserIds,
     poll,
   } = data;
 
@@ -130,6 +145,9 @@ export const createPost = async (data: CreatePostInput) => {
               create: { name },
             })),
           }
+        : undefined,
+      mentionedUsers: mentionedUserIds?.length
+        ? { connect: mentionedUserIds.map((id) => ({ id })) }
         : undefined,
       poll: poll
         ? {

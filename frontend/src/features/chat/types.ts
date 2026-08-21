@@ -68,6 +68,7 @@ export type ChatMessage = {
   deleted?: boolean;
   edited?: boolean;
   reactions?: MessageReaction[];
+  mentionedUsers?: import("@/queryAndMutation/types").MentionUser[];
   createdAt: string;
   updatedAt: string;
 };

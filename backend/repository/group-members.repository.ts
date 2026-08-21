@@ -47,6 +47,57 @@ export const findGroupMembers = async (groupId: string) => {
   return prisma.groupMembers.findMany({ where: { groupId } });
 };
 
+export const findGroupMembersByUsernames = async (
+  groupId: string,
+  usernames: string[],
+) => {
+  if (usernames.length === 0) return [];
+  const memberships = await prisma.groupMembers.findMany({
+    where: {
+      groupId,
+      member: { username: { in: [...new Set(usernames)] } },
+    },
+    select: {
+      member: {
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          name: true,
+          profilePicture: true,
+        },
+      },
+    },
+  });
+  return memberships.map((membership) => membership.member);
+};
+
+export const searchGroupMembersByUsername = async (
+  groupId: string,
+  query: string,
+) => {
+  const memberships = await prisma.groupMembers.findMany({
+    where: { groupId, member: { username: { startsWith: query } } },
+    select: {
+      member: {
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          name: true,
+          profilePicture: true,
+        },
+      },
+    },
+    take: 8,
+  });
+  return memberships
+    .map((membership) => membership.member)
+    .sort((a, b) => a.username.localeCompare(b.username));
+};
+
 export const findGroupMembershipsForUser = async (userId: string) => {
   return prisma.groupMembers.findMany({ where: { memberId: userId } });
 };

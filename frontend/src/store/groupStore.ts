@@ -15,6 +15,7 @@ import type {
   NewVoiceMessagePayload,
   ResourceType,
 } from "../features/chat/types";
+import type { MentionUser } from "../queryAndMutation/types";
 
 const API_URL =
   import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:5000/api";
@@ -80,6 +81,7 @@ type GroupStore = {
   getGroupBans: (groupId: string, cursor?: string) => Promise<GroupBanPage>;
   updateGroupImage: (groupId: string, image: File) => Promise<unknown>;
   getActiveMembers: (id: string) => Promise<ChatUser[]>;
+  getGroupMentionSearchUsers: (groupId: string, query: string) => Promise<MentionUser[]>;
 };
 
 export const useGroupStore = create<GroupStore>(() => ({
@@ -377,6 +379,16 @@ export const useGroupStore = create<GroupStore>(() => ({
       return response.data.activeUsers;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load active members"));
+    }
+  },
+  getGroupMentionSearchUsers: async (groupId, query) => {
+    try {
+      const response = await axios.get(`${API_URL}/groups/${groupId}/mention-search`, {
+        params: { q: query },
+      });
+      return response.data.users;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not search group members"));
     }
   },
 }));

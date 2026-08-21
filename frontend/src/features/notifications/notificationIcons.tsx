@@ -9,6 +9,7 @@ import {
   Reply,
   UserPlus,
   Users,
+  AtSign,
 } from "lucide-react";
 import type { Notification } from "@/queryAndMutation/types";
 
@@ -17,6 +18,8 @@ const TYPE_ICON: Record<string, typeof Heart> = {
   "comment-like": Heart,
   "post-comment": MessageCircle,
   "post-reply": Reply,
+  "post-mention": AtSign,
+  "comment-mention": AtSign,
   "event-banned": Ban,
   "group-banned": Users,
   "event-update": CalendarClock,

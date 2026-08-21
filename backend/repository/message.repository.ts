@@ -38,6 +38,7 @@ const GROUP_MESSAGE_INCLUDE = {
   ...MESSAGE_INCLUDE,
   sender: { select: GROUP_MESSAGE_SENDER_SELECT },
   poll: { include: POLL_INCLUDE },
+  mentionedUsers: { select: GROUP_MESSAGE_SENDER_SELECT },
 } as const;
 
 interface CreateMessageInput {
@@ -113,6 +114,7 @@ interface CreateGroupMessageInput {
   attachments?: AttachmentInput[];
   sharedPostId?: string | null;
   poll?: GroupMessagePollInput;
+  mentionedUserIds?: string[];
 }
 
 export const createGroupMessage = async (data: CreateGroupMessageInput) => {
@@ -128,6 +130,7 @@ export const createGroupMessage = async (data: CreateGroupMessageInput) => {
     attachments,
     sharedPostId,
     poll,
+    mentionedUserIds,
   } = data;
 
   return prisma.groupMessage.create({
@@ -159,6 +162,9 @@ export const createGroupMessage = async (data: CreateGroupMessageInput) => {
               },
             },
           }
+        : undefined,
+      mentionedUsers: mentionedUserIds?.length
+        ? { connect: mentionedUserIds.map((id) => ({ id })) }
         : undefined,
     },
     include: GROUP_MESSAGE_INCLUDE,

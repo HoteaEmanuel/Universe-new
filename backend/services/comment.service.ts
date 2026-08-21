@@ -12,6 +12,7 @@ import {
   likeCommentTx,
   removeCommentLikeTx,
 } from "../repository/comment.repository.js";
+import { resolveMentionedUsers } from "./mention.service.js";
 
 export const createComment = async (data: {
   id: string;
@@ -25,11 +26,13 @@ export const createComment = async (data: {
 
   const parentComment = parentId ? await findCommentById(parentId) : null;
 
+  const mentionedUsers = await resolveMentionedUsers(commentText, userId);
   const comment = await createCommentTx({
     postId: id,
     userId,
     text: commentText,
     parentId,
+    mentionedUserIds: mentionedUsers.map((user) => user.id),
   });
 
   const activePostUsers = getActivePostUsers(id);
@@ -71,7 +74,23 @@ export const createComment = async (data: {
     });
 
     await emitNewNotification(post.userId, notification);
+    notifiedUserIds.add(post.userId);
   }
+
+  await Promise.all(mentionedUsers
+    .filter((mentionedUser) => !notifiedUserIds.has(mentionedUser.id))
+    .map(async (mentionedUser) => {
+      const notification = await createNotification({
+        actionUserId: userId,
+        userId: mentionedUser.id,
+        title: "New comment mention",
+        type: "comment-mention",
+        message: `${user?.firstName || user?.name} mentioned you in a comment`,
+        postId: id,
+        commentId: comment.id,
+      });
+      await emitNewNotification(mentionedUser.id, notification);
+    }));
 
   return comment;
 };

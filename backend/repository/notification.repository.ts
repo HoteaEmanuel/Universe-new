@@ -51,10 +51,12 @@ interface CreateNotificationInput {
   type: NotificationType;
   title?: string;
   message?: string;
+  postId?: string;
+  commentId?: string;
 }
 
 export const createNotification = async (data: CreateNotificationInput) => {
-  const { userId, actionUserId, type, title, message } = data;
+  const { userId, actionUserId, type, title, message, postId, commentId } = data;
   return prisma.notification.create({
     data: {
       title,
@@ -62,6 +64,8 @@ export const createNotification = async (data: CreateNotificationInput) => {
       userId,
       actionUserId,
       type,
+      postId,
+      commentId,
     },
     include: { actionUser: { select: NOTIFICATION_ACTION_USER_SELECT } },
   });

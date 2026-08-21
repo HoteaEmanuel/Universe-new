@@ -21,6 +21,7 @@ import {
   unbanGroupMemberService,
   getGroupBansService,
   GroupBannedError,
+  searchGroupMentionUsers,
 } from "../services/group.service.js";
 import { findGroupMembershipsForUser } from "../repository/group-members.repository.js";
 import {
@@ -156,6 +157,20 @@ export const getGroupById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Group not found" });
     }
     return res.status(200).json({ group });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const searchGroupMentionUsersController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    const groupId = req.params.id as string;
+    const q = req.query.q as string;
+    const users = await searchGroupMentionUsers(groupId, q);
+    return res.status(200).json({ users });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

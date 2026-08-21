@@ -94,6 +94,9 @@ model User {
   groupBansIssued       GroupBan[]             @relation("GroupBanIssuedBy")
   polls                 Poll[]
   pollVotes             PollVote[]
+  mentionedInPosts      Post[]           @relation("PostMentions")
+  mentionedInComments   Comment[]        @relation("CommentMentions")
+  mentionedInGroupMessages GroupMessage[] @relation("GroupMessageMentions")
 
   @@index([university])
   @@map("users")
@@ -121,6 +124,7 @@ model Post {
   body            String?
   location        String?
   tags            Tag[]                    @relation("PostTags")
+  mentionedUsers  User[]                   @relation("PostMentions")
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
   searchVector    Unsupported("tsvector")?
@@ -133,6 +137,7 @@ model Post {
   comments Comment[]
   likes    Like[]
   savedBy  SavedPost[]
+  notifications Notification[]
 
   sharedInMessages      Message[]
   sharedInGroupMessages GroupMessage[]
@@ -165,6 +170,8 @@ model Comment {
   updatedAt    DateTime  @updatedAt
 
   likes CommentLike[]
+  mentionedUsers User[]       @relation("CommentMentions")
+  notifications Notification[]
 
   @@index([postId])
   @@index([userId])
@@ -245,6 +252,10 @@ model Notification {
   group          Group?        @relation(fields: [groupId], references: [id], onDelete: Cascade)
   eventId        String?
   event          Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  postId         String?
+  post           Post?         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commentId      String?
+  comment        Comment?      @relation(fields: [commentId], references: [id], onDelete: Cascade)
   userAvatar     String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -400,6 +411,7 @@ model GroupMessage {
   reactions     GroupMessageReaction[]
   attachments   Attachment[]
   poll          Poll?
+  mentionedUsers User[] @relation("GroupMessageMentions")
 
   @@index([groupId])
   @@map("group_messages")

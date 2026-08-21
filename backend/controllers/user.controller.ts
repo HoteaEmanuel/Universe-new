@@ -46,6 +46,31 @@ export const getAllUsers = async (req: Request, res: Response) => {
   } catch (error) {}
 };
 
+export const mentionSearchUsers = async (req: Request, res: Response) => {
+  try {
+    const q = req.query.q as string;
+    const viewerId = req.userId as string;
+    const relevantIds = [...(await getViewerRelevantUserIds(viewerId))];
+    const select = {
+      id: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      name: true,
+      profilePicture: true,
+    } as const;
+    const users = await prisma.user.findMany({
+      where: { id: { not: viewerId }, username: { startsWith: q } },
+      select,
+      take: 8,
+    });
+    users.sort((a, b) => Number(relevantIds.includes(b.id)) - Number(relevantIds.includes(a.id)) || a.username.localeCompare(b.username));
+    return res.status(200).json({ users });
+  } catch (error) {
+    return res.status(400).json({ message: "Could not search users" });
+  }
+};
+
 export const getUserById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;

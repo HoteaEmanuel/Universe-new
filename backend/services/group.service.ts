@@ -3,6 +3,7 @@ import {
   acquireGroupMember,
   findGroupMember,
   findGroupMembers,
+  searchGroupMembersByUsername,
   findGroupMembershipsForUser,
   banGroupMember,
   deleteGroupBan,
@@ -30,6 +31,7 @@ import { uploadImage, deleteImages } from "../lib/storage.js";
 import type { GroupVisibility } from "../generated/prisma/client.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 import { toPollDTO } from "./poll.service.js";
+import { resolveGroupMentionedUsers } from "./group-mention.service.js";
 
 type UploadedImage = Express.Multer.File;
 
@@ -38,6 +40,9 @@ export const withGroupMessagePollDTO = <
 >(
   message: T,
 ) => (message.poll ? { ...message, poll: toPollDTO(message.poll) } : message);
+
+export const searchGroupMentionUsers = (groupId: string, query: string) =>
+  searchGroupMembersByUsername(groupId, query);
 
 export const createGroupService = async (data: {
   name: string;
@@ -203,6 +208,11 @@ export const sendMessage = async (data: {
 
   const group = await findGroupById(groupId);
   if (!group) throw new Error("Group doesnt exist");
+  const mentionedUsers = await resolveGroupMentionedUsers(
+    groupId,
+    messageText,
+    authUserId,
+  );
 
   const groupMessage = await createGroupMessage({
     senderId: authUserId,
@@ -210,6 +220,7 @@ export const sendMessage = async (data: {
     messageText,
     imageUrls: imageSecureUrls,
     imagePublicIds,
+    mentionedUserIds: mentionedUsers.map((user) => user.id),
   });
 
   await prisma.group.update({
@@ -268,12 +279,18 @@ export const sendFilesMessage = async (data: {
 
   const group = await findGroupById(groupId);
   if (!group) throw new Error("Group doesnt exist");
+  const mentionedUsers = await resolveGroupMentionedUsers(
+    groupId,
+    messageText,
+    authUserId,
+  );
 
   const groupMessage = await createGroupMessage({
     senderId: authUserId,
     groupId,
     messageText,
     attachments: uploaded,
+    mentionedUserIds: mentionedUsers.map((user) => user.id),
   });
 
   await prisma.group.update({

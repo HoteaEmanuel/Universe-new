@@ -108,14 +108,6 @@ export const useGetUsersWhoLikedInfiniteQuery = (postId: string) => {
   });
 };
 
-export const useGetPostsByTagQuery = (tag: string) => {
-  const { getPostsByTag } = usePostStore();
-  return useQuery({
-    queryFn: () => getPostsByTag(tag) as Promise<Post[]>,
-    queryKey: ["postsByTag", tag],
-  });
-};
-
 export const useGetPostsByNameQuery = (name: string) => {
   const { getPostsByName } = usePostStore();
   return useQuery({

@@ -5,6 +5,7 @@ import type {
   FollowUser,
   FollowListPage,
   UniversityPeoplePage,
+  MentionUser,
 } from "../queryAndMutation/types";
 
 const API_URL =
@@ -40,6 +41,7 @@ type UserStore = {
   getUniversityPeople: (
     cursor?: string,
   ) => Promise<UniversityPeoplePage | undefined>;
+  getMentionSearchUsers: (query: string) => Promise<MentionUser[]>;
 };
 
 export const useUserStore = create<UserStore>((set) => ({
@@ -285,6 +287,20 @@ export const useUserStore = create<UserStore>((set) => ({
       };
     } catch (error) {
       set({ error: error });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  getMentionSearchUsers: async (query) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get(`${API_URL}/users/mention-search`, {
+        params: { q: query },
+      });
+      return response.data.users;
+    } catch (error) {
+      set({ error });
       throw error;
     } finally {
       set({ isLoading: false });

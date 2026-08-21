@@ -8,6 +8,10 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
+    if (notification.postId) {
+      navigate(`/post/${notification.postId}`);
+      return;
+    }
     if (notification.type === "message") {
       if (notification.conversationId) {
         navigate(`/conversations/${notification.conversationId}`);

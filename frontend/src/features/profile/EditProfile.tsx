@@ -198,6 +198,7 @@ const EditProfile = () => {
               <span className="select-none ps-3 text-base text-muted-foreground" aria-hidden="true">@</span>
               <Input
                 id="username"
+                type="text"
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}

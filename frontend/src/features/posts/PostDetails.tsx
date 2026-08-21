@@ -25,6 +25,7 @@ import {
 } from "@/queryAndMutation/mutations/post-mutation";
 import CommentsContainer from "@/features/comments/components/CommentsContainer";
 import CommentInput from "@/features/comments/components/CommentInput";
+import MentionText from "@/components/MentionText";
 import { useGetPostCommentsCount } from "@/queryAndMutation/queries/comments-queries";
 import LikesModal from "./components/LikesModal";
 import PollBlock from "@/features/polls/components/PollBlock";
@@ -294,7 +295,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
                 {post.title && (
                   <span className="font-semibold">{post.title} </span>
                 )}
-                <span>{post.body}</span>
+                <MentionText text={post.body} mentionedUsers={post.mentionedUsers ?? []} />
               </p>
               {isClamped && (
                 <button

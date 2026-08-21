@@ -7,7 +7,7 @@ import type { Notification } from "@/queryAndMutation/types";
 import { showNotificationToast } from "./NotificationToast";
 import { urlPathName } from "@/utils/urlPathFromName";
 
-const TOAST_TYPES = new Set(["message", "follow"]);
+const TOAST_TYPES = new Set(["message", "follow", "post-mention", "comment-mention"]);
 
 const NotificationSocketListener = () => {
   const { socket, user } = useAuthStore();
@@ -33,6 +33,8 @@ const NotificationSocketListener = () => {
           navigate(`/groups/${notification.groupId}`);
         } else if (notification.type === "follow" && notification.actionUser) {
           navigate(`/u/${urlPathName(notification.actionUser)}`);
+        } else if ((notification.type === "post-mention" || notification.type === "comment-mention") && notification.postId) {
+          navigate(`/post/${notification.postId}`);
         } else {
           navigate("/notifications");
         }

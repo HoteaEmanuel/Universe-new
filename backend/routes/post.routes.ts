@@ -19,7 +19,7 @@ import {
   likePostController,
   unlikePostController,
   createPostController,
-  getPostsByTagController,
+  getPostsTags,
   getShareRecipientsController,
   sharePostController,
 } from "../controllers/post.controller.js";
@@ -39,6 +39,7 @@ import {
 } from "../schemas/post.schema.js";
 
 router.get("/post/:id", getPost);
+router.get("/posts/tags", getPostsTags);
 router.get("/share-recipients", getShareRecipientsController);
 router.post(
   "/post/:id/share",
@@ -92,7 +93,6 @@ router.patch(
 );
 router.delete("/posts/:id", requirePostOwner, deletePostController);
 router.get("/posts-by-name/:name", getSearchedPostsController);
-router.get("/posts-by-tag/:tag", getPostsByTagController);
 
 router.post(
   "/delete-posts",

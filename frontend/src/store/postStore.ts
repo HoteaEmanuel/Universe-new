@@ -39,7 +39,6 @@ type PostStore = {
   unlikePost: (args: { postId: string }) => Promise<{ message: string } | undefined>;
   checkSaved: (id: string) => Promise<{ isSaved: boolean }>;
   getPostsByName: (name: string) => Promise<Post[]>;
-  getPostsByTag: (tag: string) => Promise<Post[]>;
   getPublicPost: (id?: string) => Promise<PublicPost>;
   getShareRecipients: () => Promise<ShareRecipient[]>;
   sharePost: (postId: string, recipientIds: string[]) => Promise<void>;
@@ -298,17 +297,6 @@ export const usePostStore = create<PostStore>((set) => ({
   getPostsByName: async (name) => {
     try {
       const response = await axios.get(`${API_URL}/posts-by-name/${name}`);
-      return response.data.posts;
-    } catch (error) {
-      set({ error: error });
-      throw new Error(error as string);
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-  getPostsByTag: async (tag) => {
-    try {
-      const response = await axios.get(`${API_URL}/posts-by-tag/${tag}`);
       return response.data.posts;
     } catch (error) {
       set({ error: error });

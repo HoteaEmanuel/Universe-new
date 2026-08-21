@@ -19,6 +19,10 @@ export const usernameAvailabilityQuerySchema = z.object({
   username: z.string().trim().toLowerCase(),
 });
 
+export const mentionSearchQuerySchema = z.object({
+  q: z.string().trim().toLowerCase().max(30),
+});
+
 export const followSchema = z.object({
   followerId: z
     .string()
