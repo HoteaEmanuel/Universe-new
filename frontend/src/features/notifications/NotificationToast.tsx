@@ -13,7 +13,7 @@ const NotificationToastContent = ({
   onView: () => void;
 }) => {
   return (
-    <div className="flex w-full max-w-sm items-start gap-3 rounded-xl border border-border bg-popover p-3 pr-2 text-popover-foreground shadow-lg ring-1 ring-foreground/10">
+    <div className="flex w-full max-w-sm items-start gap-3 rounded-xl border border-border bg-popover p-3 pr-2 text-popover-foreground shadow-(--shadow-overlay)">
       <NotificationAvatar notification={notification} size="sm" />
       <button
         type="button"

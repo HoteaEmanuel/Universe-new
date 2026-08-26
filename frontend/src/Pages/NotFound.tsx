@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import notFoundIllustration from "@/assets/undraw_astronomy_ied1.svg";
+import notFoundIllustration from "@/assets/404-event-horizon.webp";
 import "@/stars.css";
 
 const NotFound = () => {
@@ -18,20 +18,14 @@ const NotFound = () => {
       <div className="nebula-glow" />
 
       <div className="relative z-10 flex min-h-screen w-full flex-col items-center justify-center gap-6 px-6 py-16 text-center">
-        <div className="relative flex items-center justify-center">
-          <div className="absolute size-72 rounded-full bg-primary/20 blur-3xl dark:bg-primary/30 sm:size-96" />
-          <div className="animate-float relative rounded-[3rem] border border-violet-100 bg-white p-6 shadow-xl dark:border-transparent dark:bg-linear-to-br dark:from-violet-300 dark:to-violet-500 dark:shadow-[0_20px_60px_-15px_rgba(124,58,237,0.5)] sm:p-10">
-            <img
-              src={notFoundIllustration}
-              alt=""
-              className="w-full max-w-xs sm:max-w-sm"
-            />
-          </div>
+        <div className="relative flex w-full items-center justify-center">
+          <div className="absolute size-80 rounded-full bg-primary/20 blur-3xl dark:bg-primary/30 sm:size-128" />
+          <img
+            src={notFoundIllustration}
+            alt="An astronaut slipping past the edge of a 404 event horizon"
+            className="animate-float relative w-full max-w-md sm:max-w-2xl"
+          />
         </div>
-
-        <span className="gradient-text-light text-7xl leading-none sm:text-8xl">
-          404
-        </span>
 
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-foreground sm:text-4xl">

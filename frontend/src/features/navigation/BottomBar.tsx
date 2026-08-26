@@ -5,7 +5,7 @@ const BottomBar = () => {
   const { pathname } = useLocation();
 
   return (
-    <nav className="theme fixed inset-x-0 bottom-0 z-20 flex h-16 items-center justify-around gap-1 border-t border-gray-200 px-2 shadow md:hidden dark:border-gray-800">
+    <nav className="fixed inset-x-0 bottom-0 z-20 flex h-16 items-center justify-around gap-1 border-t border-border bg-card px-2 shadow-(--shadow-overlay) md:hidden">
       {BottomTabLinks.map((item) => {
         const isActive = pathname === item.link;
         const Icon = item.element;

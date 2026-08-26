@@ -26,12 +26,6 @@
   @apply text-violet-900;
 }
 
-.theme {
-  @apply bg-gray-50;
-}
-[data-theme="dark"] .theme {
-  @apply bg-gray-950;
-}
 .onHoverMenu {
   @apply hover:bg-linear-to-l hover:from-gray-50 hover:to-violet-100;
 }
@@ -243,39 +237,7 @@ body {
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-/* Varianta 1 - Deep Purple to Pink */
-.heading-text-1 {
-  @apply font-black bg-clip-text text-transparent;
-  background: linear-gradient(
-    135deg,
-    #581c87,
-    #7c3aed,
-    #a855f7,
-    #d946ef,
-    #f0abfc
-  );
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Varianta 2 - Rich Purple */
-.heading-text-1 {
-  @apply font-black bg-clip-text text-transparent;
-  background: linear-gradient(
-    135deg,
-    #4c1d95,
-    #6d28d9,
-    #8b5cf6,
-    #a78bfa,
-    #c4b5fd
-  );
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Varianta 3 - Purple to Violet */
+/* Varianta 3 - Purple to Violet (only variant that actually applies — the two prior duplicate rules above and three commented-out ones below were dead, cascade-overridden CSS and have been removed) */
 .heading-text-1 {
   @apply font-black bg-clip-text text-transparent;
   background: linear-gradient(
@@ -291,42 +253,9 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* .heading-text-1 {
-  @apply font-black bg-clip-text text-transparent;
-  background: linear-gradient(135deg, #a855f7, #d8b4fe, #6b21a8, #9333ea);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-} */
-/* .heading-text-1 {
-  @apply font-black bg-clip-text text-transparent;
-  background: linear-gradient(135deg, #3b0764, #6b21a8, #9333ea, #a855f7, #d8b4fe);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-} */
 .btn-violet {
   @apply bg-[#7013c8] hover:bg-[#8229d5] text-white font-bold py-2 px-4 rounded;
 }
-/* .heading-text-1 {
-  @apply font-black bg-clip-text text-transparent;
-  background: linear-gradient(135deg, #5b21b6, #7c3aed, #a855f7, #c084fc, #e879f9);
-  background-size: 200% 200%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gradient 3s ease infinite;
-}
-
-@keyframes gradient {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-} */
-
-/* @keyframes gradient {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-} */
 
 /* From Uiverse.io by andrew-demchenk0 */
 .switch {
@@ -1110,6 +1039,8 @@ input:checked + .slider1:before {
     oklch(0.269 0 0);
   --radius:
     0.625rem;
+  --shadow-overlay:
+    0 2px 8px rgba(15, 15, 20, 0.08), 0 16px 40px -12px rgba(15, 15, 20, 0.22);
   --sidebar:
     oklch(0.985 0 0);
   --sidebar-foreground:

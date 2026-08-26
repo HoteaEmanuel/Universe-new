@@ -42,7 +42,7 @@ const PollBlock = ({ poll, invalidateKeys = [] }: PollBlockProps) => {
 
   return (
     <div
-      className="flex flex-col gap-2 rounded-xl border border-border p-3"
+      className="flex flex-col gap-2 rounded-xl p-3"
       onClick={(e) => e.stopPropagation()}
     >
       <p className="text-sm font-medium wrap-break-word">{poll.question}</p>
@@ -79,8 +79,8 @@ const PollBlock = ({ poll, invalidateKeys = [] }: PollBlockProps) => {
                   type="button"
                   disabled={voteMutation.isPending}
                   onClick={(e) => handleVote(e, option.id)}
-                  className={`relative overflow-hidden rounded-lg border text-left hover:bg-muted/50 disabled:opacity-60 ${
-                    isMyVote ? "border-primary" : "border-border"
+                  className={`relative overflow-hidden rounded-lg text-left hover:bg-muted/50 disabled:opacity-60 ${
+                    isMyVote ? "bg-primary/10" : "bg-muted/60"
                   }`}
                 >
                   {resultRow}
@@ -91,7 +91,7 @@ const PollBlock = ({ poll, invalidateKeys = [] }: PollBlockProps) => {
             return (
               <div
                 key={option.id}
-                className="relative overflow-hidden rounded-lg border border-border"
+                className={`relative overflow-hidden rounded-lg ${isMyVote ? "bg-primary/10" : "bg-muted/60"}`}
               >
                 {resultRow}
               </div>
@@ -104,7 +104,7 @@ const PollBlock = ({ poll, invalidateKeys = [] }: PollBlockProps) => {
               type="button"
               disabled={voteMutation.isPending}
               onClick={(e) => handleVote(e, option.id)}
-              className="rounded-lg border border-border px-3 py-1.5 text-left text-sm hover:bg-muted disabled:opacity-60"
+              className="rounded-lg bg-muted/60 px-3 py-1.5 text-left text-sm hover:bg-muted disabled:opacity-60"
             >
               {option.text}
             </button>
