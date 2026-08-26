@@ -10,6 +10,7 @@ backend/generated/
 backend/dist/
 node_modules/
 uploads/
+coverage/
 .impeccable/
 design-explorations/
 /login_fixed.png
