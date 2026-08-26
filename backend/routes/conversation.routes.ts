@@ -13,8 +13,12 @@ import {
   editMessageController,
   deleteMessageController,
   getConversationsController,
+  getArchivedConversationsController,
   reactToMessageController,
   markConversationReadController,
+  archiveConversationController,
+  unarchiveConversationController,
+  deleteConversationForMeController,
 } from "../controllers/conversation.controller.js";
 import { imageUpload } from "../lib/imageUpload.js";
 import { audioUpload } from "../lib/audioUpload.js";
@@ -40,6 +44,7 @@ const router = express.Router();
 
 router.get("/", getConversationsController);
 router.get("/users", getConvoUsers);
+router.get("/archived", getArchivedConversationsController);
 router.get("/:id", requireConversationParticipant, getConvoById);
 router.get(
   "/messages/:id",
@@ -62,6 +67,17 @@ router.get(
 router.get("/:id/user", requireConversationParticipant, getConvoUser);
 router.get("/user/:id", getConversationByUserIds);
 router.post("/:id/read", requireConversationParticipant, markConversationReadController);
+router.post("/:id/archive", requireConversationParticipant, archiveConversationController);
+router.post(
+  "/:id/unarchive",
+  requireConversationParticipant,
+  unarchiveConversationController,
+);
+router.delete(
+  "/:id",
+  requireConversationParticipant,
+  deleteConversationForMeController,
+);
 
 router.delete(
   "/delete-messages/:id",

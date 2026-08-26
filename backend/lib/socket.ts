@@ -2,6 +2,7 @@ import http from "http";
 import express from "express";
 import jwt from "jsonwebtoken";
 import { Server } from "socket.io";
+import { findBlockEitherDirection } from "../repository/block.repository.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -35,7 +36,9 @@ const parseCookies = (header?: string): Record<string, string> => {
 io.use((socket, next) => {
   try {
     const bearerToken = socket.handshake.auth?.token as string | undefined;
-    const cookieToken = parseCookies(socket.handshake.headers.cookie).accessToken;
+    const cookieToken = parseCookies(
+      socket.handshake.headers.cookie,
+    ).accessToken;
     const token = bearerToken || cookieToken;
     if (!token) return next(new Error("Unauthorized"));
 
@@ -93,26 +96,30 @@ io.on("connection", (socket) => {
     activeConversationUsers[id]?.delete(userId);
   });
 
-  socket.on("typing", ({ id, name }: { id: string; name: string }) => {
+  socket.on("typing", async ({ id, name }: { id: string; name: string }) => {
     const activeUsers = activeConversationUsers[id];
     if (!activeUsers) return;
-    activeUsers.forEach((memberId) => {
-      if (memberId === userId) return;
+    for (const memberId of activeUsers) {
+      if (memberId === userId) continue;
+      // Blocking stops sending socket typing information
+      if (await findBlockEitherDirection(userId, memberId)) continue;
       const receiverSocketId = getReceiverSocketId(memberId);
       if (receiverSocketId)
         io.to(receiverSocketId).emit("userTyping", { id, userId, name });
-    });
+    }
   });
 
-  socket.on("stopTyping", ({ id }: { id: string }) => {
+  socket.on("stopTyping", async ({ id }: { id: string }) => {
     const activeUsers = activeConversationUsers[id];
     if (!activeUsers) return;
-    activeUsers.forEach((memberId) => {
-      if (memberId === userId) return;
+    for (const memberId of activeUsers) {
+      if (memberId === userId) continue;
+      // Blocking stops sending socket typing information
+      if (await findBlockEitherDirection(userId, memberId)) continue;
       const receiverSocketId = getReceiverSocketId(memberId);
       if (receiverSocketId)
         io.to(receiverSocketId).emit("userStoppedTyping", { id, userId });
-    });
+    }
   });
 
   io.emit("getOnlineUsers", Object.keys(usersSocket));

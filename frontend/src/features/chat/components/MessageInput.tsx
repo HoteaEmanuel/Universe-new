@@ -48,12 +48,23 @@ import type { ChatUser } from "../types";
 type MessageInputProps = {
   variant: "direct" | "group";
   id: string;
+  disabled?: boolean;
+  blockedByViewer?: boolean;
+  onUnblock?: () => void;
+  isUnblocking?: boolean;
 };
 
 const TYPING_IDLE_MS = 2000;
 const TYPING_EMIT_THROTTLE_MS = 2000;
 
-const MessageInput = ({ variant, id }: MessageInputProps) => {
+const MessageInput = ({
+  variant,
+  id,
+  disabled,
+  blockedByViewer,
+  onUnblock,
+  isUnblocking,
+}: MessageInputProps) => {
   const [text, setText] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [files, setFiles] = useState<File[]>([]);
@@ -208,6 +219,32 @@ const MessageInput = ({ variant, id }: MessageInputProps) => {
     });
     setPollModalOpen(false);
   };
+
+  if (disabled) {
+    if (blockedByViewer) {
+      return (
+        <div className="flex items-center justify-between gap-3 border-t border-border bg-background px-3 py-3">
+          <p className="text-sm text-muted-foreground">
+            You&apos;ve blocked this person.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={isUnblocking}
+            onClick={onUnblock}
+          >
+            {isUnblocking ? "Unblocking..." : "Unblock"}
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <div className="border-t border-border bg-background px-3 py-3 text-center text-sm text-muted-foreground">
+        You can&apos;t send messages to this conversation.
+      </div>
+    );
+  }
 
   if (isRecording) {
     return (

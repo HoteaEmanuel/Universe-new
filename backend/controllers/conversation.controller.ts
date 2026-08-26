@@ -4,24 +4,39 @@ import { prisma } from "../database/prisma.js";
 import {
   findConversationByParticipants,
   findConversationReadCursors,
+  findConversationArchiveState,
 } from "../repository/conversation.repository.js";
 import {
   getConversationFilesPage,
   getConversationMediaPage,
   getConversationMessagesPage,
 } from "../repository/message.repository.js";
+import { findBlockEitherDirection } from "../repository/block.repository.js";
 
 import {
   deleteMessage,
   editMessage,
   getUserConversations,
+  getArchivedConversations,
   markConversationRead,
   sendMessage,
   sendFilesMessage,
   sendVoiceMessage,
   startConversation,
   setMessageReaction,
+  archiveConversation,
+  unarchiveConversation,
+  deleteConversationForMe,
+  MessageNotAllowedError,
 } from "../services/conversation.service.js";
+
+// Deliberately generic - the code and message here must never change based
+// on why a send was rejected (block vs. deactivated account vs. a future DM
+// restriction), so inspecting the response can't reveal which one it was.
+const MESSAGE_NOT_ALLOWED_RESPONSE = {
+  code: "MESSAGE_NOT_ALLOWED",
+  message: "You can't send messages to this conversation.",
+} as const;
 
 const PARTICIPANT_OMIT = {
   password: true,
@@ -122,19 +137,42 @@ export const getMessages = async (req: Request, res: Response) => {
     const userId = req.userId as string;
     const cursor = req.query.cursor as string | undefined;
     const limit = req.query.limit as unknown as number;
-    const [page, cursors] = await Promise.all([
-      getConversationMessagesPage(convoId, cursor, limit),
+
+    const archiveState = await findConversationArchiveState(convoId);
+    const isParticipantOne = archiveState?.participantOneId === userId;
+    const myClearedAt = archiveState
+      ? isParticipantOne
+        ? archiveState.clearedAtParticipantOne
+        : archiveState.clearedAtParticipantTwo
+      : null;
+    const otherUserId = archiveState
+      ? isParticipantOne
+        ? archiveState.participantTwoId
+        : archiveState.participantOneId
+      : null;
+
+    const [page, cursors, block] = await Promise.all([
+      getConversationMessagesPage(convoId, cursor, limit, myClearedAt),
       findConversationReadCursors(convoId),
+      otherUserId ? findBlockEitherDirection(userId, otherUserId) : null,
     ]);
     const otherParticipantLastReadAt = cursors
       ? (cursors.participantOneId === userId
           ? cursors.lastReadAtParticipantTwo
           : cursors.lastReadAtParticipantOne)
       : null;
+
+    // canSend/viewerBlockedOther are the only block-related fields ever
+    // returned here, and both are safe from either side's perspective: a
+    // blocked viewer only ever sees canSend:false with viewerBlockedOther
+    // false, the same shape a deactivated-account or DM-restriction case
+    // would produce - see context/current-feature.md's ambiguity design.
     return res.status(200).json({
       message: "Fetched the messages successfully",
       ...page,
       otherParticipantLastReadAt,
+      canSend: block === null,
+      viewerBlockedOther: block !== null && block.blockerId === userId,
     });
   } catch (error) {
     return res.status(400).json({ error });
@@ -147,6 +185,58 @@ export const markConversationReadController = async (req: Request, res: Response
     const userId = req.userId as string;
     await markConversationRead({ convoId, userId });
     return res.status(200).json({ message: "Conversation marked as read" });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: error instanceof Error ? error.message : "" });
+  }
+};
+
+export const getArchivedConversationsController = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId as string;
+    const conversations = await getArchivedConversations(userId);
+    return res.status(200).json({
+      message: "Fetched the archived conversations",
+      conversations,
+    });
+  } catch (error) {
+    return res.status(400).json({ error });
+  }
+};
+
+export const archiveConversationController = async (req: Request, res: Response) => {
+  try {
+    const convoId = req.params.id as string;
+    const userId = req.userId as string;
+    await archiveConversation({ convoId, userId });
+    return res.status(200).json({ message: "Conversation archived" });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: error instanceof Error ? error.message : "" });
+  }
+};
+
+export const unarchiveConversationController = async (req: Request, res: Response) => {
+  try {
+    const convoId = req.params.id as string;
+    const userId = req.userId as string;
+    await unarchiveConversation({ convoId, userId });
+    return res.status(200).json({ message: "Conversation unarchived" });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: error instanceof Error ? error.message : "" });
+  }
+};
+
+export const deleteConversationForMeController = async (req: Request, res: Response) => {
+  try {
+    const convoId = req.params.id as string;
+    const userId = req.userId as string;
+    await deleteConversationForMe({ convoId, userId });
+    return res.status(200).json({ message: "Conversation deleted" });
   } catch (error) {
     return res
       .status(400)
@@ -181,6 +271,9 @@ export const startConversationController = async (req: Request, res: Response) =
     });
     return res.status(201).json({ message: "Conversation started", id: newConversationId });
   } catch (error) {
+    if (error instanceof MessageNotAllowedError) {
+      return res.status(403).json(MESSAGE_NOT_ALLOWED_RESPONSE);
+    }
     return res.status(400).json({ error });
   }
 };
@@ -195,6 +288,9 @@ export const sendMessageController = async (req: Request, res: Response) => {
 
     return res.status(201).json(message);
   } catch (error) {
+    if (error instanceof MessageNotAllowedError) {
+      return res.status(403).json(MESSAGE_NOT_ALLOWED_RESPONSE);
+    }
     return res.status(400).json({ error });
   }
 };
@@ -210,6 +306,9 @@ export const sendFilesMessageController = async (req: Request, res: Response) =>
 
     return res.status(201).json(message);
   } catch (error) {
+    if (error instanceof MessageNotAllowedError) {
+      return res.status(403).json(MESSAGE_NOT_ALLOWED_RESPONSE);
+    }
     return res.status(400).json({ error });
   }
 };
@@ -225,6 +324,9 @@ export const sendVoiceMessageController = async (req: Request, res: Response) =>
 
     return res.status(201).json(message);
   } catch (error) {
+    if (error instanceof MessageNotAllowedError) {
+      return res.status(403).json(MESSAGE_NOT_ALLOWED_RESPONSE);
+    }
     return res.status(400).json({ error });
   }
 };

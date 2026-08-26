@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useConversationStore } from "../../store/conversationStore";
 import { useAuthStore } from "../../store/authStore";
 import type {
@@ -160,6 +161,48 @@ export const useMarkConversationReadMutation = (conversationId?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-conversations"] });
     },
+  });
+};
+
+export const useArchiveConversationMutation = () => {
+  const queryClient = useQueryClient();
+  const { archiveConversation } = useConversationStore();
+  return useMutation({
+    mutationFn: (conversationId: string) => archiveConversation(conversationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["archived-conversations"] });
+      toast.success("Conversation archived");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
+
+export const useUnarchiveConversationMutation = () => {
+  const queryClient = useQueryClient();
+  const { unarchiveConversation } = useConversationStore();
+  return useMutation({
+    mutationFn: (conversationId: string) => unarchiveConversation(conversationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["archived-conversations"] });
+      toast.success("Conversation unarchived");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
+
+export const useDeleteConversationMutation = () => {
+  const queryClient = useQueryClient();
+  const { deleteConversationForMe } = useConversationStore();
+  return useMutation({
+    mutationFn: (conversationId: string) => deleteConversationForMe(conversationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["archived-conversations"] });
+      toast.success("Conversation deleted");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 };
 

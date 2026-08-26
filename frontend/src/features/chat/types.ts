@@ -141,6 +141,14 @@ export type ChatMessagePage = {
   nextCursor: string | null;
   hasMore: boolean;
   otherParticipantLastReadAt?: string | null;
+  canSend?: boolean;
+  viewerBlockedOther?: boolean;
+};
+
+export type BlockedUser = {
+  id: string;
+  createdAt: string;
+  user: ChatUser;
 };
 
 export type GroupMember = {

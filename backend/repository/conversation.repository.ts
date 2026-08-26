@@ -86,6 +86,59 @@ export const findConversationReadCursors = async (conversationId: string) => {
   });
 };
 
+export const findConversationArchiveState = async (conversationId: string) => {
+  return prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: {
+      participantOneId: true,
+      participantTwoId: true,
+      clearedAtParticipantOne: true,
+      clearedAtParticipantTwo: true,
+      hiddenAtParticipantOne: true,
+      hiddenAtParticipantTwo: true,
+    },
+  });
+};
+
+export const setConversationHiddenAt = async (
+  conversationId: string,
+  userId: string,
+  hiddenAt: Date | null,
+) => {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { participantOneId: true, participantTwoId: true },
+  });
+  if (!conversation) return null;
+  const field =
+    conversation.participantOneId === userId
+      ? "hiddenAtParticipantOne"
+      : "hiddenAtParticipantTwo";
+  return prisma.conversation.update({
+    where: { id: conversationId },
+    data: { [field]: hiddenAt },
+  });
+};
+
+export const setConversationClearedAndHiddenAt = async (
+  conversationId: string,
+  userId: string,
+  at: Date,
+) => {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { participantOneId: true, participantTwoId: true },
+  });
+  if (!conversation) return null;
+  const isParticipantOne = conversation.participantOneId === userId;
+  return prisma.conversation.update({
+    where: { id: conversationId },
+    data: isParticipantOne
+      ? { clearedAtParticipantOne: at, hiddenAtParticipantOne: at }
+      : { clearedAtParticipantTwo: at, hiddenAtParticipantTwo: at },
+  });
+};
+
 export const findAllConversationsByParticipant = async (userId: string) => {
   const conversations = await prisma.conversation.findMany({
     where: { OR: [{ participantOneId: userId }, { participantTwoId: userId }] },

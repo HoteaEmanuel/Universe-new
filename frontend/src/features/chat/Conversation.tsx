@@ -15,6 +15,7 @@ import {
   useReactToMessageMutation,
 } from "@/queryAndMutation/mutations/conversation-mutation";
 import { useSeeNewMessages } from "@/queryAndMutation/mutations/notification-mutation";
+import { useUnblockUserMutation } from "@/queryAndMutation/mutations/block-mutation";
 import { useAuthStore } from "@/store/authStore";
 import ChatUserHeader from "./components/ChatUserHeader";
 import MessageThread from "./components/MessageThread";
@@ -22,6 +23,7 @@ import MessageInput from "./components/MessageInput";
 import TypingIndicator from "./components/TypingIndicator";
 import { useTypingIndicator } from "./hooks/useTypingIndicator";
 import ChatMediaModal from "./components/ChatMediaModal";
+import ChatUserMenu from "./components/ChatUserMenu";
 import type { ChatUser } from "./types";
 
 const Conversation = () => {
@@ -50,6 +52,9 @@ const Conversation = () => {
     .reverse()
     .flatMap((page) => page.messages);
   const otherParticipantLastReadAt = messagePages?.pages[0]?.otherParticipantLastReadAt;
+  const canSend = messagePages?.pages[0]?.canSend ?? true;
+  const isBlockedByViewer = messagePages?.pages[0]?.viewerBlockedOther ?? false;
+  const { mutate: unblockUser, isPending: isUnblocking } = useUnblockUserMutation();
   const { mutate: deleteMessage } = useDeleteMessageMutation(convoId);
   const { mutate: editMessage } = useEditMessageMutation(convoId);
   const { mutate: reactToMessage } = useReactToMessageMutation(convoId);
@@ -110,14 +115,17 @@ const Conversation = () => {
             user={otherUser}
             isOnline={onlineUsers.includes(otherUser.id)}
             actions={
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="View media"
-                onClick={() => setMediaOpen(true)}
-              >
-                <Images />
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="View media"
+                  onClick={() => setMediaOpen(true)}
+                >
+                  <Images />
+                </Button>
+                <ChatUserMenu user={otherUser} isBlockedByViewer={isBlockedByViewer} />
+              </>
             }
           />
         )
@@ -141,7 +149,14 @@ const Conversation = () => {
       )}
 
       <TypingIndicator typingUsers={typingUsers} variant="direct" />
-      <MessageInput variant="direct" id={convoId as string} />
+      <MessageInput
+        variant="direct"
+        id={convoId as string}
+        disabled={!canSend}
+        blockedByViewer={isBlockedByViewer}
+        isUnblocking={isUnblocking}
+        onUnblock={() => otherUser && unblockUser(otherUser.id)}
+      />
 
       <ChatMediaModal
         variant="direct"

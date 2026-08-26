@@ -4,6 +4,8 @@ import {
   findConversationById,
   findConversationByParticipants,
   markConversationRead as markConversationReadRepo,
+  setConversationHiddenAt,
+  setConversationClearedAndHiddenAt,
 } from "../repository/conversation.repository.js";
 import {
   createMessage,
@@ -19,6 +21,8 @@ import {
 } from "../repository/notification.repository.js";
 import { findUserById } from "../repository/user.repository.js";
 import { findPostById } from "../repository/post.repository.js";
+import { assertCanMessage, isBlockedEitherWay } from "./block.service.js";
+export { MessageNotAllowedError } from "./block.service.js";
 
 import { getActiveConversationUsers } from "../lib/socket.js";
 
@@ -78,6 +82,7 @@ export const startConversation = async (data: {
 }) => {
   const { authUserId, otherUserId, messageData } = data;
   if (!messageData) throw new Error("No message");
+  await assertCanMessage(authUserId, otherUserId);
 
   const conversation = await findConversationByParticipants(authUserId, otherUserId);
   if (conversation) throw new Error("Conversation already exists");
@@ -128,6 +133,7 @@ export const sendMessage = async (data: {
     conversation.participantOneId === authUserId
       ? conversation.participantTwoId
       : conversation.participantOneId;
+  await assertCanMessage(authUserId, receiverId);
 
   const message = await createMessage({
     senderId: authUserId,
@@ -172,6 +178,7 @@ export const sendFilesMessage = async (data: {
     conversation.participantOneId === authUserId
       ? conversation.participantTwoId
       : conversation.participantOneId;
+  await assertCanMessage(authUserId, receiverId);
 
   const message = await createMessage({
     senderId: authUserId,
@@ -204,6 +211,7 @@ export const sendVoiceMessage = async (data: {
     conversation.participantOneId === authUserId
       ? conversation.participantTwoId
       : conversation.participantOneId;
+  await assertCanMessage(authUserId, receiverId);
 
   const message = await createMessage({
     senderId: authUserId,
@@ -231,8 +239,18 @@ export const sharePostToUsers = async (data: {
   );
   if (uniqueRecipientIds.length === 0) throw new Error("No recipients provided");
 
+  // Recipients blocked in either direction are silently skipped rather than
+  // failing the whole share - one blocked person in a multi-recipient send
+  // shouldn't stop it reaching everyone else.
+  const sendableRecipientIds: string[] = [];
+  for (const recipientId of uniqueRecipientIds) {
+    if (!(await isBlockedEitherWay(authUserId, recipientId))) {
+      sendableRecipientIds.push(recipientId);
+    }
+  }
+
   return Promise.all(
-    uniqueRecipientIds.map(async (receiverId) => {
+    sendableRecipientIds.map(async (receiverId) => {
       const conversation =
         (await findConversationByParticipants(authUserId, receiverId)) ??
         (await createConversation({ authUserId, otherUserId: receiverId }));
@@ -264,15 +282,35 @@ export const markConversationRead = async (data: { convoId: string; userId: stri
       ? conversation.participantTwoId
       : conversation.participantOneId;
 
-  io.to(getReceiverSocketId(otherUserId)).emit("conversationRead", {
-    convoId,
-    readAt: (userId === conversation.participantOneId
-      ? conversation.lastReadAtParticipantOne
-      : conversation.lastReadAtParticipantTwo
-    )?.toISOString(),
-  });
+  // Read receipts don't cross a block in either direction (see
+  // context/current-feature.md) - a blocked thread stays frozen from the
+  // other side's perspective, not just unsendable.
+  if (!(await isBlockedEitherWay(userId, otherUserId))) {
+    io.to(getReceiverSocketId(otherUserId)).emit("conversationRead", {
+      convoId,
+      readAt: (userId === conversation.participantOneId
+        ? conversation.lastReadAtParticipantOne
+        : conversation.lastReadAtParticipantTwo
+      )?.toISOString(),
+    });
+  }
 
   return conversation;
+};
+
+export const archiveConversation = async (data: { convoId: string; userId: string }) => {
+  const { convoId, userId } = data;
+  await setConversationHiddenAt(convoId, userId, new Date());
+};
+
+export const unarchiveConversation = async (data: { convoId: string; userId: string }) => {
+  const { convoId, userId } = data;
+  await setConversationHiddenAt(convoId, userId, null);
+};
+
+export const deleteConversationForMe = async (data: { convoId: string; userId: string }) => {
+  const { convoId, userId } = data;
+  await setConversationClearedAndHiddenAt(convoId, userId, new Date());
 };
 
 export const deleteMessage = async (data: { messageId: string }) => {
@@ -347,23 +385,58 @@ export const setMessageReaction = async (data: {
   return { removed: false, reaction };
 };
 
-export const getUserConversations = async (userId: string) => {
+const getConversationListForUser = async (userId: string, scope: "active" | "archived") => {
   const conversations = await findAllConversationsByParticipant(userId);
 
+  const withArchiveState = conversations.map((convo) => {
+    const isParticipantOne = convo.participantOneId === userId;
+    const myLastReadAt = isParticipantOne
+      ? convo.lastReadAtParticipantOne
+      : convo.lastReadAtParticipantTwo;
+    const myClearedAt = isParticipantOne
+      ? convo.clearedAtParticipantOne
+      : convo.clearedAtParticipantTwo;
+    const myHiddenAt = isParticipantOne
+      ? convo.hiddenAtParticipantOne
+      : convo.hiddenAtParticipantTwo;
+
+    // A new message from the other participant un-hides the thread - a
+    // delete/archive/block can't permanently silence a channel the other
+    // person is still actively using (see context/current-feature.md).
+    const isHidden =
+      myHiddenAt !== null &&
+      (!convo.lastMessage || convo.lastMessage.createdAt <= myHiddenAt);
+
+    return { convo, myLastReadAt, myClearedAt, isHidden };
+  });
+
+  const filtered = withArchiveState.filter(({ isHidden }) =>
+    scope === "archived" ? isHidden : !isHidden,
+  );
+
   return Promise.all(
-    conversations.map(async (convo) => {
-      const myLastReadAt =
-        convo.participantOneId === userId
-          ? convo.lastReadAtParticipantOne
-          : convo.lastReadAtParticipantTwo;
+    filtered.map(async ({ convo, myLastReadAt, myClearedAt }) => {
+      const previewIsCleared =
+        myClearedAt !== null &&
+        (!convo.lastMessage || convo.lastMessage.createdAt <= myClearedAt);
+      const since =
+        myLastReadAt && myClearedAt
+          ? (myLastReadAt > myClearedAt ? myLastReadAt : myClearedAt)
+          : (myLastReadAt ?? myClearedAt);
 
       return {
         id: convo.id,
-        lastMessage: convo.lastMessage,
+        lastMessage: previewIsCleared ? null : convo.lastMessage,
         updatedAt: convo.updatedAt,
         user: convo.participants.find((p) => p.id !== userId),
-        unreadCount: await countUnreadMessages(convo.id, userId, myLastReadAt),
+        unreadCount: await countUnreadMessages(convo.id, userId, since),
       };
     }),
   );
 };
+
+export const getUserConversations = async (userId: string) =>
+  getConversationListForUser(userId, "active");
+
+export const getArchivedConversations = async (userId: string) =>
+  getConversationListForUser(userId, "archived");

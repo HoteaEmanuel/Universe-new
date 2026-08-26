@@ -212,9 +212,13 @@ export const getConversationMessagesPage = async (
   conversationId: string,
   cursor?: string,
   limit = 30,
+  sinceClearedAt?: Date | null,
 ) => {
   const rows = await prisma.message.findMany({
-    where: { conversationId },
+    where: {
+      conversationId,
+      ...(sinceClearedAt ? { createdAt: { gt: sinceClearedAt } } : {}),
+    },
     take: limit + 1,
     orderBy: MESSAGE_ORDER_BY,
     include: {

@@ -33,6 +33,10 @@ type ConversationStore = {
   ) => Promise<ChatMediaPage | ChatFilePage>;
   getConversationByUsersIds: (id: string) => Promise<DirectConversation | null>;
   getUserConversations: () => Promise<DirectConversation[]>;
+  getArchivedConversations: () => Promise<DirectConversation[]>;
+  archiveConversation: (id: string) => Promise<void>;
+  unarchiveConversation: (id: string) => Promise<void>;
+  deleteConversationForMe: (id: string) => Promise<void>;
   getConvoUsers: () => Promise<ChatUser[]>;
   startConversation: (id: string, message: string) => Promise<string>;
   sendMessage: (
@@ -77,6 +81,8 @@ export const useConversationStore = create<ConversationStore>((set) => ({
         nextCursor: response.data.nextCursor,
         hasMore: response.data.hasMore,
         otherParticipantLastReadAt: response.data.otherParticipantLastReadAt,
+        canSend: response.data.canSend,
+        viewerBlockedOther: response.data.viewerBlockedOther,
       };
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load messages"));
@@ -119,6 +125,37 @@ export const useConversationStore = create<ConversationStore>((set) => ({
       return response.data.conversations;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load conversations"));
+    }
+  },
+  getArchivedConversations: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/conversations/archived`);
+      return response.data.conversations;
+    } catch (error) {
+      throw new Error(
+        errorMessage(error, "Could not load archived conversations"),
+      );
+    }
+  },
+  archiveConversation: async (id) => {
+    try {
+      await axios.post(`${API_URL}/conversations/${id}/archive`);
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not archive conversation"));
+    }
+  },
+  unarchiveConversation: async (id) => {
+    try {
+      await axios.post(`${API_URL}/conversations/${id}/unarchive`);
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not unarchive conversation"));
+    }
+  },
+  deleteConversationForMe: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/conversations/${id}`);
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not delete conversation"));
     }
   },
   getConvoUsers: async () => {

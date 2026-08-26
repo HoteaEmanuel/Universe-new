@@ -1,14 +1,23 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, SquarePen, X } from "lucide-react";
+import { Archive, MoreVertical, Search, ShieldOff, SquarePen, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/store/authStore";
 import { useGetUserConversations } from "@/queryAndMutation/queries/conversation-queries";
 import { useGetUserGroups } from "@/queryAndMutation/queries/group-queries";
 import { getFullName } from "@/utils/fullName";
 import ConversationListItem from "./components/ConversationListItem";
+import ConversationRowMenu from "./components/ConversationRowMenu";
+import ArchivedConversationsModal from "./components/ArchivedConversationsModal";
+import BlockedUsersModal from "./components/BlockedUsersModal";
 import type { ChatUser, ConversationListEntry } from "./types";
 
 const ChatListSkeleton = () => (
@@ -41,6 +50,8 @@ const ChatContainer = () => {
     user.id,
   );
   const [searchTerm, setSearchTerm] = useState("");
+  const [archivedOpen, setArchivedOpen] = useState(false);
+  const [blockedOpen, setBlockedOpen] = useState(false);
 
   const combined = useMemo<ConversationListEntry[]>(
     () =>
@@ -65,14 +76,38 @@ const ChatContainer = () => {
     <section className="flex h-[calc(100dvh-10rem)] flex-col md:h-[calc(100dvh-4rem)]">
       <div className="flex items-center justify-between pb-4">
         <h1 className="text-2xl font-semibold">Messages</h1>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="New conversation"
-          onClick={() => navigate("/create-conversation")}
-        >
-          <SquarePen />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            aria-label="New conversation"
+            onClick={() => navigate("/create-conversation")}
+          >
+            <SquarePen />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={<Button variant="ghost" size="icon" aria-label="More options" />}
+            >
+              <MoreVertical />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem
+                className="whitespace-nowrap"
+                onClick={() => setArchivedOpen(true)}
+              >
+                <Archive />
+                Archived conversations
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="whitespace-nowrap"
+                onClick={() => setBlockedOpen(true)}
+              >
+                <ShieldOff />
+                Blocked users
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <div className="relative mb-4">
@@ -118,6 +153,9 @@ const ChatContainer = () => {
                       : `/conversations/${entry.id}`,
                   )
                 }
+                trailingAction={
+                  !entry.name ? <ConversationRowMenu conversationId={entry.id} /> : undefined
+                }
               />
             ))}
           </ul>
@@ -131,6 +169,12 @@ const ChatContainer = () => {
           </p>
         )}
       </div>
+
+      <ArchivedConversationsModal
+        open={archivedOpen}
+        onClose={() => setArchivedOpen(false)}
+      />
+      <BlockedUsersModal open={blockedOpen} onClose={() => setBlockedOpen(false)} />
     </section>
   );
 };

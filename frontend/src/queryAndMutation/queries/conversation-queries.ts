@@ -25,6 +25,15 @@ export const useGetUserConversations = () => {
   });
 };
 
+export const useGetArchivedConversations = (enabled = true) => {
+  const { getArchivedConversations } = useConversationStore();
+  return useQuery<DirectConversation[]>({
+    queryFn: () => getArchivedConversations(),
+    queryKey: ["archived-conversations"],
+    enabled,
+  });
+};
+
 export const useGetConvoMessagesInfinite = (id?: string) => {
   const { getMessages } = useConversationStore();
   return useInfiniteQuery<ChatMessagePage>({
