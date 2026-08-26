@@ -41,6 +41,7 @@ import EventsPage from "./features/events/EventsPage";
 import EventDetails from "./features/events/EventDetails";
 import PrivacyPolicy from "./Pages/legal/PrivacyPolicy";
 import TermsOfService from "./Pages/legal/TermsOfService";
+import OnboardingPage from "./Pages/onboarding/OnboardingPage";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,15 @@ const ProtectedAdminRoute = ({ children }: { children: ReactNode }) => {
 const AuthenticatedUser = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated } = useAuthStore();
   if (isAuthenticated) return <Navigate to={"/home"} />;
+  return children;
+};
+
+// Gates the main app shell (feed, chat, etc.) behind the post-signup
+// onboarding flow - a verified user who hasn't finished it yet is sent to
+// /onboarding instead of landing on the feed cold.
+const RequireOnboarded = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuthStore();
+  if (!user?.hasCompletedOnboarding) return <Navigate to={"/onboarding"} replace />;
   return children;
 };
 
@@ -137,9 +147,19 @@ function App() {
             }
           />
           <Route
+            path="/onboarding"
             element={
               <ProtectedRoute>
-                <RootLayout />
+                <OnboardingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            element={
+              <ProtectedRoute>
+                <RequireOnboarded>
+                  <RootLayout />
+                </RequireOnboarded>
               </ProtectedRoute>
             }
           >

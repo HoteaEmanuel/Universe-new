@@ -48,6 +48,7 @@ model User {
   password                  String?
   lastLogin                 DateTime                 @default(now())
   isVerified                Boolean                  @default(false)
+  hasCompletedOnboarding    Boolean                  @default(false)
   profilePicture            String?                  @default("")
   profilePictureKey         String?
   university                String?

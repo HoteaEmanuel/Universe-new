@@ -10,6 +10,7 @@ export type User = {
   email: string;
   lastLogin?: string;
   isVerified: boolean;
+  hasCompletedOnboarding: boolean;
   profilePicture?: string | null;
   profilePictureKey?: string | null;
   university?: string | null;

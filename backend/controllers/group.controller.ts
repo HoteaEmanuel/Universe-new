@@ -32,6 +32,7 @@ import {
 import { getActiveConversationUsers } from "../lib/socket.js";
 import type {
   BanGroupMemberInput,
+  DiscoverGroupsQueryInput,
   GroupBansQueryInput,
   GroupsListQueryInput,
 } from "../schemas/group.schema.js";
@@ -118,8 +119,14 @@ export const addMemberToGroupController = async (req: Request, res: Response) =>
 
 export const getDiscoverableGroupsController = async (req: Request, res: Response) => {
   try {
-    const courseTag = req.query.courseTag as string | undefined;
-    const groups = await getDiscoverablePublicGroups(req.userId as string, courseTag);
+    const { courseTag, universityOnly, limit } =
+      req.query as unknown as DiscoverGroupsQueryInput;
+    const groups = await getDiscoverablePublicGroups(
+      req.userId as string,
+      courseTag,
+      universityOnly,
+      limit,
+    );
     return res.status(200).json({ groups });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });

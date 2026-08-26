@@ -108,6 +108,24 @@ const upcomingOrOngoingFilter = (): Prisma.EventWhereInput => ({
   OR: [{ endAt: { gte: new Date() } }, { endAt: null, startAt: { gte: new Date() } }],
 });
 
+// Onboarding step 5 candidate pool: soonest upcoming public events created
+// by someone at the viewer's university, capped at `limit`. Simpler than
+// findDiscoverableEvents' relevance-first-page logic below since there's no
+// connection graph to rank against yet for a brand-new user.
+export const findUpcomingUniversityEvents = async (university: string, limit: number) => {
+  return prisma.event.findMany({
+    where: {
+      visibility: "public",
+      cancelledAt: null,
+      creator: { university },
+      ...upcomingOrOngoingFilter(),
+    },
+    orderBy: EVENT_LIST_ORDER_BY,
+    include: EVENT_INCLUDE,
+    take: limit,
+  });
+};
+
 interface FindDiscoverableEventsInput {
   connectedUserIds: string[];
   cursor?: string;

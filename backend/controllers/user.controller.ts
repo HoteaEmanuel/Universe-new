@@ -588,3 +588,15 @@ export const updateBio = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Updating bio went wrong", error });
   }
 };
+
+export const completeOnboarding = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId as string;
+    await updateUser(userId, { hasCompletedOnboarding: true });
+    return res.status(200).json({ message: "Onboarding completed" });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ message: "Could not complete onboarding", error });
+  }
+};

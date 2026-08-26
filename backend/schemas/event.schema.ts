@@ -68,6 +68,13 @@ export const discoverEventsQuerySchema = z.object({
 });
 export type DiscoverEventsQueryInput = z.infer<typeof discoverEventsQuerySchema>;
 
+export const upcomingUniversityEventsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(10).default(3),
+});
+export type UpcomingUniversityEventsQueryInput = z.infer<
+  typeof upcomingUniversityEventsQuerySchema
+>;
+
 export const myEventsQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),

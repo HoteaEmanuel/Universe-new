@@ -7,6 +7,7 @@ import {
   cancelEventService,
   updateEventCoverImageService,
   discoverEventsService,
+  upcomingUniversityEventsService,
   myEventsService,
   rsvpEventService,
   cancelRsvpService,
@@ -20,6 +21,7 @@ import {
 } from "../services/event.service.js";
 import type {
   DiscoverEventsQueryInput,
+  UpcomingUniversityEventsQueryInput,
   MyEventsQueryInput,
   EventParticipantsQueryInput,
   BanEventParticipantInput,
@@ -80,6 +82,16 @@ export const discoverEventsController = async (req: Request, res: Response) => {
   try {
     const { cursor, limit } = req.query as unknown as DiscoverEventsQueryInput;
     const page = await discoverEventsService(req.userId as string, cursor, limit);
+    return res.status(200).json(page);
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const upcomingUniversityEventsController = async (req: Request, res: Response) => {
+  try {
+    const { limit } = req.query as unknown as UpcomingUniversityEventsQueryInput;
+    const page = await upcomingUniversityEventsService(req.userId as string, limit);
     return res.status(200).json(page);
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });

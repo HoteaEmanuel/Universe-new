@@ -165,13 +165,28 @@ export const getGroupBansService = async (
   return findGroupBansPage({ groupId, cursor, limit });
 };
 
+// Placeholder set on gmail.com signups (see universityDomains.ts) - not a
+// real university, mirrors the same check in user.controller.ts.
+const NO_UNIVERSITY_PLACEHOLDER = "No university yet";
+
 export const getDiscoverablePublicGroups = async (
   userId: string,
   courseTag?: string,
+  universityOnly?: boolean,
+  limit?: number,
 ) => {
-  const memberships = await findGroupMembershipsForUser(userId);
+  const [memberships, viewer] = await Promise.all([
+    findGroupMembershipsForUser(userId),
+    universityOnly ? findUserById(userId) : Promise.resolve(null),
+  ]);
   const joinedGroupIds = memberships.map((membership) => membership.groupId);
-  return findPublicGroupsNotJoined(joinedGroupIds, courseTag);
+
+  if (universityOnly) {
+    const university = viewer?.university;
+    if (!university || university === NO_UNIVERSITY_PLACEHOLDER) return [];
+    return findPublicGroupsNotJoined(joinedGroupIds, courseTag, university, limit);
+  }
+  return findPublicGroupsNotJoined(joinedGroupIds, courseTag, undefined, limit);
 };
 
 export const getCourseCatalogForUser = async (userId: string, groupId?: string) => {

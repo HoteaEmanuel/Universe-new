@@ -29,11 +29,16 @@ export const useGetUserGroupsInfinite = (userId: string | undefined, search: str
   });
 };
 
-export const useGetDiscoverablePublicGroups = (enabled = true, courseTag?: string) => {
+export const useGetDiscoverablePublicGroups = (
+  enabled = true,
+  courseTag?: string,
+  universityOnly?: boolean,
+  limit?: number,
+) => {
   const { getDiscoverablePublicGroups } = useGroupStore();
   return useQuery<GroupConversation[]>({
-    queryFn: () => getDiscoverablePublicGroups(courseTag),
-    queryKey: ["discoverable-public-groups", courseTag],
+    queryFn: () => getDiscoverablePublicGroups(courseTag, universityOnly, limit),
+    queryKey: ["discoverable-public-groups", courseTag, universityOnly, limit],
     enabled,
   });
 };

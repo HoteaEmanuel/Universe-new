@@ -36,6 +36,7 @@ type UserStore = {
   ) => Promise<FollowListPage | undefined>;
   isFollowing: (id?: string) => Promise<boolean | undefined>;
   updateBio: (bio: string) => Promise<unknown>;
+  completeOnboarding: () => Promise<unknown>;
   updateUsername: (username: string) => Promise<{ id: string; username: string }>;
   checkUsernameAvailability: (username: string) => Promise<{ username: string; available: boolean; reason?: string }>;
   getUniversityPeople: (
@@ -254,6 +255,15 @@ export const useUserStore = create<UserStore>((set) => ({
       throw error;
     } finally {
       set({ isLoading: false });
+    }
+  },
+  completeOnboarding: async () => {
+    try {
+      const response = await axios.post(`${API_URL}/complete-onboarding`);
+      return response.data;
+    } catch (error) {
+      set({ error });
+      throw error;
     }
   },
   updateUsername: async (username) => {

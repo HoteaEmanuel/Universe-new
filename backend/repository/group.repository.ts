@@ -23,14 +23,18 @@ export const findGroupById = async (groupId: string) => {
 export const findPublicGroupsNotJoined = async (
   excludedGroupIds: string[],
   courseTag?: string,
+  university?: string,
+  take?: number,
 ) => {
   return prisma.group.findMany({
     where: {
       visibility: "public",
       id: { notIn: excludedGroupIds },
       ...(courseTag ? { courseTag } : {}),
+      ...(university ? { university } : {}),
     },
     orderBy: { createdAt: "desc" },
+    ...(take ? { take } : {}),
   });
 };
 

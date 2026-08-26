@@ -8,6 +8,7 @@ import {
   updateEventSchema,
   rsvpEventSchema,
   discoverEventsQuerySchema,
+  upcomingUniversityEventsQuerySchema,
   myEventsQuerySchema,
   eventParticipantsQuerySchema,
   banEventParticipantSchema,
@@ -20,6 +21,7 @@ import {
   cancelEventController,
   updateEventCoverImageController,
   discoverEventsController,
+  upcomingUniversityEventsController,
   myEventsController,
   rsvpEventController,
   cancelRsvpController,
@@ -35,6 +37,11 @@ const router = express.Router();
 
 router.post("/", validate({ body: createEventSchema }), createEventController);
 router.get("/discover", validate({ query: discoverEventsQuerySchema }), discoverEventsController);
+router.get(
+  "/discover/university",
+  validate({ query: upcomingUniversityEventsQuerySchema }),
+  upcomingUniversityEventsController,
+);
 router.get("/mine", validate({ query: myEventsQuerySchema }), myEventsController);
 router.get("/:id", getEventController);
 router.patch("/:id", requireEventHost, validate({ body: updateEventSchema }), updateEventController);

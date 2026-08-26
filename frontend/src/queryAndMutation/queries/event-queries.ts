@@ -3,6 +3,7 @@ import { useEventStore } from "../../store/eventStore";
 import type {
   EventDetails,
   EventsPage,
+  EventSummary,
   EventParticipantsPage,
   EventParticipantStatus,
   EventBansPage,
@@ -25,6 +26,15 @@ export const useDiscoverEventsInfiniteQuery = (enabled = true) => {
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled,
+  });
+};
+
+export const useUpcomingUniversityEventsQuery = (enabled = true, limit?: number) => {
+  const { getUpcomingUniversityEvents } = useEventStore();
+  return useQuery<{ events: EventSummary[] }>({
+    queryFn: () => getUpcomingUniversityEvents(limit),
+    queryKey: ["events-upcoming-university", limit],
     enabled,
   });
 };

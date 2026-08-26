@@ -84,6 +84,17 @@ export const useUpdateProfilePicture = () => {
   });
 };
 
+export const useCompleteOnboardingMutation = () => {
+  const { completeOnboarding } = useUserStore();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => completeOnboarding(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth_user"] });
+    },
+  });
+};
+
 export const useUpdateBioMutation = () => {
   const { updateBio } = useUserStore();
 

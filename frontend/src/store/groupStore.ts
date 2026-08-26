@@ -39,7 +39,11 @@ type GroupStore = {
     userId: string,
     params?: GroupListParams,
   ) => Promise<GroupConversationsPage>;
-  getDiscoverablePublicGroups: (courseTag?: string) => Promise<GroupConversation[]>;
+  getDiscoverablePublicGroups: (
+    courseTag?: string,
+    universityOnly?: boolean,
+    limit?: number,
+  ) => Promise<GroupConversation[]>;
   getCourseCatalog: (groupId?: string) => Promise<string[]>;
   setGroupCourseTag: (groupId: string, courseTag: string | null) => Promise<GroupConversation>;
   getGroupById: (id: string) => Promise<GroupConversation>;
@@ -118,10 +122,14 @@ export const useGroupStore = create<GroupStore>(() => ({
       throw new Error(errorMessage(error, "Could not load groups"));
     }
   },
-  getDiscoverablePublicGroups: async (courseTag) => {
+  getDiscoverablePublicGroups: async (courseTag, universityOnly, limit) => {
     try {
       const response = await axios.get(`${API_URL}/groups/discover/public`, {
-        params: courseTag ? { courseTag } : undefined,
+        params: {
+          ...(courseTag ? { courseTag } : {}),
+          ...(universityOnly ? { universityOnly } : {}),
+          ...(limit ? { limit } : {}),
+        },
       });
       return response.data.groups;
     } catch (error) {

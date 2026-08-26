@@ -7,6 +7,7 @@ import {
   setEventCoordinationGroupId,
   createEventAnnouncementPost,
   findDiscoverableEvents,
+  findUpcomingUniversityEvents,
   findMyEvents,
   findEventParticipant,
   countGoingParticipants,
@@ -28,6 +29,7 @@ import {
   GroupBannedError,
 } from "../repository/group-members.repository.js";
 import { createGroup } from "../repository/group.repository.js";
+import { findUserById } from "../repository/user.repository.js";
 import { getFollowConnectedUserIds } from "../repository/relevance.repository.js";
 import {
   createNotification,
@@ -230,6 +232,18 @@ export const discoverEventsService = async (viewerId: string, cursor: string | u
   const connectedUserIds = Array.from(await getFollowConnectedUserIds(viewerId));
   const { items, nextCursor, hasMore } = await findDiscoverableEvents({ connectedUserIds, cursor, limit });
   return { events: items.map(toEventDTO), nextCursor, hasMore };
+};
+
+// Placeholder set on gmail.com signups (see universityDomains.ts) - not a
+// real university, mirrors the same check in user.controller.ts.
+const NO_UNIVERSITY_PLACEHOLDER = "No university yet";
+
+export const upcomingUniversityEventsService = async (viewerId: string, limit: number) => {
+  const viewer = await findUserById(viewerId);
+  const university = viewer?.university;
+  if (!university || university === NO_UNIVERSITY_PLACEHOLDER) return { events: [] };
+  const events = await findUpcomingUniversityEvents(university, limit);
+  return { events: events.map(toEventDTO) };
 };
 
 export const myEventsService = async (

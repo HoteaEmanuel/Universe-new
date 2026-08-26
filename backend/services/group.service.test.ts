@@ -225,8 +225,34 @@ describe("group.service", () => {
 
     const result = await getDiscoverablePublicGroups("user-1", "Mathematics");
 
-    expect(findPublicGroupsNotJoined).toHaveBeenCalledWith(["joined-1", "joined-2"], "Mathematics");
+    expect(findPublicGroupsNotJoined).toHaveBeenCalledWith(
+      ["joined-1", "joined-2"],
+      "Mathematics",
+      undefined,
+      undefined,
+    );
     expect(result).toEqual([{ id: "discoverable-1" }]);
+  });
+
+  it("getDiscoverablePublicGroups scopes to the viewer's university when universityOnly is set", async () => {
+    vi.mocked(findGroupMembershipsForUser).mockResolvedValue([]);
+    vi.mocked(findUserById).mockResolvedValue({ university: UNI } as never);
+    vi.mocked(findPublicGroupsNotJoined).mockResolvedValue([{ id: "discoverable-1" }] as never);
+
+    const result = await getDiscoverablePublicGroups("user-1", undefined, true, 4);
+
+    expect(findPublicGroupsNotJoined).toHaveBeenCalledWith([], undefined, UNI, 4);
+    expect(result).toEqual([{ id: "discoverable-1" }]);
+  });
+
+  it("getDiscoverablePublicGroups returns nothing for universityOnly when the viewer has no real university", async () => {
+    vi.mocked(findGroupMembershipsForUser).mockResolvedValue([]);
+    vi.mocked(findUserById).mockResolvedValue({ university: "No university yet" } as never);
+
+    const result = await getDiscoverablePublicGroups("user-1", undefined, true, 4);
+
+    expect(findPublicGroupsNotJoined).not.toHaveBeenCalled();
+    expect(result).toEqual([]);
   });
 
   describe("getCourseCatalogForUser", () => {

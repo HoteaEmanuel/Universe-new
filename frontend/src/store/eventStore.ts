@@ -29,6 +29,7 @@ type EventStore = {
   cancelEvent: (id: string) => Promise<EventSummary>;
   updateEventCoverImage: (id: string, image: File) => Promise<unknown>;
   discoverEvents: (cursor?: string) => Promise<EventsPage>;
+  getUpcomingUniversityEvents: (limit?: number) => Promise<{ events: EventSummary[] }>;
   getMyEvents: (scope: MyEventsScope, cursor?: string) => Promise<EventsPage>;
   rsvpToEvent: (
     id: string,
@@ -102,6 +103,16 @@ export const useEventStore = create<EventStore>(() => ({
     try {
       const response = await axios.get(`${API_URL}/events/discover`, {
         params: cursor ? { cursor } : undefined,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not load events"));
+    }
+  },
+  getUpcomingUniversityEvents: async (limit) => {
+    try {
+      const response = await axios.get(`${API_URL}/events/discover/university`, {
+        params: limit ? { limit } : undefined,
       });
       return response.data;
     } catch (error) {

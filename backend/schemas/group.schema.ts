@@ -21,6 +21,8 @@ export type SetGroupCourseTagInput = z.infer<typeof setGroupCourseTagSchema>;
 
 export const discoverGroupsQuerySchema = z.object({
   courseTag: z.string().min(1).max(100).optional(),
+  universityOnly: z.coerce.boolean().optional(),
+  limit: z.coerce.number().int().min(1).max(20).optional(),
 });
 export type DiscoverGroupsQueryInput = z.infer<typeof discoverGroupsQuerySchema>;
 

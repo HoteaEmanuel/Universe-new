@@ -19,6 +19,7 @@ import {
   checkUsernameAvailability,
   updateUsername,
   savePostController,
+  completeOnboarding,
 } from "../controllers/user.controller.js";
 import { validate } from "../middleware/validate.js";
 import {
@@ -71,6 +72,7 @@ router.get(
   getUniversityPeople,
 );
 router.patch("/update-bio", validate({ body: updateBioSchema }), updateBio);
+router.post("/complete-onboarding", completeOnboarding);
 router.get("/follows-user/:id", followsUser);
 router.get("/users-from-same-university", getUsersFromSameUniversity);
 router.put(

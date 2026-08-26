@@ -16,45 +16,12 @@ import { getFullName } from "@/utils/fullName";
 import { BIO_MAX_LENGTH } from "@/constants/profileForm";
 import type { ProfileUser } from "./types";
 import { useUserStore } from "@/store/userStore";
+import { validateUsernameFormat } from "@/utils/usernameValidation";
+import { useUsernameAvailability } from "@/hooks/useUsernameAvailability";
 
 type EditProfileValues = {
   bio: string;
   username: string;
-};
-
-type AvailabilityState = "idle" | "checking" | "available" | "unavailable";
-
-const USERNAME_PATTERN = /^[a-z0-9_]{3,30}$/;
-const RESERVED_USERNAMES = new Set(["admin", "support", "settings", "api", "groups", "u"]);
-const DISALLOWED_USERNAME_TERMS = new Set([
-  "asshole", "bastard", "bitch", "cunt", "dick", "fuck", "fucker", "fucking", "fock", "fvck",
-  "motherfucker", "nude", "nsfw", "porn", "pussy", "sex", "shit", "slut", "whore",
-  "cacat", "curva", "dracu", "dracului", "muie", "pizda", "pula", "rahat",
-]);
-
-const LEETSPEAK_SUBSTITUTIONS: Record<string, string> = {
-  "0": "o",
-  "1": "i",
-  "3": "e",
-  "4": "a",
-  "5": "s",
-  "7": "t",
-};
-
-const normalizeUsernameForModeration = (value: string) =>
-  value
-    .split("")
-    .map((character) => LEETSPEAK_SUBSTITUTIONS[character] ?? character)
-    .join("")
-    .replace(/(.)\1{2,}/g, "$1");
-
-const containsDisallowedUsernameTerm = (username: string) => {
-  const terms = username
-    .split("_")
-    .filter(Boolean)
-    .map(normalizeUsernameForModeration);
-  return terms.some((term) => DISALLOWED_USERNAME_TERMS.has(term)) ||
-    DISALLOWED_USERNAME_TERMS.has(normalizeUsernameForModeration(terms.join("")));
 };
 
 const EditProfile = () => {
@@ -66,11 +33,9 @@ const EditProfile = () => {
     user?: ProfileUser;
     updateCurrentUser: (updates: Partial<ProfileUser>) => void;
   };
-  const { updateUsername, checkUsernameAvailability } = useUserStore();
+  const { updateUsername } = useUserStore();
   const [openImageModal, setOpenImageModal] = useState(false);
   const { mutateAsync: updateBio, isPending } = useUpdateBioMutation();
-  const [availability, setAvailability] = useState<AvailabilityState>("idle");
-  const [availabilityMessage, setAvailabilityMessage] = useState("");
   const {
     register,
     handleSubmit,
@@ -82,48 +47,12 @@ const EditProfile = () => {
   });
   const watchedBio = watch("bio");
   const watchedUsername = watch("username");
+  const { availability, message: availabilityMessage } = useUsernameAvailability(
+    user?.username ?? "",
+    watchedUsername,
+  );
 
   if (!user) return null;
-
-  useEffect(() => {
-    const username = watchedUsername.trim().toLowerCase();
-    if (username === user.username) {
-      setAvailability("idle");
-      setAvailabilityMessage("");
-      return;
-    }
-    if (!USERNAME_PATTERN.test(username)) {
-      setAvailability("unavailable");
-      setAvailabilityMessage("Use 3–30 lowercase letters, numbers, or underscores.");
-      return;
-    }
-    if (RESERVED_USERNAMES.has(username)) {
-      setAvailability("unavailable");
-      setAvailabilityMessage("That username is reserved.");
-      return;
-    }
-    if (containsDisallowedUsernameTerm(username)) {
-      setAvailability("unavailable");
-      setAvailabilityMessage("That username contains restricted language.");
-      return;
-    }
-
-    setAvailability("checking");
-    const timer = window.setTimeout(() => {
-      checkUsernameAvailability(username)
-        .then((result) => {
-          setAvailability(result.available ? "available" : "unavailable");
-          setAvailabilityMessage(
-            result.available ? "Username is available." : result.reason ?? "That username is already taken.",
-          );
-        })
-        .catch(() => {
-          setAvailability("idle");
-          setAvailabilityMessage("Could not check availability. You can still save to try this username.");
-        });
-    }, 350);
-    return () => window.clearTimeout(timer);
-  }, [checkUsernameAvailability, user.username, watchedUsername]);
 
   const onSubmit = async (data: EditProfileValues) => {
     const username = data.username.trim().toLowerCase();
@@ -209,14 +138,7 @@ const EditProfile = () => {
                 {...register("username", {
                   validate: (value) => {
                     const canonical = value.trim().toLowerCase();
-                    if (!USERNAME_PATTERN.test(canonical)) {
-                      return "Use 3–30 lowercase letters, numbers, or underscores.";
-                    }
-                    if (RESERVED_USERNAMES.has(canonical)) return "That username is reserved.";
-                    if (containsDisallowedUsernameTerm(canonical)) {
-                      return "That username contains restricted language.";
-                    }
-                    return true;
+                    return validateUsernameFormat(canonical) ?? true;
                   },
                 })}
               />
