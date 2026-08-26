@@ -39,12 +39,21 @@ import {
   messagesQuerySchema,
   mediaQuerySchema,
   reactToMessageSchema,
+  conversationsListQuerySchema,
 } from "../schemas/conversation.schema.js";
 const router = express.Router();
 
-router.get("/", getConversationsController);
+router.get(
+  "/",
+  validate({ query: conversationsListQuerySchema }),
+  getConversationsController,
+);
 router.get("/users", getConvoUsers);
-router.get("/archived", getArchivedConversationsController);
+router.get(
+  "/archived",
+  validate({ query: conversationsListQuerySchema }),
+  getArchivedConversationsController,
+);
 router.get("/:id", requireConversationParticipant, getConvoById);
 router.get(
   "/messages/:id",

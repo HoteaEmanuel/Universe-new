@@ -7,10 +7,13 @@ import type {
   ChatMessagePage,
   ChatUser,
   DirectConversation,
+  DirectConversationsPage,
   NewFilesMessagePayload,
   NewVoiceMessagePayload,
   ResourceType,
 } from "../features/chat/types";
+
+type ConversationListParams = { cursor?: string; search?: string };
 
 const API_URL =
   import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:5000/api";
@@ -32,8 +35,12 @@ type ConversationStore = {
     before?: string,
   ) => Promise<ChatMediaPage | ChatFilePage>;
   getConversationByUsersIds: (id: string) => Promise<DirectConversation | null>;
-  getUserConversations: () => Promise<DirectConversation[]>;
-  getArchivedConversations: () => Promise<DirectConversation[]>;
+  getUserConversations: (
+    params?: ConversationListParams,
+  ) => Promise<DirectConversationsPage>;
+  getArchivedConversations: (
+    params?: ConversationListParams,
+  ) => Promise<DirectConversationsPage>;
   archiveConversation: (id: string) => Promise<void>;
   unarchiveConversation: (id: string) => Promise<void>;
   deleteConversationForMe: (id: string) => Promise<void>;
@@ -119,18 +126,30 @@ export const useConversationStore = create<ConversationStore>((set) => ({
       );
     }
   },
-  getUserConversations: async () => {
+  getUserConversations: async ({ cursor, search } = {}) => {
     try {
-      const response = await axios.get(`${API_URL}/conversations`);
-      return response.data.conversations;
+      const response = await axios.get(`${API_URL}/conversations`, {
+        params: { ...(cursor ? { cursor } : {}), ...(search ? { search } : {}) },
+      });
+      return {
+        conversations: response.data.conversations,
+        nextCursor: response.data.nextCursor,
+        hasMore: response.data.hasMore,
+      };
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load conversations"));
     }
   },
-  getArchivedConversations: async () => {
+  getArchivedConversations: async ({ cursor, search } = {}) => {
     try {
-      const response = await axios.get(`${API_URL}/conversations/archived`);
-      return response.data.conversations;
+      const response = await axios.get(`${API_URL}/conversations/archived`, {
+        params: { ...(cursor ? { cursor } : {}), ...(search ? { search } : {}) },
+      });
+      return {
+        conversations: response.data.conversations,
+        nextCursor: response.data.nextCursor,
+        hasMore: response.data.hasMore,
+      };
     } catch (error) {
       throw new Error(
         errorMessage(error, "Could not load archived conversations"),

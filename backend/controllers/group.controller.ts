@@ -23,14 +23,18 @@ import {
   GroupBannedError,
   searchGroupMentionUsers,
 } from "../services/group.service.js";
-import { findGroupMembershipsForUser } from "../repository/group-members.repository.js";
+import { findUserGroupsPage } from "../repository/group-members.repository.js";
 import {
   getGroupFilesPage,
   getGroupMediaPage,
   getGroupMessagesPage,
 } from "../repository/message.repository.js";
 import { getActiveConversationUsers } from "../lib/socket.js";
-import type { BanGroupMemberInput, GroupBansQueryInput } from "../schemas/group.schema.js";
+import type {
+  BanGroupMemberInput,
+  GroupBansQueryInput,
+  GroupsListQueryInput,
+} from "../schemas/group.schema.js";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong";
@@ -135,30 +139,15 @@ export const deleteGroup = async (req: Request, res: Response) => {
 export const getUserGroups = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId as string;
-    const memberships = await findGroupMembershipsForUser(userId);
-    const groupIds = memberships.map((membership) => membership.groupId);
-    const groups = await prisma.group.findMany({
-      where: { id: { in: groupIds } },
-      include: {
-        lastMessage: {
-          include: {
-            sender: {
-              select: {
-                id: true,
-                username: true,
-                firstName: true,
-                lastName: true,
-                name: true,
-                profilePicture: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { updatedAt: "desc" },
+    const { cursor, search, limit } = req.query as unknown as GroupsListQueryInput;
+    const { groups, nextCursor, hasMore } = await findUserGroupsPage({
+      userId,
+      cursor,
+      search,
+      limit,
     });
 
-    return res.status(200).json({ groups });
+    return res.status(200).json({ groups, nextCursor, hasMore });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

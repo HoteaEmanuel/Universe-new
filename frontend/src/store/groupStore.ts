@@ -8,6 +8,7 @@ import type {
   ChatUser,
   GroupBanPage,
   GroupConversation,
+  GroupConversationsPage,
   GroupMember,
   GroupVisibility,
   NewFilesMessagePayload,
@@ -15,6 +16,8 @@ import type {
   NewVoiceMessagePayload,
   ResourceType,
 } from "../features/chat/types";
+
+type GroupListParams = { cursor?: string; search?: string };
 import type { MentionUser } from "../queryAndMutation/types";
 
 const API_URL =
@@ -32,7 +35,10 @@ type GroupStore = {
     visibility?: GroupVisibility;
     courseTag?: string;
   }) => Promise<GroupConversation>;
-  getUserGroups: (userId: string) => Promise<GroupConversation[]>;
+  getUserGroups: (
+    userId: string,
+    params?: GroupListParams,
+  ) => Promise<GroupConversationsPage>;
   getDiscoverablePublicGroups: (courseTag?: string) => Promise<GroupConversation[]>;
   getCourseCatalog: (groupId?: string) => Promise<string[]>;
   setGroupCourseTag: (groupId: string, courseTag: string | null) => Promise<GroupConversation>;
@@ -98,10 +104,16 @@ export const useGroupStore = create<GroupStore>(() => ({
       throw new Error(errorMessage(error, "Could not create group"));
     }
   },
-  getUserGroups: async (userId) => {
+  getUserGroups: async (userId, { cursor, search } = {}) => {
     try {
-      const response = await axios.get(`${API_URL}/groups/user/${userId}`);
-      return response.data.groups;
+      const response = await axios.get(`${API_URL}/groups/user/${userId}`, {
+        params: { ...(cursor ? { cursor } : {}), ...(search ? { search } : {}) },
+      });
+      return {
+        groups: response.data.groups,
+        nextCursor: response.data.nextCursor,
+        hasMore: response.data.hasMore,
+      };
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load groups"));
     }

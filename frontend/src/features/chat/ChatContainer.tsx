@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useState, type UIEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Archive, MoreVertical, Search, ShieldOff, SquarePen, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Archive, MoreVertical, ShieldOff, SquarePen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -10,15 +9,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import SearchInput from "@/components/SearchInput";
 import { useAuthStore } from "@/store/authStore";
-import { useGetUserConversations } from "@/queryAndMutation/queries/conversation-queries";
-import { useGetUserGroups } from "@/queryAndMutation/queries/group-queries";
-import { getFullName } from "@/utils/fullName";
+import { useDebounce } from "@/hooks/Debounce";
+import { useMergedConversationFeed } from "./hooks/useMergedConversationFeed";
 import ConversationListItem from "./components/ConversationListItem";
 import ConversationRowMenu from "./components/ConversationRowMenu";
 import ArchivedConversationsModal from "./components/ArchivedConversationsModal";
 import BlockedUsersModal from "./components/BlockedUsersModal";
-import type { ChatUser, ConversationListEntry } from "./types";
+import type { ChatUser } from "./types";
+
+const SCROLL_THRESHOLD_PX = 150;
 
 const ChatListSkeleton = () => (
   <ul className="flex flex-col gap-1">
@@ -44,33 +45,22 @@ const ChatContainer = () => {
     user: ChatUser;
     onlineUsers: string[];
   };
-  const { data: conversations, isPending: isPendingConversations } =
-    useGetUserConversations();
-  const { data: groups, isPending: isPendingGroups } = useGetUserGroups(
-    user.id,
-  );
   const [searchTerm, setSearchTerm] = useState("");
   const [archivedOpen, setArchivedOpen] = useState(false);
   const [blockedOpen, setBlockedOpen] = useState(false);
+  const debouncedSearch = useDebounce(searchTerm, 350);
 
-  const combined = useMemo<ConversationListEntry[]>(
-    () =>
-      [...(conversations ?? []), ...(groups ?? [])].sort(
-        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-      ),
-    [conversations, groups],
-  );
+  const { items, isPending, hasMore, isFetchingNextPage, fetchNextPage } =
+    useMergedConversationFeed(user.id, debouncedSearch.trim());
 
-  const filtered = useMemo(() => {
-    const query = searchTerm.trim().toLowerCase();
-    if (!query) return combined;
-    return combined.filter((entry) => {
-      const title = entry.name ? entry.name : getFullName(entry.user);
-      return title.toLowerCase().includes(query);
-    });
-  }, [combined, searchTerm]);
-
-  const isPending = isPendingConversations || isPendingGroups;
+  const handleScroll = (event: UIEvent<HTMLDivElement>) => {
+    const target = event.currentTarget;
+    const distanceFromBottom =
+      target.scrollHeight - target.scrollTop - target.clientHeight;
+    if (distanceFromBottom < SCROLL_THRESHOLD_PX && hasMore && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
 
   return (
     <section className="flex h-[calc(100dvh-10rem)] flex-col md:h-[calc(100dvh-4rem)]">
@@ -110,35 +100,19 @@ const ChatContainer = () => {
         </div>
       </div>
 
-      <div className="relative mb-4">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Search contacts or groups"
-          className="pl-8 pr-8"
-          value={searchTerm}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setSearchTerm(e.target.value)
-          }
-        />
-        {searchTerm && (
-          <button
-            type="button"
-            onClick={() => setSearchTerm("")}
-            aria-label="Clear search"
-            className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
-        )}
-      </div>
+      <SearchInput
+        value={searchTerm}
+        onChange={setSearchTerm}
+        placeholder="Search contacts or groups"
+        className="mb-4"
+      />
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto" onScroll={handleScroll}>
         {isPending ? (
           <ChatListSkeleton />
-        ) : filtered.length > 0 ? (
+        ) : items.length > 0 ? (
           <ul className="flex flex-col gap-1">
-            {filtered.map((entry) => (
+            {items.map((entry) => (
               <ConversationListItem
                 key={entry.id}
                 entry={entry}
@@ -158,8 +132,17 @@ const ChatContainer = () => {
                 }
               />
             ))}
+            {isFetchingNextPage && (
+              <li className="flex items-center gap-3 p-2">
+                <Skeleton className="size-14 shrink-0 rounded-full" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3.5 w-48" />
+                </div>
+              </li>
+            )}
           </ul>
-        ) : combined.length > 0 ? (
+        ) : debouncedSearch.trim() ? (
           <p className="pt-10 text-center text-sm text-muted-foreground">
             No results
           </p>

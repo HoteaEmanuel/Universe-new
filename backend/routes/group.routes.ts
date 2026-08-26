@@ -59,6 +59,7 @@ import {
   discoverGroupsQuerySchema,
   banGroupMemberSchema,
   groupBansQuerySchema,
+  groupsListQuerySchema,
 } from "../schemas/group.schema.js";
 import { sendGroupPollMessageSchema } from "../schemas/poll.schema.js";
 const router = express.Router();
@@ -72,7 +73,12 @@ const groupActionRateLimiter = createRateLimiter({
 
 router.post("/", validate({ body: createGroupSchema }), createGroupController);
 router.delete("/:id", requireGroupAdmin, deleteGroup);
-router.get("/user/:userId", requireSelf("userId"), getUserGroups);
+router.get(
+  "/user/:userId",
+  requireSelf("userId"),
+  validate({ query: groupsListQuerySchema }),
+  getUserGroups,
+);
 router.get("/course-catalog", getCourseCatalogController);
 router.get(
   "/discover/public",

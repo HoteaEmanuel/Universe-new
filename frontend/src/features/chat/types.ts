@@ -108,6 +108,18 @@ export type GroupConversation = {
 
 export type ConversationListEntry = DirectConversation | GroupConversation;
 
+export type DirectConversationsPage = {
+  conversations: DirectConversation[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
+export type GroupConversationsPage = {
+  groups: GroupConversation[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type ResourceType = "images" | "files"; // extend with "links" etc. as new resource tabs are added
 
 export type ChatResourcePage<T> = {

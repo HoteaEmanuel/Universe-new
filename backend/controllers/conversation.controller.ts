@@ -12,6 +12,7 @@ import {
   getConversationMessagesPage,
 } from "../repository/message.repository.js";
 import { findBlockEitherDirection } from "../repository/block.repository.js";
+import type { ConversationsListQueryInput } from "../schemas/conversation.schema.js";
 
 import {
   deleteMessage,
@@ -84,10 +85,17 @@ export const getConvoUser = async (req: Request, res: Response) => {
 export const getConversationsController = async (req: Request, res: Response) => {
   try {
     const userId = req.userId as string;
-    const conversations = await getUserConversations(userId);
+    const { cursor, search, limit } = req.query as unknown as ConversationsListQueryInput;
+    const { conversations, nextCursor, hasMore } = await getUserConversations(userId, {
+      cursor,
+      search,
+      limit,
+    });
     return res.status(200).json({
       message: "Fetched the conversations",
       conversations,
+      nextCursor,
+      hasMore,
     });
   } catch (error) {
     return res.status(400).json({ error });
@@ -195,10 +203,17 @@ export const markConversationReadController = async (req: Request, res: Response
 export const getArchivedConversationsController = async (req: Request, res: Response) => {
   try {
     const userId = req.userId as string;
-    const conversations = await getArchivedConversations(userId);
+    const { cursor, search, limit } = req.query as unknown as ConversationsListQueryInput;
+    const { conversations, nextCursor, hasMore } = await getArchivedConversations(userId, {
+      cursor,
+      search,
+      limit,
+    });
     return res.status(200).json({
       message: "Fetched the archived conversations",
       conversations,
+      nextCursor,
+      hasMore,
     });
   } catch (error) {
     return res.status(400).json({ error });

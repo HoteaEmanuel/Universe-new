@@ -1,15 +1,15 @@
 import {
   createConversation,
-  findAllConversationsByParticipant,
+  findConversationsPage,
   findConversationById,
   findConversationByParticipants,
   markConversationRead as markConversationReadRepo,
   setConversationHiddenAt,
   setConversationClearedAndHiddenAt,
+  type ConversationScope,
 } from "../repository/conversation.repository.js";
 import {
   createMessage,
-  countUnreadMessages,
   findMessageById,
 } from "../repository/message.repository.js";
 import { prisma } from "../database/prisma.js";
@@ -385,58 +385,31 @@ export const setMessageReaction = async (data: {
   return { removed: false, reaction };
 };
 
-const getConversationListForUser = async (userId: string, scope: "active" | "archived") => {
-  const conversations = await findAllConversationsByParticipant(userId);
+interface ConversationListParams {
+  search?: string;
+  cursor?: string;
+  limit?: number;
+}
 
-  const withArchiveState = conversations.map((convo) => {
-    const isParticipantOne = convo.participantOneId === userId;
-    const myLastReadAt = isParticipantOne
-      ? convo.lastReadAtParticipantOne
-      : convo.lastReadAtParticipantTwo;
-    const myClearedAt = isParticipantOne
-      ? convo.clearedAtParticipantOne
-      : convo.clearedAtParticipantTwo;
-    const myHiddenAt = isParticipantOne
-      ? convo.hiddenAtParticipantOne
-      : convo.hiddenAtParticipantTwo;
-
-    // A new message from the other participant un-hides the thread - a
-    // delete/archive/block can't permanently silence a channel the other
-    // person is still actively using (see context/current-feature.md).
-    const isHidden =
-      myHiddenAt !== null &&
-      (!convo.lastMessage || convo.lastMessage.createdAt <= myHiddenAt);
-
-    return { convo, myLastReadAt, myClearedAt, isHidden };
+const getConversationListForUser = async (
+  userId: string,
+  scope: ConversationScope,
+  params: ConversationListParams,
+) =>
+  findConversationsPage({
+    userId,
+    scope,
+    search: params.search,
+    cursor: params.cursor,
+    limit: params.limit ?? 20,
   });
 
-  const filtered = withArchiveState.filter(({ isHidden }) =>
-    scope === "archived" ? isHidden : !isHidden,
-  );
+export const getUserConversations = async (
+  userId: string,
+  params: ConversationListParams = {},
+) => getConversationListForUser(userId, "active", params);
 
-  return Promise.all(
-    filtered.map(async ({ convo, myLastReadAt, myClearedAt }) => {
-      const previewIsCleared =
-        myClearedAt !== null &&
-        (!convo.lastMessage || convo.lastMessage.createdAt <= myClearedAt);
-      const since =
-        myLastReadAt && myClearedAt
-          ? (myLastReadAt > myClearedAt ? myLastReadAt : myClearedAt)
-          : (myLastReadAt ?? myClearedAt);
-
-      return {
-        id: convo.id,
-        lastMessage: previewIsCleared ? null : convo.lastMessage,
-        updatedAt: convo.updatedAt,
-        user: convo.participants.find((p) => p.id !== userId),
-        unreadCount: await countUnreadMessages(convo.id, userId, since),
-      };
-    }),
-  );
-};
-
-export const getUserConversations = async (userId: string) =>
-  getConversationListForUser(userId, "active");
-
-export const getArchivedConversations = async (userId: string) =>
-  getConversationListForUser(userId, "archived");
+export const getArchivedConversations = async (
+  userId: string,
+  params: ConversationListParams = {},
+) => getConversationListForUser(userId, "archived", params);

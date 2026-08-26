@@ -1,10 +1,11 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useConversationStore } from "../../store/conversationStore";
 import type {
   ChatMessagePage,
   ChatResourcePage,
   ChatUser,
   DirectConversation,
+  DirectConversationsPage,
   ResourceType,
 } from "../../features/chat/types";
 
@@ -17,20 +18,34 @@ export const useGetUserByConvoId = (id?: string) => {
   });
 };
 
-export const useGetUserConversations = () => {
+export const useGetUserConversationsInfinite = (search: string) => {
   const { getUserConversations } = useConversationStore();
-  return useQuery<DirectConversation[]>({
-    queryFn: () => getUserConversations(),
-    queryKey: ["user-conversations"],
+  return useInfiniteQuery<DirectConversationsPage>({
+    queryKey: ["user-conversations", search],
+    queryFn: ({ pageParam }) =>
+      getUserConversations({ cursor: pageParam as string | undefined, search }),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+    // Keeps the previous search's results on screen while the debounced
+    // search term settles into a new query key, instead of flashing to
+    // "no results" for the instant between the key changing and the new
+    // page resolving.
+    placeholderData: keepPreviousData,
   });
 };
 
-export const useGetArchivedConversations = (enabled = true) => {
+export const useGetArchivedConversationsInfinite = (search: string, enabled = true) => {
   const { getArchivedConversations } = useConversationStore();
-  return useQuery<DirectConversation[]>({
-    queryFn: () => getArchivedConversations(),
-    queryKey: ["archived-conversations"],
+  return useInfiniteQuery<DirectConversationsPage>({
+    queryKey: ["archived-conversations", search],
+    queryFn: ({ pageParam }) =>
+      getArchivedConversations({ cursor: pageParam as string | undefined, search }),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
     enabled,
+    placeholderData: keepPreviousData,
   });
 };
 

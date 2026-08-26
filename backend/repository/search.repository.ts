@@ -12,8 +12,9 @@ const toSearchPage = <T>(rows: T[], limit: number): SearchPage<T> => {
 };
 
 // Fuzzy fallback lets typo'd queries ("Jhon") still surface results that the
-// full-text match alone would miss.
-const TRIGRAM_THRESHOLD = 0.25;
+// full-text match alone would miss. Exported so other searchVector-backed
+// pagers (e.g. conversation/group list search) use the same threshold.
+export const TRIGRAM_THRESHOLD = 0.25;
 
 export interface UserSearchRow {
   id: string;

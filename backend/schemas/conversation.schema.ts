@@ -35,6 +35,13 @@ export const messagesQuerySchema = z.object({
 });
 export type MessagesQueryInput = z.infer<typeof messagesQuerySchema>;
 
+export const conversationsListQuerySchema = z.object({
+  cursor: z.string().min(1).optional(),
+  search: z.string().max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type ConversationsListQueryInput = z.infer<typeof conversationsListQuerySchema>;
+
 export const mediaQuerySchema = z.object({
   type: z.enum(["images", "files"]).default("images"),
   before: z.string().min(1).optional(),

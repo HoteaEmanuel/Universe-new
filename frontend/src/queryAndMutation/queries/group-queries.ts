@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useGroupStore } from "../../store/groupStore";
 import type {
   ChatMessagePage,
@@ -6,17 +6,26 @@ import type {
   ChatUser,
   GroupBanPage,
   GroupConversation,
+  GroupConversationsPage,
   GroupMember,
   ResourceType,
 } from "../../features/chat/types";
 import type { MentionUser } from "../types";
 
-export const useGetUserGroups = (userId?: string) => {
+export const useGetUserGroupsInfinite = (userId: string | undefined, search: string) => {
   const { getUserGroups } = useGroupStore();
-  return useQuery<GroupConversation[]>({
-    queryFn: () => getUserGroups(userId as string),
-    queryKey: ["user-groups", userId],
+  return useInfiniteQuery<GroupConversationsPage>({
+    queryKey: ["user-groups", userId, search],
+    queryFn: ({ pageParam }) =>
+      getUserGroups(userId as string, {
+        cursor: pageParam as string | undefined,
+        search,
+      }),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
     enabled: !!userId,
+    placeholderData: keepPreviousData,
   });
 };
 

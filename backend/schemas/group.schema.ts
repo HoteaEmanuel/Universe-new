@@ -59,6 +59,13 @@ export const groupMessagesQuerySchema = z.object({
 });
 export type GroupMessagesQueryInput = z.infer<typeof groupMessagesQuerySchema>;
 
+export const groupsListQuerySchema = z.object({
+  cursor: z.string().min(1).optional(),
+  search: z.string().max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+export type GroupsListQueryInput = z.infer<typeof groupsListQuerySchema>;
+
 export const groupMentionSearchQuerySchema = z.object({
   q: z.string().trim().toLowerCase().max(30),
 });

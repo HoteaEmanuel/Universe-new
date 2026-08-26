@@ -1,6 +1,9 @@
 import { prisma } from "../database/prisma.js";
+import { Prisma } from "../generated/prisma/client.js";
 import type { GroupRole } from "../generated/prisma/client.js";
 import { runSerializable } from "../lib/serializableTransaction.js";
+import { encodeCursor, decodeCursor } from "../lib/keysetCursor.js";
+import { TRIGRAM_THRESHOLD } from "./search.repository.js";
 
 export class GroupBannedError extends Error {}
 
@@ -100,6 +103,132 @@ export const searchGroupMembersByUsername = async (
 
 export const findGroupMembershipsForUser = async (userId: string) => {
   return prisma.groupMembers.findMany({ where: { memberId: userId } });
+};
+
+interface FindUserGroupsPageInput {
+  userId: string;
+  search?: string;
+  cursor?: string;
+  limit: number;
+}
+
+interface GroupPageRow {
+  id: string;
+  name: string;
+  description: string | null;
+  coverImageUrl: string | null;
+  visibility: string;
+  university: string | null;
+  courseTag: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  lastMessageId: string | null;
+  lastMessageContent: string | null;
+  lastMessageImageUrls: string[] | null;
+  lastMessageAudioUrl: string | null;
+  lastMessageSharedPostId: string | null;
+  lastMessageSenderId: string | null;
+  senderUsername: string | null;
+  senderFirstName: string | null;
+  senderLastName: string | null;
+  senderName: string | null;
+  senderProfilePicture: string | null;
+}
+
+const toGroupRow = (row: GroupPageRow) => ({
+  id: row.id,
+  name: row.name,
+  description: row.description ?? undefined,
+  coverImageUrl: row.coverImageUrl ?? undefined,
+  visibility: row.visibility,
+  university: row.university,
+  courseTag: row.courseTag,
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+  lastMessage: row.lastMessageId
+    ? {
+        content: row.lastMessageContent,
+        imageUrls: row.lastMessageImageUrls ?? [],
+        audioUrl: row.lastMessageAudioUrl,
+        sharedPostId: row.lastMessageSharedPostId,
+        senderId: row.lastMessageSenderId,
+        sender: row.lastMessageSenderId
+          ? {
+              id: row.lastMessageSenderId,
+              username: row.senderUsername,
+              firstName: row.senderFirstName,
+              lastName: row.senderLastName,
+              name: row.senderName,
+              profilePicture: row.senderProfilePicture,
+            }
+          : null,
+      }
+    : undefined,
+});
+
+// Same searchVector + trigram-fallback shape as searchGroups in
+// search.repository.ts, scoped to groups the user is actually a member of.
+export const findUserGroupsPage = async ({
+  userId,
+  search,
+  cursor,
+  limit,
+}: FindUserGroupsPageInput) => {
+  const searchClause = search
+    ? Prisma.sql`AND (
+        g."searchVector" @@ websearch_to_tsquery('simple', ${search})
+        OR similarity(coalesce(g.name, ''), ${search}) > ${TRIGRAM_THRESHOLD}
+      )`
+    : Prisma.empty;
+
+  const cursorClause = cursor
+    ? (() => {
+        const decoded = decodeCursor(cursor);
+        return Prisma.sql`AND (g."updatedAt", g.id) < (${decoded.updatedAt}, ${decoded.id})`;
+      })()
+    : Prisma.empty;
+
+  const rows = await prisma.$queryRaw<GroupPageRow[]>`
+    SELECT
+      g.id,
+      g.name,
+      g.description,
+      g."coverImageUrl",
+      g.visibility,
+      g.university,
+      g."courseTag",
+      g."createdAt",
+      g."updatedAt",
+      lm.id AS "lastMessageId",
+      lm.content AS "lastMessageContent",
+      lm."imageUrls" AS "lastMessageImageUrls",
+      lm."audioUrl" AS "lastMessageAudioUrl",
+      lm."sharedPostId" AS "lastMessageSharedPostId",
+      lm."senderId" AS "lastMessageSenderId",
+      su.username AS "senderUsername",
+      su."firstName" AS "senderFirstName",
+      su."lastName" AS "senderLastName",
+      su.name AS "senderName",
+      su."profilePicture" AS "senderProfilePicture"
+    FROM groups g
+    JOIN group_members gm ON gm."groupId" = g.id AND gm."memberId" = ${userId}
+    LEFT JOIN group_messages lm ON lm.id = g."lastMessageId"
+    LEFT JOIN users su ON su.id = lm."senderId"
+    WHERE true
+    ${searchClause}
+    ${cursorClause}
+    ORDER BY g."updatedAt" DESC, g.id DESC
+    LIMIT ${limit + 1}
+  `;
+
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  const last = page[page.length - 1];
+  return {
+    groups: page.map(toGroupRow),
+    nextCursor: hasMore && last ? encodeCursor(last.updatedAt, last.id) : null,
+    hasMore,
+  };
 };
 
 export const findGroupMember = async (groupId: string, memberId: string) => {
