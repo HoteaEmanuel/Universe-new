@@ -19,6 +19,10 @@ const signupShared = {
   email,
   password,
   "confirm-password": z.string().min(1, "Please confirm your password"),
+  agreeToTerms: z.literal(
+    true,
+    "You must agree to the Privacy Policy and Terms of Service",
+  ),
 };
 
 export const normalSignupSchema = z

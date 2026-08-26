@@ -1,5 +1,6 @@
 import ProfileCard from "@/features/profile/ProfileCard";
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useGlobalStore } from "../store/globalStore";
 import { useUpdatePreferencesMutation } from "@/queryAndMutation/mutations/preferences-mutation";
 
@@ -67,6 +68,17 @@ const Settings = () => {
               />
               <span className="slider1"></span>
             </label>
+          </li>
+          <li className="w-full h-20 flex items-center justify-between rounded-2xl p-10 border-2 border-violet-950">
+            <h1>Legal</h1>
+            <div className="flex items-center gap-4 text-sm font-semibold text-primary">
+              <Link to="/privacy-policy" className="hover:underline">
+                Privacy Policy
+              </Link>
+              <Link to="/terms-of-service" className="hover:underline">
+                Terms of Service
+              </Link>
+            </div>
           </li>
         </ul>
       </div>

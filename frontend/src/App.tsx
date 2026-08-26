@@ -39,6 +39,8 @@ import EditProfile from "./features/profile/EditProfile";
 import Notifications from "./features/notifications/Notifications.tsx";
 import EventsPage from "./features/events/EventsPage";
 import EventDetails from "./features/events/EventDetails";
+import PrivacyPolicy from "./Pages/legal/PrivacyPolicy";
+import TermsOfService from "./Pages/legal/TermsOfService";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +107,8 @@ function App() {
             }
           />
           <Route path="/p/:id" element={<PublicPost />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="*" element={<NotFound />} />
           <Route
             element={

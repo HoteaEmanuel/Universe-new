@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useForm, type Resolver } from "react-hook-form";
+import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore.js";
@@ -12,6 +12,8 @@ import PasswordField from "../components/PasswordField";
 import ErrorBanner from "../components/ErrorBanner";
 import SubmitButton from "../components/SubmitButton";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { normalSignupSchema, businessSignupSchema } from "./schemas";
 import { parseNameFromEmail } from "./parseNameFromEmail";
 
@@ -27,6 +29,7 @@ type SignupFormValues = {
   "first-name": string;
   "last-name": string;
   name: string;
+  agreeToTerms: boolean;
 };
 
 const SignUpPage = () => {
@@ -41,11 +44,13 @@ const SignUpPage = () => {
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(
       accountType === "normal" ? normalSignupSchema : businessSignupSchema,
     ) as unknown as Resolver<SignupFormValues>,
+    defaultValues: { agreeToTerms: false },
   });
   const { signUp, isLoading, error } = useAuthStore();
 
@@ -194,6 +199,47 @@ const SignUpPage = () => {
           error={errors["confirm-password"]?.message}
           registration={register("confirm-password")}
         />
+
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-start gap-2">
+            <Controller
+              name="agreeToTerms"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="agree-to-terms"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  aria-invalid={!!errors.agreeToTerms}
+                  className="mt-0.5"
+                />
+              )}
+            />
+            <Label htmlFor="agree-to-terms" className="text-xs font-normal">
+              I agree to the{" "}
+              <Link
+                to="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-primary hover:underline"
+              >
+                Privacy Policy
+              </Link>{" "}
+              and{" "}
+              <Link
+                to="/terms-of-service"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-primary hover:underline"
+              >
+                Terms of Service
+              </Link>
+            </Label>
+          </div>
+          {errors.agreeToTerms && (
+            <p className="error">{errors.agreeToTerms.message}</p>
+          )}
+        </div>
 
         <SubmitButton isLoading={isLoading} loadingText="Signing up...">
           Sign Up
