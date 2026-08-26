@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { findScrollableAncestor } from "@/utils/scroll";
 import EventCard from "./components/EventCard";
-import CreateEventModal from "./components/CreateEventModal";
+import EventFormModal from "./components/EventFormModal";
 import {
   useDiscoverEventsInfiniteQuery,
   useMyEventsInfiniteQuery,
@@ -147,7 +147,11 @@ const EventsPage = () => {
         ))}
       </Tabs>
 
-      <CreateEventModal open={showCreateModal} onClose={() => setShowCreateModal(false)} />
+      <EventFormModal
+        mode="create"
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
     </div>
   );
 };

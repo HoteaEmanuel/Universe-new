@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import {
+  ArrowLeft,
   CalendarDays,
   MapPin,
   Video,
@@ -10,6 +11,7 @@ import {
   Download,
   MessageCircle,
   Ban,
+  Pencil,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -36,6 +38,7 @@ import {
 import { formatEventDateTime, buildGoogleCalendarUrl } from "./utils/formatEventDate";
 import { urlPathName } from "@/utils/urlPathFromName";
 import EventParticipantsModal from "./components/EventParticipantsModal";
+import EventFormModal from "./components/EventFormModal";
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -49,6 +52,7 @@ const EventDetails = () => {
   const joinChatMutation = useJoinEventChatMutation(id);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (event) document.title = event.title;
@@ -85,8 +89,26 @@ const EventDetails = () => {
     });
   };
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/events");
+    }
+  };
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 pt-4 pb-24 md:pb-10">
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Back"
+        className="-ml-1 w-fit"
+        onClick={handleBack}
+      >
+        <ArrowLeft />
+      </Button>
+
       {event.coverImageUrl && (
         <img
           src={event.coverImageUrl}
@@ -227,7 +249,15 @@ const EventDetails = () => {
       </div>
 
       {isHost && !isCancelled && (
-        <div className="flex justify-end border-t border-border pt-4">
+        <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <Button
+            variant="ghost"
+            className="gap-1.5"
+            onClick={() => setShowEditModal(true)}
+          >
+            <Pencil className="size-4" />
+            Edit event
+          </Button>
           <Button
             variant="ghost"
             className="gap-1.5 text-destructive hover:text-destructive"
@@ -265,6 +295,15 @@ const EventDetails = () => {
         eventId={event.id}
         isHost={isHost}
       />
+
+      {isHost && (
+        <EventFormModal
+          mode="edit"
+          event={event}
+          open={showEditModal}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
     </div>
   );
 };
