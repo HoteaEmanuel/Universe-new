@@ -38,7 +38,7 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
   const { id: postId } = useParams();
   const { user: authUser } = useAuthStore();
   const { data: user, isPending: isPendingUser } = useGetUserByIdQuery(
-    comment.userId,
+    comment.isBlocked ? undefined : (comment.userId ?? undefined),
   );
   const isReply = !!comment.parentId;
   const [liked, setLiked] = useState(comment.isLiked);
@@ -51,10 +51,10 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
   const likeComment = useLikeCommentMutation(postId, comment.parentId);
   const removeLikeComment = useRemoveLikeCommentMutation(postId, comment.parentId);
 
-  if (isPendingUser || !user) return null;
+  if (!comment.isBlocked && (isPendingUser || !user)) return null;
 
-  const isOwnComment = authUser!.id === user.id;
-  const fullName = urlPathName(user);
+  const isOwnComment = !comment.isBlocked && authUser!.id === user!.id;
+  const fullName = comment.isBlocked ? "" : urlPathName(user!);
 
   const handleToggleLike = () => {
     const nextLiked = !liked;
@@ -90,31 +90,41 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
         isReply ? "gap-2 py-1 text-xs" : "gap-2.5 py-1.5 text-sm"
       }`}
     >
-      <Link to={isOwnComment ? "/profile" : `/u/${fullName}`}>
-        {user.profilePicture ? (
-          <img
-            src={user.profilePicture}
-            alt={getFullName(user)}
-            className={`${avatarSize} shrink-0 rounded-full object-cover`}
-          />
-        ) : (
-          <FaUserCircle className={`${avatarSize} shrink-0 text-muted-foreground`} />
-        )}
-      </Link>
+      {comment.isBlocked ? (
+        <FaUserCircle className={`${avatarSize} shrink-0 text-muted-foreground`} />
+      ) : (
+        <Link to={isOwnComment ? "/profile" : `/u/${fullName}`}>
+          {user!.profilePicture ? (
+            <img
+              src={user!.profilePicture}
+              alt={getFullName(user!)}
+              className={`${avatarSize} shrink-0 rounded-full object-cover`}
+            />
+          ) : (
+            <FaUserCircle className={`${avatarSize} shrink-0 text-muted-foreground`} />
+          )}
+        </Link>
+      )}
 
       <div className="min-w-0 flex-1">
         <p className="wrap-break-word">
-          <Link
-            to={isOwnComment ? "/profile" : `/u/${fullName}`}
-            className="font-semibold"
-          >
-            {isOwnComment ? "You" : getFullName(user)}
-          </Link>{" "}
-          <MentionText text={comment.text} mentionedUsers={comment.mentionedUsers ?? []} />
+          {comment.isBlocked ? (
+            <span className="italic text-muted-foreground">{comment.text}</span>
+          ) : (
+            <>
+              <Link
+                to={isOwnComment ? "/profile" : `/u/${fullName}`}
+                className="font-semibold"
+              >
+                {isOwnComment ? "You" : getFullName(user!)}
+              </Link>{" "}
+              <MentionText text={comment.text} mentionedUsers={comment.mentionedUsers ?? []} />
+            </>
+          )}
         </p>
         <div className="flex items-center gap-3 pt-0.5 text-xs text-muted-foreground">
           <span>{formatDateDetailed(comment.createdAt)}</span>
-          {!isReply && (
+          {!isReply && !comment.isBlocked && (
             <button
               type="button"
               className="font-medium hover:text-foreground"
@@ -167,7 +177,7 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
         )}
       </div>
 
-      {isOwnComment ? (
+      {comment.isBlocked ? null : isOwnComment ? (
         <span className="mt-1 flex shrink-0 flex-col items-center gap-0.5 text-muted-foreground">
           <Heart className={heartSize} fill="none" />
           {likesCount > 0 && (

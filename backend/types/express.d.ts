@@ -5,6 +5,7 @@ declare global {
     interface User extends PrismaUser {}
     interface Request {
       userId?: string;
+      blockedIds?: Set<string>;
     }
   }
 }

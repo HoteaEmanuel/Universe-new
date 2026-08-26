@@ -50,6 +50,7 @@ export const mentionSearchUsers = async (req: Request, res: Response) => {
   try {
     const q = req.query.q as string;
     const viewerId = req.userId as string;
+    const blockedIds = [...(req.blockedIds ?? [])];
     const relevantIds = [...(await getViewerRelevantUserIds(viewerId))];
     const select = {
       id: true,
@@ -60,7 +61,10 @@ export const mentionSearchUsers = async (req: Request, res: Response) => {
       profilePicture: true,
     } as const;
     const users = await prisma.user.findMany({
-      where: { id: { not: viewerId }, username: { startsWith: q } },
+      where: {
+        id: { not: viewerId, notIn: blockedIds },
+        username: { startsWith: q },
+      },
       select,
       take: 8,
     });
@@ -122,6 +126,9 @@ export const getUserByUsername = async (req: Request, res: Response) => {
       select: PUBLIC_USER_SELECT,
     });
     if (!user) return res.status(404).json({ message: "User not found" });
+    if (req.blockedIds?.has(user.id)) {
+      return res.status(404).json({ message: "User not found" });
+    }
     return res.status(200).json({ message: "User found", user });
   } catch {
     return res.status(404).json({ message: "User not found" });
@@ -253,9 +260,13 @@ export const getFollowers = async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error("User not found");
+    const blockedIds = [...(req.blockedIds ?? [])];
 
     const followers = await prisma.follow.findMany({
-      where: { followingId: userId },
+      where: {
+        followingId: userId,
+        ...(blockedIds.length ? { followerId: { notIn: blockedIds } } : {}),
+      },
       include: { follower: { select: PROFILE_CARD_SELECT } },
     });
     const data = followers.map((f) => f.follower);
@@ -292,8 +303,12 @@ export const getFollowing = async (req: Request, res: Response) => {
         following: followingFromCache,
       });
     }
+    const blockedIds = [...(req.blockedIds ?? [])];
     const following = await prisma.follow.findMany({
-      where: { followerId: userId },
+      where: {
+        followerId: userId,
+        ...(blockedIds.length ? { followingId: { notIn: blockedIds } } : {}),
+      },
       include: {
         following: {
           select: {
@@ -336,7 +351,10 @@ export const getRelevantFollowers = async (req: Request, res: Response) => {
     if (!user) throw new Error("User not found");
 
     const { cursor, limit } = req.query as unknown as FollowListQueryInput;
-    const relevantIds = [...(await getViewerRelevantUserIds(viewerId))];
+    const blockedIds = [...(req.blockedIds ?? [])];
+    const relevantIds = [...(await getViewerRelevantUserIds(viewerId))].filter(
+      (id) => !blockedIds.includes(id),
+    );
 
     const { items, nextCursor, hasMore } = await getRelevantFirstPage({
       cursor,
@@ -353,9 +371,7 @@ export const getRelevantFollowers = async (req: Request, res: Response) => {
         prisma.follow.findMany({
           where: {
             followingId: userId,
-            ...(relevantIds.length > 0
-              ? { followerId: { notIn: relevantIds } }
-              : {}),
+            followerId: { notIn: [...relevantIds, ...blockedIds] },
           },
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take,
@@ -384,7 +400,10 @@ export const getRelevantFollowing = async (req: Request, res: Response) => {
     if (!user) throw new Error("User not found");
 
     const { cursor, limit } = req.query as unknown as FollowListQueryInput;
-    const relevantIds = [...(await getViewerRelevantUserIds(viewerId))];
+    const blockedIds = [...(req.blockedIds ?? [])];
+    const relevantIds = [...(await getViewerRelevantUserIds(viewerId))].filter(
+      (id) => !blockedIds.includes(id),
+    );
 
     const { items, nextCursor, hasMore } = await getRelevantFirstPage({
       cursor,
@@ -401,9 +420,7 @@ export const getRelevantFollowing = async (req: Request, res: Response) => {
         prisma.follow.findMany({
           where: {
             followerId: userId,
-            ...(relevantIds.length > 0
-              ? { followingId: { notIn: relevantIds } }
-              : {}),
+            followingId: { notIn: [...relevantIds, ...blockedIds] },
           },
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take,

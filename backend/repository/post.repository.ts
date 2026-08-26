@@ -49,8 +49,13 @@ const toFeedPage = <T extends { id: string }>(
   };
 };
 
-export const findAllPosts = async (cursor?: string, limit = 10) => {
+export const findAllPosts = async (
+  cursor?: string,
+  limit = 10,
+  excludeUserIds: string[] = [],
+) => {
   const posts = await prisma.post.findMany({
+    where: excludeUserIds.length ? { userId: { notIn: excludeUserIds } } : undefined,
     take: limit + 1,
     orderBy: FEED_ORDER_BY,
     include: POST_INCLUDE,
@@ -63,9 +68,12 @@ export const findFollowingPosts = async (
   followingIds: string[],
   cursor?: string,
   limit = 10,
+  excludeUserIds: string[] = [],
 ) => {
   const posts = await prisma.post.findMany({
-    where: { userId: { in: followingIds } },
+    where: {
+      userId: { in: followingIds, ...(excludeUserIds.length ? { notIn: excludeUserIds } : {}) },
+    },
     take: limit + 1,
     orderBy: FEED_ORDER_BY,
     include: POST_INCLUDE,
@@ -78,9 +86,13 @@ export const findUniversityPosts = async (
   university: string | null,
   cursor?: string,
   limit = 10,
+  excludeUserIds: string[] = [],
 ) => {
   const posts = await prisma.post.findMany({
-    where: { user: { university } },
+    where: {
+      user: { university },
+      ...(excludeUserIds.length ? { userId: { notIn: excludeUserIds } } : {}),
+    },
     take: limit + 1,
     orderBy: FEED_ORDER_BY,
     include: POST_INCLUDE,

@@ -13,6 +13,28 @@ import {
 } from "../repository/comment.repository.js";
 import type { CommentQueryInput } from "../schemas/comment.schema.js";
 
+const TOMBSTONE_TEXT = "This comment is unavailable.";
+
+// Blocked-author comments are kept in the list (not filtered out) so replies
+// nested under them stay reachable, but their identity/content is hidden.
+const withBlockAwareness = <
+  T extends { userId: string; text: string; mentionedUsers: unknown[] },
+>(
+  comment: T,
+  blockedIds: Set<string>,
+) => {
+  if (!blockedIds.has(comment.userId)) {
+    return { ...comment, isBlocked: false };
+  }
+  return {
+    ...comment,
+    userId: null,
+    text: TOMBSTONE_TEXT,
+    mentionedUsers: [],
+    isBlocked: true,
+  };
+};
+
 export const getComments = async (req: Request, res: Response) => {
   try {
     const postId = req.params.id as string;
@@ -26,8 +48,9 @@ export const getComments = async (req: Request, res: Response) => {
       comments.map((comment) => comment.id),
       req.userId as string,
     );
+    const blockedIds = req.blockedIds ?? new Set<string>();
     const commentsWithLikes = comments.map((comment) => ({
-      ...comment,
+      ...withBlockAwareness(comment, blockedIds),
       isLiked: likedCommentIds.has(comment.id),
     }));
     return res.status(200).json({
@@ -56,8 +79,9 @@ export const getCommentReplies = async (req: Request, res: Response) => {
       comments.map((comment) => comment.id),
       req.userId as string,
     );
+    const blockedIds = req.blockedIds ?? new Set<string>();
     const commentsWithLikes = comments.map((comment) => ({
-      ...comment,
+      ...withBlockAwareness(comment, blockedIds),
       isLiked: likedCommentIds.has(comment.id),
     }));
     return res.status(200).json({

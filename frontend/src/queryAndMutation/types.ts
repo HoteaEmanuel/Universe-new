@@ -295,7 +295,7 @@ export type UniversityPeoplePage = {
 
 export type PostComment = {
   id: string;
-  userId: string;
+  userId: string | null;
   postId: string;
   text: string;
   createdAt: string;
@@ -304,6 +304,7 @@ export type PostComment = {
   parentId?: string | null;
   repliesCount?: number;
   mentionedUsers: MentionUser[];
+  isBlocked?: boolean;
 };
 
 export type PostCommentsPage = {

@@ -39,6 +39,7 @@ export const getPost = async (req: Request, res: Response) => {
       },
     });
     if (!post) throw new Error("Post not found");
+    if (req.blockedIds?.has(post.userId)) throw new Error("Post not found");
     const savedPost = await prisma.savedPost.findUnique({
       where: { userId_postId: { userId: req.userId as string, postId: id } },
     });
@@ -112,7 +113,8 @@ export const getPostsController = async (req: Request, res: Response) => {
     const userId = req.userId as string;
     const cursor = req.query.cursor as string | undefined;
     const limit = req.query.limit as unknown as number;
-    const page = await getPosts({ feed, userId, cursor, limit });
+    const blockedIds = [...(req.blockedIds ?? [])];
+    const page = await getPosts({ feed, userId, cursor, limit, blockedIds });
     return res
       .status(200)
       .json({ ...page, message: "Fetched the posts succesfully" });

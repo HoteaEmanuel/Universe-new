@@ -67,10 +67,11 @@ interface GetPostsInput {
   feed: string;
   cursor?: string;
   limit?: number;
+  blockedIds?: string[];
 }
 
 export const getPosts = async (data: GetPostsInput) => {
-  const { userId, feed, cursor, limit = 10 } = data;
+  const { userId, feed, cursor, limit = 10, blockedIds = [] } = data;
   const user = await findUserById(userId);
   if (!user) throw new Error("User not found");
 
@@ -79,14 +80,14 @@ export const getPosts = async (data: GetPostsInput) => {
 
   let page;
   if (feed === "Global" || feed === "") {
-    page = await findAllPosts(cursor, limit);
+    page = await findAllPosts(cursor, limit, blockedIds);
   } else if (feed === "Following") {
     const following = await prisma.follow.findMany({ where: { followerId: userId } });
     const followingIds = following.map((f) => f.followingId);
-    page = await findFollowingPosts(followingIds, cursor, limit);
+    page = await findFollowingPosts(followingIds, cursor, limit, blockedIds);
   } else {
     // University feed
-    page = await findUniversityPosts(user.university, cursor, limit);
+    page = await findUniversityPosts(user.university, cursor, limit, blockedIds);
   }
 
   return {

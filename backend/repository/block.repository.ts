@@ -34,6 +34,16 @@ export const deleteBlock = async (blockerId: string, blockedId: string) => {
   await prisma.block.deleteMany({ where: { blockerId, blockedId } });
 };
 
+export const findBlockedUserIdsEitherDirection = async (userId: string) => {
+  const blocks = await prisma.block.findMany({
+    where: { OR: [{ blockerId: userId }, { blockedId: userId }] },
+    select: { blockerId: true, blockedId: true },
+  });
+  return blocks.map((block) =>
+    block.blockerId === userId ? block.blockedId : block.blockerId,
+  );
+};
+
 export const findBlockedUsersForBlocker = async (blockerId: string) => {
   const blocks = await prisma.block.findMany({
     where: { blockerId },

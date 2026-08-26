@@ -1,4 +1,5 @@
 import { prisma } from "../database/prisma.js";
+import { Prisma } from "../generated/prisma/client.js";
 import type { AccountType, GroupVisibility } from "../generated/prisma/client.js";
 
 interface SearchPage<T> {
@@ -26,12 +27,23 @@ export interface UserSearchRow {
   accountType: AccountType;
 }
 
-export const searchUsers = async (query: string, limit = 20, offset = 0) => {
+export const searchUsers = async (
+  query: string,
+  limit = 20,
+  offset = 0,
+  excludeUserIds: string[] = [],
+) => {
+  const excludeClause = excludeUserIds.length
+    ? Prisma.sql`AND id NOT IN (${Prisma.join(excludeUserIds)})`
+    : Prisma.empty;
   const rows = await prisma.$queryRaw<UserSearchRow[]>`
     SELECT id, "firstName", "lastName", name, "profilePicture", university, "accountType"
     FROM users
-    WHERE "searchVector" @@ websearch_to_tsquery('simple', ${query})
+    WHERE (
+      "searchVector" @@ websearch_to_tsquery('simple', ${query})
        OR similarity(coalesce(name, '') || ' ' || coalesce("firstName", '') || ' ' || coalesce("lastName", ''), ${query}) > ${TRIGRAM_THRESHOLD}
+    )
+    ${excludeClause}
     ORDER BY
       ts_rank("searchVector", websearch_to_tsquery('simple', ${query})) DESC,
       similarity(coalesce(name, '') || ' ' || coalesce("firstName", '') || ' ' || coalesce("lastName", ''), ${query}) DESC,
@@ -53,17 +65,28 @@ export interface PostSearchRow {
   updatedAt: Date;
 }
 
-export const searchPosts = async (query: string, limit = 20, offset = 0) => {
+export const searchPosts = async (
+  query: string,
+  limit = 20,
+  offset = 0,
+  excludeUserIds: string[] = [],
+) => {
+  const excludeClause = excludeUserIds.length
+    ? Prisma.sql`AND p."userId" NOT IN (${Prisma.join(excludeUserIds)})`
+    : Prisma.empty;
   const rows = await prisma.$queryRaw<PostSearchRow[]>`
     SELECT p.id, p."userId", p."imagesUrls", p."imagesPublicIds", p.title, p.body, p.location, p."createdAt", p."updatedAt"
     FROM posts p
-    WHERE p."searchVector" @@ websearch_to_tsquery('simple', ${query})
+    WHERE (
+      p."searchVector" @@ websearch_to_tsquery('simple', ${query})
        OR similarity(coalesce(p.title, ''), ${query}) > ${TRIGRAM_THRESHOLD}
        OR EXISTS (
          SELECT 1 FROM "_PostTags" pt
          JOIN tags t ON t.id = pt."B"
          WHERE pt."A" = p.id AND t.name ILIKE ${`%${query}%`}
        )
+    )
+    ${excludeClause}
     ORDER BY
       ts_rank(p."searchVector", websearch_to_tsquery('simple', ${query})) DESC,
       similarity(coalesce(p.title, ''), ${query}) DESC,

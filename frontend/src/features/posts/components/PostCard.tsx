@@ -226,7 +226,7 @@ const PostCard = ({ post }: PostCardProps) => {
     <Link
       to={`/post/${postId}`}
       state={{ backgroundLocation: location }}
-      className="flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow duration-200 hover:shadow-sm"
+      className="flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_3px_rgba(15,15,20,0.06),0_6px_16px_-4px_rgba(15,15,20,0.10)] transition-shadow duration-200 hover:shadow-[0_2px_4px_rgba(15,15,20,0.08),0_10px_24px_-6px_rgba(15,15,20,0.14)]"
     >
       <div className="flex items-center gap-3 px-4 py-3">
         {(profilePicture && (

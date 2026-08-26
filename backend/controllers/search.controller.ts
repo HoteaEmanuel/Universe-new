@@ -23,7 +23,8 @@ export const getSearchOverviewController = async (req: Request, res: Response) =
         groups: { items: [], hasMore: false },
       });
     }
-    const overview = await getSearchOverview(query, req.userId as string);
+    const blockedIds = [...(req.blockedIds ?? [])];
+    const overview = await getSearchOverview(query, req.userId as string, blockedIds);
     return res.status(200).json({ message: "Fetched search overview", ...overview });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
@@ -38,7 +39,8 @@ export const searchUsersController = async (req: Request, res: Response) => {
     }
     const limit = req.query.limit as unknown as number;
     const offset = req.query.offset as unknown as number;
-    const page = await getSearchedUsers(query, limit, offset);
+    const blockedIds = [...(req.blockedIds ?? [])];
+    const page = await getSearchedUsers(query, limit, offset, blockedIds);
     return res.status(200).json({ message: "Fetched matching users", ...page });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
@@ -53,7 +55,8 @@ export const searchPostsController = async (req: Request, res: Response) => {
     }
     const limit = req.query.limit as unknown as number;
     const offset = req.query.offset as unknown as number;
-    const page = await getSearchedPosts(query, limit, offset);
+    const blockedIds = [...(req.blockedIds ?? [])];
+    const page = await getSearchedPosts(query, limit, offset, blockedIds);
     return res.status(200).json({ message: "Fetched matching posts", ...page });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });

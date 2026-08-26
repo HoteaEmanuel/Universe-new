@@ -64,7 +64,7 @@ const EventCard = ({ event, onClick }: EventCardProps) => {
   );
 
   const className =
-    "flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card text-left transition-colors hover:bg-muted";
+    "flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-card text-left shadow-[0_1px_3px_rgba(15,15,20,0.06),0_6px_16px_-4px_rgba(15,15,20,0.10)] transition-all hover:bg-muted hover:shadow-[0_2px_4px_rgba(15,15,20,0.08),0_10px_24px_-6px_rgba(15,15,20,0.14)]";
 
   if (onClick) {
     return (

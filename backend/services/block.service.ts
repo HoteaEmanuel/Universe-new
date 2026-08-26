@@ -9,6 +9,7 @@ import {
   findConversationByParticipants,
   setConversationHiddenAt,
 } from "../repository/conversation.repository.js";
+import { invalidateBidirectionalBlockedIds } from "../lib/blockCache.js";
 
 // Ambigous message: the blocked user doesnt receive any information regarding if it was blocked
 export class MessageNotAllowedError extends Error {}
@@ -35,6 +36,7 @@ export const blockUser = async (data: {
   if (!existing) {
     await createBlock(authUserId, targetUserId);
   }
+  await invalidateBidirectionalBlockedIds(authUserId, targetUserId);
 
   const conversation = await findConversationByParticipants(
     authUserId,
@@ -51,6 +53,7 @@ export const unblockUser = async (data: {
 }) => {
   const { authUserId, targetUserId } = data;
   await deleteBlock(authUserId, targetUserId);
+  await invalidateBidirectionalBlockedIds(authUserId, targetUserId);
 
   const conversation = await findConversationByParticipants(
     authUserId,
