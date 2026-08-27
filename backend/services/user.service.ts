@@ -33,6 +33,9 @@ export const savePost = async (data: { postId: string; authUserId: string }) => 
 
 export const follow = async (data: { authUserId: string; followerId: string }) => {
   const { authUserId, followerId } = data;
+  if (authUserId === followerId) {
+    throw new Error("Cannot follow yourself");
+  }
 
   const user = await findUserById(authUserId);
   const toFollowUser = await findUserById(followerId);

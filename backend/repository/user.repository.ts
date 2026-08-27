@@ -7,6 +7,9 @@ import {
 
 // Allowlist, not a denylist: new sensitive columns added to the User model
 // later default to excluded here instead of silently leaking to clients.
+// Full detail, including PII (email, profilePictureKey, lastLogin, role,
+// identityVerified). Only for trusted contexts: an admin reviewing business
+// registrations. Never use this for a lookup of another user's profile.
 export const PUBLIC_USER_SELECT = {
   id: true,
   firstName: true,
@@ -27,6 +30,24 @@ export const PUBLIC_USER_SELECT = {
   identityVerified: true,
   createdAt: true,
   updatedAt: true,
+} as const satisfies Prisma.UserSelect;
+
+// Safe to return when any authenticated user looks up someone else's
+// profile by id/username/name — omits email, profilePictureKey, lastLogin,
+// role, and identityVerified.
+export const PUBLIC_PROFILE_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  name: true,
+  username: true,
+  isVerified: true,
+  profilePicture: true,
+  university: true,
+  major: true,
+  bio: true,
+  accountType: true,
+  createdAt: true,
 } as const satisfies Prisma.UserSelect;
 
 export const findUserById = async (id: string) => {

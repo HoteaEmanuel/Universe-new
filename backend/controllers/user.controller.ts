@@ -7,7 +7,7 @@ import { prisma } from "../database/prisma.js";
 import {
   findUserById,
   updateUser,
-  PUBLIC_USER_SELECT,
+  PUBLIC_PROFILE_SELECT,
 } from "../repository/user.repository.js";
 import { follow, savePost, unfollow } from "../services/user.service.js";
 import { getViewerRelevantUserIds } from "../repository/relevance.repository.js";
@@ -30,7 +30,9 @@ const PROFILE_CARD_SELECT = {
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
+    const blockedIds = [...(req.blockedIds ?? [])];
     const users = await prisma.user.findMany({
+      where: { id: { notIn: blockedIds } },
       select: {
         firstName: true,
         lastName: true,
@@ -80,9 +82,12 @@ export const getUserById = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     const user = await prisma.user.findUnique({
       where: { id },
-      select: PUBLIC_USER_SELECT,
+      select: PUBLIC_PROFILE_SELECT,
     });
     if (!user) throw new Error("User not found");
+    if (req.blockedIds?.has(user.id)) {
+      return res.status(404).json({ message: "User not found" });
+    }
     return res.status(200).json({ message: "User found", user });
   } catch (error) {
     return res.status(404).json({ message: "User not found" });
@@ -96,13 +101,13 @@ export const getUserByName = async (req: Request, res: Response) => {
 
     let userWithName = await prisma.user.findFirst({
       where: { name: { equals: name, mode: "insensitive" } },
-      select: PUBLIC_USER_SELECT,
+      select: PUBLIC_PROFILE_SELECT,
     });
 
     if (!userWithName) {
       const candidates = await prisma.user.findMany({
         where: { firstName: { not: null }, lastName: { not: null } },
-        select: PUBLIC_USER_SELECT,
+        select: PUBLIC_PROFILE_SELECT,
       });
       userWithName =
         candidates.find(
@@ -112,6 +117,7 @@ export const getUserByName = async (req: Request, res: Response) => {
     }
 
     if (!userWithName) throw new Error("User not found");
+    if (req.blockedIds?.has(userWithName.id)) throw new Error("User not found");
     return res.status(200).json({ message: "User found", user: userWithName });
   } catch (error) {
     return res.status(400).json({ error });
@@ -123,7 +129,7 @@ export const getUserByUsername = async (req: Request, res: Response) => {
     const username = canonicalizeUsername(req.params.username as string);
     const user = await prisma.user.findUnique({
       where: { username },
-      select: PUBLIC_USER_SELECT,
+      select: PUBLIC_PROFILE_SELECT,
     });
     if (!user) return res.status(404).json({ message: "User not found" });
     if (req.blockedIds?.has(user.id)) {
