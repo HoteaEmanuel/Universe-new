@@ -1,4 +1,5 @@
 import {
+  BLOCKED_ACCOUNT_EMAIL,
   RESET_PASSWORD_EMAIL,
   VERIFICATION_EMAIL,
   WELCOME_EMAIL,
@@ -54,5 +55,24 @@ export const sendPasswordResetEmail = async (data) => {
     });
   } catch (error) {
     console.log("Could not sent reset email");
+  }
+};
+// Called directly from the admin block controller rather than through
+// emailQueue.js — that queue is currently a no-op stub (BullMQ/Redis
+// disabled), so routing this through it like the other senders would send
+// nothing. Keep this direct call even if the queue is re-enabled later,
+// unless this comment is updated too.
+export const sendBlockedAccountEmail = async (user, reason) => {
+  try {
+    transporter.sendMail({
+      to: user.email,
+      subject: "Your Universe account has been blocked",
+      html: BLOCKED_ACCOUNT_EMAIL.replace(
+        "{{USER_NAME}}",
+        user.firstName || user.name || "there",
+      ).replace("{{REASON}}", reason || "No reason was provided"),
+    });
+  } catch (error) {
+    console.log("Could not send blocked-account email");
   }
 };

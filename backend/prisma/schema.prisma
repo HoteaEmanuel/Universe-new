@@ -47,6 +47,11 @@ enum ResourceCategory {
   other
 }
 
+enum UserAccountStatusValue {
+  active
+  blocked
+}
+
 model User {
   id                        String                   @id @default(uuid())
   firstName                 String?
@@ -112,9 +117,28 @@ model User {
   mentionedInPosts         Post[]                 @relation("PostMentions")
   mentionedInComments      Comment[]              @relation("CommentMentions")
   mentionedInGroupMessages GroupMessage[]         @relation("GroupMessageMentions")
+  accountStatus            UserAccountStatus?     @relation("UserAccountStatus")
+  issuedUserBlocks         UserAccountStatus[]    @relation("UserBlockIssuedBy")
 
   @@index([university])
   @@map("users")
+}
+
+model UserAccountStatus {
+  id              String                  @id @default(uuid())
+  userId          String                  @unique
+  user            User                    @relation("UserAccountStatus", fields: [userId], references: [id], onDelete: Cascade)
+  status          UserAccountStatusValue  @default(active)
+  reason          String?
+  blockedAt       DateTime?
+  blockedByUserId String?
+  blockedBy       User?                   @relation("UserBlockIssuedBy", fields: [blockedByUserId], references: [id], onDelete: SetNull)
+  blockedEmailSentAt DateTime?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([status])
+  @@map("user_account_statuses")
 }
 
 model UserPreferences {

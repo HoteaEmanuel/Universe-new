@@ -5,8 +5,14 @@ vi.mock("../repository/user.repository.js", () => ({
   updateUser: vi.fn(),
 }));
 
+vi.mock("../repository/userAccountStatus.repository.js", () => ({
+  findUserAccountStatus: vi.fn(),
+}));
+
 import { hashRefreshToken, signAccessToken, signRefreshToken } from "../lib/authTokens.js";
 import { findUserById, updateUser } from "../repository/user.repository.js";
+import { findUserAccountStatus } from "../repository/userAccountStatus.repository.js";
+import { AccountBlockedError } from "../lib/accountBlockedError.js";
 import { RefreshTokenReuseError, rotateRefreshToken } from "./refreshToken.service.js";
 
 beforeAll(() => {
@@ -16,6 +22,7 @@ beforeAll(() => {
 describe("rotateRefreshToken", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(findUserAccountStatus).mockResolvedValue(null as never);
   });
 
   it("throws RefreshTokenReuseError for a malformed token", async () => {
@@ -62,5 +69,20 @@ describe("rotateRefreshToken", () => {
     expect(updateUser).toHaveBeenCalledWith("user-1", {
       refreshToken: hashRefreshToken(result.refreshToken),
     });
+  });
+
+  it("throws AccountBlockedError and revokes the session when the user is blocked", async () => {
+    const refreshToken = signRefreshToken("user-1");
+    vi.mocked(findUserById).mockResolvedValue({
+      id: "user-1",
+      refreshToken: hashRefreshToken(refreshToken),
+    } as never);
+    vi.mocked(findUserAccountStatus).mockResolvedValue({
+      status: "blocked",
+      reason: "Spamming",
+    } as never);
+
+    await expect(rotateRefreshToken(refreshToken)).rejects.toThrow(AccountBlockedError);
+    expect(updateUser).toHaveBeenCalledWith("user-1", { refreshToken: null });
   });
 });

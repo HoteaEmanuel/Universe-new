@@ -14,6 +14,9 @@ vi.mock("../queues/emailQueue.js", () => ({
   verifyEmailQueue: { add: vi.fn() },
   welcomeEmailQueue: { add: vi.fn() },
 }));
+vi.mock("../repository/userAccountStatus.repository.js", () => ({
+  findUserAccountStatus: vi.fn(),
+}));
 vi.mock("bcryptjs", () => ({
   default: {
     compare: vi.fn(),
@@ -35,7 +38,9 @@ import {
   verifyEmailQueue,
   welcomeEmailQueue,
 } from "../queues/emailQueue.js";
+import { findUserAccountStatus } from "../repository/userAccountStatus.repository.js";
 import {
+  AccountBlockedError,
   forgotPassword,
   login,
   resetPassword,
@@ -47,6 +52,7 @@ import {
 describe("auth.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(findUserAccountStatus).mockResolvedValue(null as never);
   });
 
   describe("login", () => {
@@ -121,6 +127,20 @@ describe("auth.service", () => {
         expect.objectContaining({ resetPasswordToken: null, resetPasswordExpiresAt: null }),
       );
       expect(result).not.toHaveProperty("password");
+    });
+
+    it("rejects a blocked user with the block reason, after password verification", async () => {
+      vi.mocked(findUserByEmail).mockResolvedValue(baseUser as never);
+      vi.mocked(bcryptjs.compare).mockResolvedValue(true as never);
+      vi.mocked(findUserAccountStatus).mockResolvedValue({
+        status: "blocked",
+        reason: "Violated community guidelines",
+      } as never);
+
+      await expect(
+        login({ email: "jane@example.com", password: "secret123" }),
+      ).rejects.toThrow(AccountBlockedError);
+      expect(updateUser).not.toHaveBeenCalled();
     });
   });
 

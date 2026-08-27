@@ -13,6 +13,7 @@ import {
   consumeMobileAuthExchangeCode,
 } from "../lib/oauthExchange.js";
 import { verifyAuthToken } from "../lib/authTokens.js";
+import { AccountBlockedError } from "../lib/accountBlockedError.js";
 import {
   RefreshTokenReuseError,
   rotateRefreshToken,
@@ -159,6 +160,13 @@ export const loginWeb = async (req: Request, res: Response) => {
       .status(200)
       .json({ message: "Logged in successfully", user: userExists });
   } catch (error) {
+    if (error instanceof AccountBlockedError) {
+      return res.status(403).json({
+        message: error.message,
+        code: "ACCOUNT_BLOCKED",
+        reason: error.reason,
+      });
+    }
     return res.status(400).json({ message: errorMessage(error) });
   }
 };
@@ -233,6 +241,11 @@ export const refreshMobileController = async (req: Request, res: Response) => {
       refreshToken: rotated.refreshToken,
     });
   } catch (error) {
+    if (error instanceof AccountBlockedError) {
+      return res
+        .status(403)
+        .json({ message: error.message, code: "ACCOUNT_BLOCKED" });
+    }
     if (error instanceof RefreshTokenReuseError) {
       return res.status(401).json({ message: errorMessage(error) });
     }

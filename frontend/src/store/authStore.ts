@@ -164,8 +164,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } catch (error) {
       console.log("ERROR FOUND");
       console.log(error);
-      const err = error as { response?: { data?: { message?: string } } };
-      set({ error: err?.response?.data?.message || "Login failed" });
+      const err = error as {
+        response?: { data?: { message?: string; code?: string; reason?: string | null } };
+      };
+      const data = err?.response?.data;
+      const message =
+        data?.code === "ACCOUNT_BLOCKED"
+          ? `Your account has been blocked${data.reason ? `: ${data.reason}` : ""}`
+          : data?.message || "Login failed";
+      set({ error: message });
     } finally {
       set({ isLoading: false });
     }

@@ -1,4 +1,6 @@
 import { findUserById, updateUser } from "../repository/user.repository.js";
+import { findUserAccountStatus } from "../repository/userAccountStatus.repository.js";
+import { AccountBlockedError } from "../lib/accountBlockedError.js";
 import {
   hashRefreshToken,
   signAccessToken,
@@ -36,6 +38,12 @@ export const rotateRefreshToken = async (
   if (!user || user.refreshToken !== presentedHash) {
     if (user) await updateUser(user.id, { refreshToken: null });
     throw new RefreshTokenReuseError("Session expired, please log in again");
+  }
+
+  const accountStatus = await findUserAccountStatus(user.id);
+  if (accountStatus?.status === "blocked") {
+    await updateUser(user.id, { refreshToken: null });
+    throw new AccountBlockedError(accountStatus.reason ?? null);
   }
 
   const accessToken = signAccessToken(user.id);

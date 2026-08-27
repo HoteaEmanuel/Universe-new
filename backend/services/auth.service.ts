@@ -18,6 +18,8 @@ import {
   verifyEmailQueue,
   welcomeEmailQueue,
 } from "../queues/emailQueue.js";
+import { findUserAccountStatus } from "../repository/userAccountStatus.repository.js";
+import { AccountBlockedError } from "../lib/accountBlockedError.js";
 import type { AccountType } from "../generated/prisma/client.js";
 
 interface LoginBody {
@@ -45,6 +47,11 @@ export const login = async (body: LoginBody) => {
     !!hashedPassword && (await bcryptjs.compare(password, hashedPassword));
   if (!passwordsMatch) {
     throw new Error("Authentication failed");
+  }
+
+  const accountStatus = await findUserAccountStatus(userExists.id);
+  if (accountStatus?.status === "blocked") {
+    throw new AccountBlockedError(accountStatus.reason ?? null);
   }
 
   const updatedUser = await updateUser(userExists.id, {

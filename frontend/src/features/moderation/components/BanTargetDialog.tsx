@@ -22,6 +22,8 @@ type BanTargetDialogProps = {
   isPending: boolean;
   canConfirm: boolean;
   onConfirm: (reason?: string) => void;
+  confirmLabel?: string;
+  pendingLabel?: string;
 };
 
 const BanTargetDialog = ({
@@ -33,6 +35,8 @@ const BanTargetDialog = ({
   isPending,
   canConfirm,
   onConfirm,
+  confirmLabel = "Remove and ban",
+  pendingLabel = "Removing...",
 }: BanTargetDialogProps) => {
   const [reason, setReason] = useState("");
 
@@ -77,7 +81,7 @@ const BanTargetDialog = ({
             disabled={isPending || !canConfirm}
             onClick={handleConfirm}
           >
-            {isPending ? "Removing..." : "Remove and ban"}
+            {isPending ? pendingLabel : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
