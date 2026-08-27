@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGetConvoResourcesInfinite } from "@/queryAndMutation/queries/conversation-queries";
 import { useGetGroupResourcesInfinite } from "@/queryAndMutation/queries/group-queries";
 import { formatMonthLabel } from "../utils/chatMedia";
 import { downloadImage } from "@/utils/downloadImage";
+import { findScrollableAncestor } from "@/utils/scroll";
 import FullImageModal from "@/Modals/FullImageModal";
 import type { ChatMediaItem } from "../types";
 
@@ -17,7 +18,10 @@ type MediaPhotosTabProps = {
 
 const MediaPhotosTab = ({ variant, id }: MediaPhotosTabProps) => {
   const [fullImage, setFullImage] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const rootRef = useCallback((node: HTMLDivElement | null) => {
+    scrollContainerRef.current = findScrollableAncestor(node);
+  }, []);
 
   const convoMedia = useGetConvoResourcesInfinite<ChatMediaItem>(
     "images",
@@ -34,7 +38,7 @@ const MediaPhotosTab = ({ variant, id }: MediaPhotosTabProps) => {
   const hasMedia = pages.length > 0;
 
   useEffect(() => {
-    const el = containerRef.current;
+    const el = scrollContainerRef.current;
     if (!el) return;
 
     const handleScroll = () => {
@@ -50,7 +54,7 @@ const MediaPhotosTab = ({ variant, id }: MediaPhotosTabProps) => {
 
   return (
     <>
-      <div ref={containerRef} className="max-h-[55vh] overflow-y-auto">
+      <div ref={rootRef}>
         {isPending && (
           <p className="pt-8 list-loading-text">
             Loading...

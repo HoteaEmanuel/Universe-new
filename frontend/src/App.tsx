@@ -42,6 +42,7 @@ import EventDetails from "./features/events/EventDetails";
 import PrivacyPolicy from "./Pages/legal/PrivacyPolicy";
 import TermsOfService from "./Pages/legal/TermsOfService";
 import OnboardingPage from "./Pages/onboarding/OnboardingPage";
+import { TooltipProvider } from "./components/ui/tooltip";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,7 @@ function App() {
   }, [checkAuth]);
   return (
     <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
       <Toaster
         position="top-right"
         expand={true}
@@ -202,6 +204,7 @@ function App() {
           </Routes>
         )}
       </div>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

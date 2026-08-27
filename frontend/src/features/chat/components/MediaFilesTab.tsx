@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGetConvoResourcesInfinite } from "@/queryAndMutation/queries/conversation-queries";
@@ -7,6 +7,7 @@ import { formatMonthLabel } from "../utils/chatMedia";
 import { formatFileSize } from "../utils/formatFileSize";
 import { getFileTypeIcon } from "../utils/fileTypeIcon";
 import { downloadFile } from "@/utils/downloadFile";
+import { findScrollableAncestor } from "@/utils/scroll";
 import FilePreviewModal from "@/Modals/FilePreviewModal";
 import type { ChatFileItem, MessageAttachment } from "../types";
 
@@ -27,7 +28,10 @@ const toAttachment = (item: ChatFileItem): MessageAttachment => ({
 
 const MediaFilesTab = ({ variant, id }: MediaFilesTabProps) => {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLElement | null>(null);
+  const rootRef = useCallback((node: HTMLDivElement | null) => {
+    scrollContainerRef.current = findScrollableAncestor(node);
+  }, []);
 
   const convoFiles = useGetConvoResourcesInfinite<ChatFileItem>(
     "files",
@@ -45,7 +49,7 @@ const MediaFilesTab = ({ variant, id }: MediaFilesTabProps) => {
   const allItems = pages.flatMap((page) => page.items);
 
   useEffect(() => {
-    const el = containerRef.current;
+    const el = scrollContainerRef.current;
     if (!el) return;
 
     const handleScroll = () => {
@@ -61,7 +65,7 @@ const MediaFilesTab = ({ variant, id }: MediaFilesTabProps) => {
 
   return (
     <>
-      <div ref={containerRef} className="max-h-[55vh] overflow-y-auto">
+      <div ref={rootRef}>
         {isPending && (
           <p className="pt-8 list-loading-text">
             Loading...

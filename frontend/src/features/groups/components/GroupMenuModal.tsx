@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useGetGroupMemberById } from "@/queryAndMutation/queries/group-queries";
 import AddMembersModal from "./AddMembersModal";
 import ViewMembersModal from "./ViewMembersModal";
@@ -39,17 +40,24 @@ const GroupMenuModal = () => {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Group options"
-            />
-          }
-        >
-          <EllipsisVertical />
-        </DropdownMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Group options"
+                  />
+                }
+              />
+            }
+          >
+            <EllipsisVertical />
+          </TooltipTrigger>
+          <TooltipContent>Group options</TooltipContent>
+        </Tooltip>
         <DropdownMenuContent align="end">
           {isAdmin && (
             <DropdownMenuItem onClick={() => setAddMembersOpen(true)}>

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useGetActiveGroupMembers,
@@ -90,15 +91,22 @@ const Group = () => {
     <section className="flex h-[calc(100dvh-10rem)] flex-col overflow-hidden rounded-2xl border border-border md:h-[calc(100dvh-4rem)]">
       {isPendingGroup ? (
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Back to messages"
-            className="shrink-0"
-            onClick={() => navigate("/chat")}
-          >
-            <ArrowLeft />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Back to messages"
+                  className="shrink-0"
+                  onClick={() => navigate("/chat")}
+                />
+              }
+            >
+              <ArrowLeft />
+            </TooltipTrigger>
+            <TooltipContent>Back to messages</TooltipContent>
+          </Tooltip>
           <Skeleton className="size-11 shrink-0 rounded-full" />
           <div className="flex-1 space-y-1.5">
             <Skeleton className="h-4 w-32" />
@@ -108,15 +116,22 @@ const Group = () => {
       ) : (
         group && (
           <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Back to messages"
-              className="shrink-0"
-              onClick={() => navigate("/chat")}
-            >
-              <ArrowLeft />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Back to messages"
+                    className="shrink-0"
+                    onClick={() => navigate("/chat")}
+                  />
+                }
+              >
+                <ArrowLeft />
+              </TooltipTrigger>
+              <TooltipContent>Back to messages</TooltipContent>
+            </Tooltip>
             <Button
               type="button"
               variant="ghost"

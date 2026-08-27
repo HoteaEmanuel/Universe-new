@@ -9,6 +9,7 @@ import {
   Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import UserAvatar from "@/components/UserAvatar";
 import { getFullName } from "@/utils/fullName";
 import { useAuthStore } from "@/store/authStore";
@@ -86,15 +87,22 @@ const ProfileHeader = ({
           className="size-24 ring-1 ring-border sm:size-28"
         />
         {isOwnProfile && (
-          <Button
-            type="button"
-            variant="ghost"
-            aria-label="Change profile picture"
-            onClick={() => setOpenImageModal(true)}
-            className="absolute inset-0 size-full rounded-full bg-black/0 p-0 text-transparent hover:bg-black/40 hover:text-white"
-          >
-            <Camera className="size-6" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  aria-label="Change profile picture"
+                  onClick={() => setOpenImageModal(true)}
+                  className="absolute inset-0 size-full rounded-full bg-black/0 p-0 text-transparent hover:bg-black/40 hover:text-white"
+                />
+              }
+            >
+              <Camera className="size-6" />
+            </TooltipTrigger>
+            <TooltipContent>Change profile picture</TooltipContent>
+          </Tooltip>
         )}
       </div>
 
@@ -182,24 +190,38 @@ const ProfileHeader = ({
               >
                 {isFollowing ? "Following" : "Follow"}
               </Button>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                aria-label="Message"
-                onClick={handleMessageClick}
-              >
-                <MessageCircle />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      size="icon-sm"
+                      aria-label="Message"
+                      onClick={handleMessageClick}
+                    />
+                  }
+                >
+                  <MessageCircle />
+                </TooltipTrigger>
+                <TooltipContent>Message</TooltipContent>
+              </Tooltip>
             </>
           )}
-          <Button
-            variant="outline"
-            size="icon-sm"
-            aria-label="Share profile"
-            onClick={handleShareProfile}
-          >
-            <Link2 />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  aria-label="Share profile"
+                  onClick={handleShareProfile}
+                />
+              }
+            >
+              <Link2 />
+            </TooltipTrigger>
+            <TooltipContent>Share profile</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

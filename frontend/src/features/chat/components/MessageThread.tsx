@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MessageGroup } from "@/components/ui/message";
 import MessageBubble from "./MessageBubble";
@@ -220,16 +221,23 @@ const MessageThread = ({
       </div>
 
       {showScrollButton && (
-        <Button
-          type="button"
-          variant="secondary"
-          size="icon"
-          onClick={scrollToBottom}
-          aria-label="Scroll to latest messages"
-          className="absolute bottom-4 right-4 rounded-full shadow-md"
-        >
-          <ChevronDown />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="secondary"
+                size="icon"
+                onClick={scrollToBottom}
+                aria-label="Scroll to latest messages"
+                className="absolute bottom-4 right-4 rounded-full shadow-md"
+              />
+            }
+          >
+            <ChevronDown />
+          </TooltipTrigger>
+          <TooltipContent>Scroll to latest messages</TooltipContent>
+        </Tooltip>
       )}
 
       <ImageGalleryModal

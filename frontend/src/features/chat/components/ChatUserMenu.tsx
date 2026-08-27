@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,11 +41,18 @@ const ChatUserMenu = ({ user, isBlockedByViewer }: ChatUserMenuProps) => {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={<Button variant="ghost" size="icon" aria-label="Conversation options" />}
-        >
-          <MoreVertical />
-        </DropdownMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <DropdownMenuTrigger
+                render={<Button variant="ghost" size="icon" aria-label="Conversation options" />}
+              />
+            }
+          >
+            <MoreVertical />
+          </TooltipTrigger>
+          <TooltipContent>Conversation options</TooltipContent>
+        </Tooltip>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => navigate(`/u/${urlPathName(user)}`)}>
             <User />

@@ -14,6 +14,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -100,15 +101,22 @@ const EventDetails = () => {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 pt-4 pb-24 md:pb-10">
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label="Back"
-        className="-ml-1 w-fit"
-        onClick={handleBack}
-      >
-        <ArrowLeft />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Back"
+              className="-ml-1 w-fit"
+              onClick={handleBack}
+            />
+          }
+        >
+          <ArrowLeft />
+        </TooltipTrigger>
+        <TooltipContent>Back</TooltipContent>
+      </Tooltip>
 
       {event.coverImageUrl && (
         <img

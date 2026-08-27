@@ -3,6 +3,7 @@ import WaveSurfer from "wavesurfer.js";
 import RecordPlugin from "wavesurfer.js/plugins/record";
 import { Pause, Play, SendHorizontal, Square, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { resolveCssColor, formatAudioDuration } from "../utils/waveColors";
 
 const MAX_RECORDING_SEC = 120;
@@ -88,39 +89,60 @@ const VoiceRecorder = ({ onCancel, onSend, isSending }: VoiceRecorderProps) => {
     return (
       <div className="flex items-center gap-2 py-1 text-sm text-muted-foreground">
         <span className="flex-1">{permissionError}</span>
-        <Button type="button" variant="ghost" size="icon" aria-label="Cancel" onClick={onCancel}>
-          <X />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button type="button" variant="ghost" size="icon" aria-label="Cancel" onClick={onCancel} />
+            }
+          >
+            <X />
+          </TooltipTrigger>
+          <TooltipContent>Cancel</TooltipContent>
+        </Tooltip>
       </div>
     );
   }
 
   return (
     <div className="flex items-center gap-2">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        aria-label="Discard recording"
-        onClick={onCancel}
-        disabled={isSending}
-      >
-        <Trash2 />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Discard recording"
+              onClick={onCancel}
+              disabled={isSending}
+            />
+          }
+        >
+          <Trash2 />
+        </TooltipTrigger>
+        <TooltipContent>Discard recording</TooltipContent>
+      </Tooltip>
 
       <div className="flex flex-1 items-center gap-2 rounded-full bg-muted px-3 py-1.5">
         {isRecording ? (
           <span className="size-2.5 shrink-0 animate-pulse rounded-full bg-destructive" />
         ) : (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            aria-label={isPlaying ? "Pause preview" : "Play preview"}
-            onClick={handleTogglePlay}
-          >
-            {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label={isPlaying ? "Pause preview" : "Play preview"}
+                  onClick={handleTogglePlay}
+                />
+              }
+            >
+              {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
+            </TooltipTrigger>
+            <TooltipContent>{isPlaying ? "Pause preview" : "Play preview"}</TooltipContent>
+          </Tooltip>
         )}
         <div ref={containerRef} className="min-w-0 flex-1" />
         <span className="w-9 shrink-0 text-right text-xs text-muted-foreground">
@@ -129,19 +151,33 @@ const VoiceRecorder = ({ onCancel, onSend, isSending }: VoiceRecorderProps) => {
       </div>
 
       {isRecording ? (
-        <Button type="button" size="icon" aria-label="Stop recording" onClick={handleStop}>
-          <Square className="size-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button type="button" size="icon" aria-label="Stop recording" onClick={handleStop} />
+            }
+          >
+            <Square className="size-4" />
+          </TooltipTrigger>
+          <TooltipContent>Stop recording</TooltipContent>
+        </Tooltip>
       ) : (
-        <Button
-          type="button"
-          size="icon"
-          aria-label="Send voice message"
-          onClick={handleSend}
-          disabled={isSending || !recordedBlob}
-        >
-          <SendHorizontal />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                size="icon"
+                aria-label="Send voice message"
+                onClick={handleSend}
+                disabled={isSending || !recordedBlob}
+              />
+            }
+          >
+            <SendHorizontal />
+          </TooltipTrigger>
+          <TooltipContent>Send voice message</TooltipContent>
+        </Tooltip>
       )}
     </div>
   );

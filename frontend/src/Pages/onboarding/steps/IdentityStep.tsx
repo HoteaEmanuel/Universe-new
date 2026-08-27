@@ -10,6 +10,7 @@ import ProfileImageModal from "@/Modals/ProfileImageModal";
 import TextareaField from "@/components/TextareaField";
 import SubmitButton from "@/components/SubmitButton";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import UserAvatar from "@/components/UserAvatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,15 +93,22 @@ const IdentityStep = ({ user, onNext }: IdentityStepProps) => {
       <div className="flex flex-col items-center gap-3">
         <div className="group/avatar relative">
           <UserAvatar user={user} className="size-24 ring-1 ring-border" />
-          <Button
-            type="button"
-            variant="ghost"
-            aria-label="Add a profile picture"
-            onClick={() => setOpenImageModal(true)}
-            className="absolute inset-0 size-full rounded-full bg-black/0 p-0 text-transparent hover:bg-black/40 hover:text-white"
-          >
-            <Camera className="size-6" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  aria-label="Add a profile picture"
+                  onClick={() => setOpenImageModal(true)}
+                  className="absolute inset-0 size-full rounded-full bg-black/0 p-0 text-transparent hover:bg-black/40 hover:text-white"
+                />
+              }
+            >
+              <Camera className="size-6" />
+            </TooltipTrigger>
+            <TooltipContent>Add a profile picture</TooltipContent>
+          </Tooltip>
         </div>
         <button
           type="button"

@@ -1,6 +1,7 @@
 import { Download } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { downloadImage } from "../utils/downloadImage";
 
 type FullImageModalProps = {
@@ -24,16 +25,23 @@ const FullImageModal = ({ image, open, onClose }: FullImageModalProps) => {
           className="max-h-[85vh] max-w-full rounded-2xl object-contain"
         />
         {isRemoteImage && (
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            aria-label="Download image"
-            className="absolute top-2 left-2 shadow-md"
-            onClick={() => downloadImage(image)}
-          >
-            <Download />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon"
+                  aria-label="Download image"
+                  className="absolute top-2 left-2 shadow-md"
+                  onClick={() => downloadImage(image)}
+                />
+              }
+            >
+              <Download />
+            </TooltipTrigger>
+            <TooltipContent>Download image</TooltipContent>
+          </Tooltip>
         )}
       </DialogContent>
     </Dialog>

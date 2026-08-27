@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import SearchInput from "@/components/SearchInput";
 import { useAuthStore } from "@/store/authStore";
 import { useDebounce } from "@/hooks/Debounce";
@@ -67,19 +68,33 @@ const ChatContainer = () => {
       <div className="flex items-center justify-between pb-4">
         <h1 className="text-2xl font-semibold">Messages</h1>
         <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            aria-label="New conversation"
-            onClick={() => navigate("/create-conversation")}
-          >
-            <SquarePen />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={<Button variant="ghost" size="icon" aria-label="More options" />}
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  size="icon"
+                  aria-label="New conversation"
+                  onClick={() => navigate("/create-conversation")}
+                />
+              }
             >
-              <MoreVertical />
-            </DropdownMenuTrigger>
+              <SquarePen />
+            </TooltipTrigger>
+            <TooltipContent>New conversation</TooltipContent>
+          </Tooltip>
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <DropdownMenuTrigger
+                    render={<Button variant="ghost" size="icon" aria-label="More options" />}
+                  />
+                }
+              >
+                <MoreVertical />
+              </TooltipTrigger>
+              <TooltipContent>More options</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem
                 className="whitespace-nowrap"

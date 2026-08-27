@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,17 +36,24 @@ const ConversationRowMenu = ({ conversationId }: ConversationRowMenuProps) => {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Conversation options"
-            />
-          }
-        >
-          <MoreVertical className="size-4" />
-        </DropdownMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Conversation options"
+                  />
+                }
+              />
+            }
+          >
+            <MoreVertical className="size-4" />
+          </TooltipTrigger>
+          <TooltipContent>Conversation options</TooltipContent>
+        </Tooltip>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => archiveConversation(conversationId)}>
             <Archive />

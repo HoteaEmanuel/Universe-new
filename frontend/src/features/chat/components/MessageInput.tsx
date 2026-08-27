@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   useSendFilesMessageMutation,
   useSendMessageMutation,
@@ -314,34 +315,55 @@ const MessageInput = ({
         </ul>
       )}
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Attach images"
-          onClick={() => setPickerOpen(true)}
-        >
-          <ImagePlus />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Attach files"
-          onClick={() => setFilePickerOpen(true)}
-        >
-          <Paperclip />
-        </Button>
-        {variant === "group" && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Create a poll"
-            onClick={() => setPollModalOpen(true)}
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Attach images"
+                onClick={() => setPickerOpen(true)}
+              />
+            }
           >
-            <BarChart3 />
-          </Button>
+            <ImagePlus />
+          </TooltipTrigger>
+          <TooltipContent>Attach images</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Attach files"
+                onClick={() => setFilePickerOpen(true)}
+              />
+            }
+          >
+            <Paperclip />
+          </TooltipTrigger>
+          <TooltipContent>Attach files</TooltipContent>
+        </Tooltip>
+        {variant === "group" && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Create a poll"
+                  onClick={() => setPollModalOpen(true)}
+                />
+              }
+            >
+              <BarChart3 />
+            </TooltipTrigger>
+            <TooltipContent>Create a poll</TooltipContent>
+          </Tooltip>
         )}
         <div className="relative flex-1">
           <Textarea
@@ -372,6 +394,7 @@ const MessageInput = ({
         </div>
         <EmojiPickerPopover
           onPick={handleEmojiPick}
+          tooltip="Add emoji"
           trigger={
             <Button
               type="button"
@@ -384,24 +407,38 @@ const MessageInput = ({
           }
         />
         {text.trim().length === 0 && images.length === 0 && files.length === 0 ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Record voice message"
-            onClick={() => setIsRecording(true)}
-          >
-            <Mic />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Record voice message"
+                  onClick={() => setIsRecording(true)}
+                />
+              }
+            >
+              <Mic />
+            </TooltipTrigger>
+            <TooltipContent>Record voice message</TooltipContent>
+          </Tooltip>
         ) : (
-          <Button
-            type="submit"
-            size="icon"
-            disabled={!canSend}
-            aria-label="Send message"
-          >
-            <SendHorizontal />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={!canSend}
+                  aria-label="Send message"
+                />
+              }
+            >
+              <SendHorizontal />
+            </TooltipTrigger>
+            <TooltipContent>Send message</TooltipContent>
+          </Tooltip>
         )}
       </form>
       <ImagePickerModal

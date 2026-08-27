@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import UserAvatar from "@/components/UserAvatar";
 import { getFullName } from "../../../utils/fullName";
 import { urlPathName } from "../../../utils/urlPathFromName";
@@ -19,15 +20,22 @@ const ChatUserHeader = ({ user, isOnline, actions }: ChatUserHeaderProps) => {
 
   return (
     <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label="Back to messages"
-        className="shrink-0"
-        onClick={() => navigate("/chat")}
-      >
-        <ArrowLeft />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Back to messages"
+              className="shrink-0"
+              onClick={() => navigate("/chat")}
+            />
+          }
+        >
+          <ArrowLeft />
+        </TooltipTrigger>
+        <TooltipContent>Back to messages</TooltipContent>
+      </Tooltip>
 
       <Button
         type="button"

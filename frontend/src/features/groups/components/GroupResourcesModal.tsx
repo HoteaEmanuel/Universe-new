@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import SearchInput from "@/components/SearchInput";
 import UserAvatar from "@/components/UserAvatar";
 import UserListSkeleton from "@/components/UserListSkeleton";
@@ -151,22 +152,36 @@ const ResourceRow = ({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={isLink ? "Open link" : "Download file"}
-          onClick={() => download(resource.id)}
-        >
-          <Download className="size-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={isLink ? "Open link" : "Download file"}
+                onClick={() => download(resource.id)}
+              />
+            }
+          >
+            <Download className="size-4" />
+          </TooltipTrigger>
+          <TooltipContent>{isLink ? "Open link" : "Download file"}</TooltipContent>
+        </Tooltip>
         {(isAdmin || canModify) && (
           <DropdownMenu>
-            <DropdownMenuTrigger
-              render={<Button variant="ghost" size="icon" aria-label="Resource options" />}
-            >
-              <EllipsisVertical className="size-4" />
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <DropdownMenuTrigger
+                    render={<Button variant="ghost" size="icon" aria-label="Resource options" />}
+                  />
+                }
+              >
+                <EllipsisVertical className="size-4" />
+              </TooltipTrigger>
+              <TooltipContent>Resource options</TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="end">
               {isAdmin && (
                 <DropdownMenuItem onClick={() => togglePin(resource.id)}>

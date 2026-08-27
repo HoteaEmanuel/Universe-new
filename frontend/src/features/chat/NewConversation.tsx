@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Compass, Search, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/Debounce";
 import { useGetAllUsersQuery } from "@/queryAndMutation/queries/user-queries";
@@ -33,14 +34,21 @@ const NewConversation = () => {
   return (
     <section className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Back"
-          onClick={() => navigate("/chat")}
-        >
-          <ArrowLeft />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Back"
+                onClick={() => navigate("/chat")}
+              />
+            }
+          >
+            <ArrowLeft />
+          </TooltipTrigger>
+          <TooltipContent>Back</TooltipContent>
+        </Tooltip>
         <h1 className="text-xl font-semibold">New message</h1>
       </div>
 

@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from "react";
 import EmojiPicker, { Theme, type EmojiClickData } from "emoji-picker-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const getEmojiPickerTheme = () =>
   document.documentElement.getAttribute("data-theme") === "dark"
@@ -11,18 +12,27 @@ type EmojiPickerPopoverProps = {
   trigger: ReactElement;
   onPick: (emoji: string) => void;
   align?: "start" | "center" | "end";
+  tooltip?: string;
 };
 
 const EmojiPickerPopover = ({
   trigger,
   onPick,
   align = "end",
+  tooltip,
 }: EmojiPickerPopoverProps) => {
   const [open, setOpen] = useState(false);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger render={trigger} />
+      {tooltip ? (
+        <Tooltip>
+          <TooltipTrigger render={<PopoverTrigger render={trigger} />} />
+          <TooltipContent>{tooltip}</TooltipContent>
+        </Tooltip>
+      ) : (
+        <PopoverTrigger render={trigger} />
+      )}
       <PopoverContent align={align} className="w-auto border-none p-0 shadow-lg">
         <EmojiPicker
           onEmojiClick={(data: EmojiClickData) => {

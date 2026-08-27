@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDebounce } from "@/hooks/Debounce";
 import {
   useSearchLocationsQuery,
@@ -166,20 +167,27 @@ const LocationAutocompleteField = ({
             </ul>
           )}
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-lg"
-          disabled={isLocating}
-          onClick={handleUseMyLocation}
-          aria-label="Use my current location"
-        >
-          {isLocating ? (
-            <FiLoader className="animate-spin" />
-          ) : (
-            <FiNavigation />
-          )}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                disabled={isLocating}
+                onClick={handleUseMyLocation}
+                aria-label="Use my current location"
+              />
+            }
+          >
+            {isLocating ? (
+              <FiLoader className="animate-spin" />
+            ) : (
+              <FiNavigation />
+            )}
+          </TooltipTrigger>
+          <TooltipContent>Use my current location</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );
