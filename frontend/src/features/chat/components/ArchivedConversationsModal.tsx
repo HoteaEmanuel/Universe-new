@@ -2,14 +2,16 @@ import { useState, type UIEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import SearchInput from "@/components/SearchInput";
 import { useDebounce } from "@/hooks/Debounce";
+import { useShowSearchInput } from "@/hooks/useShowSearchInput";
 import { useGetArchivedConversationsInfinite } from "@/queryAndMutation/queries/conversation-queries";
 import { useUnarchiveConversationMutation } from "@/queryAndMutation/mutations/conversation-mutation";
 import { useAuthStore } from "@/store/authStore";
@@ -34,22 +36,26 @@ const ArchivedConversationsModal = ({
   };
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 350);
-  const {
-    data,
-    isPending,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useGetArchivedConversationsInfinite(debouncedSearch.trim(), open);
+  const { data, isPending, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useGetArchivedConversationsInfinite(debouncedSearch.trim(), open);
   const conversations = data?.pages.flatMap((page) => page.conversations) ?? [];
   const { mutate: unarchiveConversation, isPending: isUnarchiving } =
     useUnarchiveConversationMutation();
+  const showSearch = useShowSearchInput(
+    conversations.length,
+    !!debouncedSearch.trim(),
+    isPending,
+  );
 
   const handleScroll = (event: UIEvent<HTMLDivElement>) => {
     const target = event.currentTarget;
     const distanceFromBottom =
       target.scrollHeight - target.scrollTop - target.clientHeight;
-    if (distanceFromBottom < SCROLL_THRESHOLD_PX && hasNextPage && !isFetchingNextPage) {
+    if (
+      distanceFromBottom < SCROLL_THRESHOLD_PX &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
       fetchNextPage();
     }
   };
@@ -62,21 +68,20 @@ const ArchivedConversationsModal = ({
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="mx-auto flex max-h-[70vh] w-full flex-col rounded-t-2xl sm:max-w-md"
-      >
-        <SheetHeader className="border-b border-border pb-3">
-          <SheetTitle>Archived conversations</SheetTitle>
-        </SheetHeader>
-        <SearchInput
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder="Search archived conversations"
-          className="mx-4 mt-3"
-        />
-        <div className="flex-1 overflow-y-auto px-4 pb-4" onScroll={handleScroll}>
+    <Drawer open={open} onOpenChange={handleOpenChange}>
+      <DrawerContent>
+        <DrawerHeader className="border-b border-border pr-12 pb-3">
+          <DrawerTitle>Archived conversations</DrawerTitle>
+        </DrawerHeader>
+        {showSearch && (
+          <SearchInput
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Search archived conversations"
+            className="shrink-0 px-4"
+          />
+        )}
+        <DrawerBody className="px-4 pb-4" onScroll={handleScroll}>
           {isPending ? (
             <ul className="flex flex-col gap-1 pt-1">
               {Array.from({ length: 4 }).map((_, index) => (
@@ -125,12 +130,14 @@ const ArchivedConversationsModal = ({
             </ul>
           ) : (
             <p className="pt-8 list-loading-text">
-              {debouncedSearch.trim() ? "No results." : "No archived conversations."}
+              {debouncedSearch.trim()
+                ? "No results."
+                : "No archived conversations."}
             </p>
           )}
-        </div>
-      </SheetContent>
-    </Sheet>
+        </DrawerBody>
+      </DrawerContent>
+    </Drawer>
   );
 };
 

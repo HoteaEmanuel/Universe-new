@@ -13,6 +13,7 @@ import UserAvatar from "@/components/UserAvatar";
 import SearchInput from "@/components/SearchInput";
 import UserListSkeleton from "@/components/UserListSkeleton";
 import { useDebounce } from "@/hooks/Debounce";
+import { useShowSearchInput } from "@/hooks/useShowSearchInput";
 import { getFullName } from "@/utils/fullName";
 import { useAuthStore } from "@/store/authStore";
 import {
@@ -39,6 +40,11 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
   const { data, isPending, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetGroupMembersInfiniteQuery(groupId, open, debouncedSearch);
   const groupMembers = data?.pages.flatMap((page) => page.items) ?? [];
+  const showSearch = useShowSearchInput(
+    groupMembers.length,
+    !!debouncedSearch.trim(),
+    isPending,
+  );
   const { data: isAdmin } = useCheckUserIsAdminQuery(groupId, user.id);
   const { mutate: promoteMemberToAdmin, isPending: isPromoting } =
     usePromoteMemberToAdminMutation(groupId);
@@ -90,12 +96,14 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
             </Button>
           )}
         </DrawerHeader>
-        <SearchInput
-          onChange={setSearch}
-          value={search}
-          className="shrink-0 px-2"
-          placeholder="Search members..."
-        />
+        {showSearch && (
+          <SearchInput
+            onChange={setSearch}
+            value={search}
+            className="shrink-0 px-2"
+            placeholder="Search members..."
+          />
+        )}
         <DrawerBody
           className="h-full px-4 pb-4"
           onScroll={handleScroll}

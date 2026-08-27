@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateDetailed } from "@/utils/formatDate";
 import { getFullName } from "@/utils/fullName";
@@ -49,15 +50,12 @@ const BlockedUsersModal = ({ open, onClose }: BlockedUsersModalProps) => {
   };
 
   return (
-    <Sheet open={open} onOpenChange={(next: boolean) => !next && onClose()}>
-      <SheetContent
-        side="bottom"
-        className="mx-auto flex max-h-[70vh] w-full flex-col rounded-t-2xl sm:max-w-md"
-      >
-        <SheetHeader className="border-b border-border pb-3">
-          <SheetTitle>Blocked users</SheetTitle>
-        </SheetHeader>
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
+    <Drawer open={open} onOpenChange={(next: boolean) => !next && onClose()}>
+      <DrawerContent>
+        <DrawerHeader className="border-b border-border pr-12 pb-3">
+          <DrawerTitle>Blocked users</DrawerTitle>
+        </DrawerHeader>
+        <DrawerBody className="px-4 pb-4">
           {isPending ? (
             <ul className="flex flex-col gap-1 pt-1">
               {Array.from({ length: 3 }).map((_, index) => (
@@ -96,9 +94,9 @@ const BlockedUsersModal = ({ open, onClose }: BlockedUsersModalProps) => {
               No blocked users.
             </p>
           )}
-        </div>
-      </SheetContent>
-    </Sheet>
+        </DrawerBody>
+      </DrawerContent>
+    </Drawer>
   );
 };
 
