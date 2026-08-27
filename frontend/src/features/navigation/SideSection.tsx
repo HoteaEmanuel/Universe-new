@@ -22,6 +22,7 @@ import {
 import { SideLinks } from "./SideTabLinks";
 import { cn } from "@/lib/utils";
 import NotificationBell from "@/features/notifications/NotificationBell";
+import AppTour from "./AppTour";
 import CountBadge from "@/components/CountBadge";
 
 const menuButtonClass = cn(
@@ -87,7 +88,7 @@ const SideSection = () => {
                 const Icon = item.element;
 
                 return (
-                  <SidebarMenuItem key={item.link}>
+                  <SidebarMenuItem key={item.link} data-tour={`nav-${item.link.slice(1)}`}>
                     <SidebarMenuButton
                       render={<NavLink to={item.link} />}
                       isActive={isActive}
@@ -149,6 +150,7 @@ const SideSection = () => {
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
+      <AppTour />
     </SidebarProvider>
   );
 };

@@ -34,7 +34,7 @@
 }
 
 [data-theme="dark"] {
-  @apply bg-gray-950;
+  @apply bg-background;
 }
 .themeCollor {
   @apply text-white;
@@ -1086,15 +1086,15 @@ input:checked + .slider1:before {
 .dark,
 [data-theme="dark"] {
   --background:
-    oklch(0.145 0 0);
+    oklch(0.09 0.006 70);
   --foreground:
     oklch(0.985 0 0);
   --card:
-    oklch(0.205 0 0);
+    oklch(0.19 0.006 70);
   --card-foreground:
     oklch(0.985 0 0);
   --popover:
-    oklch(0.205 0 0);
+    oklch(0.19 0.006 70);
   --popover-foreground:
     oklch(0.985 0 0);
   --primary:
@@ -2444,4 +2444,37 @@ input:checked + .slider1:before {
     gap: 8px;
     align-items: flex-start;
   }
+}
+
+/* App tour, mirrors AppTour.tsx (theming reactour, which only exposes accentColor as a token) */
+.universe-tour-mask {
+  opacity: 0.45 !important;
+  color: #000 !important;
+}
+.universe-tour-helper {
+  background-color: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-overlay) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.universe-tour-helper [data-tour-elem="left-arrow"],
+.universe-tour-helper [data-tour-elem="right-arrow"] {
+  color: var(--muted-foreground) !important;
+}
+.universe-tour-helper [data-tour-elem="left-arrow"]:hover,
+.universe-tour-helper [data-tour-elem="right-arrow"]:hover {
+  color: var(--foreground) !important;
+}
+.universe-tour-helper button[aria-label="Close"] {
+  color: var(--muted-foreground) !important;
+}
+.universe-tour-helper button[aria-label="Close"]:hover {
+  color: var(--foreground) !important;
+}
+.universe-tour-helper [data-tour-elem="dot"] {
+  border-color: var(--border) !important;
+  color: var(--muted-foreground) !important;
 }

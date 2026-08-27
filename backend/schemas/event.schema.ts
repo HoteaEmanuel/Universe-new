@@ -66,7 +66,9 @@ export const discoverEventsQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
-export type DiscoverEventsQueryInput = z.infer<typeof discoverEventsQuerySchema>;
+export type DiscoverEventsQueryInput = z.infer<
+  typeof discoverEventsQuerySchema
+>;
 
 export const upcomingUniversityEventsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(10).default(3),
@@ -78,7 +80,9 @@ export type UpcomingUniversityEventsQueryInput = z.infer<
 export const myEventsQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
-  scope: z.enum(["hosting", "going", "interested", "waitlisted"]).default("going"),
+  scope: z
+    .enum(["hosting", "going", "interested", "waitlisted"])
+    .default("going"),
 });
 export type MyEventsQueryInput = z.infer<typeof myEventsQuerySchema>;
 
@@ -86,13 +90,21 @@ export const eventParticipantsQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(30),
   status: z.enum(["going", "interested", "waitlisted"]).optional(),
+  search: z.string().optional(),
 });
-export type EventParticipantsQueryInput = z.infer<typeof eventParticipantsQuerySchema>;
+export type EventParticipantsQueryInput = z.infer<
+  typeof eventParticipantsQuerySchema
+>;
 
 export const banEventParticipantSchema = z.object({
-  reason: z.string().max(500, "Reason should have less than 500 characters").optional(),
+  reason: z
+    .string()
+    .max(500, "Reason should have less than 500 characters")
+    .optional(),
 });
-export type BanEventParticipantInput = z.infer<typeof banEventParticipantSchema>;
+export type BanEventParticipantInput = z.infer<
+  typeof banEventParticipantSchema
+>;
 
 export const eventBansQuerySchema = z.object({
   cursor: z.string().min(1).optional(),

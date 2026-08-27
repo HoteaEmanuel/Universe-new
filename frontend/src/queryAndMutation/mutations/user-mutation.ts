@@ -95,6 +95,17 @@ export const useCompleteOnboardingMutation = () => {
   });
 };
 
+export const useMarkAppTourSeenMutation = () => {
+  const { markAppTourSeen } = useUserStore();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => markAppTourSeen(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth_user"] });
+    },
+  });
+};
+
 export const useUpdateBioMutation = () => {
   const { updateBio } = useUserStore();
 

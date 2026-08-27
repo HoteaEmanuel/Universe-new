@@ -12,6 +12,7 @@ import {
 import { follow, savePost, unfollow } from "../services/user.service.js";
 import { getViewerRelevantUserIds } from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
+import { userNameSearchClause } from "../lib/userSearchClause.js";
 import type { FollowListQueryInput } from "../schemas/user.schema.js";
 import {
   canonicalizeUsername,
@@ -356,11 +357,13 @@ export const getRelevantFollowers = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error("User not found");
 
-    const { cursor, limit } = req.query as unknown as FollowListQueryInput;
+    const { cursor, limit, search } =
+      req.query as unknown as FollowListQueryInput;
     const blockedIds = [...(req.blockedIds ?? [])];
     const relevantIds = [...(await getViewerRelevantUserIds(viewerId))].filter(
       (id) => !blockedIds.includes(id),
     );
+    const searchClause = search ? userNameSearchClause(search) : {};
 
     const { items, nextCursor, hasMore } = await getRelevantFirstPage({
       cursor,
@@ -369,7 +372,11 @@ export const getRelevantFollowers = async (req: Request, res: Response) => {
         relevantIds.length === 0
           ? Promise.resolve([])
           : prisma.follow.findMany({
-              where: { followingId: userId, followerId: { in: relevantIds } },
+              where: {
+                followingId: userId,
+                followerId: { in: relevantIds },
+                follower: searchClause,
+              },
               orderBy: [{ createdAt: "desc" }, { id: "desc" }],
               include: { follower: { select: PROFILE_CARD_SELECT } },
             }),
@@ -378,6 +385,7 @@ export const getRelevantFollowers = async (req: Request, res: Response) => {
           where: {
             followingId: userId,
             followerId: { notIn: [...relevantIds, ...blockedIds] },
+            follower: searchClause,
           },
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take,
@@ -405,11 +413,13 @@ export const getRelevantFollowing = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error("User not found");
 
-    const { cursor, limit } = req.query as unknown as FollowListQueryInput;
+    const { cursor, limit, search } =
+      req.query as unknown as FollowListQueryInput;
     const blockedIds = [...(req.blockedIds ?? [])];
     const relevantIds = [...(await getViewerRelevantUserIds(viewerId))].filter(
       (id) => !blockedIds.includes(id),
     );
+    const searchClause = search ? userNameSearchClause(search) : {};
 
     const { items, nextCursor, hasMore } = await getRelevantFirstPage({
       cursor,
@@ -418,7 +428,11 @@ export const getRelevantFollowing = async (req: Request, res: Response) => {
         relevantIds.length === 0
           ? Promise.resolve([])
           : prisma.follow.findMany({
-              where: { followerId: userId, followingId: { in: relevantIds } },
+              where: {
+                followerId: userId,
+                followingId: { in: relevantIds },
+                following: searchClause,
+              },
               orderBy: [{ createdAt: "desc" }, { id: "desc" }],
               include: { following: { select: FOLLOWING_SELECT } },
             }),
@@ -427,6 +441,7 @@ export const getRelevantFollowing = async (req: Request, res: Response) => {
           where: {
             followerId: userId,
             followingId: { notIn: [...relevantIds, ...blockedIds] },
+            following: searchClause,
           },
           orderBy: [{ createdAt: "desc" }, { id: "desc" }],
           take,
@@ -604,5 +619,17 @@ export const completeOnboarding = async (req: Request, res: Response) => {
     return res
       .status(400)
       .json({ message: "Could not complete onboarding", error });
+  }
+};
+
+export const markAppTourSeen = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId as string;
+    await updateUser(userId, { hasSeenAppTour: true });
+    return res.status(200).json({ message: "App tour marked as seen" });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ message: "Could not mark app tour as seen", error });
   }
 };

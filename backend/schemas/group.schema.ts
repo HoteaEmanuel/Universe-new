@@ -93,3 +93,10 @@ export const groupBansQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(30),
 });
 export type GroupBansQueryInput = z.infer<typeof groupBansQuerySchema>;
+
+export const groupMembersQuerySchema = z.object({
+  cursor: z.string().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(30),
+  search: z.string().optional(),
+});
+export type GroupMembersQueryInput = z.infer<typeof groupMembersQuerySchema>;

@@ -46,7 +46,9 @@ import type { EventStatus, EventType } from "../types/shared.js";
 export { EventBannedError };
 
 type UploadedImage = Express.Multer.File;
-type EventWithRelations = NonNullable<Awaited<ReturnType<typeof findEventById>>>;
+type EventWithRelations = NonNullable<
+  Awaited<ReturnType<typeof findEventById>>
+>;
 
 export const deriveEventStatus = (event: {
   cancelledAt: Date | null;
@@ -65,7 +67,8 @@ export const deriveEventType = (creator: {
   accountType: string;
   identityVerified: string;
 }): EventType => {
-  return creator.accountType === "business" && creator.identityVerified === "true"
+  return creator.accountType === "business" &&
+    creator.identityVerified === "true"
     ? "official"
     : "community";
 };
@@ -128,7 +131,10 @@ const isEventHost = async (
 // view, the participant list, and the calendar export all require already
 // being the host or an existing participant.
 const assertEventVisible = async (
-  event: Pick<EventWithRelations, "id" | "visibility" | "creatorId" | "hostGroupId">,
+  event: Pick<
+    EventWithRelations,
+    "id" | "visibility" | "creatorId" | "hostGroupId"
+  >,
   viewerId: string,
 ) => {
   if (event.visibility !== "private") return;
@@ -160,7 +166,10 @@ interface UpdateEventServiceInput {
   capacity?: number;
 }
 
-export const updateEventService = async (eventId: string, data: UpdateEventServiceInput) => {
+export const updateEventService = async (
+  eventId: string,
+  data: UpdateEventServiceInput,
+) => {
   const before = await findEventById(eventId);
   if (!before) throw new Error("Event not found");
 
@@ -196,7 +205,11 @@ export const cancelEventService = async (eventId: string) => {
 const notifyParticipants = async (
   eventId: string,
   actionUserId: string,
-  payload: { type: "event-update" | "event-cancelled"; title: string; message: string },
+  payload: {
+    type: "event-update" | "event-cancelled";
+    title: string;
+    message: string;
+  },
 ) => {
   const participantUserIds = await findAllActiveParticipantUserIds(eventId);
   await Promise.all(
@@ -213,14 +226,21 @@ const notifyParticipants = async (
   );
 };
 
-export const updateEventCoverImageService = async (data: { image?: UploadedImage; eventId: string }) => {
+export const updateEventCoverImageService = async (data: {
+  image?: UploadedImage;
+  eventId: string;
+}) => {
   const { image, eventId } = data;
   if (!image?.buffer) throw new Error("No image provided");
 
   const event = await findEventById(eventId);
   if (!event) throw new Error("Event not found");
 
-  const uploaded = await uploadImage({ buffer: image.buffer, mimeType: image.mimetype, folder: "event_covers" });
+  const uploaded = await uploadImage({
+    buffer: image.buffer,
+    mimeType: image.mimetype,
+    folder: "event_covers",
+  });
   await setEventCoverImage(eventId, uploaded.url, uploaded.key);
 
   if (event.coverImageKey) {
@@ -228,9 +248,19 @@ export const updateEventCoverImageService = async (data: { image?: UploadedImage
   }
 };
 
-export const discoverEventsService = async (viewerId: string, cursor: string | undefined, limit: number) => {
-  const connectedUserIds = Array.from(await getFollowConnectedUserIds(viewerId));
-  const { items, nextCursor, hasMore } = await findDiscoverableEvents({ connectedUserIds, cursor, limit });
+export const discoverEventsService = async (
+  viewerId: string,
+  cursor: string | undefined,
+  limit: number,
+) => {
+  const connectedUserIds = Array.from(
+    await getFollowConnectedUserIds(viewerId),
+  );
+  const { items, nextCursor, hasMore } = await findDiscoverableEvents({
+    connectedUserIds,
+    cursor,
+    limit,
+  });
   return { events: items.map(toEventDTO), nextCursor, hasMore };
 };
 
@@ -238,10 +268,14 @@ export const discoverEventsService = async (viewerId: string, cursor: string | u
 // real university, mirrors the same check in user.controller.ts.
 const NO_UNIVERSITY_PLACEHOLDER = "No university yet";
 
-export const upcomingUniversityEventsService = async (viewerId: string, limit: number) => {
+export const upcomingUniversityEventsService = async (
+  viewerId: string,
+  limit: number,
+) => {
   const viewer = await findUserById(viewerId);
   const university = viewer?.university;
-  if (!university || university === NO_UNIVERSITY_PLACEHOLDER) return { events: [] };
+  if (!university || university === NO_UNIVERSITY_PLACEHOLDER)
+    return { events: [] };
   const events = await findUpcomingUniversityEvents(university, limit);
   return { events: events.map(toEventDTO) };
 };
@@ -252,7 +286,12 @@ export const myEventsService = async (
   cursor: string | undefined,
   limit: number,
 ) => {
-  const { items, nextCursor, hasMore } = await findMyEvents({ userId, scope, cursor, limit });
+  const { items, nextCursor, hasMore } = await findMyEvents({
+    userId,
+    scope,
+    cursor,
+    limit,
+  });
   return { events: items.map(toEventDTO), nextCursor, hasMore };
 };
 
@@ -263,7 +302,8 @@ export const rsvpEventService = async (
 ) => {
   const event = await findEventById(eventId);
   if (!event) throw new Error("Event not found");
-  if (deriveEventStatus(event) === "cancelled") throw new Error("This event has been cancelled");
+  if (deriveEventStatus(event) === "cancelled")
+    throw new Error("This event has been cancelled");
 
   let status: EventParticipantStatus = requestedStatus;
   if (requestedStatus === "going" && event.capacity) {
@@ -318,12 +358,13 @@ export const getEventParticipantsService = async (
   status: EventParticipantStatus | undefined,
   cursor: string | undefined,
   limit: number,
+  search?: string,
 ) => {
   const event = await findEventById(eventId);
   if (!event) throw new Error("Event not found");
   await assertEventVisible(event, viewerId);
 
-  return findEventParticipantsPage({ eventId, status, cursor, limit });
+  return findEventParticipantsPage({ eventId, status, cursor, limit, search });
 };
 
 export const joinEventChatService = async (eventId: string, userId: string) => {
@@ -338,7 +379,10 @@ export const joinEventChatService = async (eventId: string, userId: string) => {
 
   let groupId = event.coordinationGroup?.id;
   if (!groupId) {
-    const group = await createGroup({ name: `${event.title} - Chat`, visibility: "private" });
+    const group = await createGroup({
+      name: `${event.title} - Chat`,
+      visibility: "private",
+    });
     await createGroupMember({ groupId: group.id, userId, role: "admin" });
     await setEventCoordinationGroupId(eventId, group.id);
     return group;
@@ -350,7 +394,9 @@ export const joinEventChatService = async (eventId: string, userId: string) => {
       await acquireGroupMember({ groupId, userId, role: "member" });
     } catch (error) {
       if (error instanceof GroupBannedError) {
-        throw new Error("You've been removed from this event's chat and can't rejoin");
+        throw new Error(
+          "You've been removed from this event's chat and can't rejoin",
+        );
       }
       throw error;
     }
@@ -358,7 +404,10 @@ export const joinEventChatService = async (eventId: string, userId: string) => {
   return { id: groupId };
 };
 
-export const buildEventIcsService = async (eventId: string, viewerId: string) => {
+export const buildEventIcsService = async (
+  eventId: string,
+  viewerId: string,
+) => {
   const event = await findEventById(eventId);
   if (!event) throw new Error("Event not found");
   await assertEventVisible(event, viewerId);
@@ -374,7 +423,9 @@ export const banEventParticipantService = async (
   const event = await findEventById(eventId);
   if (!event) throw new Error("Event not found");
   if (await isEventHost(event, targetUserId)) {
-    throw new Error("Event hosts can't be banned - remove their host access first");
+    throw new Error(
+      "Event hosts can't be banned - remove their host access first",
+    );
   }
 
   const ban = await banEventParticipant({
@@ -397,7 +448,10 @@ export const banEventParticipantService = async (
   return ban;
 };
 
-export const unbanEventParticipantService = async (eventId: string, targetUserId: string) => {
+export const unbanEventParticipantService = async (
+  eventId: string,
+  targetUserId: string,
+) => {
   await deleteEventBan(eventId, targetUserId);
 };
 

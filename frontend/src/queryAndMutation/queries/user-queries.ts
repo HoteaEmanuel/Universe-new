@@ -38,24 +38,38 @@ export const useGetFollowersQuery = (id?: string) => {
 // sheets on a profile — distinct from the flat useGetFollowersQuery/
 // useGetFollowingQuery above, which AddMembersModal still relies on for a
 // complete, unpaginated list of the viewer's own followers/following.
-export const useGetRelevantFollowersInfiniteQuery = (id?: string) => {
+export const useGetRelevantFollowersInfiniteQuery = (
+  id?: string,
+  search?: string,
+) => {
   const { getRelevantFollowers } = useUserStore();
   return useInfiniteQuery<FollowListPage>({
-    queryKey: ["followers-relevant", id],
+    queryKey: ["followers-relevant", id, search],
     queryFn: ({ pageParam }) =>
-      getRelevantFollowers(id, pageParam as string | undefined) as Promise<FollowListPage>,
+      getRelevantFollowers(
+        id,
+        pageParam as string | undefined,
+        search,
+      ) as Promise<FollowListPage>,
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
     enabled: !!id,
   });
 };
-export const useGetRelevantFollowingInfiniteQuery = (id?: string) => {
+export const useGetRelevantFollowingInfiniteQuery = (
+  id?: string,
+  search?: string,
+) => {
   const { getRelevantFollowing } = useUserStore();
   return useInfiniteQuery<FollowListPage>({
-    queryKey: ["following-relevant", id],
+    queryKey: ["following-relevant", id, search],
     queryFn: ({ pageParam }) =>
-      getRelevantFollowing(id, pageParam as string | undefined) as Promise<FollowListPage>,
+      getRelevantFollowing(
+        id,
+        pageParam as string | undefined,
+        search,
+      ) as Promise<FollowListPage>,
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,

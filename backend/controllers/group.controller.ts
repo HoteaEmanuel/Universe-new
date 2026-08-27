@@ -23,7 +23,10 @@ import {
   GroupBannedError,
   searchGroupMentionUsers,
 } from "../services/group.service.js";
-import { findUserGroupsPage } from "../repository/group-members.repository.js";
+import {
+  findUserGroupsPage,
+  findGroupMembersPage,
+} from "../repository/group-members.repository.js";
 import {
   getGroupFilesPage,
   getGroupMediaPage,
@@ -34,6 +37,7 @@ import type {
   BanGroupMemberInput,
   DiscoverGroupsQueryInput,
   GroupBansQueryInput,
+  GroupMembersQueryInput,
   GroupsListQueryInput,
 } from "../schemas/group.schema.js";
 
@@ -323,6 +327,18 @@ export const getGroupMembers = async (req: Request, res: Response) => {
       include: { member: { select: MEMBER_SELECT } },
     });
     return res.status(200).json({ members: groupMembers });
+  } catch (error) {
+    return res.status(400).json({ message: "Could not retrieve group members" });
+  }
+};
+
+export const getGroupMembersPage = async (req: Request, res: Response) => {
+  try {
+    const groupId = req.params.id as string;
+    const { cursor, limit, search } =
+      req.query as unknown as GroupMembersQueryInput;
+    const page = await findGroupMembersPage({ groupId, cursor, limit, search });
+    return res.status(200).json(page);
   } catch (error) {
     return res.status(400).json({ message: "Could not retrieve group members" });
   }

@@ -170,6 +170,12 @@ export type GroupMember = {
   member: ChatUser;
 };
 
+export type GroupMemberPage = {
+  items: GroupMember[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type GroupBan = {
   id: string;
   groupId: string;

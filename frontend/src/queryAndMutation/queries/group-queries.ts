@@ -8,6 +8,7 @@ import type {
   GroupConversation,
   GroupConversationsPage,
   GroupMember,
+  GroupMemberPage,
   ResourceType,
 } from "../../features/chat/types";
 import type { MentionUser } from "../types";
@@ -95,6 +96,23 @@ export const useGetGroupMembers = (groupId?: string) => {
     queryFn: () => getGroupMembers(groupId as string),
     queryKey: ["group-members", groupId],
     enabled: !!groupId,
+  });
+};
+
+export const useGetGroupMembersInfiniteQuery = (
+  groupId?: string,
+  enabled = true,
+  search?: string,
+) => {
+  const { getGroupMembersPage } = useGroupStore();
+  return useInfiniteQuery<GroupMemberPage>({
+    queryKey: ["group-members-page", groupId, search],
+    queryFn: ({ pageParam }) =>
+      getGroupMembersPage(groupId as string, pageParam as string | undefined, search),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled: !!groupId && enabled,
   });
 };
 

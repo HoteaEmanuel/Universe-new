@@ -20,6 +20,7 @@ export const PUBLIC_USER_SELECT = {
   lastLogin: true,
   isVerified: true,
   hasCompletedOnboarding: true,
+  hasSeenAppTour: true,
   profilePicture: true,
   profilePictureKey: true,
   university: true,

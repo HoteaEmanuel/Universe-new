@@ -11,6 +11,7 @@ export type User = {
   lastLogin?: string;
   isVerified: boolean;
   hasCompletedOnboarding: boolean;
+  hasSeenAppTour: boolean;
   profilePicture?: string | null;
   profilePictureKey?: string | null;
   university?: string | null;

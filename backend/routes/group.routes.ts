@@ -18,6 +18,7 @@ import {
   getGroupMemberById,
   getUsersFromSameUniversityNotInGroup,
   getGroupMembers,
+  getGroupMembersPage,
   leaveGroup,
   kickMemberFromGroup,
   banGroupMemberController,
@@ -59,6 +60,7 @@ import {
   discoverGroupsQuerySchema,
   banGroupMemberSchema,
   groupBansQuerySchema,
+  groupMembersQuerySchema,
   groupsListQuerySchema,
 } from "../schemas/group.schema.js";
 import { sendGroupPollMessageSchema } from "../schemas/poll.schema.js";
@@ -99,6 +101,12 @@ router.get(
 );
 router.get("/:id", requireGroupMembership, getGroupById);
 router.get("/:id/members", requireGroupMembership, getGroupMembers);
+router.get(
+  "/:id/members/page",
+  requireGroupMembership,
+  validate({ query: groupMembersQuerySchema }),
+  getGroupMembersPage,
+);
 router.get("/:id/auth-user", getGroupMemberById);
 router.get(
   "/:id/messages",

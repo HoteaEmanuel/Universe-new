@@ -12,11 +12,11 @@ type SearchInputProps = {
 
 const SearchInput = ({ value, onChange, placeholder, className }: SearchInputProps) => (
   <div className={cn("relative", className)}>
-    <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
     <Input
       type="text"
       placeholder={placeholder}
-      className="pl-8 pr-8"
+      className="px-6"
       value={value}
       onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
     />

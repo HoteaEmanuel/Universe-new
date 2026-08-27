@@ -10,6 +10,7 @@ import type {
   GroupConversation,
   GroupConversationsPage,
   GroupMember,
+  GroupMemberPage,
   GroupVisibility,
   NewFilesMessagePayload,
   NewPollMessagePayload,
@@ -78,6 +79,11 @@ type GroupStore = {
   checkUserIsAdmin: (groupId: string, userId: string) => Promise<boolean>;
   addMemberToGroup: (groupId: string, userId: string) => Promise<unknown>;
   getGroupMembers: (groupId: string) => Promise<GroupMember[]>;
+  getGroupMembersPage: (
+    groupId: string,
+    cursor?: string,
+    search?: string,
+  ) => Promise<GroupMemberPage>;
   getGroupMemberById: (groupId: string) => Promise<GroupMember>;
   getUsersFromSameUniversityNotInGroup: (groupId: string) => Promise<ChatUser[]>;
   leaveGroup: (groupId: string) => Promise<{ message: string }>;
@@ -304,6 +310,16 @@ export const useGroupStore = create<GroupStore>(() => ({
     try {
       const response = await axios.get(`${API_URL}/groups/${groupId}/members`);
       return response.data.members;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not load members"));
+    }
+  },
+  getGroupMembersPage: async (groupId, cursor, search) => {
+    try {
+      const response = await axios.get(`${API_URL}/groups/${groupId}/members/page`, {
+        params: { cursor, search },
+      });
+      return response.data;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load members"));
     }

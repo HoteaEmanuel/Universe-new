@@ -54,6 +54,12 @@ function MultipleImagesUploader<T extends FileItem>({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     disabled: atLimit,
+    // react-dropzone auto-focuses its root element on mount unless this is
+    // set, which steals focus inside dialogs (e.g. a multi-step modal) and
+    // can trip the dialog's focus-trap into treating it as an outside
+    // interaction and closing. We already expose a "Select from computer"
+    // button, so the root div doesn't need its own keyboard handling.
+    noKeyboard: true,
     accept: {
       "image/*": [".png", ".jpeg", ".jpg", ".svg"],
     },

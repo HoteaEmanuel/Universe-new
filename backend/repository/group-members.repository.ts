@@ -3,6 +3,7 @@ import { Prisma } from "../generated/prisma/client.js";
 import type { GroupRole } from "../generated/prisma/client.js";
 import { runSerializable } from "../lib/serializableTransaction.js";
 import { encodeCursor, decodeCursor } from "../lib/keysetCursor.js";
+import { userNameSearchClause } from "../lib/userSearchClause.js";
 import { TRIGRAM_THRESHOLD } from "./search.repository.js";
 
 export class GroupBannedError extends Error {}
@@ -37,12 +38,19 @@ export const createGroupMember = async (memberData: CreateGroupMemberInput) => {
 // original spec checked the ban once, earlier in addMemberToGroup, which
 // left a check-then-write race against a concurrent ban). Serializable so a
 // concurrent ban can't race past the check.
-export const acquireGroupMember = async (memberData: CreateGroupMemberInput) => {
+export const acquireGroupMember = async (
+  memberData: CreateGroupMemberInput,
+) => {
   const { groupId, userId, role } = memberData;
   return runSerializable(async (tx) => {
-    const ban = await tx.groupBan.findUnique({ where: { groupId_userId: { groupId, userId } } });
-    if (ban) throw new GroupBannedError("You have been removed from this group");
-    return tx.groupMembers.create({ data: { groupId, memberId: userId, role } });
+    const ban = await tx.groupBan.findUnique({
+      where: { groupId_userId: { groupId, userId } },
+    });
+    if (ban)
+      throw new GroupBannedError("You have been removed from this group");
+    return tx.groupMembers.create({
+      data: { groupId, memberId: userId, role },
+    });
   });
 };
 
@@ -238,7 +246,9 @@ export const findGroupMember = async (groupId: string, memberId: string) => {
 };
 
 export const findGroupBan = async (groupId: string, userId: string) => {
-  return prisma.groupBan.findUnique({ where: { groupId_userId: { groupId, userId } } });
+  return prisma.groupBan.findUnique({
+    where: { groupId_userId: { groupId, userId } },
+  });
 };
 
 interface BanGroupMemberInput {
@@ -271,7 +281,11 @@ interface FindGroupBansInput {
   limit: number;
 }
 
-export const findGroupBansPage = async ({ groupId, cursor, limit }: FindGroupBansInput) => {
+export const findGroupBansPage = async ({
+  groupId,
+  cursor,
+  limit,
+}: FindGroupBansInput) => {
   const rows = await prisma.groupBan.findMany({
     where: { groupId },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -284,5 +298,52 @@ export const findGroupBansPage = async ({ groupId, cursor, limit }: FindGroupBan
   });
   const hasMore = rows.length > limit;
   const page = hasMore ? rows.slice(0, limit) : rows;
-  return { items: page, nextCursor: hasMore ? page[page.length - 1]?.id ?? null : null, hasMore };
+  return {
+    items: page,
+    nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+    hasMore,
+  };
+};
+
+export const GROUP_MEMBER_SELECT = {
+  id: true,
+  username: true,
+  firstName: true,
+  lastName: true,
+  profilePicture: true,
+  accountType: true,
+  name: true,
+  university: true,
+} as const;
+
+interface FindGroupMembersPageInput {
+  groupId: string;
+  cursor?: string;
+  search?: string;
+  limit: number;
+}
+
+export const findGroupMembersPage = async ({
+  groupId,
+  limit,
+  cursor,
+  search,
+}: FindGroupMembersPageInput) => {
+  const rows = await prisma.groupMembers.findMany({
+    where: {
+      groupId,
+      ...(search ? { member: userNameSearchClause(search) } : {}),
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    include: { member: { select: GROUP_MEMBER_SELECT } },
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    take: limit + 1,
+  });
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  return {
+    items: page,
+    nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+    hasMore,
+  };
 };

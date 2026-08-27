@@ -1,14 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useCompleteOnboardingMutation } from "@/queryAndMutation/mutations/user-mutation";
 import { useUpcomingUniversityEventsQuery } from "@/queryAndMutation/queries/event-queries";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useStepWizard } from "@/hooks/useStepWizard";
+import StepWizardHeader from "@/components/StepWizardHeader";
 import type { ProfileUser } from "@/features/profile/types";
 import "@/stars.css";
-import OnboardingProgressBar from "./OnboardingProgressBar";
 import WelcomeStep from "./steps/WelcomeStep";
 import IdentityStep from "./steps/IdentityStep";
 import PeopleStep from "./steps/PeopleStep";
@@ -46,17 +45,15 @@ const OnboardingPage = () => {
     return suggestedEvents.length > 0 ? [...base, "events"] : base;
   }, [suggestedEvents.length]);
 
-  const [stepIndex, setStepIndex] = useState(0);
-  // Clamp instead of resetting to 0 if the events step disappears (query
+  // Clamps instead of resetting to 0 if the events step disappears (query
   // resolves empty) while the user is sitting on a later step already.
-  const clampedIndex = Math.min(stepIndex, steps.length - 1);
+  const { stepIndex: clampedIndex, isLastStep, goNext, goBack } = useStepWizard(
+    steps.length,
+  );
   const currentStep = steps[clampedIndex];
 
   if (!user) return null;
   if (user.hasCompletedOnboarding) return <Navigate to="/home" replace />;
-
-  const goNext = () => setStepIndex((i) => Math.min(i + 1, steps.length - 1));
-  const goBack = () => setStepIndex((i) => Math.max(i - 1, 0));
 
   const finish = async () => {
     try {
@@ -67,7 +64,6 @@ const OnboardingPage = () => {
     }
   };
 
-  const isLastStep = clampedIndex === steps.length - 1;
   const handleStepNext = isLastStep ? finish : goNext;
 
   return (
@@ -81,34 +77,21 @@ const OnboardingPage = () => {
       <div className="nebula-glow" />
 
       <div className="relative z-10 w-full max-w-md">
-        <div className="mb-4 flex items-center gap-2">
-          {clampedIndex > 0 && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Back"
-              onClick={goBack}
-              className="shrink-0"
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
+        <div className="mb-4">
+          {clampedIndex + 1 === 4 && (
+            <p className="animate-like-pop mb-1.5 text-lg font-black sm:text-xl">
+              <span className="heading-text-1">
+                Almost there — you're doing great!
+              </span>{" "}
+              🎉
+            </p>
           )}
-          <div className="flex-1">
-            {clampedIndex + 1 === 4 && (
-              <p className="animate-like-pop mb-1.5 text-lg font-black sm:text-xl">
-                <span className="heading-text-1">
-                  Almost there — you're doing great!
-                </span>{" "}
-                🎉
-              </p>
-            )}
-            <OnboardingProgressBar
-              current={clampedIndex + 1}
-              total={steps.length}
-              label={STEP_LABELS[currentStep]}
-            />
-          </div>
+          <StepWizardHeader
+            current={clampedIndex + 1}
+            total={steps.length}
+            label={STEP_LABELS[currentStep]}
+            onBack={goBack}
+          />
         </div>
 
         <Card className="auth-card relative z-10 py-6 sm:py-8">

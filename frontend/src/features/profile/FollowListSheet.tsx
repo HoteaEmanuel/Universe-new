@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   useGetRelevantFollowersInfiniteQuery,
@@ -12,6 +12,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import UserListSkeleton from "@/components/UserListSkeleton";
+import SearchInput from "@/components/SearchInput";
+import { useDebounce } from "@/hooks/Debounce";
 
 type FollowListSheetProps = {
   open: boolean;
@@ -29,11 +32,15 @@ const FollowListSheet = ({
   userId,
   title,
 }: FollowListSheetProps) => {
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const followersQuery = useGetRelevantFollowersInfiniteQuery(
     open && title === "Followers" ? userId : undefined,
+    debouncedSearch,
   );
   const followingQuery = useGetRelevantFollowingInfiniteQuery(
     open && title === "Following" ? userId : undefined,
+    debouncedSearch,
   );
   const {
     data,
@@ -45,8 +52,11 @@ const FollowListSheet = ({
 
   const listRef = useRef<HTMLDivElement>(null);
   const users = data?.pages.flatMap((page) => page.users) ?? [];
-  const emptyMessage =
-    title === "Followers" ? "No followers yet." : "Not following anyone yet.";
+  const emptyMessage = debouncedSearch
+    ? "No matches found."
+    : title === "Followers"
+      ? "No followers yet."
+      : "Not following anyone yet.";
 
   const virtualizer = useVirtualizer({
     count: users.length,
@@ -85,17 +95,16 @@ const FollowListSheet = ({
           <SheetHeader className="border-b border-border pb-3">
             <SheetTitle>{title}</SheetTitle>
           </SheetHeader>
+          <SearchInput
+            onChange={setSearch}
+            value={search}
+            className="px-2"
+            placeholder={
+              title === "Followers" ? "Search followers..." : "Search following..."
+            }
+          />
           <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-4">
-            {isLoading && (
-              <ul className="flex flex-col gap-3 pt-1">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <li key={i} className="flex items-center gap-3 p-2">
-                    <Skeleton className="size-12 shrink-0 rounded-full" />
-                    <Skeleton className="h-4 w-32" />
-                  </li>
-                ))}
-              </ul>
-            )}
+            {isLoading && <UserListSkeleton />}
             {!isLoading && users.length === 0 && (
               <p className="pt-8 list-loading-text">
                 {emptyMessage}

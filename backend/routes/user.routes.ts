@@ -20,6 +20,7 @@ import {
   updateUsername,
   savePostController,
   completeOnboarding,
+  markAppTourSeen,
 } from "../controllers/user.controller.js";
 import { validate } from "../middleware/validate.js";
 import {
@@ -73,6 +74,7 @@ router.get(
 );
 router.patch("/update-bio", validate({ body: updateBioSchema }), updateBio);
 router.post("/complete-onboarding", completeOnboarding);
+router.post("/mark-app-tour-seen", markAppTourSeen);
 router.get("/follows-user/:id", followsUser);
 router.get("/users-from-same-university", getUsersFromSameUniversity);
 router.put(

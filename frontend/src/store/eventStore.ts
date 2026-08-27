@@ -29,7 +29,9 @@ type EventStore = {
   cancelEvent: (id: string) => Promise<EventSummary>;
   updateEventCoverImage: (id: string, image: File) => Promise<unknown>;
   discoverEvents: (cursor?: string) => Promise<EventsPage>;
-  getUpcomingUniversityEvents: (limit?: number) => Promise<{ events: EventSummary[] }>;
+  getUpcomingUniversityEvents: (
+    limit?: number,
+  ) => Promise<{ events: EventSummary[] }>;
   getMyEvents: (scope: MyEventsScope, cursor?: string) => Promise<EventsPage>;
   rsvpToEvent: (
     id: string,
@@ -40,6 +42,7 @@ type EventStore = {
     id: string,
     status?: EventParticipantStatus,
     cursor?: string,
+    search?: string,
   ) => Promise<EventParticipantsPage>;
   joinEventChat: (id: string) => Promise<{ id: string }>;
   downloadEventIcs: (id: string, title: string) => Promise<void>;
@@ -48,7 +51,10 @@ type EventStore = {
     userId: string,
     reason?: string,
   ) => Promise<{ message: string }>;
-  unbanEventParticipant: (id: string, userId: string) => Promise<{ message: string }>;
+  unbanEventParticipant: (
+    id: string,
+    userId: string,
+  ) => Promise<{ message: string }>;
   getEventBans: (id: string, cursor?: string) => Promise<EventBansPage>;
 };
 
@@ -96,7 +102,9 @@ export const useEventStore = create<EventStore>(() => ({
       );
       return response.data;
     } catch (error) {
-      throw new Error(errorMessage(error, "Could not update event cover image"));
+      throw new Error(
+        errorMessage(error, "Could not update event cover image"),
+      );
     }
   },
   discoverEvents: async (cursor) => {
@@ -111,9 +119,12 @@ export const useEventStore = create<EventStore>(() => ({
   },
   getUpcomingUniversityEvents: async (limit) => {
     try {
-      const response = await axios.get(`${API_URL}/events/discover/university`, {
-        params: limit ? { limit } : undefined,
-      });
+      const response = await axios.get(
+        `${API_URL}/events/discover/university`,
+        {
+          params: limit ? { limit } : undefined,
+        },
+      );
       return response.data;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not load events"));
@@ -131,7 +142,9 @@ export const useEventStore = create<EventStore>(() => ({
   },
   rsvpToEvent: async (id, status) => {
     try {
-      const response = await axios.post(`${API_URL}/events/${id}/rsvp`, { status });
+      const response = await axios.post(`${API_URL}/events/${id}/rsvp`, {
+        status,
+      });
       return response.data.participant;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not save RSVP"));
@@ -144,10 +157,14 @@ export const useEventStore = create<EventStore>(() => ({
       throw new Error(errorMessage(error, "Could not remove RSVP"));
     }
   },
-  getEventParticipants: async (id, status, cursor) => {
+  getEventParticipants: async (id, status, cursor, search) => {
     try {
       const response = await axios.get(`${API_URL}/events/${id}/participants`, {
-        params: { ...(status ? { status } : {}), ...(cursor ? { cursor } : {}) },
+        params: {
+          ...(status ? { status } : {}),
+          ...(cursor ? { cursor } : {}),
+          ...(search ? { search } : {}),
+        },
       });
       return response.data;
     } catch (error) {
@@ -193,7 +210,9 @@ export const useEventStore = create<EventStore>(() => ({
   },
   unbanEventParticipant: async (id, userId) => {
     try {
-      const response = await axios.delete(`${API_URL}/events/${id}/bans/${userId}`);
+      const response = await axios.delete(
+        `${API_URL}/events/${id}/bans/${userId}`,
+      );
       return response.data;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not unban participant"));

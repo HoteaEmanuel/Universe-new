@@ -1,7 +1,13 @@
 import { prisma } from "../database/prisma.js";
-import type { EventVisibility, EventParticipantStatus, Prisma } from "../generated/prisma/client.js";
+import type {
+  EventVisibility,
+  EventParticipantStatus,
+  Prisma,
+} from "../generated/prisma/client.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
 import { runSerializable } from "../lib/serializableTransaction.js";
+import { userNameSearchClause } from "../lib/userSearchClause.js";
+import { searchUsers } from "./search.repository.js";
 
 export class EventBannedError extends Error {}
 
@@ -78,12 +84,25 @@ export const cancelEvent = async (id: string) => {
   });
 };
 
-export const setEventCoverImage = async (id: string, coverImageUrl: string, coverImageKey: string) => {
-  return prisma.event.update({ where: { id }, data: { coverImageUrl, coverImageKey } });
+export const setEventCoverImage = async (
+  id: string,
+  coverImageUrl: string,
+  coverImageKey: string,
+) => {
+  return prisma.event.update({
+    where: { id },
+    data: { coverImageUrl, coverImageKey },
+  });
 };
 
-export const setEventCoordinationGroupId = async (id: string, groupId: string) => {
-  return prisma.event.update({ where: { id }, data: { coordinationGroup: { connect: { id: groupId } } } });
+export const setEventCoordinationGroupId = async (
+  id: string,
+  groupId: string,
+) => {
+  return prisma.event.update({
+    where: { id },
+    data: { coordinationGroup: { connect: { id: groupId } } },
+  });
 };
 
 export const createEventAnnouncementPost = async (event: {
@@ -105,14 +124,20 @@ export const createEventAnnouncementPost = async (event: {
 };
 
 const upcomingOrOngoingFilter = (): Prisma.EventWhereInput => ({
-  OR: [{ endAt: { gte: new Date() } }, { endAt: null, startAt: { gte: new Date() } }],
+  OR: [
+    { endAt: { gte: new Date() } },
+    { endAt: null, startAt: { gte: new Date() } },
+  ],
 });
 
 // Onboarding step 5 candidate pool: soonest upcoming public events created
 // by someone at the viewer's university, capped at `limit`. Simpler than
 // findDiscoverableEvents' relevance-first-page logic below since there's no
 // connection graph to rank against yet for a brand-new user.
-export const findUpcomingUniversityEvents = async (university: string, limit: number) => {
+export const findUpcomingUniversityEvents = async (
+  university: string,
+  limit: number,
+) => {
   return prisma.event.findMany({
     where: {
       visibility: "public",
@@ -144,7 +169,10 @@ export const findDiscoverableEvents = async ({
   };
   const connectedGoingOrInterested: Prisma.EventWhereInput = {
     participants: {
-      some: { userId: { in: connectedUserIds }, status: { in: ["going", "interested"] } },
+      some: {
+        userId: { in: connectedUserIds },
+        status: { in: ["going", "interested"] },
+      },
     },
   };
 
@@ -181,7 +209,12 @@ interface FindMyEventsInput {
   limit: number;
 }
 
-export const findMyEvents = async ({ userId, scope, cursor, limit }: FindMyEventsInput) => {
+export const findMyEvents = async ({
+  userId,
+  scope,
+  cursor,
+  limit,
+}: FindMyEventsInput) => {
   const where: Prisma.EventWhereInput =
     scope === "hosting"
       ? { creatorId: userId }
@@ -196,11 +229,17 @@ export const findMyEvents = async ({ userId, scope, cursor, limit }: FindMyEvent
   });
   const hasMore = events.length > limit;
   const page = hasMore ? events.slice(0, limit) : events;
-  return { items: page, nextCursor: hasMore ? page[page.length - 1]?.id ?? null : null, hasMore };
+  return {
+    items: page,
+    nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+    hasMore,
+  };
 };
 
 export const findEventParticipant = async (eventId: string, userId: string) => {
-  return prisma.eventParticipant.findUnique({ where: { eventId_userId: { eventId, userId } } });
+  return prisma.eventParticipant.findUnique({
+    where: { eventId_userId: { eventId, userId } },
+  });
 };
 
 export const countGoingParticipants = async (eventId: string) => {
@@ -213,7 +252,11 @@ export const countParticipantsByStatus = async (eventId: string) => {
     where: { eventId },
     _count: true,
   });
-  const result: Record<EventParticipantStatus, number> = { going: 0, interested: 0, waitlisted: 0 };
+  const result: Record<EventParticipantStatus, number> = {
+    going: 0,
+    interested: 0,
+    waitlisted: 0,
+  };
   counts.forEach((row) => {
     result[row.status] = row._count;
   });
@@ -245,8 +288,11 @@ export const acquireEventParticipant = async (
   status: EventParticipantStatus,
 ) => {
   return runSerializable(async (tx) => {
-    const ban = await tx.eventBan.findUnique({ where: { eventId_userId: { eventId, userId } } });
-    if (ban) throw new EventBannedError("You have been removed from this event");
+    const ban = await tx.eventBan.findUnique({
+      where: { eventId_userId: { eventId, userId } },
+    });
+    if (ban)
+      throw new EventBannedError("You have been removed from this event");
     return tx.eventParticipant.upsert({
       where: { eventId_userId: { eventId, userId } },
       create: { eventId, userId, status },
@@ -255,12 +301,19 @@ export const acquireEventParticipant = async (
   });
 };
 
-export const deleteEventParticipant = async (eventId: string, userId: string) => {
-  return prisma.eventParticipant.delete({ where: { eventId_userId: { eventId, userId } } });
+export const deleteEventParticipant = async (
+  eventId: string,
+  userId: string,
+) => {
+  return prisma.eventParticipant.delete({
+    where: { eventId_userId: { eventId, userId } },
+  });
 };
 
 export const findEventBan = async (eventId: string, userId: string) => {
-  return prisma.eventBan.findUnique({ where: { eventId_userId: { eventId, userId } } });
+  return prisma.eventBan.findUnique({
+    where: { eventId_userId: { eventId, userId } },
+  });
 };
 
 interface BanEventParticipantInput {
@@ -280,7 +333,9 @@ export const banEventParticipant = async (data: BanEventParticipantInput) => {
   return runSerializable(async (tx) => {
     await tx.eventParticipant.deleteMany({ where: { eventId, userId } });
     if (coordinationGroupId) {
-      await tx.groupMembers.deleteMany({ where: { groupId: coordinationGroupId, memberId: userId } });
+      await tx.groupMembers.deleteMany({
+        where: { groupId: coordinationGroupId, memberId: userId },
+      });
     }
     return tx.eventBan.upsert({
       where: { eventId_userId: { eventId, userId } },
@@ -300,7 +355,11 @@ interface FindEventBansInput {
   limit: number;
 }
 
-export const findEventBansPage = async ({ eventId, cursor, limit }: FindEventBansInput) => {
+export const findEventBansPage = async ({
+  eventId,
+  cursor,
+  limit,
+}: FindEventBansInput) => {
   const rows = await prisma.eventBan.findMany({
     where: { eventId },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -313,7 +372,11 @@ export const findEventBansPage = async ({ eventId, cursor, limit }: FindEventBan
   });
   const hasMore = rows.length > limit;
   const page = hasMore ? rows.slice(0, limit) : rows;
-  return { items: page, nextCursor: hasMore ? page[page.length - 1]?.id ?? null : null, hasMore };
+  return {
+    items: page,
+    nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+    hasMore,
+  };
 };
 
 export const findOldestWaitlistedParticipant = async (eventId: string) => {
@@ -328,6 +391,7 @@ interface FindEventParticipantsInput {
   status?: EventParticipantStatus;
   cursor?: string;
   limit: number;
+  search?: string;
 }
 
 export const findEventParticipantsPage = async ({
@@ -335,9 +399,14 @@ export const findEventParticipantsPage = async ({
   status,
   cursor,
   limit,
+  search,
 }: FindEventParticipantsInput) => {
   const rows = await prisma.eventParticipant.findMany({
-    where: { eventId, ...(status ? { status } : {}) },
+    where: {
+      eventId,
+      ...(status ? { status } : {}),
+      ...(search ? { user: userNameSearchClause(search) } : {}),
+    },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     include: { user: { select: EVENT_CREATOR_SELECT } },
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
@@ -345,7 +414,11 @@ export const findEventParticipantsPage = async ({
   });
   const hasMore = rows.length > limit;
   const page = hasMore ? rows.slice(0, limit) : rows;
-  return { items: page, nextCursor: hasMore ? page[page.length - 1]?.id ?? null : null, hasMore };
+  return {
+    items: page,
+    nextCursor: hasMore ? (page[page.length - 1]?.id ?? null) : null,
+    hasMore,
+  };
 };
 
 export const findAllActiveParticipantUserIds = async (eventId: string) => {

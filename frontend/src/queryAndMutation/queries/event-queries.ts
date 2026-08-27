@@ -30,7 +30,10 @@ export const useDiscoverEventsInfiniteQuery = (enabled = true) => {
   });
 };
 
-export const useUpcomingUniversityEventsQuery = (enabled = true, limit?: number) => {
+export const useUpcomingUniversityEventsQuery = (
+  enabled = true,
+  limit?: number,
+) => {
   const { getUpcomingUniversityEvents } = useEventStore();
   return useQuery<{ events: EventSummary[] }>({
     queryFn: () => getUpcomingUniversityEvents(limit),
@@ -41,11 +44,15 @@ export const useUpcomingUniversityEventsQuery = (enabled = true, limit?: number)
 
 export type MyEventsScope = "hosting" | "going" | "interested" | "waitlisted";
 
-export const useMyEventsInfiniteQuery = (scope: MyEventsScope, enabled = true) => {
+export const useMyEventsInfiniteQuery = (
+  scope: MyEventsScope,
+  enabled = true,
+) => {
   const { getMyEvents } = useEventStore();
   return useInfiniteQuery<EventsPage>({
     queryKey: ["events-mine", scope],
-    queryFn: ({ pageParam }) => getMyEvents(scope, pageParam as string | undefined),
+    queryFn: ({ pageParam }) =>
+      getMyEvents(scope, pageParam as string | undefined),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
@@ -57,12 +64,18 @@ export const useGetEventParticipantsInfiniteQuery = (
   id?: string,
   status?: EventParticipantStatus,
   enabled = true,
+  search?: string,
 ) => {
   const { getEventParticipants } = useEventStore();
   return useInfiniteQuery<EventParticipantsPage>({
-    queryKey: ["event-participants", id, status],
+    queryKey: ["event-participants", id, status,search],
     queryFn: ({ pageParam }) =>
-      getEventParticipants(id as string, status, pageParam as string | undefined),
+      getEventParticipants(
+        id as string,
+        status,
+        pageParam as string | undefined,
+        search,
+      ),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
@@ -74,7 +87,8 @@ export const useGetEventBansInfiniteQuery = (id?: string, enabled = true) => {
   const { getEventBans } = useEventStore();
   return useInfiniteQuery<EventBansPage>({
     queryKey: ["event-bans", id],
-    queryFn: ({ pageParam }) => getEventBans(id as string, pageParam as string | undefined),
+    queryFn: ({ pageParam }) =>
+      getEventBans(id as string, pageParam as string | undefined),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,

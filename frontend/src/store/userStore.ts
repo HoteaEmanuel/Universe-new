@@ -29,14 +29,17 @@ type UserStore = {
   getRelevantFollowers: (
     id?: string,
     cursor?: string,
+    search?: string,
   ) => Promise<FollowListPage | undefined>;
   getRelevantFollowing: (
     id?: string,
     cursor?: string,
+    search?: string,
   ) => Promise<FollowListPage | undefined>;
   isFollowing: (id?: string) => Promise<boolean | undefined>;
   updateBio: (bio: string) => Promise<unknown>;
   completeOnboarding: () => Promise<unknown>;
+  markAppTourSeen: () => Promise<unknown>;
   updateUsername: (username: string) => Promise<{ id: string; username: string }>;
   checkUsernameAvailability: (username: string) => Promise<{ username: string; available: boolean; reason?: string }>;
   getUniversityPeople: (
@@ -194,12 +197,12 @@ export const useUserStore = create<UserStore>((set) => ({
       set({ isLoading: false });
     }
   },
-  getRelevantFollowers: async (id, cursor) => {
+  getRelevantFollowers: async (id, cursor, search) => {
     if (!id) return undefined;
     set({ isLoading: true });
     try {
       const response = await axios.get(`${API_URL}/followers-relevant/${id}`, {
-        params: cursor ? { cursor } : undefined,
+        params: { cursor, search },
       });
       return {
         users: response.data.followers,
@@ -213,12 +216,12 @@ export const useUserStore = create<UserStore>((set) => ({
       set({ isLoading: false });
     }
   },
-  getRelevantFollowing: async (id, cursor) => {
+  getRelevantFollowing: async (id, cursor, search) => {
     if (!id) return undefined;
     set({ isLoading: true });
     try {
       const response = await axios.get(`${API_URL}/following-relevant/${id}`, {
-        params: cursor ? { cursor } : undefined,
+        params: { cursor, search },
       });
       return {
         users: response.data.following,
@@ -260,6 +263,15 @@ export const useUserStore = create<UserStore>((set) => ({
   completeOnboarding: async () => {
     try {
       const response = await axios.post(`${API_URL}/complete-onboarding`);
+      return response.data;
+    } catch (error) {
+      set({ error });
+      throw error;
+    }
+  },
+  markAppTourSeen: async () => {
+    try {
+      const response = await axios.post(`${API_URL}/mark-app-tour-seen`);
       return response.data;
     } catch (error) {
       set({ error });

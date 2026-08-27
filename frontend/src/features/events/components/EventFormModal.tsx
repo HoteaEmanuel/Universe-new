@@ -104,7 +104,6 @@ const EventFormModal = (props: EventFormModalProps) => {
       setVisibility("public");
       setCoverImageFiles([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mode, event]);
 
   const watchedValues = watch();

@@ -12,6 +12,10 @@ import { getFullName } from "@/utils/fullName";
 import { useGetEventParticipantsInfiniteQuery } from "@/queryAndMutation/queries/event-queries";
 import BanEventParticipantDialog from "./BanEventParticipantDialog";
 import EventBannedUsersModal from "./EventBannedUsersModal";
+import { Input } from "@/components/ui/input";
+import SearchInput from "@/components/SearchInput";
+import UserListSkeleton from "@/components/UserListSkeleton";
+import { useDebounce } from "@/hooks/Debounce";
 
 type EventParticipantsModalProps = {
   open: boolean;
@@ -28,20 +32,33 @@ const EventParticipantsModal = ({
   eventId,
   isHost,
 }: EventParticipantsModalProps) => {
+  const [search, setSearch] = useState("");
+
+  const debouncedSearch = useDebounce(search,300);
   const { data, isPending, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useGetEventParticipantsInfiniteQuery(eventId, undefined, open);
-  const [banTarget, setBanTarget] = useState<{ userId: string; name: string } | null>(
-    null,
-  );
+    useGetEventParticipantsInfiniteQuery(
+      eventId,
+      undefined,
+      open,
+      debouncedSearch,
+    );
+  const [banTarget, setBanTarget] = useState<{
+    userId: string;
+    name: string;
+  } | null>(null);
   const [bannedListOpen, setBannedListOpen] = useState(false);
 
   const participants = data?.pages.flatMap((page) => page.items) ?? [];
-
+  
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.currentTarget;
     const distanceFromBottom =
       target.scrollHeight - target.scrollTop - target.clientHeight;
-    if (distanceFromBottom < SCROLL_THRESHOLD_PX && hasNextPage && !isFetchingNextPage) {
+    if (
+      distanceFromBottom < SCROLL_THRESHOLD_PX &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
       fetchNextPage();
     }
   };
@@ -55,24 +72,29 @@ const EventParticipantsModal = ({
         <SheetHeader className="flex-row items-center justify-between border-b border-border pb-3">
           <SheetTitle>Participants</SheetTitle>
           {isHost && (
-            <Button variant="ghost" size="sm" onClick={() => setBannedListOpen(true)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setBannedListOpen(true)}
+            >
               Banned users
             </Button>
           )}
         </SheetHeader>
+        <SearchInput
+          onChange={setSearch}
+          value={search}
+          className="px-2"
+          placeholder="Search participants..."
+
+        />
         <div
           className="flex-1 overflow-y-auto px-4 pb-4"
           onScroll={handleScroll}
         >
-          {isPending && (
-            <p className="pt-8 list-loading-text">
-              Loading...
-            </p>
-          )}
+          {isPending && <UserListSkeleton lines={2} />}
           {!isPending && participants.length === 0 && (
-            <p className="pt-8 list-loading-text">
-              No participants yet.
-            </p>
+            <p className="pt-8 list-loading-text">No participants yet.</p>
           )}
           {!isPending && participants.length > 0 && (
             <ul className="flex flex-col gap-1 pt-1">
@@ -80,8 +102,14 @@ const EventParticipantsModal = ({
                 const participantName = getFullName(participant.user);
 
                 return (
-                  <li key={participant.id} className="flex items-start gap-3 p-2">
-                    <UserAvatar user={participant.user} name={participantName} />
+                  <li
+                    key={participant.id}
+                    className="flex items-start gap-3 p-2"
+                  >
+                    <UserAvatar
+                      user={participant.user}
+                      name={participantName}
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{participantName}</p>
                       <p className="text-xs text-muted-foreground capitalize">
