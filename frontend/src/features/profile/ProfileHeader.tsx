@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Camera, GraduationCap, BookOpen, MessageCircle } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Camera,
+  GraduationCap,
+  BookOpen,
+  MessageCircle,
+  Link2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
 import { getFullName } from "@/utils/fullName";
@@ -55,6 +62,20 @@ const ProfileHeader = ({
     } else {
       navigate(`/new-conversation/${user.id}`);
     }
+  };
+
+  const handleShareProfile = async () => {
+    const url = `${window.location.origin}/u/${user.username}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ url });
+      } catch {
+        // user dismissed the native share sheet
+      }
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    toast.success("Profile link copied");
   };
 
   return (
@@ -171,6 +192,14 @@ const ProfileHeader = ({
               </Button>
             </>
           )}
+          <Button
+            variant="outline"
+            size="icon-sm"
+            aria-label="Share profile"
+            onClick={handleShareProfile}
+          >
+            <Link2 />
+          </Button>
         </div>
       </div>
 

@@ -16,7 +16,7 @@ const SearchInput = ({ value, onChange, placeholder, className }: SearchInputPro
     <Input
       type="text"
       placeholder={placeholder}
-      className="px-6"
+      className="px-8"
       value={value}
       onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
     />
