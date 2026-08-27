@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Ban, ShieldCheck } from "lucide-react";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import UserAvatar from "@/components/UserAvatar";
 import SearchInput from "@/components/SearchInput";
@@ -79,27 +80,24 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
   };
 
   return (
-    <Sheet open={open} onOpenChange={(next: boolean) => !next && onClose()}>
-      <SheetContent
-        side="bottom"
-        className="mx-auto flex max-h-[70vh] w-full flex-col rounded-t-2xl sm:max-w-md"
-      >
-        <SheetHeader className="flex-row items-center justify-between border-b border-border pb-3">
-          <SheetTitle>Group members</SheetTitle>
+    <Drawer open={open} onOpenChange={(next: boolean) => !next && onClose()}>
+      <DrawerContent>
+        <DrawerHeader className="flex-row items-center justify-between border-b border-border pr-12 pb-3">
+          <DrawerTitle>Group members</DrawerTitle>
           {isAdmin && (
             <Button variant="ghost" size="sm" onClick={() => setBannedListOpen(true)}>
               Banned users
             </Button>
           )}
-        </SheetHeader>
+        </DrawerHeader>
         <SearchInput
           onChange={setSearch}
           value={search}
-          className="px-2"
+          className="shrink-0 px-2"
           placeholder="Search members..."
         />
-        <div
-          className="flex-1 overflow-y-auto px-4 pb-4"
+        <DrawerBody
+          className="h-full px-4 pb-4"
           onScroll={handleScroll}
         >
           {isPending && <UserListSkeleton />}
@@ -157,8 +155,8 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
               })}
             </ul>
           )}
-        </div>
-      </SheetContent>
+        </DrawerBody>
+      </DrawerContent>
       <BanGroupMemberDialog
         open={!!banTarget}
         onClose={() => setBanTarget(null)}
@@ -170,7 +168,7 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
         open={bannedListOpen}
         onClose={() => setBannedListOpen(false)}
       />
-    </Sheet>
+    </Drawer>
   );
 };
 

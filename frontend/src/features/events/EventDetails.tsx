@@ -293,6 +293,7 @@ const EventDetails = () => {
         onClose={() => setShowParticipants(false)}
         eventId={event.id}
         isHost={isHost}
+        counts={event.counts}
       />
 
       {isHost && (

@@ -6,11 +6,12 @@ import {
 } from "@/queryAndMutation/queries/user-queries";
 import UserListElement from "@/components/UserListElement";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import UserListSkeleton from "@/components/UserListSkeleton";
 import SearchInput from "@/components/SearchInput";
@@ -87,23 +88,20 @@ const FollowListSheet = ({
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
-      <Sheet open={open} onOpenChange={(next: boolean) => !next && onClose()}>
-        <SheetContent
-          side="bottom"
-          className="mx-auto flex max-h-[70vh] w-full flex-col rounded-t-2xl sm:max-w-md"
-        >
-          <SheetHeader className="border-b border-border pb-3">
-            <SheetTitle>{title}</SheetTitle>
-          </SheetHeader>
+      <Drawer open={open} onOpenChange={(next: boolean) => !next && onClose()}>
+        <DrawerContent>
+          <DrawerHeader className="border-b border-border pr-12 pb-3">
+            <DrawerTitle>{title}</DrawerTitle>
+          </DrawerHeader>
           <SearchInput
             onChange={setSearch}
             value={search}
-            className="px-2"
+            className="shrink-0 px-2"
             placeholder={
               title === "Followers" ? "Search followers..." : "Search following..."
             }
           />
-          <div ref={listRef} className="flex-1 overflow-y-auto px-4 pb-4">
+          <DrawerBody ref={listRef} className="h-full px-4 pb-4">
             {isLoading && <UserListSkeleton />}
             {!isLoading && users.length === 0 && (
               <p className="pt-8 list-loading-text">
@@ -137,9 +135,9 @@ const FollowListSheet = ({
                 <Skeleton className="h-4 w-32" />
               </div>
             )}
-          </div>
-        </SheetContent>
-      </Sheet>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
