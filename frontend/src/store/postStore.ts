@@ -5,6 +5,8 @@ import type {
   Post,
   PostAuthor,
   PostsPage,
+  OpportunitiesPage,
+  OpportunityFilters,
   PublicPost,
   RelevantLiker,
   ShareRecipientsResponse,
@@ -46,6 +48,8 @@ type PostStore = {
     recipientIds: string[],
     groupIds: string[],
   ) => Promise<void>;
+  getOpportunities: (filters: OpportunityFilters, cursor?: string) => Promise<OpportunitiesPage>;
+  setOpportunityClosed: (id: string, closed: boolean) => Promise<void>;
 };
 
 export const usePostStore = create<PostStore>((set) => ({
@@ -113,6 +117,7 @@ export const usePostStore = create<PostStore>((set) => ({
       const formData = new FormData();
       console.log("POST TITLE: ", post.title);
       formData.append("title", post.title);
+      formData.append("type", post.type ?? "standard");
       if (post?.body) {
         formData.append("body", post.body);
       }
@@ -132,6 +137,14 @@ export const usePostStore = create<PostStore>((set) => ({
           formData.append("pollClosesAt", post.poll.closesAt);
         }
       }
+      if (post.type === "opportunity") {
+        if (post.opportunityType) formData.append("opportunityType", post.opportunityType);
+        if (post.workplaceType) formData.append("workplaceType", post.workplaceType);
+        if (post.companyName) formData.append("companyName", post.companyName);
+        if (post.applyUrl) formData.append("applyUrl", post.applyUrl);
+        if (post.deadlineAt) formData.append("deadlineAt", post.deadlineAt);
+        if (post.expiresAt) formData.append("expiresAt", post.expiresAt);
+      }
       console.log("FORM DATA: ");
       console.log(formData);
       await axios.post(`${API_URL}/posts`, formData, {
@@ -139,29 +152,55 @@ export const usePostStore = create<PostStore>((set) => ({
       });
     } catch (error) {
       set({ error: error });
+      if (axios.isAxiosError(error)) throw new Error(error.response?.data?.message ?? "Could not create post");
+      throw error;
     } finally {
       set({ isLoading: false });
     }
   },
+  getOpportunities: async (filters, cursor) => {
+    const response = await axios.get(`${API_URL}/posts/opportunities`, {
+      params: {
+        ...filters,
+        savedOnly: filters.savedOnly ? "true" : "false",
+        ...(cursor ? { cursor } : {}),
+      },
+    });
+    return {
+      posts: response.data.posts,
+      nextCursor: response.data.nextCursor,
+      hasMore: response.data.hasMore,
+    };
+  },
+  setOpportunityClosed: async (id, closed) => {
+    await axios.patch(`${API_URL}/posts/${id}/opportunity-status`, { closed });
+  },
   updatePost: async (data) => {
-    console.log("POST UPDATE CALLED");
     set({ isLoading: true });
     try {
       const formData = new FormData();
-      console.log("DATA: ", data);
+      formData.append("title", data.title);
       formData.append("body", data.body);
       if (data?.location) formData.append("location", data.location);
       formData.append("tags", data.tags);
       data.images.forEach((image) => {
         formData.append("images", image);
       });
-      console.log("HIER?>");
+      if (data.type) formData.append("type", data.type);
+      if (data.type === "opportunity") {
+        if (data.opportunityType) formData.append("opportunityType", data.opportunityType);
+        if (data.workplaceType) formData.append("workplaceType", data.workplaceType);
+        if (data.companyName) formData.append("companyName", data.companyName);
+        if (data.applyUrl) formData.append("applyUrl", data.applyUrl);
+        if (data.deadlineAt) formData.append("deadlineAt", data.deadlineAt);
+      }
       await axios.patch(`${API_URL}/posts/${data.id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
     } catch (error) {
       set({ error: error });
-      throw new Error(error as string);
+      if (axios.isAxiosError(error)) throw new Error(error.response?.data?.message ?? "Could not update post");
+      throw error;
     } finally {
       set({ isLoading: false });
     }

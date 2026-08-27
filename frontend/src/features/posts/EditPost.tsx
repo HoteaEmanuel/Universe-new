@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import {
   useDeletePostMutation,
@@ -14,8 +14,10 @@ import FormField from "@/components/FormField";
 import LocationAutocompleteField from "./components/LocationAutocompleteField";
 import TextareaField from "@/components/TextareaField";
 import SubmitButton from "@/components/SubmitButton";
+import DateTimePickerField from "@/components/DateTimePickerField";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,13 +33,18 @@ import {
   BODY_MAX_LENGTH,
   LOCATION_MAX_LENGTH,
   TAGS_MAX_LENGTH,
+  OPPORTUNITY_TYPES,
 } from "@/constants/postForm";
+import type { OpportunityType, WorkplaceType } from "@/queryAndMutation/types";
 
 type PostFormValues = {
   title: string;
   body: string;
   location: string;
   tags: string;
+  companyName: string;
+  applyUrl: string;
+  deadlineAt?: Date;
 };
 
 const EditPost = () => {
@@ -45,7 +52,11 @@ const EditPost = () => {
     document.title = "Edit Post";
   }, []);
   const { id } = useParams();
-  const { user } = useAuthStore() as { user?: { id: string } };
+  const { user } = useAuthStore();
+  const canPublishOpportunity = user?.role === "admin" || (user?.accountType === "business" && user?.identityVerified === "true");
+  const [postType, setPostType] = useState<"standard" | "opportunity">("standard");
+  const [opportunityType, setOpportunityType] = useState<OpportunityType>("internship");
+  const [workplaceType, setWorkplaceType] = useState<WorkplaceType>("onsite");
   const [files, setFiles] = useState<(File | string)[]>([]);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const navigate = useNavigate();
@@ -55,6 +66,7 @@ const EditPost = () => {
     reset,
     watch,
     setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<PostFormValues>();
   const watchedValues = watch();
@@ -72,19 +84,38 @@ const EditPost = () => {
         body: post.body,
         location: post.location ?? "",
         tags: post.tags.join(" "),
+        companyName: post.companyName ?? "",
+        applyUrl: post.applyUrl ?? "",
+        deadlineAt: post.deadlineAt ? new Date(post.deadlineAt) : undefined,
       });
       setFiles(post.imagesUrls);
+      setPostType(post.type === "opportunity" ? "opportunity" : "standard");
+      if (post.opportunityType) setOpportunityType(post.opportunityType);
+      if (post.workplaceType) setWorkplaceType(post.workplaceType);
     }
   }, [post, reset]);
 
   if (isPending || !post) return <p>Fetching the post data</p>;
 
   const onSubmit = (data: PostFormValues) => {
-    if (files[0] === undefined) {
+    if (postType === "standard" && files[0] === undefined) {
       setImageError("Add an image");
       return;
     }
-    const payload: UpdatePostPayload = { ...data, id: id ?? "", images: files };
+    const { deadlineAt, companyName, applyUrl, ...formValues } = data;
+    const payload: UpdatePostPayload = {
+      ...formValues,
+      id: id ?? "",
+      images: files,
+      type: postType,
+      ...(postType === "opportunity" ? {
+        opportunityType,
+        workplaceType,
+        companyName: companyName.trim(),
+        applyUrl: applyUrl.trim(),
+        deadlineAt: deadlineAt ? deadlineAt.toISOString() : undefined,
+      } : {}),
+    };
     updatePostMutation.mutate(payload);
     navigate("/profile");
   };
@@ -96,6 +127,16 @@ const EditPost = () => {
           className="flex flex-col gap-4"
           onSubmit={handleSubmit(onSubmit)}
         >
+          {canPublishOpportunity && (
+            <div className="flex flex-col gap-1.5">
+              <Label>Post type</Label>
+              <div className="inline-flex w-fit rounded-full bg-muted p-1">
+                <Button type="button" size="sm" variant={postType === "standard" ? "default" : "ghost"} className="rounded-full" onClick={() => setPostType("standard")}>Post</Button>
+                <Button type="button" size="sm" variant={postType === "opportunity" ? "default" : "ghost"} className="rounded-full" onClick={() => setPostType("opportunity")}>Job or internship</Button>
+              </div>
+            </div>
+          )}
+
           <FormField
             id="post-title"
             label="Title"
@@ -129,11 +170,57 @@ const EditPost = () => {
             })}
           />
 
-          <div className="flex flex-col gap-1.5">
-            <Label className="">Images</Label>
-            {imageError && !files[0] && <p className="error">{imageError}</p>}
-            <MultipleImagesUploader setFiles={setFiles} files={files} />
-          </div>
+          {postType === "opportunity" && (
+            <section className="flex flex-col gap-4 rounded-2xl bg-primary/[0.06] p-4 dark:bg-brand-400/10">
+              <div>
+                <h2 className="font-semibold">Opportunity details</h2>
+                <p className="text-sm text-muted-foreground">Students will apply on the external page you provide.</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <Label>Opportunity type</Label>
+                  <Select value={opportunityType} onValueChange={(value: unknown) => setOpportunityType(value as OpportunityType)}>
+                    <SelectTrigger className="h-10 w-full"><SelectValue /></SelectTrigger>
+                    <SelectContent>{OPPORTUNITY_TYPES.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Workplace</Label>
+                  <Select value={workplaceType} onValueChange={(value: unknown) => setWorkplaceType(value as WorkplaceType)}>
+                    <SelectTrigger className="h-10 w-full"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="onsite">On-site</SelectItem><SelectItem value="hybrid">Hybrid</SelectItem><SelectItem value="remote">Remote</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <FormField id="company-name" label="Company" placeholder="Company or organization" error={errors.companyName?.message} registration={register("companyName", { required: postType === "opportunity" ? "Enter the company name" : false, minLength: { value: 2, message: "Company name is too short" } })} />
+              <FormField id="apply-url" type="url" label="External application link" placeholder="https://linkedin.com/jobs/..." error={errors.applyUrl?.message} registration={register("applyUrl", { required: postType === "opportunity" ? "Add an application link" : false, validate: (value) => postType !== "opportunity" || value.startsWith("https://") || "Application links must use HTTPS" })} />
+              <Controller
+                control={control}
+                name="deadlineAt"
+                rules={{ validate: (value) => !value || value.getTime() > Date.now() || "Choose a future deadline" }}
+                render={({ field }) => (
+                  <DateTimePickerField
+                    id="application-deadline"
+                    label="Application deadline (optional)"
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.deadlineAt?.message}
+                    minDate={new Date()}
+                  />
+                )}
+              />
+            </section>
+          )}
+
+          {postType === "standard" && (
+            <div className="flex flex-col gap-1.5">
+              <Label className="">Images</Label>
+              {imageError && !files[0] && <p className="error">{imageError}</p>}
+              <MultipleImagesUploader setFiles={setFiles} files={files} />
+            </div>
+          )}
 
           <LocationAutocompleteField
             id="location"

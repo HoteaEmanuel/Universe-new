@@ -112,15 +112,29 @@ const ProfilePage = () => {
       <ProfilePostGrid
         posts={activePosts}
         showEditIcon={isOwnProfile && tab === "posts"}
-        emptyTitle={tab === "saved" ? "No saved posts yet" : "No posts yet"}
+        emptyTitle={
+          tab === "saved" ? (
+            "No saved posts yet"
+          ) : isOwnProfile ? (
+            <>
+              Give this space some{" "}
+              <span className="italic font-black text-amber-500 dark:text-amber-400">
+                life
+              </span>
+            </>
+          ) : (
+            "No posts yet"
+          )
+        }
         emptyDescription={
           tab === "saved"
             ? "Posts you save will show up here."
             : isOwnProfile
-              ? "Share something with the community."
+              ? "You don't need the perfect post — just something real."
               : undefined
         }
         showCreateCta={isOwnProfile && tab === "posts"}
+        showIllustrations={tab === "posts"}
       />
     </div>
   );

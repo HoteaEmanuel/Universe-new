@@ -61,6 +61,13 @@ export type CreatePostPayload = {
   tags: string;
   images: File[];
   poll?: CreatePollFields;
+  type?: PostType;
+  opportunityType?: OpportunityType;
+  workplaceType?: WorkplaceType;
+  companyName?: string;
+  applyUrl?: string;
+  deadlineAt?: string;
+  expiresAt?: string;
 };
 
 export type UpdatePostPayload = {
@@ -70,6 +77,12 @@ export type UpdatePostPayload = {
   location?: string;
   tags: string;
   images: (File | string)[];
+  type?: PostType;
+  opportunityType?: OpportunityType;
+  workplaceType?: WorkplaceType;
+  companyName?: string;
+  applyUrl?: string;
+  deadlineAt?: string;
 };
 
 export type Post = {
@@ -86,7 +99,32 @@ export type Post = {
   event?: EventSummary | null;
   poll?: Poll | null;
   mentionedUsers: MentionUser[];
+  type: PostType;
+  opportunityType?: OpportunityType | null;
+  workplaceType?: WorkplaceType | null;
+  companyName?: string | null;
+  applyUrl?: string | null;
+  deadlineAt?: string | null;
+  expiresAt?: string | null;
+  opportunityClosedAt?: string | null;
+  isOpportunityExpired?: boolean;
 };
+
+export type PostType = "standard" | "opportunity";
+export type OpportunityType = "internship" | "part_time" | "full_time" | "graduate_program" | "volunteering" | "campus_ambassador";
+export type WorkplaceType = "onsite" | "hybrid" | "remote";
+
+export type OpportunityFilters = {
+  q?: string;
+  opportunityType?: OpportunityType;
+  workplaceType?: WorkplaceType;
+  location?: string;
+  status?: "active" | "expired" | "all";
+  sort?: "newest" | "deadline";
+  savedOnly?: boolean;
+};
+
+export type OpportunitiesPage = PostsPage;
 
 export type MentionUser = {
   id: string;

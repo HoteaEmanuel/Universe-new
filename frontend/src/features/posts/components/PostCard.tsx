@@ -35,6 +35,7 @@ import MentionText from "@/components/MentionText";
 import UserAvatar from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import OpportunitySummary from "@/features/opportunities/components/OpportunitySummary";
 
 type PostCardProps = {
   post: Post;
@@ -265,6 +266,10 @@ const PostCard = ({ post }: PostCardProps) => {
             ))}
         </div>
       </div>
+
+      {post.type === "opportunity" && (
+        <OpportunitySummary post={post} isOwner={userId === user_.id} />
+      )}
 
       {post.event && (
         <div className="px-4 pt-2">

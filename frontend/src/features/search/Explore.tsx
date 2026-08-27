@@ -6,7 +6,7 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react";
-import { Search, X, Loader2, Compass } from "lucide-react";
+import { Search, X, Loader2, Telescope } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import EventCard from "@/features/events/components/EventCard";
 import { useDiscoverEventsInfiniteQuery } from "@/queryAndMutation/queries/event-queries";
@@ -226,7 +226,7 @@ const Explore = () => {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 pt-4 pb-24 md:pb-10">
       <div className="flex items-center gap-3">
         <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary dark:bg-brand-400/15 dark:text-brand-100">
-          <Compass className="size-5" />
+          <Telescope className="size-5" />
         </span>
         <div className="flex flex-col">
           <h1 className="text-xl font-bold text-foreground">Explore</h1>

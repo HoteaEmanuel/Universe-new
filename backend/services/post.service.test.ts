@@ -10,6 +10,8 @@ vi.mock("../repository/post.repository.js", () => ({
   findUniversityPosts: vi.fn(),
   findPostsByText: vi.fn(),
   findPostsByTag: vi.fn(),
+  findOpportunities: vi.fn(),
+  setOpportunityClosed: vi.fn(),
 }));
 vi.mock("../repository/user.repository.js", () => ({
   findUserById: vi.fn(),
@@ -18,6 +20,7 @@ vi.mock("../database/prisma.js", () => ({
   prisma: {
     follow: { findMany: vi.fn() },
     post: { update: vi.fn(), delete: vi.fn() },
+    savedPost: { findMany: vi.fn() },
   },
 }));
 vi.mock("../lib/storage.js", () => ({
@@ -208,6 +211,43 @@ describe("post.service", () => {
         expect.objectContaining({ userId: "user-2", type: "post-mention", postId: "post-1" }),
       );
       expect(emitNewNotification).toHaveBeenCalledWith("user-2", { id: "notif-1" });
+    });
+
+    it("rejects opportunity publishing by an unverified account", async () => {
+      vi.mocked(findUserById).mockResolvedValue({
+        id: "user-1", role: "user", accountType: "normal", identityVerified: "true",
+      } as never);
+
+      await expect(createNewPost({
+        userId: "user-1",
+        body: {
+          title: "Intern", tags: "internship", type: "opportunity",
+          opportunityType: "internship", workplaceType: "remote",
+          companyName: "Acme", applyUrl: "https://example.com/apply",
+        },
+      })).rejects.toThrow("Only verified businesses can publish opportunities");
+      expect(createPost).not.toHaveBeenCalled();
+    });
+
+    it("passes structured opportunity fields for a verified business", async () => {
+      vi.mocked(findUserById).mockResolvedValue({
+        id: "business-1", role: "user", accountType: "business", identityVerified: "true",
+      } as never);
+      vi.mocked(createPost).mockResolvedValue({ id: "post-1" } as never);
+
+      await createNewPost({
+        userId: "business-1",
+        body: {
+          title: "Intern", tags: "internship", type: "opportunity",
+          opportunityType: "internship", workplaceType: "remote",
+          companyName: "Acme", applyUrl: "https://example.com/apply",
+        },
+      });
+
+      expect(createPost).toHaveBeenCalledWith(expect.objectContaining({
+        type: "opportunity", opportunityType: "internship", workplaceType: "remote",
+        companyName: "Acme", applyUrl: "https://example.com/apply",
+      }));
     });
   });
 

@@ -10,8 +10,11 @@ export const useCreatePostMutation = () => {
   const { createPost } = usePostStore();
   return useMutation({
     mutationFn: (post: CreatePostPayload) => createPost(post),
-    onSuccess: () => {
+    onSuccess: (_, post) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      if (post.type === "opportunity") {
+        queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+      }
       toast.success("Post created");
     },
     onError: (err: Error) => {
@@ -52,6 +55,7 @@ export const useUpdatePostMutation = (userId?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["userPosts", userId] });
+      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
     },
   });
 };
@@ -84,5 +88,20 @@ export const useDeletePostMutation = (postId: string, userId?: string) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["userPosts", userId] });
     },
+  });
+};
+
+export const useSetOpportunityClosedMutation = (postId: string) => {
+  const queryClient = useQueryClient();
+  const { setOpportunityClosed } = usePostStore();
+  return useMutation({
+    mutationFn: (closed: boolean) => setOpportunityClosed(postId, closed),
+    onSuccess: (_, closed) => {
+      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+      toast.success(closed ? "Applications closed" : "Opportunity reopened");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 };

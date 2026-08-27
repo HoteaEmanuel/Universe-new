@@ -9,7 +9,7 @@ import {
   getShareRecipientGroups,
 } from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
-import type { UsersWhoLikedQueryInput, SharePostInput } from "../schemas/post.schema.js";
+import type { UsersWhoLikedQueryInput, SharePostInput, OpportunitiesQueryInput } from "../schemas/post.schema.js";
 import {
   createNewPost,
   deletePost,
@@ -22,6 +22,8 @@ import {
   unlikePost,
   updatePost,
   toPostDTO,
+  getOpportunities,
+  closeOpportunity,
 } from "../services/post.service.js";
 import { sharePostToUsers } from "../services/conversation.service.js";
 import { sharePostToGroups } from "../services/group.service.js";
@@ -103,7 +105,7 @@ export const createPostController = async (req: Request, res: Response) => {
     await createNewPost(postData);
     return res.status(201).json({ message: "Post created succesfully!" });
   } catch (error) {
-    res.status(400).json({ message: "Could not create post" });
+    res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -118,6 +120,29 @@ export const getPostsController = async (req: Request, res: Response) => {
     return res
       .status(200)
       .json({ ...page, message: "Fetched the posts succesfully" });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const getOpportunitiesController = async (req: Request, res: Response) => {
+  try {
+    const query = req.query as unknown as OpportunitiesQueryInput;
+    const page = await getOpportunities({
+      ...query,
+      viewerId: req.userId as string,
+      excludeUserIds: [...(req.blockedIds ?? [])],
+    });
+    return res.status(200).json(page);
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const setOpportunityClosedController = async (req: Request, res: Response) => {
+  try {
+    const post = await closeOpportunity(req.params.id as string, req.body.closed as boolean);
+    return res.status(200).json({ message: req.body.closed ? "Applications closed" : "Opportunity reopened", post });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }
@@ -334,7 +359,7 @@ export const updatePostController = async (req: Request, res: Response) => {
     const postData = req.body;
     const id = req.params.id as string;
     const images = req.files as Express.Multer.File[] | undefined;
-    await updatePost({ postData, postId: id, images });
+    await updatePost({ postData, postId: id, images, userId: req.userId as string });
     return res.status(200).json({ message: "Updated successfully" });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });

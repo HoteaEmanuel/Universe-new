@@ -6,6 +6,7 @@ import {
   Bell,
   Settings,
   CalendarDays,
+  BriefcaseBusiness,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -43,6 +44,12 @@ export const SideLinks: SideLink[] = [
     text: "Events",
     element: CalendarDays,
     hoverAnimation: "group-hover/menu-button:animate-icon-pop-rotate",
+  },
+  {
+    link: "/opportunities",
+    text: "Opportunities",
+    element: BriefcaseBusiness,
+    hoverAnimation: "group-hover/menu-button:animate-icon-hop",
   },
   {
     link: "/profile",

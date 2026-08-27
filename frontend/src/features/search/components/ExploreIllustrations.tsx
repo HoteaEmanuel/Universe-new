@@ -1,3 +1,5 @@
+import telescopeStarsIllustration from "@/assets/explore-empty-state/telescope-stars.webp";
+
 type IllustrationProps = {
   className?: string;
 };

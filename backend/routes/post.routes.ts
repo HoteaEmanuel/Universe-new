@@ -22,6 +22,8 @@ import {
   getPostsTags,
   getShareRecipientsController,
   sharePostController,
+  getOpportunitiesController,
+  setOpportunityClosedController,
 } from "../controllers/post.controller.js";
 import { imageUpload } from "../lib/imageUpload.js";
 import { verifyUploadedFiles } from "../lib/validateUpload.js";
@@ -36,7 +38,21 @@ import {
   feedQuerySchema,
   usersWhoLikedQuerySchema,
   sharePostSchema,
+  opportunitiesQuerySchema,
+  opportunityStatusSchema,
 } from "../schemas/post.schema.js";
+
+router.get(
+  "/posts/opportunities",
+  validate({ query: opportunitiesQuerySchema }),
+  getOpportunitiesController,
+);
+router.patch(
+  "/posts/:id/opportunity-status",
+  requirePostOwner,
+  validate({ body: opportunityStatusSchema }),
+  setOpportunityClosedController,
+);
 
 router.get("/post/:id", getPost);
 router.get("/posts/tags", getPostsTags);

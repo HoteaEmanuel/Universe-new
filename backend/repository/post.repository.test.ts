@@ -6,6 +6,7 @@ vi.mock("../database/prisma.js", () => ({
       findUnique: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
     },
     savedPost: {
       findMany: vi.fn(),
@@ -28,6 +29,7 @@ import {
   findUniversityPosts,
   findUserPosts,
   findUserSavedPosts,
+  findOpportunities,
 } from "./post.repository.js";
 
 const post = (id: string) => ({ id });
@@ -101,6 +103,33 @@ describe("post.repository", () => {
         expect.objectContaining({ where: { user: { university: "MIT" } } }),
       );
     });
+  });
+
+  it("filters the opportunities board by structured fields and active lifecycle", async () => {
+    vi.mocked(prisma.post.findMany).mockResolvedValue([]);
+
+    await findOpportunities({
+      viewerId: "user-1",
+      limit: 12,
+      status: "active",
+      sort: "deadline",
+      opportunityType: "internship",
+      workplaceType: "remote",
+      q: "react",
+      excludeUserIds: ["blocked-1"],
+    });
+
+    expect(prisma.post.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        type: "opportunity",
+        opportunityType: "internship",
+        workplaceType: "remote",
+        userId: { notIn: ["blocked-1"] },
+        NOT: expect.any(Object),
+      }),
+      orderBy: expect.arrayContaining([expect.objectContaining({ deadlineAt: expect.any(Object) })]),
+      take: 13,
+    }));
   });
 
   it("findUserPosts orders by newest first", async () => {

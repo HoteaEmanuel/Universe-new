@@ -8,6 +8,9 @@ import {
   findUniversityPosts,
   findPostsByText,
   findPostsByTag,
+  findOpportunities,
+  setOpportunityClosed,
+  type OpportunityFilters,
 } from "../repository/post.repository.js";
 import { findUserById } from "../repository/user.repository.js";
 import { prisma } from "../database/prisma.js";
@@ -45,8 +48,30 @@ const withPollDTO = <T extends { poll?: Parameters<typeof toPollDTO>[0] | null }
 const withTagNames = <T extends { tags?: { name: string }[] }>(post: T) =>
   post.tags ? { ...post, tags: post.tags.map((tag) => tag.name) } : post;
 
-export const toPostDTO = <T extends { event?: Parameters<typeof toEventDTO>[0] | null; poll?: Parameters<typeof toPollDTO>[0] | null; tags?: { name: string }[] }>(post: T) =>
-  withTagNames(withPollDTO(withEventDTO(post)));
+export const toPostDTO = <T extends {
+  event?: Parameters<typeof toEventDTO>[0] | null;
+  poll?: Parameters<typeof toPollDTO>[0] | null;
+  tags?: { name: string }[];
+  type?: string;
+  deadlineAt?: Date | null;
+  expiresAt?: Date | null;
+  opportunityClosedAt?: Date | null;
+}>(post: T) =>
+  withOpportunityStatus(withTagNames(withPollDTO(withEventDTO(post))));
+
+const withOpportunityStatus = <T extends {
+  type?: string;
+  deadlineAt?: Date | null;
+  expiresAt?: Date | null;
+  opportunityClosedAt?: Date | null;
+}>(post: T) => {
+  if (post.type !== "opportunity") return post;
+  const cutoff = post.expiresAt ?? post.deadlineAt;
+  return {
+    ...post,
+    isOpportunityExpired: !!post.opportunityClosedAt || (!!cutoff && cutoff.getTime() < Date.now()),
+  };
+};
 
 export const getUserPosts = async (userId: string) => {
   const user = await findUserById(userId);
@@ -107,16 +132,32 @@ interface CreatePostInput {
     pollQuestion?: string;
     pollOptions?: string[];
     pollClosesAt?: Date;
+    type?: "standard" | "opportunity";
+    opportunityType?: OpportunityFilters["opportunityType"];
+    workplaceType?: OpportunityFilters["workplaceType"];
+    companyName?: string;
+    applyUrl?: string;
+    deadlineAt?: Date;
+    expiresAt?: Date;
   };
   userId: string;
   images?: UploadedImage[];
 }
 
 export const createNewPost = async (data: CreatePostInput) => {
-  const { title, body, location, tags, pollQuestion, pollOptions, pollClosesAt } =
+  const { title, body, location, tags, pollQuestion, pollOptions, pollClosesAt,
+    type = "standard", opportunityType, workplaceType, companyName, applyUrl,
+    deadlineAt, expiresAt } =
     data.body;
   const userId = data.userId;
   const images = data.images;
+  const publisher = await findUserById(userId);
+  if (!publisher) throw new Error("User not found");
+  if (type === "opportunity" && publisher.role !== "admin" && !(
+    publisher.accountType === "business" && publisher.identityVerified === "true"
+  )) {
+    throw new Error("Only verified businesses can publish opportunities");
+  }
 
   let uploaded: { url: string; key: string }[] = [];
   if (images && images.length > 0) {
@@ -149,6 +190,13 @@ export const createNewPost = async (data: CreatePostInput) => {
       pollQuestion && pollOptions
         ? { question: pollQuestion, options: pollOptions, closesAt: pollClosesAt }
         : undefined,
+    type,
+    opportunityType,
+    workplaceType,
+    companyName,
+    applyUrl,
+    deadlineAt,
+    expiresAt,
   });
   const author = await findUserById(userId);
   await Promise.all(mentionedUsers.map(async (mentionedUser) => {
@@ -209,22 +257,38 @@ export const unlikePost = async (data: { postId: string; userId: string }) => {
 
 interface UpdatePostInput {
   postData: {
+    title?: string;
     body?: string;
     images?: string | string[];
     location?: string;
     tags?: string;
+    type?: "standard" | "opportunity";
+    opportunityType?: OpportunityFilters["opportunityType"];
+    workplaceType?: OpportunityFilters["workplaceType"];
+    companyName?: string;
+    applyUrl?: string;
+    deadlineAt?: Date;
+    expiresAt?: Date;
   };
   postId: string;
+  userId: string;
   images?: UploadedImage[];
 }
 
 export const updatePost = async (data: UpdatePostInput) => {
-  const { postData, postId, images } = data;
+  const { postData, postId, images, userId } = data;
 
   if (!postData) throw new Error("No post data");
 
   const currentPost = await findPostById(postId);
   if (!currentPost) throw new Error("Post not found");
+  const nextType = postData.type ?? currentPost.type;
+  if (nextType === "opportunity") {
+    const publisher = await findUserById(userId);
+    if (!publisher || (publisher.role !== "admin" && !(
+      publisher.accountType === "business" && publisher.identityVerified === "true"
+    ))) throw new Error("Only verified businesses can publish opportunities");
+  }
 
   let uploaded: { url: string; key: string }[] = [];
   if (images && images.length > 0) {
@@ -264,10 +328,18 @@ export const updatePost = async (data: UpdatePostInput) => {
   await prisma.post.update({
     where: { id: postId },
     data: {
+      title: postData.title,
       body: postData.body,
       imagesUrls: [...existing, ...uploaded.map((u) => u.url)],
       imagesPublicIds: [...existingKeys, ...uploaded.map((u) => u.key)],
       location: postData?.location?.trim() ? postData.location : undefined,
+      type: postData.type,
+      opportunityType: nextType === "opportunity" ? postData.opportunityType : null,
+      workplaceType: nextType === "opportunity" ? postData.workplaceType : null,
+      companyName: nextType === "opportunity" ? postData.companyName : null,
+      applyUrl: nextType === "opportunity" ? postData.applyUrl : null,
+      deadlineAt: nextType === "opportunity" ? postData.deadlineAt : null,
+      expiresAt: nextType === "opportunity" ? (postData.expiresAt ?? postData.deadlineAt) : null,
       tags: {
         set: [],
         connectOrCreate: tagsArray.map((name) => ({
@@ -283,6 +355,28 @@ export const updatePost = async (data: UpdatePostInput) => {
       console.error(`Failed to delete removed post images for ${postId}:`, error);
     });
   }
+};
+
+export const getOpportunities = async (filters: OpportunityFilters) => {
+  const page = await findOpportunities(filters);
+  const saved = await prisma.savedPost.findMany({
+    where: { userId: filters.viewerId, postId: { in: page.posts.map((post) => post.id) } },
+    select: { postId: true },
+  });
+  const savedIds = new Set(saved.map((item) => item.postId));
+  return { ...page, posts: page.posts.map((post) => toPostDTO(withIsSaved(post, savedIds))) };
+};
+
+export const closeOpportunity = async (postId: string, closed: boolean) => {
+  const post = await findPostById(postId);
+  if (!post || post.type !== "opportunity") throw new Error("Opportunity not found");
+  if (!closed) {
+    const cutoff = post.expiresAt ?? post.deadlineAt;
+    if (cutoff && cutoff.getTime() < Date.now()) {
+      throw new Error("Update the deadline before reopening this opportunity");
+    }
+  }
+  return toPostDTO(await setOpportunityClosed(postId, closed));
 };
 
 export const deletePost = async (data: { postId: string }) => {

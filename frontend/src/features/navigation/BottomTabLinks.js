@@ -1,9 +1,8 @@
 
 import { FaHome } from "react-icons/fa";
-import { IoMdSettings } from "react-icons/io";
 import { IoChatboxEllipses } from "react-icons/io5";
 import { IoAddCircleSharp } from "react-icons/io5";
-import { MdExplore, MdEvent } from "react-icons/md";
+import { MdExplore, MdEvent, MdWork } from "react-icons/md";
 export const BottomTabLinks = [
   {
     link: "/home",
@@ -24,13 +23,13 @@ export const BottomTabLinks = [
     element:MdEvent
   },
   {
+    link: "/opportunities",
+    text: "Jobs",
+    element: MdWork
+  },
+  {
     link: "/create-post",
     text: "Create post",
     element:IoAddCircleSharp
   },
-  {
-    link:"/settings",
-    text:"Settings",
-    element:IoMdSettings
-  }
 ];

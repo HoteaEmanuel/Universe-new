@@ -127,6 +127,13 @@ interface CreatePostInput {
   imagePublicIds?: string[];
   mentionedUserIds?: string[];
   poll?: { question: string; options: string[]; closesAt?: Date };
+  type?: "standard" | "opportunity";
+  opportunityType?: "internship" | "part_time" | "full_time" | "graduate_program" | "volunteering" | "campus_ambassador";
+  workplaceType?: "onsite" | "hybrid" | "remote";
+  companyName?: string;
+  applyUrl?: string;
+  deadlineAt?: Date;
+  expiresAt?: Date;
 }
 
 export const createPost = async (data: CreatePostInput) => {
@@ -140,6 +147,13 @@ export const createPost = async (data: CreatePostInput) => {
     imagePublicIds,
     mentionedUserIds,
     poll,
+    type,
+    opportunityType,
+    workplaceType,
+    companyName,
+    applyUrl,
+    deadlineAt,
+    expiresAt,
   } = data;
 
   return prisma.post.create({
@@ -148,6 +162,13 @@ export const createPost = async (data: CreatePostInput) => {
       body,
       title,
       location,
+      type,
+      opportunityType,
+      workplaceType,
+      companyName,
+      applyUrl,
+      deadlineAt,
+      expiresAt: expiresAt ?? deadlineAt,
       imagesUrls: imageUrls ?? [],
       imagesPublicIds: imagePublicIds ?? [],
       tags: tags?.length
@@ -179,6 +200,64 @@ export const createPost = async (data: CreatePostInput) => {
     },
   });
 };
+
+export interface OpportunityFilters {
+  cursor?: string;
+  limit: number;
+  q?: string;
+  opportunityType?: "internship" | "part_time" | "full_time" | "graduate_program" | "volunteering" | "campus_ambassador";
+  workplaceType?: "onsite" | "hybrid" | "remote";
+  location?: string;
+  status: "active" | "expired" | "all";
+  sort: "newest" | "deadline";
+  savedOnly?: boolean;
+  viewerId: string;
+  excludeUserIds?: string[];
+}
+
+export const findOpportunities = async (filters: OpportunityFilters) => {
+  const now = new Date();
+  const expiryFields: Prisma.PostWhereInput[] = [
+    { opportunityClosedAt: { not: null } },
+    { expiresAt: { lt: now } },
+    { AND: [{ expiresAt: null }, { deadlineAt: { lt: now } }] },
+  ];
+  const where: Prisma.PostWhereInput = {
+    type: "opportunity",
+    ...(filters.excludeUserIds?.length ? { userId: { notIn: filters.excludeUserIds } } : {}),
+    ...(filters.opportunityType ? { opportunityType: filters.opportunityType } : {}),
+    ...(filters.workplaceType ? { workplaceType: filters.workplaceType } : {}),
+    ...(filters.location ? { location: { contains: filters.location, mode: "insensitive" } } : {}),
+    ...(filters.q ? {
+      OR: [
+        { title: { contains: filters.q, mode: "insensitive" } },
+        { body: { contains: filters.q, mode: "insensitive" } },
+        { companyName: { contains: filters.q, mode: "insensitive" } },
+        { tags: { some: { name: { contains: filters.q, mode: "insensitive" } } } },
+      ],
+    } : {}),
+    ...(filters.savedOnly ? { savedBy: { some: { userId: filters.viewerId } } } : {}),
+    ...(filters.status === "active" ? { NOT: { OR: expiryFields } } : {}),
+    ...(filters.status === "expired" ? { OR: expiryFields } : {}),
+  };
+  const posts = await prisma.post.findMany({
+    where,
+    take: filters.limit + 1,
+    orderBy: filters.sort === "deadline"
+      ? [{ deadlineAt: { sort: "asc", nulls: "last" } }, { id: "desc" }]
+      : FEED_ORDER_BY,
+    include: POST_INCLUDE,
+    ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
+  });
+  return toFeedPage(posts, filters.limit);
+};
+
+export const setOpportunityClosed = async (postId: string, closed: boolean) =>
+  prisma.post.update({
+    where: { id: postId },
+    data: { opportunityClosedAt: closed ? new Date() : null },
+    include: POST_INCLUDE,
+  });
 
 export const findPostsByText = async (text: string) => {
   return prisma.post.findMany({

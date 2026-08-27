@@ -36,6 +36,7 @@ import ImageSlider from "./components/ImageSlider";
 import UserAvatar from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import OpportunitySummary from "@/features/opportunities/components/OpportunitySummary";
 
 type PostDetailsProps = {
   inModal?: boolean;
@@ -314,6 +315,10 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
             <div className="px-4 pb-2 pl-[46px]">
               <PollBlock poll={post.poll} invalidateKeys={[["posts"], ["post", postId]]} />
             </div>
+          )}
+
+          {post.type === "opportunity" && (
+            <OpportunitySummary post={post} isOwner={post.userId === user.id} />
           )}
 
           <div className="px-4">

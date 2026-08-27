@@ -48,6 +48,7 @@ import EventDetails from "./features/events/EventDetails";
 import PrivacyPolicy from "./Pages/legal/PrivacyPolicy";
 import TermsOfService from "./Pages/legal/TermsOfService";
 import OnboardingPage from "./Pages/onboarding/OnboardingPage";
+import OpportunitiesPage from "./features/opportunities/OpportunitiesPage";
 import { TooltipProvider } from "./components/ui/tooltip";
 
 const queryClient = new QueryClient();
@@ -200,6 +201,7 @@ function App() {
               <Route path="/groups/:id" element={<Group />} />
               <Route path="/events" element={<EventsPage />} />
               <Route path="/events/:id" element={<EventDetails />} />
+              <Route path="/opportunities" element={<OpportunitiesPage />} />
             </Route>
           </Route>
         </Routes>

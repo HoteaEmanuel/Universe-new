@@ -38,6 +38,26 @@ enum EventParticipantStatus {
   waitlisted
 }
 
+enum PostType {
+  standard
+  opportunity
+}
+
+enum OpportunityType {
+  internship
+  part_time
+  full_time
+  graduate_program
+  volunteering
+  campus_ambassador
+}
+
+enum WorkplaceType {
+  onsite
+  hybrid
+  remote
+}
+
 enum ResourceCategory {
   lecture_notes
   assignment
@@ -162,6 +182,14 @@ model Post {
   title           String
   body            String?
   location        String?
+  type            PostType        @default(standard)
+  opportunityType OpportunityType?
+  workplaceType   WorkplaceType?
+  companyName     String?
+  applyUrl        String?
+  deadlineAt      DateTime?
+  expiresAt       DateTime?
+  opportunityClosedAt DateTime?
   tags            Tag[]                    @relation("PostTags")
   mentionedUsers  User[]                   @relation("PostMentions")
   createdAt       DateTime                 @default(now())
@@ -182,6 +210,9 @@ model Post {
   sharedInGroupMessages GroupMessage[]
 
   @@index([userId])
+  @@index([type, createdAt(sort: Desc)])
+  @@index([type, opportunityType, workplaceType])
+  @@index([type, deadlineAt])
   @@map("posts")
 }
 

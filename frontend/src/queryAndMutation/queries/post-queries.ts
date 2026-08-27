@@ -8,6 +8,8 @@ import type {
   RelevantLiker,
   ShareRecipientsResponse,
   UsersWhoLikedPage,
+  OpportunitiesPage,
+  OpportunityFilters,
 } from "../types";
 
 export const useGetPostQuery = (id?: string) => {
@@ -15,6 +17,16 @@ export const useGetPostQuery = (id?: string) => {
   return useQuery({
     queryFn: async () => (await getPost(id)) as Post,
     queryKey: ["post", id],
+  });
+};
+
+export const useOpportunitiesInfiniteQuery = (filters: OpportunityFilters) => {
+  const { getOpportunities } = usePostStore();
+  return useInfiniteQuery<OpportunitiesPage>({
+    queryKey: ["opportunities", filters],
+    queryFn: ({ pageParam }) => getOpportunities(filters, pageParam as string | undefined),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
   });
 };
 

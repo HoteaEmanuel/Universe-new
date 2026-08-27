@@ -16,7 +16,7 @@ import FormField from "@/components/FormField";
 import TextareaField from "@/components/TextareaField";
 import LocationAutocompleteField from "@/features/posts/components/LocationAutocompleteField";
 import MultipleImagesUploader from "@/features/posts/components/MultipleImagesUploader";
-import DateTimePickerField from "./DateTimePickerField";
+import DateTimePickerField from "@/components/DateTimePickerField";
 import StepWizardHeader from "@/components/StepWizardHeader";
 import { useStepWizard } from "@/hooks/useStepWizard";
 import {
