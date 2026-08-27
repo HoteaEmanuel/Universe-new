@@ -29,6 +29,7 @@ export const useAcceptBusinessRegistrationMutation = () => {
     onSuccess: () => {
       toast.success("Business registration accepted successfully!");
       queryClient.invalidateQueries({ queryKey: ["businessRegistrations"] });
+      queryClient.invalidateQueries({ queryKey: ["adminStats"] });
     },
   });
 };
@@ -45,6 +46,7 @@ export const useRejectBusinessRegistrationMutation = () => {
     onSuccess: () => {
       toast.success("Business registration rejected successfully!");
       queryClient.invalidateQueries({ queryKey: ["businessRegistrations"] });
+      queryClient.invalidateQueries({ queryKey: ["adminStats"] });
     },
   });
 };

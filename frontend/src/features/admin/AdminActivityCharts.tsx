@@ -32,19 +32,27 @@ type TrendCardProps = {
   data: { date: string; value: number }[];
   dataKey: string;
   config: Record<string, { label: string; color: string }>;
+  highlightGrowth?: boolean;
 };
 
-const TrendCard = ({ title, data, dataKey, config }: TrendCardProps) => {
+const TrendCard = ({ title, data, dataKey, config, highlightGrowth = false }: TrendCardProps) => {
   const total = data.reduce((sum, row) => sum + row.value, 0);
 
   return (
     <Card className="">
       <CardHeader className="">
         <CardTitle className="">{title}</CardTitle>
-        <p className="flex items-center gap-1.5 text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-          <AiOutlineRise className="size-7" aria-hidden="true" />
+        <p
+          className={
+            highlightGrowth
+              ? "flex items-center gap-1.5 text-3xl font-bold text-emerald-600 tabular-nums dark:text-emerald-400"
+              : "text-3xl font-bold tabular-nums"
+          }
+        >
+          {highlightGrowth && <AiOutlineRise className="size-7" aria-hidden="true" />}
           {compactNumberFormatter.format(total)}
         </p>
+        <p className="text-xs text-muted-foreground">14-day total</p>
       </CardHeader>
       <CardContent className="">
         <ChartContainer config={config} className="aspect-auto h-48 w-full">
@@ -88,7 +96,7 @@ const TrendCard = ({ title, data, dataKey, config }: TrendCardProps) => {
 };
 
 const AdminActivityCharts = () => {
-  const { data, isPending } = useGetDailyActivityQuery();
+  const { data, isPending, isError, refetch } = useGetDailyActivityQuery();
 
   if (isPending) {
     return (
@@ -99,7 +107,7 @@ const AdminActivityCharts = () => {
     );
   }
 
-  if (!data) return null;
+  if (isError || !data) return <button className="min-h-64 rounded-xl bg-destructive/8 p-6 text-sm font-semibold" onClick={() => refetch()}>Activity could not be loaded. Try again.</button>;
 
   const userSeries = data.map((row) => ({ date: row.date, value: row.newUsers }));
   const postSeries = data.map((row) => ({ date: row.date, value: row.newPosts }));
@@ -111,12 +119,14 @@ const AdminActivityCharts = () => {
         data={userSeries}
         dataKey="newUsers"
         config={usersChartConfig}
+        highlightGrowth
       />
       <TrendCard
         title="New posts (last 14 days)"
         data={postSeries}
         dataKey="newPosts"
         config={postsChartConfig}
+        highlightGrowth
       />
     </>
   );

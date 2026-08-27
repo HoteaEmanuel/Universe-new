@@ -14,7 +14,7 @@ const chartConfig = {
 const ROW_HEIGHT = 32;
 
 const AdminUniversityChart = () => {
-  const { data, isPending } = useGetTopUniversitiesQuery();
+  const { data, isPending, isError, refetch } = useGetTopUniversitiesQuery();
   const { data: stats } = useGetAdminStatsQuery();
   const totalUsers = stats?.totalUsers ?? 0;
 
@@ -22,11 +22,13 @@ const AdminUniversityChart = () => {
     return <Skeleton className="h-64 w-full rounded-xl" />;
   }
 
+  if (isError) return <button className="min-h-40 rounded-xl bg-destructive/8 p-6 text-sm font-semibold" onClick={() => refetch()}>Campus distribution could not be loaded. Try again.</button>;
+
   if (!data || data.length === 0) {
     return (
       <Card className="">
         <CardHeader className="">
-          <CardTitle className="">Top universities</CardTitle>
+          <CardTitle className="">Campus distribution</CardTitle>
         </CardHeader>
         <CardContent className="">
           <p className="py-6 text-center text-sm text-muted-foreground">
@@ -40,7 +42,8 @@ const AdminUniversityChart = () => {
   return (
     <Card className="">
       <CardHeader className="">
-        <CardTitle className="">Top universities by users</CardTitle>
+        <CardTitle className="">Campus distribution</CardTitle>
+        <p className="text-sm text-muted-foreground">Universities with the most registered students.</p>
       </CardHeader>
       <CardContent className="">
         <ChartContainer

@@ -13,6 +13,16 @@ import { useDebounce } from "@/hooks/Debounce";
 import { getFullName } from "@/utils/fullName";
 import { formatToLocalDate } from "@/utils/formatDatetoLocal";
 import BlockUserDialog from "./BlockUserDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const SCROLL_FETCH_THRESHOLD = 150;
 
@@ -20,8 +30,9 @@ const UserManagementPanel = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [blockTarget, setBlockTarget] = useState<AdminUser | null>(null);
+  const [unblockTarget, setUnblockTarget] = useState<AdminUser | null>(null);
 
-  const { data, isPending, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, isPending, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetUsersInfiniteQuery(debouncedSearch);
   const { mutate: unblockUser, isPending: isUnblocking, variables: unblockingId } =
     useUnblockUserMutation();
@@ -56,8 +67,14 @@ const UserManagementPanel = () => {
         placeholder="Search users by name or username..."
       />
 
-      <div ref={listRef} className="flex max-h-[65vh] flex-col overflow-y-auto">
+      <div ref={listRef} className="flex max-h-[65vh] flex-col overflow-y-auto" aria-live="polite">
         {isPending && <UserListSkeleton count={6} lines={2} />}
+
+        {isError && (
+          <button className="rounded-lg bg-destructive/8 p-6 text-sm font-semibold" onClick={() => refetch()}>
+            Users could not be loaded. Try again.
+          </button>
+        )}
 
         {!isPending && users.length === 0 && (
           <p className="py-10 text-center text-sm text-muted-foreground">
@@ -73,7 +90,7 @@ const UserManagementPanel = () => {
               return (
                 <li
                   key={user.id}
-                  className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                  className="flex flex-col items-stretch gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center"
                 >
                   <UserAvatar user={user} name={displayName} className="size-11 shrink-0" />
                   <div className="min-w-0 flex-1">
@@ -102,7 +119,7 @@ const UserManagementPanel = () => {
                         variant="outline"
                         size="sm"
                         disabled={isUnblocking && unblockingId === user.id}
-                        onClick={() => unblockUser(user.id)}
+                        onClick={() => setUnblockTarget(user)}
                       >
                         <ShieldCheck className="size-4" />
                         {isUnblocking && unblockingId === user.id
@@ -131,6 +148,12 @@ const UserManagementPanel = () => {
             <Skeleton className="h-4 w-32" />
           </div>
         )}
+
+        {hasNextPage && !isFetchingNextPage && (
+          <Button variant="outline" className="mt-3 self-center" onClick={() => fetchNextPage()}>
+            Load more users
+          </Button>
+        )}
       </div>
 
       <BlockUserDialog
@@ -139,6 +162,23 @@ const UserManagementPanel = () => {
         userId={blockTarget?.id}
         userName={blockTarget ? getFullName(blockTarget) : undefined}
       />
+      <AlertDialog open={!!unblockTarget} onOpenChange={(open: boolean) => !open && !isUnblocking && setUnblockTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unblock {unblockTarget ? getFullName(unblockTarget) : "this user"}?</AlertDialogTitle>
+            <AlertDialogDescription>They will be able to sign in again. The previous block reason will no longer restrict access.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isUnblocking}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isUnblocking || !unblockTarget}
+              onClick={() => unblockTarget && unblockUser(unblockTarget.id, { onSuccess: () => setUnblockTarget(null) })}
+            >
+              {isUnblocking ? "Unblocking..." : "Unblock user"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
