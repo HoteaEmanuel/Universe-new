@@ -193,6 +193,51 @@ export type GroupBanPage = {
   hasMore: boolean;
 };
 
+export type ResourceCategory =
+  | "lecture_notes"
+  | "assignment"
+  | "exam_prep"
+  | "link"
+  | "recording"
+  | "other";
+
+export type CourseResource = {
+  id: string;
+  groupId: string;
+  uploaderId: string;
+  uploader: ChatUser;
+  title: string;
+  description?: string | null;
+  category: ResourceCategory;
+  week?: string | null;
+  linkUrl?: string | null;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  pinned: boolean;
+  downloadCount: number;
+  helpfulCount: number;
+  votedHelpful: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CourseResourcePage = {
+  items: CourseResource[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
+export type NewCourseResourcePayload = {
+  title: string;
+  description?: string;
+  category: ResourceCategory;
+  week?: string;
+  linkUrl?: string;
+  file?: File;
+};
+
 export type NewMessagePayload = {
   messageText: string;
   images?: File[];

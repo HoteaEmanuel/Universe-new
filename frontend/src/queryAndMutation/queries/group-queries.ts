@@ -4,11 +4,13 @@ import type {
   ChatMessagePage,
   ChatResourcePage,
   ChatUser,
+  CourseResourcePage,
   GroupBanPage,
   GroupConversation,
   GroupConversationsPage,
   GroupMember,
   GroupMemberPage,
+  ResourceCategory,
   ResourceType,
 } from "../../features/chat/types";
 import type { MentionUser } from "../types";
@@ -160,6 +162,28 @@ export const useGetGroupBansInfinite = (groupId?: string, enabled = true) => {
     queryKey: ["group-bans", groupId],
     queryFn: ({ pageParam }) =>
       getGroupBans(groupId as string, pageParam as string | undefined),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
+    enabled: !!groupId && enabled,
+  });
+};
+
+export const useGetCourseResourcesInfiniteQuery = (
+  groupId?: string,
+  enabled = true,
+  category?: ResourceCategory,
+  search?: string,
+) => {
+  const { getCourseResourcesPage } = useGroupStore();
+  return useInfiniteQuery<CourseResourcePage>({
+    queryKey: ["course-resources", groupId, category, search],
+    queryFn: ({ pageParam }) =>
+      getCourseResourcesPage(groupId as string, {
+        cursor: pageParam as string | undefined,
+        category,
+        search,
+      }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,

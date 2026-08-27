@@ -38,6 +38,15 @@ enum EventParticipantStatus {
   waitlisted
 }
 
+enum ResourceCategory {
+  lecture_notes
+  assignment
+  exam_prep
+  link
+  recording
+  other
+}
+
 model User {
   id                        String                   @id @default(uuid())
   firstName                 String?
@@ -70,37 +79,39 @@ model User {
   updatedAt                 DateTime                 @updatedAt
   searchVector              Unsupported("tsvector")?
 
-  posts                 Post[]
-  comments              Comment[]
-  commentLikes          CommentLike[]
-  likes                 Like[]
-  following             Follow[]       @relation("Follower")
-  followers             Follow[]       @relation("Following")
-  savedPosts            SavedPost[]
-  notificationsReceived Notification[] @relation("NotificationUser")
-  notificationsActed    Notification[] @relation("NotificationActionUser")
-  conversationsAsOne    Conversation[] @relation("ParticipantOne")
-  conversationsAsTwo    Conversation[] @relation("ParticipantTwo")
-  sentMessages          Message[]      @relation("SenderMessages")
-  receivedMessages      Message[]      @relation("ReceiverMessages")
-  groupMemberships      GroupMembers[]
-  groupMessages         GroupMessage[]
-  messageReactions      MessageReaction[]
-  groupMessageReactions GroupMessageReaction[]
-  preferences           UserPreferences?
-  createdEvents         Event[]                @relation("EventCreator")
-  eventParticipations   EventParticipant[]
-  eventBansReceived     EventBan[]             @relation("EventBannedUser")
-  eventBansIssued       EventBan[]             @relation("EventBanIssuedBy")
-  groupBansReceived     GroupBan[]             @relation("GroupBannedUser")
-  groupBansIssued       GroupBan[]             @relation("GroupBanIssuedBy")
-  blocksMade            Block[]                @relation("BlockingUser")
-  blocksReceived        Block[]                @relation("BlockedUser")
-  polls                 Poll[]
-  pollVotes             PollVote[]
-  mentionedInPosts      Post[]           @relation("PostMentions")
-  mentionedInComments   Comment[]        @relation("CommentMentions")
-  mentionedInGroupMessages GroupMessage[] @relation("GroupMessageMentions")
+  posts                    Post[]
+  comments                 Comment[]
+  commentLikes             CommentLike[]
+  likes                    Like[]
+  following                Follow[]               @relation("Follower")
+  followers                Follow[]               @relation("Following")
+  savedPosts               SavedPost[]
+  notificationsReceived    Notification[]         @relation("NotificationUser")
+  notificationsActed       Notification[]         @relation("NotificationActionUser")
+  conversationsAsOne       Conversation[]         @relation("ParticipantOne")
+  conversationsAsTwo       Conversation[]         @relation("ParticipantTwo")
+  sentMessages             Message[]              @relation("SenderMessages")
+  receivedMessages         Message[]              @relation("ReceiverMessages")
+  groupMemberships         GroupMembers[]
+  groupMessages            GroupMessage[]
+  messageReactions         MessageReaction[]
+  groupMessageReactions    GroupMessageReaction[]
+  preferences              UserPreferences?
+  createdEvents            Event[]                @relation("EventCreator")
+  eventParticipations      EventParticipant[]
+  eventBansReceived        EventBan[]             @relation("EventBannedUser")
+  eventBansIssued          EventBan[]             @relation("EventBanIssuedBy")
+  groupBansReceived        GroupBan[]             @relation("GroupBannedUser")
+  groupBansIssued          GroupBan[]             @relation("GroupBanIssuedBy")
+  blocksMade               Block[]                @relation("BlockingUser")
+  blocksReceived           Block[]                @relation("BlockedUser")
+  polls                    Poll[]
+  pollVotes                PollVote[]
+  courseResources          CourseResource[]
+  resourceHelpfulVotes     ResourceHelpfulVote[]
+  mentionedInPosts         Post[]                 @relation("PostMentions")
+  mentionedInComments      Comment[]              @relation("CommentMentions")
+  mentionedInGroupMessages GroupMessage[]         @relation("GroupMessageMentions")
 
   @@index([university])
   @@map("users")
@@ -138,9 +149,9 @@ model Post {
 
   poll Poll?
 
-  comments Comment[]
-  likes    Like[]
-  savedBy  SavedPost[]
+  comments      Comment[]
+  likes         Like[]
+  savedBy       SavedPost[]
   notifications Notification[]
 
   sharedInMessages      Message[]
@@ -173,9 +184,9 @@ model Comment {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  likes CommentLike[]
-  mentionedUsers User[]       @relation("CommentMentions")
-  notifications Notification[]
+  likes          CommentLike[]
+  mentionedUsers User[]         @relation("CommentMentions")
+  notifications  Notification[]
 
   @@index([postId])
   @@index([userId])
@@ -295,27 +306,27 @@ model Conversation {
 }
 
 model Message {
-  id             String       @id @default(uuid())
-  senderId       String
-  sender         User         @relation("SenderMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiverId     String
-  receiver       User         @relation("ReceiverMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-  conversationId String
-  conversation   Conversation @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
-  content        String?
-  edited         Boolean      @default(false)
-  deleted        Boolean      @default(false)
-  imageUrls      String[]     @default([])
-  imagePublicIds String[]     @default([])
-  audioUrl       String?
-  audioKey       String?
+  id               String       @id @default(uuid())
+  senderId         String
+  sender           User         @relation("SenderMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId       String
+  receiver         User         @relation("ReceiverMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  conversationId   String
+  conversation     Conversation @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
+  content          String?
+  edited           Boolean      @default(false)
+  deleted          Boolean      @default(false)
+  imageUrls        String[]     @default([])
+  imagePublicIds   String[]     @default([])
+  audioUrl         String?
+  audioKey         String?
   audioDurationSec Int?
-  sharedPostId   String?
-  sharedPost     Post?        @relation(fields: [sharedPostId], references: [id], onDelete: SetNull)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  sharedPostId     String?
+  sharedPost       Post?        @relation(fields: [sharedPostId], references: [id], onDelete: SetNull)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
-  lastMessageOf Conversation? @relation("ConversationLastMessage")
+  lastMessageOf Conversation?     @relation("ConversationLastMessage")
   reactions     MessageReaction[]
   attachments   Attachment[]
 
@@ -357,10 +368,11 @@ model Group {
   event   Event?  @relation("EventCoordinationGroup", fields: [eventId], references: [id], onDelete: SetNull)
 
   members       GroupMembers[]
-  messages      GroupMessage[] @relation("GroupMessages")
+  messages      GroupMessage[]   @relation("GroupMessages")
   notifications Notification[]
-  hostedEvents  Event[]        @relation("GroupHostedEvents")
+  hostedEvents  Event[]          @relation("GroupHostedEvents")
   bans          GroupBan[]
+  resources     CourseResource[]
 
   @@index([university, courseTag])
   @@map("groups")
@@ -415,11 +427,11 @@ model GroupMessage {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  lastMessageOf Group? @relation("GroupLastMessage")
-  reactions     GroupMessageReaction[]
-  attachments   Attachment[]
-  poll          Poll?
-  mentionedUsers User[] @relation("GroupMessageMentions")
+  lastMessageOf  Group?                 @relation("GroupLastMessage")
+  reactions      GroupMessageReaction[]
+  attachments    Attachment[]
+  poll           Poll?
+  mentionedUsers User[]                 @relation("GroupMessageMentions")
 
   @@index([groupId])
   @@map("group_messages")
@@ -458,12 +470,12 @@ model GroupMessageReaction {
 }
 
 model Event {
-  id            String   @id @default(uuid())
-  creatorId     String
-  creator       User     @relation("EventCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  id        String @id @default(uuid())
+  creatorId String
+  creator   User   @relation("EventCreator", fields: [creatorId], references: [id], onDelete: Cascade)
 
-  hostGroupId   String?
-  hostGroup     Group?   @relation("GroupHostedEvents", fields: [hostGroupId], references: [id], onDelete: SetNull)
+  hostGroupId String?
+  hostGroup   Group?  @relation("GroupHostedEvents", fields: [hostGroupId], references: [id], onDelete: SetNull)
 
   title         String
   description   String?
@@ -481,8 +493,8 @@ model Event {
   searchVector  Unsupported("tsvector")?
 
   participants      EventParticipant[]
-  announcementPost  Post?          @relation
-  coordinationGroup Group?         @relation("EventCoordinationGroup")
+  announcementPost  Post?              @relation
+  coordinationGroup Group?             @relation("EventCoordinationGroup")
   notifications     Notification[]
   bans              EventBan[]
 
@@ -536,13 +548,13 @@ model Block {
 }
 
 model Poll {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   question  String
   closesAt  DateTime?
   closedAt  DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   postId String? @unique
   post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -582,4 +594,44 @@ model PollVote {
   @@unique([pollId, userId])
   @@index([optionId])
   @@map("poll_votes")
+}
+
+model CourseResource {
+  id            String           @id @default(uuid())
+  groupId       String
+  group         Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  uploaderId    String
+  uploader      User             @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  category      ResourceCategory
+  week          String?
+  linkUrl       String?
+  fileUrl       String?
+  fileKey       String?
+  fileName      String?
+  fileSize      Int?
+  mimeType      String?
+  pinned        Boolean          @default(false)
+  downloadCount Int              @default(0)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  helpfulVotes ResourceHelpfulVote[]
+
+  @@index([groupId, pinned, createdAt(sort: Desc)])
+  @@index([groupId, category])
+  @@map("course_resources")
+}
+
+model ResourceHelpfulVote {
+  id         String         @id @default(uuid())
+  resourceId String
+  resource   CourseResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now())
+
+  @@unique([resourceId, userId])
+  @@map("resource_helpful_votes")
 }

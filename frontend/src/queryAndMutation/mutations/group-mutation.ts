@@ -6,10 +6,12 @@ import type {
   ChatMessage,
   ChatMessagePage,
   GroupVisibility,
+  NewCourseResourcePayload,
   NewFilesMessagePayload,
   NewMessagePayload,
   NewPollMessagePayload,
   NewVoiceMessagePayload,
+  ResourceCategory,
 } from "../../features/chat/types";
 import {
   appendOptimisticMessage,
@@ -401,5 +403,95 @@ export const useUpdateGroupImageMutation = (groupId?: string) => {
       queryClient.invalidateQueries({ queryKey: ["group", groupId] });
       toast.success("Group image updated");
     },
+  });
+};
+
+export const useAddCourseResourceMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { addCourseResource } = useGroupStore();
+  return useMutation({
+    mutationFn: (payload: NewCourseResourcePayload) =>
+      addCourseResource(groupId as string, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
+      toast.success("Resource added");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
+
+export const useUpdateCourseResourceMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { updateCourseResource } = useGroupStore();
+  return useMutation({
+    mutationFn: ({
+      resourceId,
+      ...payload
+    }: {
+      resourceId: string;
+      title?: string;
+      description?: string;
+      category?: ResourceCategory;
+      week?: string;
+    }) => updateCourseResource(groupId as string, resourceId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
+      toast.success("Resource updated");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
+
+export const useDeleteCourseResourceMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { deleteCourseResource } = useGroupStore();
+  return useMutation({
+    mutationFn: (resourceId: string) =>
+      deleteCourseResource(groupId as string, resourceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
+      toast.success("Resource deleted");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
+
+export const useToggleCourseResourcePinMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { toggleCourseResourcePin } = useGroupStore();
+  return useMutation({
+    mutationFn: (resourceId: string) =>
+      toggleCourseResourcePin(groupId as string, resourceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
+
+export const useDownloadCourseResourceMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { downloadCourseResource } = useGroupStore();
+  return useMutation({
+    mutationFn: (resourceId: string) =>
+      downloadCourseResource(groupId as string, resourceId),
+    onSuccess: (data) => {
+      if (data.url) window.open(data.url, "_blank", "noopener,noreferrer");
+      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
+
+export const useToggleCourseResourceHelpfulMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  const { toggleCourseResourceHelpful } = useGroupStore();
+  return useMutation({
+    mutationFn: (resourceId: string) =>
+      toggleCourseResourceHelpful(groupId as string, resourceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 };

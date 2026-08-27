@@ -36,6 +36,15 @@ import {
   getCourseCatalogController,
   setGroupCourseTagController,
 } from "../controllers/group.controller.js";
+import {
+  getGroupResourcesController,
+  createGroupResourceController,
+  updateGroupResourceController,
+  deleteGroupResourceController,
+  pinGroupResourceController,
+  downloadGroupResourceController,
+  toggleGroupResourceHelpfulController,
+} from "../controllers/groupResource.controller.js";
 import { createRateLimiter } from "../middleware/rateLimiter.js";
 import { messageRateLimiter } from "../middleware/messageRateLimiter.js";
 import { validate } from "../middleware/validate.js";
@@ -64,6 +73,11 @@ import {
   groupsListQuerySchema,
 } from "../schemas/group.schema.js";
 import { sendGroupPollMessageSchema } from "../schemas/poll.schema.js";
+import {
+  createGroupResourceSchema,
+  updateGroupResourceSchema,
+  groupResourcesQuerySchema,
+} from "../schemas/groupResource.schema.js";
 const router = express.Router();
 
 const groupActionRateLimiter = createRateLimiter({
@@ -217,4 +231,46 @@ router.get(
   requireGroupMembership,
   getActiveGroupUsersOnConversation,
 );
+
+router.get(
+  "/:id/resources",
+  requireGroupMembership,
+  validate({ query: groupResourcesQuerySchema }),
+  getGroupResourcesController,
+);
+router.post(
+  "/:id/resources",
+  requireGroupMembership,
+  fileUpload.single("file"),
+  verifyUploadedFiles("file"),
+  validate({ body: createGroupResourceSchema }),
+  createGroupResourceController,
+);
+router.patch(
+  "/:id/resources/:resourceId",
+  requireGroupMembership,
+  validate({ body: updateGroupResourceSchema }),
+  updateGroupResourceController,
+);
+router.delete(
+  "/:id/resources/:resourceId",
+  requireGroupMembership,
+  deleteGroupResourceController,
+);
+router.post(
+  "/:id/resources/:resourceId/pin",
+  requireGroupAdmin,
+  pinGroupResourceController,
+);
+router.post(
+  "/:id/resources/:resourceId/download",
+  requireGroupMembership,
+  downloadGroupResourceController,
+);
+router.post(
+  "/:id/resources/:resourceId/helpful",
+  requireGroupMembership,
+  toggleGroupResourceHelpfulController,
+);
+
 export default router;

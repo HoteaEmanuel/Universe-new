@@ -16,6 +16,10 @@ import type {
   NewPollMessagePayload,
   NewVoiceMessagePayload,
   ResourceType,
+  CourseResource,
+  CourseResourcePage,
+  NewCourseResourcePayload,
+  ResourceCategory,
 } from "../features/chat/types";
 
 type GroupListParams = { cursor?: string; search?: string };
@@ -98,6 +102,42 @@ type GroupStore = {
   updateGroupImage: (groupId: string, image: File) => Promise<unknown>;
   getActiveMembers: (id: string) => Promise<ChatUser[]>;
   getGroupMentionSearchUsers: (groupId: string, query: string) => Promise<MentionUser[]>;
+  getCourseResourcesPage: (
+    groupId: string,
+    params?: {
+      cursor?: string;
+      category?: ResourceCategory;
+      search?: string;
+      week?: string;
+    },
+  ) => Promise<CourseResourcePage>;
+  addCourseResource: (
+    groupId: string,
+    payload: NewCourseResourcePayload,
+  ) => Promise<CourseResource>;
+  updateCourseResource: (
+    groupId: string,
+    resourceId: string,
+    payload: Partial<
+      Pick<NewCourseResourcePayload, "title" | "description" | "category" | "week">
+    >,
+  ) => Promise<CourseResource>;
+  deleteCourseResource: (
+    groupId: string,
+    resourceId: string,
+  ) => Promise<{ message: string }>;
+  toggleCourseResourcePin: (
+    groupId: string,
+    resourceId: string,
+  ) => Promise<CourseResource>;
+  downloadCourseResource: (
+    groupId: string,
+    resourceId: string,
+  ) => Promise<{ url: string | null }>;
+  toggleCourseResourceHelpful: (
+    groupId: string,
+    resourceId: string,
+  ) => Promise<{ helpful: boolean }>;
 };
 
 export const useGroupStore = create<GroupStore>(() => ({
@@ -425,6 +465,86 @@ export const useGroupStore = create<GroupStore>(() => ({
       return response.data.users;
     } catch (error) {
       throw new Error(errorMessage(error, "Could not search group members"));
+    }
+  },
+  getCourseResourcesPage: async (groupId, params) => {
+    try {
+      const response = await axios.get(`${API_URL}/groups/${groupId}/resources`, {
+        params,
+      });
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not load resources"));
+    }
+  },
+  addCourseResource: async (groupId, { title, description, category, week, linkUrl, file }) => {
+    try {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("category", category);
+      if (description) formData.append("description", description);
+      if (week) formData.append("week", week);
+      if (linkUrl) formData.append("linkUrl", linkUrl);
+      if (file) formData.append("file", file);
+      const response = await axios.post(
+        `${API_URL}/groups/${groupId}/resources`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not add resource"));
+    }
+  },
+  updateCourseResource: async (groupId, resourceId, payload) => {
+    try {
+      const response = await axios.patch(
+        `${API_URL}/groups/${groupId}/resources/${resourceId}`,
+        payload,
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not update resource"));
+    }
+  },
+  deleteCourseResource: async (groupId, resourceId) => {
+    try {
+      const response = await axios.delete(
+        `${API_URL}/groups/${groupId}/resources/${resourceId}`,
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not delete resource"));
+    }
+  },
+  toggleCourseResourcePin: async (groupId, resourceId) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/groups/${groupId}/resources/${resourceId}/pin`,
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not pin resource"));
+    }
+  },
+  downloadCourseResource: async (groupId, resourceId) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/groups/${groupId}/resources/${resourceId}/download`,
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not download resource"));
+    }
+  },
+  toggleCourseResourceHelpful: async (groupId, resourceId) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/groups/${groupId}/resources/${resourceId}/helpful`,
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(errorMessage(error, "Could not update helpful vote"));
     }
   },
 }));

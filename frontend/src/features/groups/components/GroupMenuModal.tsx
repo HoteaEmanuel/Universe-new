@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import {
   BookOpen,
   EllipsisVertical,
+  FolderOpen,
   Images,
   LogOut,
   UserPlus,
@@ -20,6 +21,7 @@ import AddMembersModal from "./AddMembersModal";
 import ViewMembersModal from "./ViewMembersModal";
 import LeaveGroupWarningModal from "./LeaveGroupWarningModal";
 import SetCourseTagModal from "./SetCourseTagModal";
+import GroupResourcesModal from "./GroupResourcesModal";
 import ChatMediaModal from "@/features/chat/components/ChatMediaModal";
 
 const GroupMenuModal = () => {
@@ -32,6 +34,7 @@ const GroupMenuModal = () => {
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [mediaOpen, setMediaOpen] = useState(false);
   const [courseTagOpen, setCourseTagOpen] = useState(false);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
 
   return (
     <>
@@ -61,6 +64,10 @@ const GroupMenuModal = () => {
           <DropdownMenuItem onClick={() => setMediaOpen(true)}>
             <Images />
             View media
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setResourcesOpen(true)}>
+            <FolderOpen />
+            Resources
           </DropdownMenuItem>
           {isAdmin && (
             <DropdownMenuItem onClick={() => setCourseTagOpen(true)}>
@@ -98,6 +105,10 @@ const GroupMenuModal = () => {
       <SetCourseTagModal
         open={courseTagOpen}
         onClose={() => setCourseTagOpen(false)}
+      />
+      <GroupResourcesModal
+        open={resourcesOpen}
+        onClose={() => setResourcesOpen(false)}
       />
     </>
   );
