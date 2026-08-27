@@ -14,6 +14,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -118,20 +119,18 @@ const EventDetails = () => {
       )}
 
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary dark:bg-brand-400/15 dark:text-brand-100">
+        <Badge variant="brand" className="px-2.5 py-1">
           <CalendarDays className="size-3.5" />
           {formatEventDateTime(event.startAt, event.endAt)}
-        </span>
+        </Badge>
         {event.eventType === "official" && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-600 dark:text-blue-400">
+          <Badge variant="info" className="px-2.5 py-1">
             <BadgeCheck className="size-3.5" />
             Official
-          </span>
+          </Badge>
         )}
         {isCancelled && (
-          <span className="rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive">
-            Cancelled
-          </span>
+          <Badge variant="destructive" className="px-2.5 py-1">Cancelled</Badge>
         )}
       </div>
 

@@ -42,7 +42,7 @@ const ResendVerificationEmail = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="flex w-full flex-col gap-4"
       >
-        <p className="-mt-2 text-center text-sm text-muted-foreground">
+        <p className="-mt-2 list-loading-text">
           We'll send a new verification code to your inbox.
         </p>
 

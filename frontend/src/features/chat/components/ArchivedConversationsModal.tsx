@@ -124,7 +124,7 @@ const ArchivedConversationsModal = ({
               )}
             </ul>
           ) : (
-            <p className="pt-8 text-center text-sm text-muted-foreground">
+            <p className="pt-8 list-loading-text">
               {debouncedSearch.trim() ? "No results." : "No archived conversations."}
             </p>
           )}

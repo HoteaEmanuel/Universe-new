@@ -52,12 +52,12 @@ const MediaPhotosTab = ({ variant, id }: MediaPhotosTabProps) => {
     <>
       <div ref={containerRef} className="max-h-[55vh] overflow-y-auto">
         {isPending && (
-          <p className="pt-8 text-center text-sm text-muted-foreground">
+          <p className="pt-8 list-loading-text">
             Loading...
           </p>
         )}
         {!isPending && !hasMedia && (
-          <p className="pt-8 text-center text-sm text-muted-foreground">
+          <p className="pt-8 list-loading-text">
             No photos shared yet.
           </p>
         )}

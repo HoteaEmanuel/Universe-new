@@ -169,13 +169,13 @@ const SharePostModal = ({ open, onClose, postId }: SharePostModalProps) => {
             />
 
             {isPending && (
-              <p className="pt-4 text-center text-sm text-muted-foreground">
+              <p className="pt-4 list-loading-text">
                 Loading...
               </p>
             )}
 
             {!isPending && filteredTargets.length === 0 && (
-              <p className="pt-4 text-center text-sm text-muted-foreground">
+              <p className="pt-4 list-loading-text">
                 No one to show here yet.
               </p>
             )}

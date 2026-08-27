@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
 import { Camera, GraduationCap, BookOpen, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import UserAvatar from "@/components/UserAvatar";
 import { getFullName } from "@/utils/fullName";
 import { useAuthStore } from "@/store/authStore";
 import {
@@ -60,15 +60,10 @@ const ProfileHeader = ({
   return (
     <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start sm:gap-8">
       <div className="group/avatar relative shrink-0">
-        {user.profilePicture ? (
-          <img
-            src={user.profilePicture}
-            alt={getFullName(user)}
-            className="size-24 rounded-full object-cover ring-1 ring-border sm:size-28"
-          />
-        ) : (
-          <FaUserCircle className="size-24 text-muted-foreground sm:size-28" />
-        )}
+        <UserAvatar
+          user={user}
+          className="size-24 ring-1 ring-border sm:size-28"
+        />
         {isOwnProfile && (
           <Button
             type="button"

@@ -22,12 +22,7 @@ import {
 import { SideLinks } from "./SideTabLinks";
 import { cn } from "@/lib/utils";
 import NotificationBell from "@/features/notifications/NotificationBell";
-
-const NotificationBadge = ({ count }: { count: number }) => (
-  <div className="absolute -top-1.5 -right-2 flex size-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-primary-foreground">
-    {count < 100 ? count : "99+"}
-  </div>
-);
+import CountBadge from "@/components/CountBadge";
 
 const menuButtonClass = cn(
   "cursor-pointer gap-3 text-[15px]",
@@ -113,7 +108,7 @@ const SideSection = () => {
                           {notificationsOn &&
                             item.notification &&
                             (messageNotifications?.length ?? 0) > 0 && (
-                              <NotificationBadge
+                              <CountBadge
                                 count={messageNotifications?.length ?? 0}
                               />
                             )}

@@ -65,12 +65,12 @@ const EventParticipantsModal = ({
           onScroll={handleScroll}
         >
           {isPending && (
-            <p className="pt-8 text-center text-sm text-muted-foreground">
+            <p className="pt-8 list-loading-text">
               Loading...
             </p>
           )}
           {!isPending && participants.length === 0 && (
-            <p className="pt-8 text-center text-sm text-muted-foreground">
+            <p className="pt-8 list-loading-text">
               No participants yet.
             </p>
           )}

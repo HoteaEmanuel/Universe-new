@@ -45,7 +45,7 @@ const GroupsStep = ({ onNext, onSkip, continueLabel = "Continue" }: GroupsStepPr
       )}
 
       {!isPending && (!groups || groups.length === 0) && (
-        <p className="py-6 text-center text-sm text-muted-foreground">
+        <p className="py-6 list-loading-text">
           No public groups to suggest yet — you can browse groups anytime.
         </p>
       )}

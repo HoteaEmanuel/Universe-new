@@ -117,10 +117,11 @@ const Group = () => {
             >
               <ArrowLeft />
             </Button>
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setGroupImageOpen(true)}
-              className="shrink-0 cursor-pointer"
+              className="h-auto shrink-0 rounded-full p-0 hover:bg-transparent"
             >
               {group.coverImageUrl ? (
                 <img
@@ -133,7 +134,7 @@ const Group = () => {
                   <Users className="size-5 text-muted-foreground" />
                 </div>
               )}
-            </button>
+            </Button>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="truncate text-base font-semibold">

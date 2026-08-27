@@ -143,11 +143,11 @@ const ChatContainer = () => {
             )}
           </ul>
         ) : debouncedSearch.trim() ? (
-          <p className="pt-10 text-center text-sm text-muted-foreground">
+          <p className="pt-10 list-loading-text">
             No results
           </p>
         ) : (
-          <p className="pt-10 text-center text-sm text-muted-foreground">
+          <p className="pt-10 list-loading-text">
             No conversations yet
           </p>
         )}

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Camera, Mic, Paperclip, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getFullName } from "../../../utils/fullName";
 import { getAvatarColorClass, getInitials } from "../utils/avatarColor";
 import { formatChatListTime } from "../utils/chatListTime";
@@ -44,10 +45,11 @@ const ConversationListItem = ({
   return (
     <li>
       <div className="flex items-center gap-1 rounded-xl transition-colors hover:bg-muted">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={onClick}
-          className="flex min-w-0 flex-1 items-center gap-3 p-2 text-left cursor-pointer"
+          className="h-auto min-w-0 flex-1 justify-start gap-3 p-2 text-left hover:bg-transparent"
         >
           <div className="relative shrink-0">
             {avatarSrc ? (
@@ -64,7 +66,7 @@ const ConversationListItem = ({
               </div>
             )}
             {!isGroup && isOnline && (
-              <span className="absolute right-0.5 bottom-0.5 size-3.5 rounded-full bg-green-500 ring-2 ring-background" />
+              <span className="online-dot right-0.5 bottom-0.5 size-3.5" />
             )}
           </div>
 
@@ -118,7 +120,7 @@ const ConversationListItem = ({
               )}
             </p>
           </div>
-        </button>
+        </Button>
         {trailingAction && <div className="shrink-0 pr-2">{trailingAction}</div>}
       </div>
     </li>

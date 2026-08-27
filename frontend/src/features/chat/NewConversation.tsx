@@ -1,13 +1,13 @@
 import { useMemo, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Compass, Search, Users } from "lucide-react";
-import { FaUserCircle } from "react-icons/fa";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/Debounce";
 import { useGetAllUsersQuery } from "@/queryAndMutation/queries/user-queries";
 import { getFullName } from "@/utils/fullName";
+import UserAvatar from "@/components/UserAvatar";
 import CreateGroupModal from "@/features/groups/components/CreateGroupModal";
 import DiscoverGroupsModal from "@/features/groups/components/DiscoverGroupsModal";
 import type { ChatUser } from "./types";
@@ -78,21 +78,15 @@ const NewConversation = () => {
         <ul className="flex flex-col gap-1">
           {results.map((candidate) => (
             <li key={candidate.id}>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => navigate(`/new-conversation/${candidate.id}`)}
-                className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-muted cursor-pointer"
+                className="h-auto w-full justify-start gap-3 rounded-xl p-2 text-left"
               >
-                {candidate.profilePicture ? (
-                  <img
-                    src={candidate.profilePicture}
-                    className="size-11 shrink-0 rounded-full object-cover"
-                  />
-                ) : (
-                  <FaUserCircle className="size-11 shrink-0 text-muted-foreground" />
-                )}
+                <UserAvatar user={candidate} className="size-11" />
                 <span className="font-medium">{getFullName(candidate)}</span>
-              </button>
+              </Button>
             </li>
           ))}
         </ul>

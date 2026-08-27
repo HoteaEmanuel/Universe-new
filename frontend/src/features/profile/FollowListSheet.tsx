@@ -97,7 +97,7 @@ const FollowListSheet = ({
               </ul>
             )}
             {!isLoading && users.length === 0 && (
-              <p className="pt-8 text-center text-sm text-muted-foreground">
+              <p className="pt-8 list-loading-text">
                 {emptyMessage}
               </p>
             )}

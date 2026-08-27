@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Users, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { useAddMemberToGroupMutation } from "@/queryAndMutation/mutations/group-mutation";
 import type { GroupConversation } from "@/features/chat/types";
@@ -32,11 +33,13 @@ const GroupSuggestionCard = ({ group }: { group: GroupConversation }) => {
           )}
         </div>
       </div>
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         disabled={joined || isPending}
         onClick={() => joinGroup(user.id, { onSuccess: () => setJoined(true) })}
-        className="flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-primary transition-transform duration-200 ease-in hover:scale-105 disabled:opacity-50"
+        className="pill-follow shrink-0 gap-1 px-3"
       >
         {joined ? (
           <>
@@ -45,7 +48,7 @@ const GroupSuggestionCard = ({ group }: { group: GroupConversation }) => {
         ) : (
           "Join"
         )}
-      </button>
+      </Button>
     </li>
   );
 };

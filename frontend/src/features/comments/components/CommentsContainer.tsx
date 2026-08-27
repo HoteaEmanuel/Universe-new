@@ -84,7 +84,7 @@ const CommentsContainer = () => {
 
   if (!comments.length) {
     return (
-      <p className="pt-8 text-center text-sm text-muted-foreground">
+      <p className="pt-8 list-loading-text">
         No comments yet — start the conversation.
       </p>
     );

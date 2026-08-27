@@ -82,12 +82,12 @@ const LikesModal = ({ open, onClose, postId }: LikesModalProps) => {
               </ul>
             )}
             {!!error && (
-              <p className="pt-8 text-center text-sm text-muted-foreground">
+              <p className="pt-8 list-loading-text">
                 Couldn&apos;t load likes.
               </p>
             )}
             {!isLoading && !error && users.length === 0 && (
-              <p className="pt-8 text-center text-sm text-muted-foreground">
+              <p className="pt-8 list-loading-text">
                 No likes yet.
               </p>
             )}

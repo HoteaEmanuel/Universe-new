@@ -92,7 +92,7 @@ const BlockedUsersModal = ({ open, onClose }: BlockedUsersModalProps) => {
               })}
             </ul>
           ) : (
-            <p className="pt-8 text-center text-sm text-muted-foreground">
+            <p className="pt-8 list-loading-text">
               No blocked users.
             </p>
           )}

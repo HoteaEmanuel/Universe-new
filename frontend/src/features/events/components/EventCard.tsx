@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { CalendarDays, MapPin, Video, Users, BadgeCheck } from "lucide-react";
 import type { EventSummary } from "@/queryAndMutation/types";
 import { formatEventDateTime } from "../utils/formatEventDate";
+import { Badge } from "@/components/ui/badge";
 
 type EventCardProps = {
   event: EventSummary;
@@ -28,21 +29,17 @@ const EventCard = ({ event, onClick }: EventCardProps) => {
       )}
       <div className="flex flex-col gap-1.5 p-3.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary dark:bg-brand-400/15 dark:text-brand-100">
+          <Badge variant="brand" className="py-0.5">
             <CalendarDays className="size-3" />
             {formatEventDateTime(event.startAt, event.endAt)}
-          </span>
+          </Badge>
           {event.eventType === "official" && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">
+            <Badge variant="info" className="py-0.5">
               <BadgeCheck className="size-3" />
               Official
-            </span>
+            </Badge>
           )}
-          {isCancelled && (
-            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-              Cancelled
-            </span>
-          )}
+          {isCancelled && <Badge variant="destructive" className="py-0.5">Cancelled</Badge>}
         </div>
         <p className="font-semibold leading-tight">{event.title}</p>
         {(event.location || event.virtualUrl) && (
@@ -63,8 +60,7 @@ const EventCard = ({ event, onClick }: EventCardProps) => {
     </>
   );
 
-  const className =
-    "flex w-full flex-col overflow-hidden rounded-2xl bg-card text-left shadow-[0_0_3px_rgba(15,15,20,0.10),0_2px_20px_rgba(15,15,20,0.14)] transition-all hover:bg-muted hover:shadow-[0_0_4px_rgba(15,15,20,0.12),0_4px_28px_rgba(15,15,20,0.18)]";
+  const className = "card-shell text-left hover:bg-muted";
 
   if (onClick) {
     return (

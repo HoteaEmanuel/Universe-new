@@ -11,6 +11,7 @@ import { useGetUnreadNotifications } from "@/queryAndMutation/queries/notificati
 import { useSeeNotifications } from "@/queryAndMutation/mutations/notification-mutation";
 import NotificationItem from "./NotificationItem";
 import { AllCaughtUpState } from "./NotificationEmptyState";
+import CountBadge from "@/components/CountBadge";
 
 const POPOVER_PREVIEW_LIMIT = 8;
 
@@ -43,11 +44,7 @@ const NotificationBell = ({
         }}
       >
         <Icon className={iconClassName} />
-        {badgeCount > 0 && (
-          <div className="absolute -top-1.5 -right-2 flex size-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-primary-foreground">
-            {badgeCount < 100 ? badgeCount : "99+"}
-          </div>
-        )}
+        {badgeCount > 0 && <CountBadge count={badgeCount} />}
       </PopoverTrigger>
       <PopoverContent align="start" side="right" sideOffset={12}>
         <div className="flex items-center justify-between border-b border-border px-3 py-2">
@@ -66,7 +63,7 @@ const NotificationBell = ({
         </div>
         <div className="max-h-80 overflow-y-auto p-1">
           {isLoading && (
-            <p className="p-3 text-center text-sm text-muted-foreground">
+            <p className="p-3 list-loading-text">
               Loading…
             </p>
           )}

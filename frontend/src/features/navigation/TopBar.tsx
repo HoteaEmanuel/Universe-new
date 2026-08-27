@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
 import { useAuthStore } from "@/store/authStore";
+import UserAvatar from "@/components/UserAvatar";
 import logo from "@/assets/logo_1.png";
 
 const TopBar = () => {
@@ -19,15 +19,7 @@ const TopBar = () => {
 
       <div className="flex items-center gap-5">
         <Link to={`/profile`}>
-          {user?.profilePicture ? (
-            <img
-              src={user.profilePicture}
-              alt="user profile picture"
-              className="size-10 rounded-full"
-            />
-          ) : (
-            <FaUserCircle className="h-10 w-8 text-violet-950" />
-          )}
+          <UserAvatar user={user} className="size-10" />
         </Link>
       </div>
     </section>

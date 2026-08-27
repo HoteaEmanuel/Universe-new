@@ -141,7 +141,7 @@ const DiscoverGroupsModal = ({ open, onClose }: DiscoverGroupsModalProps) => {
               </ul>
             )}
             {!isPending && (!groups || groups.length === 0) && (
-              <p className="pt-8 text-center text-sm text-muted-foreground">
+              <p className="pt-8 list-loading-text">
                 No public groups to join right now.
               </p>
             )}

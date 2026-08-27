@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { FaUserCircle } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
+import UserAvatar from "@/components/UserAvatar";
 import { getFullName } from "../../../utils/fullName";
 import { urlPathName } from "../../../utils/urlPathFromName";
 import type { ChatUser } from "../types";
@@ -29,29 +29,23 @@ const ChatUserHeader = ({ user, isOnline, actions }: ChatUserHeaderProps) => {
         <ArrowLeft />
       </Button>
 
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={goToProfile}
-        className="relative shrink-0 cursor-pointer"
+        className="relative h-auto shrink-0 rounded-full p-0 hover:bg-transparent"
       >
-        {user.profilePicture ? (
-          <img
-            src={user.profilePicture}
-            alt={getFullName(user)}
-            className="size-11 rounded-full object-cover"
-          />
-        ) : (
-          <FaUserCircle className="size-11 text-muted-foreground" />
-        )}
+        <UserAvatar user={user} className="size-11" />
         {isOnline && (
-          <span className="absolute right-0 bottom-0 size-3 rounded-full bg-green-500 ring-2 ring-background" />
+          <span className="online-dot right-0 bottom-0 size-3" />
         )}
-      </button>
+      </Button>
 
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={goToProfile}
-        className="flex min-w-0 flex-1 flex-col items-start text-left cursor-pointer"
+        className="h-auto min-w-0 flex-1 flex-col items-start p-0 text-left hover:bg-transparent"
       >
         <h1 className="truncate text-base font-semibold">
           {getFullName(user)}
@@ -61,7 +55,7 @@ const ChatUserHeader = ({ user, isOnline, actions }: ChatUserHeaderProps) => {
             {user.university}
           </p>
         )}
-      </button>
+      </Button>
 
       {actions}
     </div>

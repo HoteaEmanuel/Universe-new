@@ -212,7 +212,7 @@ const MessageThread = ({
             })}
           </div>
         ) : (
-          <p className="pt-10 text-center text-sm text-muted-foreground">
+          <p className="pt-10 list-loading-text">
             {emptyLabel}
           </p>
         )}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { useAuthStore } from "../../../store/authStore";
 import { useFollowMutation } from "@/queryAndMutation/mutations/user-mutation";
 import { getAvatarColorClass, getInitials } from "../../chat/utils/avatarColor";
@@ -21,10 +22,11 @@ const UniversityPersonRow = ({ user }: { user: FollowUser }) => {
 
   return (
     <li className="flex items-center gap-3 rounded-xl p-2 hover:bg-muted">
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={() => navigate(`/u/${urlPathName(user)}`)}
-        className="flex min-w-0 flex-1 items-center gap-3 text-left cursor-pointer"
+        className="h-auto min-w-0 flex-1 justify-start gap-3 p-0 text-left hover:bg-transparent"
       >
         {user.profilePicture ? (
           <img
@@ -47,19 +49,21 @@ const UniversityPersonRow = ({ user }: { user: FollowUser }) => {
             </p>
           )}
         </div>
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         disabled={justFollowed || followMutation.isPending}
         onClick={() =>
           followMutation.mutate(undefined, {
             onSuccess: () => setJustFollowed(true),
           })
         }
-        className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-primary transition-transform duration-200 ease-in hover:scale-105 disabled:opacity-50"
+        className="pill-follow shrink-0 px-3"
       >
         {justFollowed ? "Following" : "Follow"}
-      </button>
+      </Button>
     </li>
   );
 };

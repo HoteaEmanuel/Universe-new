@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { FaUserCircle } from "react-icons/fa";
 import { Camera, GraduationCap, BookOpen } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useUpdateBioMutation } from "@/queryAndMutation/mutations/user-mutation";
@@ -12,6 +11,7 @@ import SubmitButton from "@/components/SubmitButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import UserAvatar from "@/components/UserAvatar";
 import { getFullName } from "@/utils/fullName";
 import { BIO_MAX_LENGTH } from "@/constants/profileForm";
 import type { ProfileUser } from "./types";
@@ -79,15 +79,7 @@ const EditProfile = () => {
       <PostFormCard title="Edit profile" maxWidthClass="max-w-md">
         <div className="flex flex-col items-center gap-3">
           <div className="group/avatar relative">
-            {user.profilePicture ? (
-              <img
-                src={user.profilePicture}
-                alt={getFullName(user)}
-                className="size-24 rounded-full object-cover ring-1 ring-border"
-              />
-            ) : (
-              <FaUserCircle className="size-24 text-muted-foreground" />
-            )}
+            <UserAvatar user={user} className="size-24 ring-1 ring-border" />
             <Button
               type="button"
               variant="ghost"

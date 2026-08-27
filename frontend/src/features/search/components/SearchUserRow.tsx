@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { useAuthStore } from "../../../store/authStore";
 import { getAvatarColorClass, getInitials } from "../../chat/utils/avatarColor";
 import { getFullName } from "../../../utils/fullName";
@@ -16,10 +17,11 @@ const SearchUserRow = ({ user }: { user: ChatUser }) => {
 
   return (
     <li>
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={goToProfile}
-        className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-muted cursor-pointer"
+        className="h-auto w-full justify-start gap-3 rounded-xl p-2 text-left"
       >
         {user.profilePicture ? (
           <img
@@ -42,7 +44,7 @@ const SearchUserRow = ({ user }: { user: ChatUser }) => {
             </p>
           )}
         </div>
-      </button>
+      </Button>
     </li>
   );
 };

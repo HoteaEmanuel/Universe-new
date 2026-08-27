@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
 import { Heart, MessageCircle, ImageOff } from "lucide-react";
 import NotFoundState from "@/components/NotFoundState";
 import { useAuthStore } from "@/store/authStore";
@@ -9,6 +8,8 @@ import { formatDateDetailed } from "@/utils/formatDate";
 import { formatCount } from "@/utils/formatCount";
 import { getFullName } from "@/utils/fullName";
 import ImageSlider from "./components/ImageSlider";
+import UserAvatar from "@/components/UserAvatar";
+import { Badge } from "@/components/ui/badge";
 
 const PublicPost = () => {
   const { id: postId } = useParams();
@@ -44,15 +45,7 @@ const PublicPost = () => {
     <div className="flex min-h-screen justify-center bg-background px-4 py-10">
       <div className="flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-card">
         <div className="flex items-center gap-3 px-4 py-3">
-          {post.user.profilePicture ? (
-            <img
-              src={post.user.profilePicture}
-              alt="profile picture"
-              className="size-9 rounded-full object-cover"
-            />
-          ) : (
-            <FaUserCircle className="size-9 text-muted-foreground" />
-          )}
+          <UserAvatar user={post.user} className="size-9" />
           <div>
             <p className="text-sm font-semibold leading-tight">
               {getFullName(post.user)}
@@ -100,11 +93,8 @@ const PublicPost = () => {
         {post.tags.length > 0 && (
           <ul className="flex flex-wrap gap-2 px-4 pt-2 pb-4">
             {post.tags.map((tag) => (
-              <li
-                key={tag.name}
-                className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground"
-              >
-                #{tag.name}
+              <li key={tag.name}>
+                <Badge variant="muted">#{tag.name}</Badge>
               </li>
             ))}
           </ul>

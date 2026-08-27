@@ -237,14 +237,16 @@ const CreatePost = () => {
             {(aiSuggestedHashTags?.hashtags?.length ?? 0) > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">
                 {aiSuggestedHashTags!.hashtags.map((tag) => (
-                  <button
+                  <Button
                     key={tag}
                     type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full bg-muted px-2 text-xs text-muted-foreground"
                     onClick={() => handleAddHashtag(tag)}
-                    className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
                   >
                     #{tag}
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}

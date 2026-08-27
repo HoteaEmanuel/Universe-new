@@ -120,7 +120,7 @@ const AddMembersModal = ({ open, onClose }: AddMembersModalProps) => {
             }
           />
           {isPendingGroupMembers && (
-            <p className="pt-4 text-center text-sm text-muted-foreground">
+            <p className="pt-4 list-loading-text">
               Loading...
             </p>
           )}

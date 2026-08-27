@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { FaUserCircle } from "react-icons/fa";
 import { Camera } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useUserStore } from "@/store/userStore";
@@ -11,6 +10,7 @@ import ProfileImageModal from "@/Modals/ProfileImageModal";
 import TextareaField from "@/components/TextareaField";
 import SubmitButton from "@/components/SubmitButton";
 import { Button } from "@/components/ui/button";
+import UserAvatar from "@/components/UserAvatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BIO_MAX_LENGTH } from "@/constants/profileForm";
@@ -91,15 +91,7 @@ const IdentityStep = ({ user, onNext }: IdentityStepProps) => {
 
       <div className="flex flex-col items-center gap-3">
         <div className="group/avatar relative">
-          {user.profilePicture ? (
-            <img
-              src={user.profilePicture}
-              alt=""
-              className="size-24 rounded-full object-cover ring-1 ring-border"
-            />
-          ) : (
-            <FaUserCircle className="size-24 text-muted-foreground" />
-          )}
+          <UserAvatar user={user} className="size-24 ring-1 ring-border" />
           <Button
             type="button"
             variant="ghost"

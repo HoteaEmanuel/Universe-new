@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
 import { getFullName } from "@/utils/fullName";
+import UserAvatar from "@/components/UserAvatar";
 import type { SharedPost } from "../types";
 
 type SharedPostCardProps = {
@@ -31,15 +31,7 @@ const SharedPostCard = ({ post, isOwn }: SharedPostCardProps) => {
       )}
       <div className="flex flex-col gap-1 p-2.5">
         <div className="flex items-center gap-1.5">
-          {post.user.profilePicture ? (
-            <img
-              src={post.user.profilePicture}
-              alt=""
-              className="size-4 shrink-0 rounded-full object-cover"
-            />
-          ) : (
-            <FaUserCircle className="size-4 shrink-0 text-muted-foreground" />
-          )}
+          <UserAvatar user={post.user} className="size-4" />
           <span className="truncate text-xs text-muted-foreground">
             {getFullName(post.user)}
           </span>

@@ -168,6 +168,21 @@ body {
   .icon {
     @apply text-violet-950 size-6;
   }
+  .card-shell {
+    @apply flex w-full flex-col overflow-hidden rounded-2xl bg-card shadow-[0_0_3px_rgba(15,15,20,0.10),0_2px_20px_rgba(15,15,20,0.14)] transition-all duration-200 hover:shadow-[0_0_4px_rgba(15,15,20,0.12),0_4px_28px_rgba(15,15,20,0.18)] dark:border dark:border-border dark:shadow-none dark:hover:shadow-none;
+  }
+  /* Overrides for a shadcn <Button variant="ghost"> used as a chromeless
+     pill/icon action — keeps the plain-text/icon hover-scale feel instead
+     of ghost's default hover:bg-muted background. */
+  .pill-follow {
+    @apply rounded-full px-2 text-xs font-semibold text-primary hover:scale-105 hover:bg-transparent hover:text-primary;
+  }
+  .pill-following {
+    @apply rounded-full px-2 text-xs text-muted-foreground hover:scale-105 hover:bg-transparent hover:text-muted-foreground;
+  }
+  .icon-hover-btn {
+    @apply hover:scale-110 hover:bg-transparent;
+  }
   .university-logo {
     @apply size-20;
   }
@@ -198,15 +213,24 @@ body {
   div {
     @apply select-none cursor-default;
   }
-  .card {
-    @apply bg-white shadow-lg rounded-2xl p-6 border border-gray-100;
-  }
   .text-outline {
     -webkit-text-stroke: 1px black;
     color: transparent;
   }
-  .basic-transition {
-    @apply transition-transform duration-200 ease-in;
+  .list-loading-text {
+    @apply text-center text-sm text-muted-foreground;
+  }
+  .list-row {
+    @apply flex items-center gap-3 p-2;
+  }
+  .list-row-hover {
+    @apply flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted;
+  }
+  .panel-header {
+    @apply flex items-center gap-3 border-b border-border px-4 py-3;
+  }
+  .online-dot {
+    @apply absolute rounded-full bg-green-500 ring-2 ring-background;
   }
 }
 .text-xss {

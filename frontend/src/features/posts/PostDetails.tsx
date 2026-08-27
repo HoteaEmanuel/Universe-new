@@ -1,6 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { FaUserCircle } from "react-icons/fa";
 import { Heart, MessageCircle, Bookmark, BookmarkCheck, ImageOff, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import NotFoundState from "@/components/NotFoundState";
@@ -34,6 +33,9 @@ import { formatCount } from "@/utils/formatCount";
 import { getFullName } from "@/utils/fullName";
 import { urlPathName } from "@/utils/urlPathFromName";
 import ImageSlider from "./components/ImageSlider";
+import UserAvatar from "@/components/UserAvatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 type PostDetailsProps = {
   inModal?: boolean;
@@ -233,19 +235,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
         }
       >
         <div className="flex shrink-0 items-center gap-2.5 border-b border-border px-4 py-3">
-          {creator.profilePicture ? (
-            <img
-              src={creator.profilePicture}
-              alt="profile"
-              className="size-9 shrink-0 cursor-pointer rounded-full object-cover"
-              onClick={handleProfileClick}
-            />
-          ) : (
-            <FaUserCircle
-              className="size-9 shrink-0 cursor-pointer text-muted-foreground"
-              onClick={handleProfileClick}
-            />
-          )}
+          <UserAvatar user={creator} className="size-9" onClick={handleProfileClick} />
           <div className="flex w-full items-center justify-between gap-2">
             <div>
               <p className="text-sm font-semibold leading-tight">
@@ -258,34 +248,30 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
             </div>
             {userId !== user.id &&
               (isFollowing ? (
-                <button
-                  className="shrink-0 rounded-full px-2 py-1 text-xs text-muted-foreground transition-transform duration-200 ease-in hover:scale-105"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="pill-following shrink-0"
                   onClick={() => unfollowMutation.mutate()}
                 >
                   Following
-                </button>
+                </Button>
               ) : (
-                <button
-                  className="shrink-0 rounded-full px-2 py-1 text-xs font-semibold text-primary transition-transform duration-200 ease-in hover:scale-105"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="pill-follow shrink-0"
                   onClick={() => followMutation.mutate()}
                 >
                   Follow
-                </button>
+                </Button>
               ))}
           </div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex items-start gap-2.5 px-4 pt-3 pb-1.5">
-            {creator.profilePicture ? (
-              <img
-                src={creator.profilePicture}
-                alt="profile"
-                className="size-8 shrink-0 rounded-full object-cover"
-              />
-            ) : (
-              <FaUserCircle className="size-8 shrink-0 text-muted-foreground" />
-            )}
+            <UserAvatar user={creator} className="size-8" />
             <div className="min-w-0 flex-1 text-sm">
               <p
                 ref={bodyRef}
@@ -311,12 +297,14 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
           {post.tags?.length > 0 && (
             <ul className="flex flex-wrap gap-2 px-4 pb-2 pl-[46px]">
               {post.tags.map((tag) => (
-                <li
-                  key={tag}
-                  className="cursor-pointer rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
-                  onClick={() => navigate(`/related-posts/${tag.toLowerCase()}`)}
-                >
-                  #{tag}
+                <li key={tag}>
+                  <Badge
+                    variant="muted"
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/related-posts/${tag.toLowerCase()}`)}
+                  >
+                    #{tag}
+                  </Badge>
                 </li>
               ))}
             </ul>
@@ -335,8 +323,10 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
 
         <div className="shrink-0 border-t border-border">
           <div className="flex items-center gap-4 px-4 pt-3">
-            <button
-              className="relative inline-flex items-center justify-center transition-transform duration-150 hover:scale-110"
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="icon-hover-btn relative"
               onClick={handleLike}
               aria-label={liked ? "Unlike post" : "Like post"}
             >
@@ -347,23 +337,30 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
                 fill={liked ? "currentColor" : "none"}
                 onAnimationEnd={() => setLikePop(false)}
               />
-            </button>
+            </Button>
             <MessageCircle className="size-6 text-foreground/80" />
             {userId !== user.id && (
               <div className="ml-auto">
                 {!isSaved ? (
-                  <Bookmark
-                    className="size-6 cursor-pointer text-foreground/80 transition-transform duration-150 hover:scale-110 hover:text-foreground"
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="icon-hover-btn"
                     onClick={handleSaveClick}
                     aria-label="Save post"
-                  />
+                  >
+                    <Bookmark className="size-6 text-foreground/80 hover:text-foreground" />
+                  </Button>
                 ) : (
-                  <BookmarkCheck
-                    className="size-6 cursor-pointer text-foreground transition-transform duration-150 hover:scale-110"
-                    fill="currentColor"
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="icon-hover-btn"
                     onClick={handleUnsaveClick}
                     aria-label="Unsave post"
-                  />
+                  >
+                    <BookmarkCheck className="size-6 text-foreground" fill="currentColor" />
+                  </Button>
                 )}
               </div>
             )}
@@ -374,15 +371,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
                 className="flex min-w-0 items-center gap-1.5 hover:text-muted-foreground"
                 onClick={() => setSeeLikesModal(true)}
               >
-                {relevantLiker.profilePicture ? (
-                  <img
-                    src={relevantLiker.profilePicture}
-                    alt=""
-                    className="size-4 shrink-0 rounded-full object-cover"
-                  />
-                ) : (
-                  <FaUserCircle className="size-4 shrink-0 text-muted-foreground" />
-                )}
+                <UserAvatar user={relevantLiker} className="size-4" />
                 <span className="min-w-0 truncate">
                   Liked by{" "}
                   <span className="font-semibold">

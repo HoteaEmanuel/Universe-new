@@ -72,12 +72,12 @@ const ViewMembersModal = ({ open, onClose }: ViewMembersModalProps) => {
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           {isPending && (
-            <p className="pt-8 text-center text-sm text-muted-foreground">
+            <p className="pt-8 list-loading-text">
               Loading...
             </p>
           )}
           {!isPending && (!groupMembers || groupMembers.length === 0) && (
-            <p className="pt-8 text-center text-sm text-muted-foreground">
+            <p className="pt-8 list-loading-text">
               No members found.
             </p>
           )}

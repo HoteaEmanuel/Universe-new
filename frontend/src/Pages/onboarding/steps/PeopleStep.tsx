@@ -47,7 +47,7 @@ const PeopleStep = ({ onNext, onSkip, continueLabel = "Continue" }: PeopleStepPr
       )}
 
       {!isPending && people.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">
+        <p className="py-6 list-loading-text">
           No suggestions yet — you can always find people to follow later.
         </p>
       )}

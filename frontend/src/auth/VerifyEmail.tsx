@@ -47,7 +47,7 @@ const VerifyEmail = () => {
   return (
     <AuthCard title="Verify your email" maxWidthClass="sm:w-2/3 max-w-lg">
       <form onSubmit={onSubmit} className="flex w-full flex-col items-center gap-4">
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="list-loading-text">
           Enter the 6-digit verification code
         </p>
         <ErrorBanner>{submitError}</ErrorBanner>

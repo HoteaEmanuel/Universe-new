@@ -240,7 +240,7 @@ const MessageInput = ({
       );
     }
     return (
-      <div className="border-t border-border bg-background px-3 py-3 text-center text-sm text-muted-foreground">
+      <div className="border-t border-border bg-background px-3 py-3 list-loading-text">
         You can&apos;t send messages to this conversation.
       </div>
     );

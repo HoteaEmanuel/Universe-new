@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
 import { SmilePlus } from "lucide-react";
 import {
   Message,
@@ -10,6 +9,7 @@ import {
   MessageFooter,
 } from "@/components/ui/message";
 import { Button } from "@/components/ui/button";
+import UserAvatar from "@/components/UserAvatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getFullName } from "../../../utils/fullName";
 import { formatDateDetailed } from "../../../utils/formatDate";
@@ -216,22 +216,15 @@ const MessageBubble = ({
       {isGroupChat &&
         (showAvatar ? (
           <MessageAvatar>
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => navigate(`/u/${urlPathName(senderUser)}`)}
               aria-label={`View ${getFullName(senderUser)}'s profile`}
-              className="cursor-pointer"
+              className="h-auto rounded-full p-0 hover:bg-transparent"
             >
-              {senderUser?.profilePicture ? (
-                <img
-                  src={senderUser.profilePicture}
-                  alt={getFullName(senderUser)}
-                  className="size-8 object-cover"
-                />
-              ) : (
-                <FaUserCircle className="size-8 text-muted-foreground" />
-              )}
-            </button>
+              <UserAvatar user={senderUser} className="size-8" />
+            </Button>
           </MessageAvatar>
         ) : (
           <div className="size-8 shrink-0" aria-hidden="true" />

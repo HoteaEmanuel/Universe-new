@@ -1,6 +1,5 @@
 import { useState, type RefObject } from "react";
 import { Link, useParams } from "react-router-dom";
-import { FaUserCircle } from "react-icons/fa";
 import { Heart, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useGetUserByIdQuery } from "@/queryAndMutation/queries/user-queries";
@@ -15,6 +14,7 @@ import { urlPathName } from "@/utils/urlPathFromName";
 import { getFullName } from "@/utils/fullName";
 import type { PostComment } from "@/queryAndMutation/types";
 import MentionText from "@/components/MentionText";
+import UserAvatar from "@/components/UserAvatar";
 import CommentReplies from "./CommentReplies";
 import ReplyInput from "./ReplyInput";
 import {
@@ -91,18 +91,10 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
       }`}
     >
       {comment.isBlocked ? (
-        <FaUserCircle className={`${avatarSize} shrink-0 text-muted-foreground`} />
+        <UserAvatar className={`${avatarSize} shrink-0`} />
       ) : (
         <Link to={isOwnComment ? "/profile" : `/u/${fullName}`}>
-          {user!.profilePicture ? (
-            <img
-              src={user!.profilePicture}
-              alt={getFullName(user!)}
-              className={`${avatarSize} shrink-0 rounded-full object-cover`}
-            />
-          ) : (
-            <FaUserCircle className={`${avatarSize} shrink-0 text-muted-foreground`} />
-          )}
+          <UserAvatar user={user} className={`${avatarSize} shrink-0`} />
         </Link>
       )}
 

@@ -124,7 +124,7 @@ const BannedUsersSheet = <TUser extends NameFields>({
             </div>
           )}
           {!isPending && !isError && bans.length === 0 && (
-            <p className="pt-8 text-center text-sm text-muted-foreground">
+            <p className="pt-8 list-loading-text">
               {emptyText}
             </p>
           )}

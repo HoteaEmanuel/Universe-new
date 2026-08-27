@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/store/authStore";
-import { FaUserCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import UserAvatar from "@/components/UserAvatar";
 
 const ProfileCard = () => {
   const { user } = useAuthStore();
@@ -8,13 +8,7 @@ const ProfileCard = () => {
     <div className="flex flex-col w-full  justify-center p-4 rounded-xl">
       <div className="flex items-center">
         <Link to={`/profile`}>
-          {(user?.profilePicture && (
-            <img
-              src={user?.profilePicture}
-              alt="user"
-              className="w-20 h-20 rounded-full mr-2"
-            />
-          )) || <FaUserCircle className="w-20 h-20 text-violet-950" />}{" "}
+          <UserAvatar user={user} className="size-20 mr-2" />
         </Link>
         <div>
           <p className="text-sm px-2">

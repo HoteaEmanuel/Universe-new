@@ -14,6 +14,7 @@ type UserAvatarProps = {
   name?: string;
   className?: string;
   fallbackClassName?: string;
+  onClick?: React.MouseEventHandler;
 };
 
 const UserAvatar = ({
@@ -21,9 +22,14 @@ const UserAvatar = ({
   name,
   className,
   fallbackClassName,
+  onClick,
 }: UserAvatarProps) => {
   const displayName = name || getFullName(user);
-  const classes = cn("size-11 shrink-0 rounded-full object-cover", className);
+  const classes = cn(
+    "size-11 shrink-0 rounded-full object-cover",
+    onClick && "cursor-pointer",
+    className,
+  );
 
   if (user?.profilePicture) {
     return (
@@ -31,6 +37,7 @@ const UserAvatar = ({
         src={user.profilePicture}
         alt={`${displayName}'s avatar`}
         className={classes}
+        onClick={onClick}
       />
     );
   }
@@ -39,6 +46,7 @@ const UserAvatar = ({
     <FaUserCircle
       aria-hidden="true"
       className={cn("text-muted-foreground", classes, fallbackClassName)}
+      onClick={onClick}
     />
   );
 };

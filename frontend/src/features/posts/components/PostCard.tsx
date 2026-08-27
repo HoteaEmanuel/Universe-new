@@ -1,6 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { FaUserCircle } from "react-icons/fa";
 import { Heart, MessageCircle, Bookmark, BookmarkCheck, Send } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -33,6 +32,9 @@ import EventCard from "@/features/events/components/EventCard";
 import PollBlock from "@/features/polls/components/PollBlock";
 import type { Post } from "@/queryAndMutation/types";
 import MentionText from "@/components/MentionText";
+import UserAvatar from "@/components/UserAvatar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 type PostCardProps = {
   post: Post;
@@ -197,7 +199,7 @@ const PostCard = ({ post }: PostCardProps) => {
   )
     return <PostSkeleton />;
   if (!creator) return null;
-  const { firstName, name, lastName, profilePicture } = creator;
+  const { firstName, name, lastName } = creator;
   const hasImages = !!post.imagesUrls?.length;
   const captionBlock = (
     <div className="px-4 pt-2">
@@ -226,22 +228,10 @@ const PostCard = ({ post }: PostCardProps) => {
     <Link
       to={`/post/${postId}`}
       state={{ backgroundLocation: location }}
-      className="flex w-full flex-col overflow-hidden rounded-2xl bg-card shadow-[0_0_3px_rgba(15,15,20,0.10),0_2px_20px_rgba(15,15,20,0.14)] transition-shadow duration-200 hover:shadow-[0_0_4px_rgba(15,15,20,0.12),0_4px_28px_rgba(15,15,20,0.18)]"
+      className="card-shell"
     >
       <div className="flex items-center gap-3 px-4 py-3">
-        {(profilePicture && (
-          <img
-            src={profilePicture}
-            alt="profile picture"
-            className="size-9 rounded-full object-cover cursor-pointer"
-            onClick={handleProfileClick}
-          />
-        )) || (
-          <FaUserCircle
-            className="size-9 text-muted-foreground cursor-pointer"
-            onClick={handleProfileClick}
-          />
-        )}
+        <UserAvatar user={creator} className="size-9" onClick={handleProfileClick} />
         <div className="flex w-full items-center justify-between">
           <div>
             <p className="text-sm font-semibold leading-tight">
@@ -254,20 +244,24 @@ const PostCard = ({ post }: PostCardProps) => {
           </div>
 
           {(!isFollowing && userId !== user_.id && (
-            <button
-              className="rounded-full px-2 py-1 text-xs font-semibold text-primary transition-transform duration-200 ease-in hover:scale-105"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="pill-follow"
               onClick={handleFollowClick}
             >
               Follow
-            </button>
+            </Button>
           )) ||
             (userId !== user_.id && isFollowing && (
-              <button
-                className="rounded-full px-2 py-1 text-xs text-muted-foreground transition-transform duration-200 ease-in hover:scale-105"
+              <Button
+                variant="ghost"
+                size="sm"
+                className="pill-following"
                 onClick={handleUnfollowClick}
               >
                 Following
-              </button>
+              </Button>
             ))}
         </div>
       </div>
@@ -316,9 +310,11 @@ const PostCard = ({ post }: PostCardProps) => {
       )}
 
       <div className="flex items-center gap-4 px-4 pt-3">
-        <button
-          className="relative inline-flex items-center justify-center transition-transform duration-150 hover:scale-110"
-          onClick={(e) => handleLike(e)}
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="icon-hover-btn relative"
+          onClick={handleLike}
           aria-label={liked ? "Unlike post" : "Like post"}
         >
           <Heart
@@ -348,36 +344,45 @@ const PostCard = ({ post }: PostCardProps) => {
               <line x1="81" y1="19" x2="73" y2="27" />
             </svg>
           )}
-        </button>
-        <button aria-label="Comments">
+        </Button>
+        <Button variant="ghost" size="icon-sm" className="hover:bg-transparent" aria-label="Comments">
           <MessageCircle className="size-6 text-foreground/80 hover:text-foreground" />
-        </button>
-        <button
-          className="transition-transform duration-150 hover:scale-110"
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="icon-hover-btn"
           onClick={handleShareClick}
           aria-label="Send post"
         >
           <Send className="size-6 text-foreground/80 hover:text-foreground" />
-        </button>
+        </Button>
         <div className="relative ml-auto">
           {userId !== user_.id && !isSaved && (
-            <Bookmark
-              className="size-6 text-foreground/80 hover:scale-110 hover:text-foreground cursor-pointer transition-transform duration-150"
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="icon-hover-btn"
               onClick={handleSaveClick}
               onMouseEnter={() => setShowSaveOption("Save post")}
               onMouseLeave={() => setShowSaveOption(false)}
               aria-label="Save post"
-            />
+            >
+              <Bookmark className="size-6 text-foreground/80 hover:text-foreground" />
+            </Button>
           )}
           {userId !== user_.id && isSaved && (
-            <BookmarkCheck
-              className="size-6 text-foreground hover:scale-110 cursor-pointer transition-transform duration-150"
-              fill="currentColor"
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="icon-hover-btn"
               onClick={handleUnSavePostClick}
               onMouseEnter={() => setShowSaveOption("Unsave post")}
               onMouseLeave={() => setShowSaveOption(false)}
               aria-label="Unsave post"
-            />
+            >
+              <BookmarkCheck className="size-6 text-foreground" fill="currentColor" />
+            </Button>
           )}
           {showSaveOption && (
             <span className="absolute right-0 top-8 whitespace-nowrap rounded-md bg-foreground/90 px-2 py-1 text-[10px] font-medium text-background shadow-sm">
@@ -393,15 +398,7 @@ const PostCard = ({ post }: PostCardProps) => {
             className="flex cursor-pointer items-center gap-1.5 text-sm"
             onClick={handleSeeLikesModal}
           >
-            {relevantLiker.profilePicture ? (
-              <img
-                src={relevantLiker.profilePicture}
-                alt=""
-                className="size-4 shrink-0 rounded-full object-cover"
-              />
-            ) : (
-              <FaUserCircle className="size-4 shrink-0 text-muted-foreground" />
-            )}
+            <UserAvatar user={relevantLiker} className="size-4" />
             <span className="min-w-0 truncate">
               Liked by{" "}
               <span className="font-semibold">
@@ -449,12 +446,14 @@ const PostCard = ({ post }: PostCardProps) => {
       {post.tags?.length > 0 && (
         <ul className="flex flex-wrap gap-2 px-4 pt-2 pb-4">
           {post.tags.map((tag) => (
-            <li
-              key={tag + userId}
-              className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-              onClick={(e) => handleSeeRelated(e, tag)}
-            >
-              #{tag}
+            <li key={tag + userId}>
+              <Badge
+                variant="muted"
+                className="cursor-pointer"
+                onClick={(e: MouseEvent) => handleSeeRelated(e, tag)}
+              >
+                #{tag}
+              </Badge>
             </li>
           ))}
         </ul>

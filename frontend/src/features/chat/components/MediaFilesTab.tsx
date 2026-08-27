@@ -63,12 +63,12 @@ const MediaFilesTab = ({ variant, id }: MediaFilesTabProps) => {
     <>
       <div ref={containerRef} className="max-h-[55vh] overflow-y-auto">
         {isPending && (
-          <p className="pt-8 text-center text-sm text-muted-foreground">
+          <p className="pt-8 list-loading-text">
             Loading...
           </p>
         )}
         {!isPending && !hasFiles && (
-          <p className="pt-8 text-center text-sm text-muted-foreground">
+          <p className="pt-8 list-loading-text">
             No files shared yet.
           </p>
         )}
