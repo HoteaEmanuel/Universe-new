@@ -30,6 +30,12 @@ import ChatContainer from "./features/chat/ChatContainer";
 import Conversation from "./features/chat/Conversation";
 import NewConvo from "./features/chat/NewConvo";
 import Settings from "./Pages/Settings";
+import SettingsHome from "./features/settings/SettingsHome";
+import SettingsAccount from "./features/settings/SettingsAccount";
+import SettingsNotifications from "./features/settings/SettingsNotifications";
+import SettingsAppearance from "./features/settings/SettingsAppearance";
+import SettingsPrivacy from "./features/settings/SettingsPrivacy";
+import SettingsLegal from "./features/settings/SettingsLegal";
 import RelatedPosts from "./features/posts/RelatedPosts";
 import Admin from "./Pages/Admin";
 import NotFound from "./Pages/NotFound";
@@ -175,7 +181,14 @@ function App() {
               <Route path="/post/:id" element={<PostDetails />} />
               <Route path="/explore/*" element={<Explore />} />
               <Route path="/related-posts/:tag" element={<RelatedPosts />} />
-              <Route path="/settings" element={<Settings />} />
+              <Route path="/settings" element={<Settings />}>
+                <Route index element={<SettingsHome />} />
+                <Route path="account" element={<SettingsAccount />} />
+                <Route path="notifications" element={<SettingsNotifications />} />
+                <Route path="appearance" element={<SettingsAppearance />} />
+                <Route path="privacy" element={<SettingsPrivacy />} />
+                <Route path="legal" element={<SettingsLegal />} />
+              </Route>
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/chat" element={<ChatContainer />} />
               <Route path="/conversations/:id" element={<Conversation />} />

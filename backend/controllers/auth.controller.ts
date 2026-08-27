@@ -19,6 +19,7 @@ import {
   rotateRefreshToken,
 } from "../services/refreshToken.service.js";
 import { updateUser } from "../repository/user.repository.js";
+import { findUserAccountStatus } from "../repository/userAccountStatus.repository.js";
 import { universityEmailDomains } from "../utils/universityDomain.js";
 import { universityDomains } from "../utils/universityDomains.js";
 
@@ -311,6 +312,16 @@ export const authWithGoogleMobile = async (req: Request, res: Response) => {
 
     if (!user.isVerified) {
       res.redirect("mobileapp://auth-callback?error=email_not_verified");
+      return;
+    }
+
+    // This flow builds/looks up the user directly instead of going through
+    // login() or the passport Google strategy, so the blocked-account check
+    // has to be duplicated here too — otherwise a blocked user could bypass
+    // it via the mobile Google sign-in.
+    const accountStatus = await findUserAccountStatus(user.id);
+    if (accountStatus?.status === "blocked") {
+      res.redirect("mobileapp://auth-callback?error=account_blocked");
       return;
     }
 

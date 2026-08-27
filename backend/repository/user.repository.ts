@@ -55,6 +55,16 @@ export const findUserById = async (id: string) => {
   return prisma.user.findUnique({ where: { id }, omit: { password: true } });
 };
 
+// Only for flows that must verify the current password (change-password,
+// delete-account) — everywhere else use findUserById, which omits it.
+export const findUserWithPasswordById = async (id: string) => {
+  return prisma.user.findUnique({ where: { id } });
+};
+
+export const deleteUser = async (id: string) => {
+  return prisma.user.delete({ where: { id } });
+};
+
 export const findUserByEmail = async (email: string) => {
   return prisma.user.findUnique({ where: { email } });
 };

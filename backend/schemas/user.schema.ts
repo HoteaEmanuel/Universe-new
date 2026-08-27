@@ -45,3 +45,16 @@ export const followListQuerySchema = z.object({
   search: z.string().optional(),
 });
 export type FollowListQueryInput = z.infer<typeof followListQuerySchema>;
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z
+    .string()
+    .min(8, "New password must be at least 8 characters long"),
+});
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+export const deleteAccountSchema = z.object({
+  password: z.string().optional(),
+});
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;

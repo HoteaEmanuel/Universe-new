@@ -4,6 +4,7 @@ import { prisma } from "../database/prisma.js";
 import { universityEmailDomains } from "../utils/universityDomain.js";
 import { universityDomains } from "../utils/universityDomains.js";
 import { createUserWithGeneratedUsername } from "../repository/user.repository.js";
+import { findUserAccountStatus } from "../repository/userAccountStatus.repository.js";
 
 // passport-google-oauth20's Strategy constructor throws synchronously if
 // clientID/clientSecret are missing, which would otherwise crash the whole
@@ -31,7 +32,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             (Unidomain) => Unidomain == domain,
           );
           if (!email || domainValid === undefined) {
-            return done(null, false, { message: "Invalid email domain" });
+            return done(null, false, {
+              code: "INVALID_DOMAIN",
+              message: "Invalid email domain",
+            });
           }
 
           if (!user) {
@@ -40,6 +44,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             if (user) {
               if (!user.isVerified) {
                 return done(null, false, {
+                  code: "EMAIL_NOT_VERIFIED",
                   message: "Please verify your email before continuing",
                 });
               }
@@ -67,7 +72,19 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
           if (!user.isVerified) {
             return done(null, false, {
+              code: "EMAIL_NOT_VERIFIED",
               message: "Please verify your email before continuing",
+            });
+          }
+
+          /* Check if the user was block and block its access if so */
+          const accountStatus = await findUserAccountStatus(user.id);
+          if (accountStatus?.status === "blocked") {
+            return done(null, false, {
+              code: "ACCOUNT_BLOCKED",
+              message: accountStatus.reason
+                ? `Your account has been blocked: ${accountStatus.reason}`
+                : "Your account has been blocked",
             });
           }
 

@@ -38,12 +38,20 @@ const LoginPage = () => {
     await logIn(data.email, data.password);
     if (error === "Rate limit exceeded") toast.error("Too many requests");
   };
+  const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
+    google_auth_failed:
+      "Google authentication failed. Provide a university email or try again.",
+    invalid_domain:
+      "Google authentication failed. Provide a university email or try again.",
+    email_not_verified: "Please verify your email before continuing.",
+    account_blocked:
+      "Your account has been blocked. Check your email for more details.",
+  };
   const [googleError, setGoogleError] = useState<string | null>(null);
   useEffect(() => {
-    if (url.search === "?error=google_auth_failed") {
-      setGoogleError(
-        "Google authentication failed. Provide a university email or try again.",
-      );
+    const errorCode = new URLSearchParams(url.search).get("error");
+    if (errorCode) {
+      setGoogleError(GOOGLE_ERROR_MESSAGES[errorCode] ?? GOOGLE_ERROR_MESSAGES.google_auth_failed);
     }
   }, [url.search]);
   const handleGoogleLogin = () => {

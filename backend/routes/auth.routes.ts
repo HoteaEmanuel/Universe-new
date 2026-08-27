@@ -48,14 +48,34 @@ router.post(
   authWithGoogle,
 );
 
-router.get(
-  "/google/callback",
-  passport.authenticate("google", {
-    session: false,
-    failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed`,
-  }),
-  authWithGoogle,
-);
+// A plain failureRedirect can only send one fixed URL for every failure
+// reason, so a blocked account would land on the same generic
+// "google_auth_failed" message as an unsupported email domain. Using the
+// callback form of passport.authenticate instead exposes the verify
+// callback's `info` (set in config/passport.ts), so the specific reason can
+// be forwarded to the frontend as a distinct ?error= code.
+const GOOGLE_ERROR_CODE_TO_PARAM: Record<string, string> = {
+  INVALID_DOMAIN: "invalid_domain",
+  EMAIL_NOT_VERIFIED: "email_not_verified",
+  ACCOUNT_BLOCKED: "account_blocked",
+};
+
+router.get("/google/callback", (req, res, next) => {
+  passport.authenticate(
+    "google",
+    { session: false },
+    (err: unknown, user: Express.User | false, info?: { code?: string }) => {
+      if (err || !user) {
+        const errorParam = info?.code
+          ? (GOOGLE_ERROR_CODE_TO_PARAM[info.code] ?? "google_auth_failed")
+          : "google_auth_failed";
+        return res.redirect(`${process.env.FRONTEND_URL}/login?error=${errorParam}`);
+      }
+      req.user = user;
+      return authWithGoogle(req, res);
+    },
+  )(req, res, next);
+});
 
 router.post(
   "/reject-business-registrations/:id",

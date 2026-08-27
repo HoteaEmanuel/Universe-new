@@ -36,6 +36,8 @@ type AuthStore = {
   logIn: (email: string, password: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  deleteAccount: (password?: string) => Promise<void>;
   sendVerificationEmail: (email: string) => Promise<void>;
   verifyEmail: (email: string, verificationCode: string) => Promise<void>;
   logOut: () => Promise<void>;
@@ -170,7 +172,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const data = err?.response?.data;
       const message =
         data?.code === "ACCOUNT_BLOCKED"
-          ? `Your account has been blocked${data.reason ? `: ${data.reason}` : ""}`
+          ? `Your account has been blocked${data.reason ? `: ${data.reason}` : ""}. Check your email for more details.`
           : data?.message || "Login failed";
       set({ error: message });
     } finally {
@@ -226,6 +228,35 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({
         error: err.response.data.message || "Verification failed",
       });
+      throw eroare;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  changePassword: async (currentPassword, newPassword) => {
+    set({ isLoading: true, error: null });
+    try {
+      await axios.post(`${API_URL}/change-password`, {
+        currentPassword,
+        newPassword,
+      });
+    } catch (eroare) {
+      const err = eroare as { response?: { data?: { message?: string } } };
+      set({ error: err?.response?.data?.message || "Could not change password" });
+      throw eroare;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  deleteAccount: async (password) => {
+    set({ isLoading: true, error: null });
+    try {
+      await axios.post(`${API_URL}/delete-account`, { password });
+      get().disconnectSocket();
+      set({ isAuthenticated: false, user: null });
+    } catch (eroare) {
+      const err = eroare as { response?: { data?: { message?: string } } };
+      set({ error: err?.response?.data?.message || "Could not delete account" });
       throw eroare;
     } finally {
       set({ isLoading: false });

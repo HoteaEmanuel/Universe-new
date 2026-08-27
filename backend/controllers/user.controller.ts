@@ -1,19 +1,27 @@
 import type { Request, Response } from "express";
 import type {} from "multer";
+import bcryptjs from "bcryptjs";
 import { uploadImage, deleteImages } from "../lib/storage.js";
+import { sendPasswordChangedEmail } from "../mail-service/sendMail.js";
 import { prisma } from "../database/prisma.js";
 // Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
 // import { redis } from "../lib/redis.js";
 import {
   findUserById,
+  findUserWithPasswordById,
   updateUser,
+  deleteUser,
   PUBLIC_PROFILE_SELECT,
 } from "../repository/user.repository.js";
 import { follow, savePost, unfollow } from "../services/user.service.js";
 import { getViewerRelevantUserIds } from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
 import { userNameSearchClause } from "../lib/userSearchClause.js";
-import type { FollowListQueryInput } from "../schemas/user.schema.js";
+import type {
+  ChangePasswordInput,
+  DeleteAccountInput,
+  FollowListQueryInput,
+} from "../schemas/user.schema.js";
 import {
   canonicalizeUsername,
   isValidUsername,
@@ -631,5 +639,67 @@ export const markAppTourSeen = async (req: Request, res: Response) => {
     return res
       .status(400)
       .json({ message: "Could not mark app tour as seen", error });
+  }
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId as string;
+    const { currentPassword, newPassword } = req.body as ChangePasswordInput;
+    const user = await findUserWithPasswordById(userId);
+    if (!user || !user.password) {
+      return res.status(400).json({
+        message:
+          "This account signs in with Google and has no password to change",
+      });
+    }
+
+    const passwordsMatch = await bcryptjs.compare(
+      currentPassword,
+      user.password,
+    );
+    if (!passwordsMatch) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    const salt = await bcryptjs.genSalt(10);
+    const hashedPassword = await bcryptjs.hash(newPassword, salt);
+    await updateUser(userId, {
+      password: hashedPassword,
+      // Any other active session should be forced to log in again with the
+      // new password, the same way a reset-password flow already does.
+      refreshToken: null,
+    });
+
+    await sendPasswordChangedEmail(user);
+
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    return res.status(400).json({ message: "Could not change password", error });
+  }
+};
+
+export const deleteAccount = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId as string;
+    const { password } = req.body as DeleteAccountInput;
+    const user = await findUserWithPasswordById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.password) {
+      const passwordsMatch =
+        !!password && (await bcryptjs.compare(password, user.password));
+      if (!passwordsMatch) {
+        return res.status(401).json({ message: "Password is incorrect" });
+      }
+    }
+
+    await deleteUser(userId);
+
+    res.clearCookie("refreshToken");
+    res.clearCookie("accessToken");
+    return res.status(200).json({ message: "Account deleted successfully" });
+  } catch (error) {
+    return res.status(400).json({ message: "Could not delete account", error });
   }
 };

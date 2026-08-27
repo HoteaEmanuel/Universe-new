@@ -21,6 +21,8 @@ import {
   savePostController,
   completeOnboarding,
   markAppTourSeen,
+  changePassword,
+  deleteAccount,
 } from "../controllers/user.controller.js";
 import { validate } from "../middleware/validate.js";
 import {
@@ -31,6 +33,8 @@ import {
   updateUsernameSchema,
   usernameAvailabilityQuerySchema,
   mentionSearchQuerySchema,
+  changePasswordSchema,
+  deleteAccountSchema,
 } from "../schemas/user.schema.js";
 import { imageUpload } from "../lib/imageUpload.js";
 import { verifyUploadedFiles } from "../lib/validateUpload.js";
@@ -90,6 +94,16 @@ router.post(
   "/unfollow",
   validate({ body: unfollowSchema }),
   unfollowController,
+);
+router.post(
+  "/change-password",
+  validate({ body: changePasswordSchema }),
+  changePassword,
+);
+router.post(
+  "/delete-account",
+  validate({ body: deleteAccountSchema }),
+  deleteAccount,
 );
 
 export default router;

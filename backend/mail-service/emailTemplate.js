@@ -281,6 +281,63 @@ export const RESET_PASSWORD_EMAIL = `
 </html>
 
 `;
+export const PASSWORD_CHANGED_EMAIL = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your password was changed</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f6fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 30px;
+      text-align: center;
+    }
+    h2 {
+      color: #333;
+    }
+    p {
+      color: #555;
+      font-size: 15px;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #888;
+    }
+      .img{
+        height: 8rem;
+        width: 12rem;
+        margin-bottom: 2rem;}
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <img src="https://i.imgur.com/cv2yCX7.png" alt="logo" class="img" />
+    <h2>Your password was changed</h2>
+    <p>Hi {{USER_NAME}},</p>
+    <p>This is a confirmation that the password for your Universe account was just changed.</p>
+    <p>If you made this change, no further action is needed. If you didn't, please reset your password immediately and contact support.</p>
+    <div class="footer">
+      © 2026 Universe. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>
+
+`;
 export const BLOCKED_ACCOUNT_EMAIL = `
 <!DOCTYPE html>
 <html lang="en">
