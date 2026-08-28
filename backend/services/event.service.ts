@@ -201,7 +201,7 @@ export const cancelEventService = async (eventId: string) => {
   });
   return toEventDTO(event);
 };
-
+/* Needs background job behaviour - what if the event has 100000 participants? */
 const notifyParticipants = async (
   eventId: string,
   actionUserId: string,

@@ -408,3 +408,70 @@ export const BLOCKED_ACCOUNT_EMAIL = `
 </html>
 
 `;
+export const UNBLOCKED_ACCOUNT_EMAIL = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your account has been unblocked</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f6fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 30px;
+      text-align: center;
+    }
+    h2 {
+      color: #333;
+    }
+    p {
+      color: #555;
+      font-size: 15px;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 12px 28px;
+      background-color: #9400D3;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #888;
+    }
+      .img{
+        height: 8rem;
+        width: 12rem;
+        margin-bottom: 2rem;}
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <img src="https://i.imgur.com/cv2yCX7.png" alt="logo" class="img" />
+    <h2>Your account has been unblocked</h2>
+    <p>Hi {{USER_NAME}},</p>
+    <p>Good news — an administrator has unblocked your Universe account. You can now log in and use your account as normal.</p>
+    <a class="btn" href="{{APP_URL}}">Log in to Universe</a>
+    <div class="footer">
+      © 2026 Universe. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>
+
+`;

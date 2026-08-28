@@ -26,6 +26,10 @@ const TOUR_STEPS = [
     content: "Browse and RSVP to events happening around your university.",
   },
   {
+    selector: "[data-tour='nav-opportunities']",
+    content: "Find internships, jobs, and other opportunities shared by your community.",
+  },
+  {
     selector: "[data-tour='nav-create-post']",
     content: "Share a new post, photo, or poll with your network.",
   },

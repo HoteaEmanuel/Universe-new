@@ -11,7 +11,11 @@ import {
 import { findPostForReport, softDeletePost } from "../repository/post.repository.js";
 import { findCommentForReport, softDeleteComment } from "../repository/comment.repository.js";
 import { findUserById } from "../repository/user.repository.js";
-import { blockUser as adminBlockUser } from "../repository/admin.repository.js";
+import {
+  blockUser as adminBlockUser,
+  SelfBlockError,
+  CannotBlockAdminError,
+} from "./admin.service.js";
 import { blockUser as blockUserUser } from "./block.service.js";
 import { createNotification, emitNewNotification } from "../repository/notification.repository.js";
 import type { Prisma } from "../generated/prisma/client.js";
@@ -203,22 +207,21 @@ export const resolveReport = async (input: ResolveReportServiceInput) => {
   }
 
   // action === "block_user" - reuses the platform-ban path (UserAccountStatus),
-  // not the user-to-user Block model. Mirrors admin.controller's blockUser
-  // safety checks since this reaches the same repository function via a
-  // different route.
-  if (report.reportedUserId === adminId) {
-    throw new InvalidReportActionError("You cannot block yourself");
+  // not the user-to-user Block model. adminBlockUser (admin.service) owns the
+  // self-block / cannot-block-admin safety checks, same as the direct
+  // admin.controller route.
+  try {
+    await adminBlockUser({
+      userId: report.reportedUserId,
+      blockedByUserId: adminId,
+      reason: note ?? `Reported for ${report.reason}`,
+    });
+  } catch (error) {
+    if (error instanceof SelfBlockError || error instanceof CannotBlockAdminError) {
+      throw new InvalidReportActionError(error.message);
+    }
+    throw error;
   }
-  const targetUser = await findUserById(report.reportedUserId);
-  if (targetUser?.role === "admin") {
-    throw new InvalidReportActionError("Admins cannot block other admins");
-  }
-
-  await adminBlockUser({
-    userId: report.reportedUserId,
-    blockedByUserId: adminId,
-    reason: note ?? `Reported for ${report.reason}`,
-  });
 
   return resolveReportRow({
     id: reportId,
