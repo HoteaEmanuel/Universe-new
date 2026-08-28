@@ -15,7 +15,13 @@ import TextareaField from "@/components/TextareaField";
 import SubmitButton from "@/components/SubmitButton";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import DateTimePickerField from "@/components/DateTimePickerField";
 import PollComposeFields from "@/features/polls/components/PollComposeFields";
 import MentionAutocomplete from "@/components/MentionAutocomplete";
@@ -47,9 +53,14 @@ const CreatePost = () => {
   }, []);
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const canPublishOpportunity = user?.role === "admin" || (user?.accountType === "business" && user?.identityVerified === "true");
-  const [postType, setPostType] = useState<"standard" | "opportunity">("standard");
-  const [opportunityType, setOpportunityType] = useState<OpportunityType>("internship");
+  const canPublishOpportunity =
+    user?.role === "admin" ||
+    (user?.accountType === "business" && user?.identityVerified === "true");
+  const [postType, setPostType] = useState<"standard" | "opportunity">(
+    "standard",
+  );
+  const [opportunityType, setOpportunityType] =
+    useState<OpportunityType>("internship");
   const [workplaceType, setWorkplaceType] = useState<WorkplaceType>("onsite");
   const [caption, setCaption] = useState("");
   const bodyInputRef = useRef<HTMLTextAreaElement>(null);
@@ -73,6 +84,7 @@ const CreatePost = () => {
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const watchedValues = watch();
+  const titleValue= watchedValues.title || "";
   const tagsValue = watchedValues.tags || "";
   const mentionAutocomplete = useMentionAutocomplete({
     inputRef: bodyInputRef,
@@ -86,7 +98,9 @@ const CreatePost = () => {
   };
 
   const onSubmit = async (data: PostFormValues) => {
-    const trimmedOptions = pollOptions.map((option) => option.trim()).filter(Boolean);
+    const trimmedOptions = pollOptions
+      .map((option) => option.trim())
+      .filter(Boolean);
     const poll =
       showPoll && pollQuestion.trim() && trimmedOptions.length >= 2
         ? { question: pollQuestion.trim(), options: trimmedOptions }
@@ -97,13 +111,15 @@ const CreatePost = () => {
       images: files,
       poll: postType === "standard" ? poll : undefined,
       type: postType,
-      ...(postType === "opportunity" ? {
-        opportunityType,
-        workplaceType,
-        companyName: data.companyName.trim(),
-        applyUrl: data.applyUrl.trim(),
-        deadlineAt: deadlineAt ? deadlineAt.toISOString() : undefined,
-      } : {}),
+      ...(postType === "opportunity"
+        ? {
+            opportunityType,
+            workplaceType,
+            companyName: data.companyName.trim(),
+            applyUrl: data.applyUrl.trim(),
+            deadlineAt: deadlineAt ? deadlineAt.toISOString() : undefined,
+          }
+        : {}),
     };
     await createPost(payload);
     navigate("/home");
@@ -118,19 +134,42 @@ const CreatePost = () => {
     });
   };
 
+  console.log(watchedValues.title, watchedValues.tags);
+
+  const disabled =
+    isSubmitting ||
+    titleValue.trim().length === 0 ||
+    tagsValue.trim().length === 0 ||
+    (postType === "opportunity" &&
+      (watchedValues?.companyName.trim().length === 0 ||
+        watchedValues?.applyUrl.trim().length === 0));
+
   return (
     <section className="w-full py-6">
       <PostFormCard title="Create a post">
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={handleSubmit(onSubmit)}
-        >
+        <form className="flex flex-col gap-4 mb-20" onSubmit={handleSubmit(onSubmit)}>
           {canPublishOpportunity && (
             <div className="flex flex-col gap-1.5">
               <Label>Post type</Label>
               <div className="inline-flex w-fit rounded-full bg-muted p-1">
-                <Button type="button" size="sm" variant={postType === "standard" ? "default" : "ghost"} className="rounded-full" onClick={() => setPostType("standard")}>Post</Button>
-                <Button type="button" size="sm" variant={postType === "opportunity" ? "default" : "ghost"} className="rounded-full" onClick={() => setPostType("opportunity")}>Job or internship</Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={postType === "standard" ? "default" : "ghost"}
+                  className="rounded-full"
+                  onClick={() => setPostType("standard")}
+                >
+                  Post
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={postType === "opportunity" ? "default" : "ghost"}
+                  className="rounded-full"
+                  onClick={() => setPostType("opportunity")}
+                >
+                  Job or internship
+                </Button>
               </div>
             </div>
           )}
@@ -178,15 +217,20 @@ const CreatePost = () => {
               <MentionAutocomplete
                 users={mentionAutocomplete.users}
                 isLoading={mentionAutocomplete.isLoading}
-                onSelect={(user) => insertMentionAtCursor({
-                  input: bodyInputRef.current,
-                  value: watchedValues.body ?? "",
-                  username: user.username,
-                  onChange: (body) => {
-                    setValue("body", body, { shouldValidate: true, shouldDirty: true });
-                    setCaption(body);
-                  },
-                })}
+                onSelect={(user) =>
+                  insertMentionAtCursor({
+                    input: bodyInputRef.current,
+                    value: watchedValues.body ?? "",
+                    username: user.username,
+                    onChange: (body) => {
+                      setValue("body", body, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                      setCaption(body);
+                    },
+                  })
+                }
               />
             )}
           </div>
@@ -195,32 +239,89 @@ const CreatePost = () => {
             <section className="flex flex-col gap-4 rounded-2xl bg-primary/[0.06] p-4 dark:bg-brand-400/10">
               <div>
                 <h2 className="font-semibold">Opportunity details</h2>
-                <p className="text-sm text-muted-foreground">Students will apply on the external page you provide.</p>
+                <p className="text-sm text-muted-foreground">
+                  Students will apply on the external page you provide.
+                </p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
                   <Label>Opportunity type</Label>
-                  <Select value={opportunityType} onValueChange={(value: unknown) => setOpportunityType(value as OpportunityType)}>
-                    <SelectTrigger className="h-10 w-full"><SelectValue /></SelectTrigger>
-                    <SelectContent>{OPPORTUNITY_TYPES.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+                  <Select
+                    value={opportunityType}
+                    onValueChange={(value: unknown) =>
+                      setOpportunityType(value as OpportunityType)
+                    }
+                  >
+                    <SelectTrigger className="h-10 w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OPPORTUNITY_TYPES.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <Label>Workplace</Label>
-                  <Select value={workplaceType} onValueChange={(value: unknown) => setWorkplaceType(value as WorkplaceType)}>
-                    <SelectTrigger className="h-10 w-full"><SelectValue /></SelectTrigger>
+                  <Select
+                    value={workplaceType}
+                    onValueChange={(value: unknown) =>
+                      setWorkplaceType(value as WorkplaceType)
+                    }
+                  >
+                    <SelectTrigger className="h-10 w-full">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="onsite">On-site</SelectItem><SelectItem value="hybrid">Hybrid</SelectItem><SelectItem value="remote">Remote</SelectItem>
+                      <SelectItem value="onsite">On-site</SelectItem>
+                      <SelectItem value="hybrid">Hybrid</SelectItem>
+                      <SelectItem value="remote">Remote</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-              <FormField id="company-name" label="Company" placeholder="Company or organization" error={errors.companyName?.message} registration={register("companyName", { required: postType === "opportunity" ? "Enter the company name" : false, minLength: { value: 2, message: "Company name is too short" } })} />
-              <FormField id="apply-url" type="url" label="External application link" placeholder="https://linkedin.com/jobs/..." error={errors.applyUrl?.message} registration={register("applyUrl", { required: postType === "opportunity" ? "Add an application link" : false, validate: (value) => postType !== "opportunity" || value.startsWith("https://") || "Application links must use HTTPS" })} />
+              <FormField
+                id="company-name"
+                label="Company"
+                placeholder="Company or organization"
+                error={errors.companyName?.message}
+                registration={register("companyName", {
+                  required:
+                    postType === "opportunity"
+                      ? "Enter the company name"
+                      : false,
+                  minLength: { value: 2, message: "Company name is too short" },
+                })}
+              />
+              <FormField
+                id="apply-url"
+                type="url"
+                label="External application link"
+                placeholder="https://linkedin.com/jobs/..."
+                error={errors.applyUrl?.message}
+                registration={register("applyUrl", {
+                  required:
+                    postType === "opportunity"
+                      ? "Add an application link"
+                      : false,
+                  validate: (value) =>
+                    postType !== "opportunity" ||
+                    value.startsWith("https://") ||
+                    "Application links must use HTTPS",
+                })}
+              />
               <Controller
                 control={control}
                 name="deadlineAt"
-                rules={{ validate: (value) => !value || value.getTime() > Date.now() || "Choose a future deadline" }}
+                rules={{
+                  validate: (value) =>
+                    !value ||
+                    value.getTime() > Date.now() ||
+                    "Choose a future deadline",
+                }}
                 render={({ field }) => (
                   <DateTimePickerField
                     id="application-deadline"
@@ -235,10 +336,12 @@ const CreatePost = () => {
             </section>
           )}
 
-          {postType === "standard" && <div className="flex flex-col gap-1.5">
-            <Label className="">Images</Label>
-            <MultipleImagesUploader setFiles={setFiles} files={files} />
-          </div>}
+          {postType === "standard" && (
+            <div className="flex flex-col gap-1.5">
+              <Label className="">Images</Label>
+              <MultipleImagesUploader setFiles={setFiles} files={files} />
+            </div>
+          )}
 
           <div className="flex flex-col gap-1.5">
             {!showPoll ? (
@@ -345,6 +448,7 @@ const CreatePost = () => {
               isLoading={isSubmitting}
               loadingText="Creating..."
               className="w-auto"
+              disabled={disabled}
             >
               Share
             </SubmitButton>

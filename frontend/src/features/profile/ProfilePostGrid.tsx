@@ -4,7 +4,10 @@ import { Heart, Images, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGetLikesQuery } from "../../queryAndMutation/queries/post-queries";
 import type { Post } from "../../queryAndMutation/types";
-import transparentEaselIllustration from "@/assets/profile-empty-state/transparent-camera.webp";
+import incompleteConstellationIllustration from "@/assets/profile-empty-state/incomplete-constellation-color.webp";
+import studentLifeIllustration from "@/assets/profile-empty-state/student-life-documentary-photos.webp";
+
+type EmptyIllustration = "student-life" | "constellation";
 
 type ProfilePostGridProps = {
   posts: Post[];
@@ -12,7 +15,7 @@ type ProfilePostGridProps = {
   emptyTitle: ReactNode;
   emptyDescription?: string;
   showCreateCta?: boolean;
-  showIllustrations?: boolean;
+  emptyIllustration?: EmptyIllustration;
 };
 
 const ProfilePostGrid = ({
@@ -21,35 +24,64 @@ const ProfilePostGrid = ({
   emptyTitle,
   emptyDescription,
   showCreateCta = false,
-  showIllustrations = false,
+  emptyIllustration,
 }: ProfilePostGridProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const emptyIllustrationSrc =
+    emptyIllustration === "constellation"
+      ? incompleteConstellationIllustration
+      : studentLifeIllustration;
+  const isVisitorEmptyState = emptyIllustration === "constellation";
 
   if (posts.length === 0) {
     return (
       <div className="flex flex-col items-center gap-5 py-6 text-center sm:py-10">
-        {showIllustrations && (
-          <div className="relative flex min-h-34 w-full max-w-xl items-center justify-center overflow-hidden rounded-2xl px-6 pt-5 sm:min-h-60 sm:px-10 sm:pt-7">
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_25%,rgba(251,191,36,0.22),transparent_55%),radial-gradient(circle_at_75%_70%,rgba(124,58,237,0.22),transparent_60%)] blur-2xl"
-            />
+        {emptyIllustration && (
+          <div
+            className={
+              isVisitorEmptyState
+                ? "relative isolate flex min-h-64 w-full max-w-xl items-center justify-center overflow-hidden rounded-2xl bg-violet-50/70 px-6 py-7 dark:bg-violet-950/25 sm:min-h-80 sm:px-10"
+                : "relative flex min-h-34 w-full max-w-xl items-center justify-center overflow-hidden rounded-2xl px-6 pt-5 sm:min-h-60 sm:px-10 sm:pt-7"
+            }
+          >
+            {!isVisitorEmptyState && (
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_25%,rgba(251,191,36,0.22),transparent_55%),radial-gradient(circle_at_75%_70%,rgba(124,58,237,0.22),transparent_60%)] blur-2xl"
+              />
+            )}
             <img
-              src={transparentEaselIllustration}
+              src={emptyIllustrationSrc}
               alt=""
               aria-hidden="true"
-              className="h-auto w-1/2 max-w-sm object-contain"
+              className={
+                isVisitorEmptyState
+                  ? "h-auto w-4/5 max-w-sm object-contain"
+                  : "h-auto w-1/2 max-w-sm object-contain"
+              }
             />
           </div>
         )}
 
         <div className="flex max-w-md flex-col items-center gap-2 px-4">
-          <p className="text-xl font-bold text-violet-600 dark:text-violet-400">
+          <p
+            className={
+              isVisitorEmptyState
+                ? "text-xl font-bold text-foreground"
+                : "text-xl font-bold text-violet-600 dark:text-violet-400"
+            }
+          >
             {emptyTitle}
           </p>
           {emptyDescription && (
-            <p className="text-sm text-violet-900/70 dark:text-violet-200/70">
+            <p
+              className={
+                isVisitorEmptyState
+                  ? "text-sm text-muted-foreground"
+                  : "text-sm text-violet-900/70 dark:text-violet-200/70"
+              }
+            >
               {emptyDescription}
             </p>
           )}

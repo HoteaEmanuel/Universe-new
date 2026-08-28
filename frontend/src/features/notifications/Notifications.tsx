@@ -37,7 +37,11 @@ const NotificationSkeletonList = () => (
   </div>
 );
 
-const NotificationList = ({ notifications }: { notifications: Notification[] }) => (
+const NotificationList = ({
+  notifications,
+}: {
+  notifications: Notification[];
+}) => (
   <div className="flex flex-col gap-1">
     {notifications.map((notification) => (
       <NotificationItem key={notification.id} notification={notification} />
@@ -95,7 +99,11 @@ const NotificationHistoryList = ({
     const handleScroll = () => {
       const distanceFromBottom =
         scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
-      if (hasNextPage && !isFetchingNextPage && distanceFromBottom < SCROLL_FETCH_THRESHOLD) {
+      if (
+        hasNextPage &&
+        !isFetchingNextPage &&
+        distanceFromBottom < SCROLL_FETCH_THRESHOLD
+      ) {
         fetchNextPage();
       }
     };
@@ -118,7 +126,9 @@ const NotificationHistoryList = ({
               data-index={virtualItem.index}
               ref={virtualizer.measureElement}
               className="absolute top-0 left-0 w-full pb-1"
-              style={{ transform: `translateY(${virtualItem.start - scrollMargin}px)` }}
+              style={{
+                transform: `translateY(${virtualItem.start - scrollMargin}px)`,
+              }}
             >
               <NotificationItem notification={notification} />
             </div>
@@ -134,17 +144,16 @@ const Notifications = () => {
   const { user } = useAuthStore();
   const { mutate: seeNotifications } = useSeeNotifications(user!.id);
   const [historyExpanded, setHistoryExpanded] = useState(false);
-  const {
-    data,
-    isPending,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useGetNotificationsHistoryInfinite(user!.id);
+  const { data, isPending, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useGetNotificationsHistoryInfinite(user!.id);
 
   // Clears the unread badge shortly after the page is viewed. Unlike the
   // old Unseen tab, the lists below aren't filtered by read state, so this
   // no longer makes notifications vanish out from under the user.
+
+  useEffect(() => {
+    document.title = "Notifications";
+  }, []);
   useEffect(() => {
     const timeoutId = setTimeout(() => seeNotifications(), 2000);
     return () => clearTimeout(timeoutId);
@@ -166,7 +175,9 @@ const Notifications = () => {
 
       {!isPending && recent.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold text-muted-foreground">Recent</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            Recent
+          </h2>
           <NotificationList notifications={recent} />
         </section>
       )}

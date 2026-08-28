@@ -123,7 +123,7 @@ const ProfilePage = () => {
               </span>
             </>
           ) : (
-            "No posts yet"
+            "Still connecting the dots"
           )
         }
         emptyDescription={
@@ -131,10 +131,16 @@ const ProfilePage = () => {
             ? "Posts you save will show up here."
             : isOwnProfile
               ? "You don't need the perfect post — just something real."
-              : undefined
+              : "Nothing has been shared here yet."
         }
         showCreateCta={isOwnProfile && tab === "posts"}
-        showIllustrations={tab === "posts"}
+        emptyIllustration={
+          tab === "posts"
+            ? isOwnProfile
+              ? "student-life"
+              : "constellation"
+            : undefined
+        }
       />
     </div>
   );

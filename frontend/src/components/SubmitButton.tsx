@@ -7,6 +7,7 @@ type SubmitButtonProps = {
   loadingText?: string;
   children: ReactNode;
   className?: string;
+  disabled?:boolean
 };
 
 const SubmitButton = ({
@@ -14,11 +15,12 @@ const SubmitButton = ({
   loadingText = "Loading...",
   children,
   className = "",
+  disabled,
 }: SubmitButtonProps) => {
   return (
     <Button
       type="submit"
-      disabled={isLoading}
+      disabled={isLoading || disabled}
       size="lg"
       className={`h-10 w-full ${className}`}
     >
