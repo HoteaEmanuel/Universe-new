@@ -7,6 +7,7 @@ import {
   Mail,
   MessageCircle,
   Reply,
+  ShieldAlert,
   UserPlus,
   Users,
   AtSign,
@@ -25,6 +26,7 @@ const TYPE_ICON: Record<string, typeof Heart> = {
   "event-update": CalendarClock,
   "event-cancelled": CalendarX,
   "event-waitlist-promoted": CalendarCheck,
+  "content-removed": ShieldAlert,
   follow: UserPlus,
   message: Mail,
 };

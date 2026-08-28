@@ -1,6 +1,8 @@
 import { useState, type RefObject } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Heart, Trash2 } from "lucide-react";
+import ReportDialog from "@/features/moderation/components/ReportDialog";
+import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 import { useGetUserByIdQuery } from "@/queryAndMutation/queries/user-queries";
 import {
@@ -47,6 +49,7 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
   const [repliesExpanded, setRepliesExpanded] = useState(false);
   const [replyBoxOpen, setReplyBoxOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const deleteComment = useDeleteCommentMutation(postId, comment.parentId);
   const likeComment = useLikeCommentMutation(postId, comment.parentId);
   const removeLikeComment = useRemoveLikeCommentMutation(postId, comment.parentId);
@@ -110,40 +113,60 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
               >
                 {isOwnComment ? "You" : getFullName(user!)}
               </Link>{" "}
-              <MentionText text={comment.text} mentionedUsers={comment.mentionedUsers ?? []} />
+              {comment.isRemoved ? (
+                <span className="italic text-muted-foreground">{comment.text}</span>
+              ) : (
+                <MentionText text={comment.text} mentionedUsers={comment.mentionedUsers ?? []} />
+              )}
             </>
           )}
         </p>
-        <div className="flex items-center gap-3 pt-0.5 text-xs text-muted-foreground">
+        <div className="flex flex-col gap-1 pt-0.5 text-xs text-muted-foreground">
           <span>{formatDateDetailed(comment.createdAt)}</span>
-          {!isReply && !comment.isBlocked && (
-            <button
-              type="button"
-              className="font-medium hover:text-foreground"
-              onClick={() => setReplyBoxOpen((open) => !open)}
-            >
-              Reply
-            </button>
-          )}
-          {!isReply && (repliesCount > 0 || repliesExpanded) && (
-            <button
-              type="button"
-              className="font-medium hover:text-foreground"
-              onClick={() => setRepliesExpanded((open) => !open)}
-            >
-              {repliesExpanded ? "Hide replies" : "View replies"}
-            </button>
-          )}
-          {isOwnComment && (
-            <button
-              type="button"
-              className="opacity-0 transition-opacity hover:text-destructive group-hover/comment:opacity-100"
-              onClick={() => setConfirmDeleteOpen(true)}
-              aria-label="Delete comment"
-            >
-              <Trash2 className="size-3.5" />
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {!isReply && !comment.isBlocked && !comment.isRemoved && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-auto gap-0 rounded-none bg-transparent p-0 font-medium hover:bg-transparent hover:text-foreground"
+                onClick={() => setReplyBoxOpen((open) => !open)}
+              >
+                Reply
+              </Button>
+            )}
+            {!isReply && (repliesCount > 0 || repliesExpanded) && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-auto gap-0 rounded-none bg-transparent p-0 font-medium hover:bg-transparent hover:text-foreground"
+                onClick={() => setRepliesExpanded((open) => !open)}
+              >
+                {repliesExpanded ? "Hide replies" : "View replies"}
+              </Button>
+            )}
+            {isOwnComment && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="rounded-none bg-transparent p-0 opacity-0 transition-opacity hover:bg-transparent hover:text-destructive group-hover/comment:opacity-100"
+                onClick={() => setConfirmDeleteOpen(true)}
+                aria-label="Delete comment"
+              >
+                <Trash2 className="size-3.5" />
+              </Button>
+            )}
+            {!comment.isBlocked && !comment.isRemoved && !isOwnComment && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-auto gap-0 rounded-none bg-transparent p-0 font-medium opacity-0 transition-opacity hover:bg-transparent hover:text-destructive group-hover/comment:opacity-100"
+                onClick={() => setShowReportDialog(true)}
+              >
+                Report
+              </Button>
+            )}
+          </div>
         </div>
 
         {!isReply && replyBoxOpen && (
@@ -169,7 +192,7 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
         )}
       </div>
 
-      {comment.isBlocked ? null : isOwnComment ? (
+      {comment.isBlocked || comment.isRemoved ? null : isOwnComment ? (
         <span className="mt-1 flex shrink-0 flex-col items-center gap-0.5 text-muted-foreground">
           <Heart className={heartSize} fill="none" />
           {likesCount > 0 && (
@@ -177,9 +200,10 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
           )}
         </span>
       ) : (
-        <button
+        <Button
           type="button"
-          className="mt-1 flex shrink-0 flex-col items-center gap-0.5"
+          variant="ghost"
+          className="mt-1 h-auto flex-col gap-0.5 rounded-none bg-transparent p-0 hover:bg-transparent"
           onClick={handleToggleLike}
           aria-label={liked ? "Unlike comment" : "Like comment"}
         >
@@ -198,7 +222,7 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
               {formatCount(likesCount)}
             </span>
           )}
-        </button>
+        </Button>
       )}
 
       <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
@@ -217,6 +241,13 @@ const Comment = ({ comment, scrollContainerRef, onDeleted }: CommentProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ReportDialog
+        open={showReportDialog}
+        onClose={() => setShowReportDialog(false)}
+        targetType="comment"
+        targetId={comment.id}
+      />
     </div>
   );
 };

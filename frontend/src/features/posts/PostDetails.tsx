@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Heart, MessageCircle, Bookmark, BookmarkCheck, ImageOff, Loader2 } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, BookmarkCheck, ImageOff, Loader2, Flag, MoreVertical } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import NotFoundState from "@/components/NotFoundState";
 import { useAuthStore } from "@/store/authStore";
@@ -36,6 +36,13 @@ import ImageSlider from "./components/ImageSlider";
 import UserAvatar from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import ReportDialog from "@/features/moderation/components/ReportDialog";
 import OpportunitySummary from "@/features/opportunities/components/OpportunitySummary";
 
 type PostDetailsProps = {
@@ -64,6 +71,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
   const [isClamped, setIsClamped] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likePop, setLikePop] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const [showHeartBurst, setShowHeartBurst] = useState(false);
   const bodyRef = useRef<HTMLParagraphElement>(null);
   const userId = post?.userId;
@@ -237,7 +245,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
       >
         <div className="flex shrink-0 items-center gap-2.5 border-b border-border px-4 py-3">
           <UserAvatar user={creator} className="size-9" onClick={handleProfileClick} />
-          <div className="flex w-full items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
             <div>
               <p className="text-sm font-semibold leading-tight">
                 {getFullName(creator)}
@@ -268,6 +276,32 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
                 </Button>
               ))}
           </div>
+
+          {userId !== user.id && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="icon-hover-btn shrink-0"
+                    aria-label="Post options"
+                  />
+                }
+              >
+                <MoreVertical className="size-5 text-foreground/80" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setShowReportDialog(true)}
+                >
+                  <Flag />
+                  Report post
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
@@ -413,6 +447,13 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
           postId={postId ?? ""}
         />
       )}
+
+      <ReportDialog
+        open={showReportDialog}
+        onClose={() => setShowReportDialog(false)}
+        targetType="post"
+        targetId={postId ?? ""}
+      />
     </div>
   );
 };

@@ -3,13 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Camera,
+  Flag,
   GraduationCap,
   BookOpen,
   MessageCircle,
   Link2,
+  MoreVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import ReportDialog from "@/features/moderation/components/ReportDialog";
 import UserAvatar from "@/components/UserAvatar";
 import { getFullName } from "@/utils/fullName";
 import { useAuthStore } from "@/store/authStore";
@@ -44,6 +53,7 @@ const ProfileHeader = ({
   const [followListOpen, setFollowListOpen] = useState<
     "followers" | "following" | null
   >(null);
+  const [showReportDialog, setShowReportDialog] = useState(false);
 
   const { data: followers } = useGetFollowersQuery(user.id);
   const { data: following } = useGetFollowingQuery(user.id);
@@ -222,6 +232,33 @@ const ProfileHeader = ({
             </TooltipTrigger>
             <TooltipContent>Share profile</TooltipContent>
           </Tooltip>
+          {!isOwnProfile && (
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <DropdownMenuTrigger
+                      render={
+                        <Button variant="outline" size="icon-sm" aria-label="Profile options" />
+                      }
+                    />
+                  }
+                >
+                  <MoreVertical />
+                </TooltipTrigger>
+                <TooltipContent>Profile options</TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setShowReportDialog(true)}
+                >
+                  <Flag />
+                  Report account
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
@@ -246,6 +283,15 @@ const ProfileHeader = ({
         userId={user.id}
         title="Following"
       />
+
+      {!isOwnProfile && (
+        <ReportDialog
+          open={showReportDialog}
+          onClose={() => setShowReportDialog(false)}
+          targetType="user_profile"
+          targetId={user.id}
+        />
+      )}
     </div>
   );
 };

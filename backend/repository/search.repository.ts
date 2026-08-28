@@ -77,7 +77,8 @@ export const searchPosts = async (
   const rows = await prisma.$queryRaw<PostSearchRow[]>`
     SELECT p.id, p."userId", p."imagesUrls", p."imagesPublicIds", p.title, p.body, p.location, p."createdAt", p."updatedAt"
     FROM posts p
-    WHERE (
+    WHERE p."removedAt" IS NULL
+    AND (
       p."searchVector" @@ websearch_to_tsquery('simple', ${query})
        OR similarity(coalesce(p.title, ''), ${query}) > ${TRIGRAM_THRESHOLD}
        OR EXISTS (

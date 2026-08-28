@@ -15,7 +15,7 @@ const tx = {
 
 vi.mock("../database/prisma.js", () => ({
   prisma: {
-    comment: { findMany: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn() },
+    comment: { findMany: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     commentLike: { findMany: vi.fn() },
     $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback(tx)),
   },
@@ -26,11 +26,13 @@ import {
   createCommentTx,
   deleteCommentTx,
   findCommentById,
+  findCommentForReport,
   getCommentRepliesPage,
   getLikedCommentIds,
   getPostCommentsPage,
   likeCommentTx,
   removeCommentLikeTx,
+  softDeleteComment,
 } from "./comment.repository.js";
 
 describe("comment.repository", () => {
@@ -77,6 +79,44 @@ describe("comment.repository", () => {
     expect(prisma.comment.findUnique).toHaveBeenCalledWith({
       where: { id: "comment-1" },
       select: { id: true, userId: true, postId: true, parentId: true },
+    });
+  });
+
+  it("findCommentForReport selects the fields needed to build a report snapshot", async () => {
+    vi.mocked(prisma.comment.findUnique).mockResolvedValue({
+      id: "comment-1",
+      text: "some text",
+      userId: "user-1",
+      postId: "post-1",
+      user: { username: "alice" },
+    } as never);
+
+    const result = await findCommentForReport("comment-1");
+
+    expect(prisma.comment.findUnique).toHaveBeenCalledWith({
+      where: { id: "comment-1" },
+      select: expect.objectContaining({
+        text: true,
+        userId: true,
+        postId: true,
+        user: { select: { username: true } },
+      }),
+    });
+    expect(result?.user.username).toBe("alice");
+  });
+
+  it("softDeleteComment stamps removedAt/removedReason/removedByUserId", async () => {
+    vi.mocked(prisma.comment.update).mockResolvedValue({ id: "comment-1" } as never);
+
+    await softDeleteComment({ commentId: "comment-1", reason: "spam", byUserId: "admin-1" });
+
+    expect(prisma.comment.update).toHaveBeenCalledWith({
+      where: { id: "comment-1" },
+      data: {
+        removedAt: expect.any(Date),
+        removedReason: "spam",
+        removedByUserId: "admin-1",
+      },
     });
   });
 

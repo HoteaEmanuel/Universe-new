@@ -55,7 +55,10 @@ export const findAllPosts = async (
   excludeUserIds: string[] = [],
 ) => {
   const posts = await prisma.post.findMany({
-    where: excludeUserIds.length ? { userId: { notIn: excludeUserIds } } : undefined,
+    where: {
+      removedAt: null,
+      ...(excludeUserIds.length ? { userId: { notIn: excludeUserIds } } : {}),
+    },
     take: limit + 1,
     orderBy: FEED_ORDER_BY,
     include: POST_INCLUDE,
@@ -72,6 +75,7 @@ export const findFollowingPosts = async (
 ) => {
   const posts = await prisma.post.findMany({
     where: {
+      removedAt: null,
       userId: { in: followingIds, ...(excludeUserIds.length ? { notIn: excludeUserIds } : {}) },
     },
     take: limit + 1,
@@ -90,6 +94,7 @@ export const findUniversityPosts = async (
 ) => {
   const posts = await prisma.post.findMany({
     where: {
+      removedAt: null,
       user: { university },
       ...(excludeUserIds.length ? { userId: { notIn: excludeUserIds } } : {}),
     },
@@ -103,7 +108,7 @@ export const findUniversityPosts = async (
 
 export const findUserPosts = async (userId: string) => {
   return prisma.post.findMany({
-    where: { userId },
+    where: { userId, removedAt: null },
     orderBy: { createdAt: "desc" },
     include: POST_INCLUDE,
   });
@@ -224,6 +229,7 @@ export const findOpportunities = async (filters: OpportunityFilters) => {
   ];
   const where: Prisma.PostWhereInput = {
     type: "opportunity",
+    removedAt: null,
     ...(filters.excludeUserIds?.length ? { userId: { notIn: filters.excludeUserIds } } : {}),
     ...(filters.opportunityType ? { opportunityType: filters.opportunityType } : {}),
     ...(filters.workplaceType ? { workplaceType: filters.workplaceType } : {}),
@@ -262,6 +268,7 @@ export const setOpportunityClosed = async (postId: string, closed: boolean) =>
 export const findPostsByText = async (text: string) => {
   return prisma.post.findMany({
     where: {
+      removedAt: null,
       OR: [
         { title: { contains: text, mode: "insensitive" } },
         { body: { contains: text, mode: "insensitive" } },
@@ -273,8 +280,39 @@ export const findPostsByText = async (text: string) => {
 
 export const findPostsByTag = async (tag: string) => {
   return prisma.post.findMany({
-    where: { tags: { some: { name: tag } } },
+    where: { removedAt: null, tags: { some: { name: tag } } },
     include: POST_INCLUDE,
+  });
+};
+
+export const findPostForReport = async (postId: string) => {
+  return prisma.post.findUnique({
+    where: { id: postId },
+    select: {
+      id: true,
+      userId: true,
+      title: true,
+      body: true,
+      imagesUrls: true,
+      user: { select: { username: true } },
+    },
+  });
+};
+
+interface SoftDeletePostInput {
+  postId: string;
+  reason?: string;
+  byUserId: string;
+}
+
+export const softDeletePost = async (data: SoftDeletePostInput) => {
+  return prisma.post.update({
+    where: { id: data.postId },
+    data: {
+      removedAt: new Date(),
+      removedReason: data.reason,
+      removedByUserId: data.byUserId,
+    },
   });
 };
 

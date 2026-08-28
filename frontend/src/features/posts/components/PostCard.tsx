@@ -1,6 +1,14 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { Heart, MessageCircle, Bookmark, BookmarkCheck, Send } from "lucide-react";
+import {
+  Heart,
+  MessageCircle,
+  Bookmark,
+  BookmarkCheck,
+  Send,
+  Flag,
+  MoreVertical,
+} from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -35,6 +43,13 @@ import MentionText from "@/components/MentionText";
 import UserAvatar from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import ReportDialog from "@/features/moderation/components/ReportDialog";
 import OpportunitySummary from "@/features/opportunities/components/OpportunitySummary";
 
 type PostCardProps = {
@@ -55,6 +70,7 @@ const PostCard = ({ post }: PostCardProps) => {
   const bodyRef = useRef<HTMLSpanElement>(null);
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
   const [likePop, setLikePop] = useState(false);
   const [showCelebrate, setShowCelebrate] = useState(false);
   const [showHeartBurst, setShowHeartBurst] = useState(false);
@@ -212,7 +228,10 @@ const PostCard = ({ post }: PostCardProps) => {
           className={`text-sm wrap-break-word ${!showMore && "line-clamp-3"}`}
           ref={bodyRef}
         >
-          <MentionText text={post.body} mentionedUsers={post.mentionedUsers ?? []} />
+          <MentionText
+            text={post.body}
+            mentionedUsers={post.mentionedUsers ?? []}
+          />
         </span>
       )}
       {isClamped && (
@@ -230,10 +249,21 @@ const PostCard = ({ post }: PostCardProps) => {
       to={`/post/${postId}`}
       state={{ backgroundLocation: location }}
       className="card-shell"
+      onClick={(e: MouseEvent) => {
+        /* Blocking the propagation, showing the report modal not navigating to the details page */
+        if (showReportDialog) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
     >
       <div className="flex items-center gap-3 px-4 py-3">
-        <UserAvatar user={creator} className="size-9" onClick={handleProfileClick} />
-        <div className="flex w-full items-center justify-between">
+        <UserAvatar
+          user={creator}
+          className="size-9"
+          onClick={handleProfileClick}
+        />
+        <div className="flex min-w-0 flex-1 items-center justify-between">
           <div>
             <p className="text-sm font-semibold leading-tight">
               {firstName || name} {lastName}
@@ -265,6 +295,39 @@ const PostCard = ({ post }: PostCardProps) => {
               </Button>
             ))}
         </div>
+
+        {userId !== user_.id && (
+          <div
+            onClick={(e: MouseEvent) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="icon-hover-btn shrink-0"
+                    aria-label="Post options"
+                  />
+                }
+              >
+                <MoreVertical className="size-5 text-foreground/80" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setShowReportDialog(true)}
+                >
+                  <Flag />
+                  Report post
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
 
       {post.type === "opportunity" && (
@@ -286,7 +349,10 @@ const PostCard = ({ post }: PostCardProps) => {
 
       {post.poll && (
         <div className="px-4 pt-2">
-          <PollBlock poll={post.poll} invalidateKeys={[["posts"], ["post", postId]]} />
+          <PollBlock
+            poll={post.poll}
+            invalidateKeys={[["posts"], ["post", postId]]}
+          />
         </div>
       )}
 
@@ -350,7 +416,12 @@ const PostCard = ({ post }: PostCardProps) => {
             </svg>
           )}
         </Button>
-        <Button variant="ghost" size="icon-sm" className="hover:bg-transparent" aria-label="Comments">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="hover:bg-transparent"
+          aria-label="Comments"
+        >
           <MessageCircle className="size-6 text-foreground/80 hover:text-foreground" />
         </Button>
         <Button
@@ -386,7 +457,10 @@ const PostCard = ({ post }: PostCardProps) => {
               onMouseLeave={() => setShowSaveOption(false)}
               aria-label="Unsave post"
             >
-              <BookmarkCheck className="size-6 text-foreground" fill="currentColor" />
+              <BookmarkCheck
+                className="size-6 text-foreground"
+                fill="currentColor"
+              />
             </Button>
           )}
           {showSaveOption && (
@@ -445,6 +519,13 @@ const PostCard = ({ post }: PostCardProps) => {
           postId={postId}
         />
       )}
+
+      <ReportDialog
+        open={showReportDialog}
+        onClose={() => setShowReportDialog(false)}
+        targetType="post"
+        targetId={postId}
+      />
 
       {hasImages && captionBlock}
 

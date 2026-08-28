@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, ChevronRight, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Building2, ChevronRight, Flag, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BusinessRegistrationsPanel from "@/features/admin/BusinessRegistrationsPanel";
 import UserManagementPanel from "@/features/admin/UserManagementPanel";
+import ReportsQueuePanel from "@/features/admin/ReportsQueuePanel";
 import AdminStatsOverview from "@/features/admin/AdminStatsOverview";
 import AdminActivityCharts from "@/features/admin/AdminActivityCharts";
 import AdminUniversityChart from "@/features/admin/AdminUniversityChart";
@@ -20,6 +21,7 @@ const Admin = () => {
   const [managementTab, setManagementTab] = useState("users");
   const { data: stats } = useGetAdminStatsQuery();
   const pendingRegistrations = stats?.pendingBusinessRegistrations ?? 0;
+  const pendingReports = stats?.pendingReports ?? 0;
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-10 px-4 py-6 md:px-6 md:py-10">
@@ -47,13 +49,14 @@ const Admin = () => {
           </h2>
           <p className="text-sm text-muted-foreground">Items waiting for an administrator.</p>
         </div>
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => {
             setManagementTab("registrations");
             document.getElementById("admin-management")?.scrollIntoView({ behavior: "smooth" });
           }}
-          className="group flex min-h-20 w-full items-center gap-4 rounded-xl bg-primary/8 p-4 text-left outline-none ring-primary transition-colors hover:bg-primary/12 focus-visible:ring-2"
+          className="group h-auto min-h-20 w-full justify-start gap-4 rounded-xl bg-primary/8 p-4 text-left hover:bg-primary/12"
         >
           <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Building2 className="size-5" aria-hidden="true" />
@@ -67,7 +70,29 @@ const Admin = () => {
             </span>
           </span>
           <ChevronRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-        </button>
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            setManagementTab("reports");
+            document.getElementById("admin-management")?.scrollIntoView({ behavior: "smooth" });
+          }}
+          className="group h-auto min-h-20 w-full justify-start gap-4 rounded-xl bg-destructive/8 p-4 text-left hover:bg-destructive/12"
+        >
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-destructive text-destructive-foreground">
+            <Flag className="size-5" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">Content reports</span>
+            <span className="block text-sm text-muted-foreground">
+              {pendingReports === 0
+                ? "The report queue is clear."
+                : `${pendingReports.toLocaleString()} pending ${pendingReports === 1 ? "report needs" : "reports need"} review.`}
+            </span>
+          </span>
+          <ChevronRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+        </Button>
       </section>
 
       <AdminStatsOverview />
@@ -88,6 +113,14 @@ const Admin = () => {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="reports">
+              Reports
+              {pendingReports > 0 && (
+                <span className="ml-2 rounded-full bg-destructive px-1.5 py-0.5 text-xs tabular-nums text-destructive-foreground">
+                  {pendingReports}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -102,6 +135,14 @@ const Admin = () => {
             <Card className="">
               <CardContent className="">
                 <BusinessRegistrationsPanel />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <Card className="">
+              <CardContent className="">
+                <ReportsQueuePanel />
               </CardContent>
             </Card>
           </TabsContent>

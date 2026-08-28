@@ -8,6 +8,16 @@ import {
   findUsersPage,
   unblockUser as unblockUserRepo,
 } from "../repository/admin.repository.js";
+import {
+  listReports,
+  getReportedUsersSummary,
+  getReportDetail,
+  resolveReport,
+  ReportNotFoundError,
+  ReportAlreadyResolvedError,
+  InvalidReportActionError,
+} from "../services/report.service.js";
+import type { ListReportsQueryInput, ResolveReportInput } from "../schemas/report.schema.js";
 
 export const getStats = async (_req: Request, res: Response) => {
   try {
@@ -88,5 +98,65 @@ export const unblockUser = async (req: Request, res: Response) => {
     return res.status(200).json({ message: "User unblocked" });
   } catch (error) {
     return res.status(400).json({ message: "Could not unblock user" });
+  }
+};
+
+export const listReportsController = async (req: Request, res: Response) => {
+  try {
+    const { status, reason, targetType, search, cursor, limit } =
+      req.query as unknown as ListReportsQueryInput;
+    const page = await listReports({ status, reason, targetType, search, cursor, limit });
+    return res.status(200).json(page);
+  } catch (error) {
+    return res.status(400).json({ message: "Could not fetch reports" });
+  }
+};
+
+export const getReportedUsersSummaryController = async (_req: Request, res: Response) => {
+  try {
+    const summary = await getReportedUsersSummary();
+    return res.status(200).json({ summary });
+  } catch (error) {
+    return res.status(400).json({ message: "Could not fetch report summary" });
+  }
+};
+
+export const getReportDetailController = async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  try {
+    const report = await getReportDetail(id);
+    return res.status(200).json({ report });
+  } catch (error) {
+    if (error instanceof ReportNotFoundError) {
+      return res.status(404).json({ message: error.message });
+    }
+    return res.status(400).json({ message: "Could not fetch report" });
+  }
+};
+
+export const resolveReportController = async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const { action, note } = req.body as ResolveReportInput;
+  try {
+    const report = await resolveReport({
+      reportId: id,
+      adminId: req.userId as string,
+      action,
+      note,
+    });
+    return res.status(200).json({ message: "Report resolved", report });
+  } catch (error) {
+    if (error instanceof ReportNotFoundError) {
+      return res.status(404).json({ message: error.message });
+    }
+    if (error instanceof ReportAlreadyResolvedError) {
+      return res.status(409).json({ message: error.message });
+    }
+    if (error instanceof InvalidReportActionError) {
+      return res.status(400).json({ message: error.message });
+    }
+    return res.status(400).json({
+      message: error instanceof Error ? error.message : "Could not resolve report",
+    });
   }
 };

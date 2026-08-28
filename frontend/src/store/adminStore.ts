@@ -40,6 +40,7 @@ export type AdminStats = {
   totalPosts: number;
   totalGroups: number;
   totalEvents: number;
+  pendingReports: number;
 };
 
 export type DailyActivity = {

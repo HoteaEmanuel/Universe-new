@@ -118,6 +118,7 @@ export const findAdminStats = async () => {
     totalPosts,
     totalGroups,
     totalEvents,
+    pendingReports,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({
@@ -131,6 +132,7 @@ export const findAdminStats = async () => {
     prisma.post.count(),
     prisma.group.count(),
     prisma.event.count(),
+    prisma.report.count({ where: { status: "pending" } }),
   ]);
 
   return {
@@ -143,6 +145,7 @@ export const findAdminStats = async () => {
     totalPosts,
     totalGroups,
     totalEvents,
+    pendingReports,
   };
 };
 

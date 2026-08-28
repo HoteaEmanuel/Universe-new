@@ -19,7 +19,8 @@ export type NotificationType =
   | "event-banned"
   | "group-banned"
   | "post-mention"
-  | "comment-mention";
+  | "comment-mention"
+  | "content-removed";
 
 export type EventVisibility = "public" | "private";
 export type EventParticipantStatus = "going" | "interested" | "waitlisted";

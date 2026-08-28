@@ -14,6 +14,7 @@ import {
 import type { CommentQueryInput } from "../schemas/comment.schema.js";
 
 const TOMBSTONE_TEXT = "This comment is unavailable.";
+const REMOVED_TEXT = "This comment was removed for violating community guidelines.";
 
 // Blocked-author comments are kept in the list (not filtered out) so replies
 // nested under them stay reachable, but their identity/content is hidden.
@@ -35,6 +36,24 @@ const withBlockAwareness = <
   };
 };
 
+// Same tombstone approach as withBlockAwareness, for the same reason: a
+// moderator-removed comment's replies still need to stay reachable.
+const withRemovalAwareness = <
+  T extends { text: string; mentionedUsers: unknown[]; removedAt?: Date | null },
+>(
+  comment: T,
+) => {
+  if (!comment.removedAt) {
+    return { ...comment, isRemoved: false };
+  }
+  return {
+    ...comment,
+    text: REMOVED_TEXT,
+    mentionedUsers: [],
+    isRemoved: true,
+  };
+};
+
 export const getComments = async (req: Request, res: Response) => {
   try {
     const postId = req.params.id as string;
@@ -50,7 +69,7 @@ export const getComments = async (req: Request, res: Response) => {
     );
     const blockedIds = req.blockedIds ?? new Set<string>();
     const commentsWithLikes = comments.map((comment) => ({
-      ...withBlockAwareness(comment, blockedIds),
+      ...withRemovalAwareness(withBlockAwareness(comment, blockedIds)),
       isLiked: likedCommentIds.has(comment.id),
     }));
     return res.status(200).json({
@@ -81,7 +100,7 @@ export const getCommentReplies = async (req: Request, res: Response) => {
     );
     const blockedIds = req.blockedIds ?? new Set<string>();
     const commentsWithLikes = comments.map((comment) => ({
-      ...withBlockAwareness(comment, blockedIds),
+      ...withRemovalAwareness(withBlockAwareness(comment, blockedIds)),
       isLiked: likedCommentIds.has(comment.id),
     }));
     return res.status(200).json({

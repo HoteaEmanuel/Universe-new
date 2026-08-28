@@ -23,6 +23,7 @@ import {
   findAllPosts,
   findFollowingPosts,
   findPostById,
+  findPostForReport,
   findPostsByTag,
   findPostsByText,
   findSavedPostByIds,
@@ -30,6 +31,7 @@ import {
   findUserPosts,
   findUserSavedPosts,
   findOpportunities,
+  softDeletePost,
 } from "./post.repository.js";
 
 const post = (id: string) => ({ id });
@@ -74,7 +76,7 @@ describe("post.repository", () => {
 
       expect(prisma.post.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { userId: { notIn: ["blocked-1"] } },
+          where: { removedAt: null, userId: { notIn: ["blocked-1"] } },
           cursor: { id: "post-5" },
           skip: 1,
           take: 11,
@@ -89,7 +91,10 @@ describe("post.repository", () => {
 
       expect(prisma.post.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { userId: { in: ["user-a", "user-b"], notIn: ["blocked-1"] } },
+          where: {
+            removedAt: null,
+            userId: { in: ["user-a", "user-b"], notIn: ["blocked-1"] },
+          },
         }),
       );
     });
@@ -100,8 +105,20 @@ describe("post.repository", () => {
       await findUniversityPosts("MIT", undefined, 10, []);
 
       expect(prisma.post.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { user: { university: "MIT" } } }),
+        expect.objectContaining({ where: { removedAt: null, user: { university: "MIT" } } }),
       );
+    });
+
+    it("excludes soft-removed posts from every feed query", async () => {
+      vi.mocked(prisma.post.findMany).mockResolvedValue([]);
+
+      await findAllPosts();
+      await findFollowingPosts([]);
+      await findUniversityPosts(null);
+
+      for (const call of vi.mocked(prisma.post.findMany).mock.calls) {
+        expect((call[0] as { where: { removedAt: null } }).where.removedAt).toBeNull();
+      }
     });
   });
 
@@ -122,6 +139,7 @@ describe("post.repository", () => {
     expect(prisma.post.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({
         type: "opportunity",
+        removedAt: null,
         opportunityType: "internship",
         workplaceType: "remote",
         userId: { notIn: ["blocked-1"] },
@@ -132,13 +150,16 @@ describe("post.repository", () => {
     }));
   });
 
-  it("findUserPosts orders by newest first", async () => {
+  it("findUserPosts orders by newest first and excludes removed posts", async () => {
     vi.mocked(prisma.post.findMany).mockResolvedValue([]);
 
     await findUserPosts("user-1");
 
     expect(prisma.post.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { userId: "user-1" }, orderBy: { createdAt: "desc" } }),
+      expect.objectContaining({
+        where: { userId: "user-1", removedAt: null },
+        orderBy: { createdAt: "desc" },
+      }),
     );
   });
 
@@ -199,7 +220,7 @@ describe("post.repository", () => {
     });
   });
 
-  it("findPostsByText searches title and body case-insensitively", async () => {
+  it("findPostsByText searches title and body case-insensitively, excluding removed posts", async () => {
     vi.mocked(prisma.post.findMany).mockResolvedValue([]);
 
     await findPostsByText("campus life");
@@ -207,6 +228,7 @@ describe("post.repository", () => {
     expect(prisma.post.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
+          removedAt: null,
           OR: [
             { title: { contains: "campus life", mode: "insensitive" } },
             { body: { contains: "campus life", mode: "insensitive" } },
@@ -216,14 +238,55 @@ describe("post.repository", () => {
     );
   });
 
-  it("findPostsByTag filters by tag name", async () => {
+  it("findPostsByTag filters by tag name, excluding removed posts", async () => {
     vi.mocked(prisma.post.findMany).mockResolvedValue([]);
 
     await findPostsByTag("campus");
 
     expect(prisma.post.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { tags: { some: { name: "campus" } } } }),
+      expect.objectContaining({
+        where: { removedAt: null, tags: { some: { name: "campus" } } },
+      }),
     );
+  });
+
+  it("findPostForReport selects the fields needed to build a report snapshot", async () => {
+    vi.mocked(prisma.post.findUnique).mockResolvedValue({
+      id: "post-1",
+      userId: "user-1",
+      title: "Title",
+      body: "Body",
+      imagesUrls: [],
+      user: { username: "alice" },
+    } as never);
+
+    const result = await findPostForReport("post-1");
+
+    expect(prisma.post.findUnique).toHaveBeenCalledWith({
+      where: { id: "post-1" },
+      select: expect.objectContaining({
+        title: true,
+        body: true,
+        imagesUrls: true,
+        user: { select: { username: true } },
+      }),
+    });
+    expect(result?.user.username).toBe("alice");
+  });
+
+  it("softDeletePost stamps removedAt/removedReason/removedByUserId", async () => {
+    vi.mocked(prisma.post.update).mockResolvedValue(post("post-1") as never);
+
+    await softDeletePost({ postId: "post-1", reason: "spam", byUserId: "admin-1" });
+
+    expect(prisma.post.update).toHaveBeenCalledWith({
+      where: { id: "post-1" },
+      data: {
+        removedAt: expect.any(Date),
+        removedReason: "spam",
+        removedByUserId: "admin-1",
+      },
+    });
   });
 
   it("findSavedPostByIds looks up the composite unique key", async () => {

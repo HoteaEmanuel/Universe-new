@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAdmin } from "../middleware/authorization.js";
 import { validate } from "../middleware/validate.js";
 import { blockUserSchema, listUsersQuerySchema } from "../schemas/admin.schema.js";
+import { listReportsQuerySchema, resolveReportSchema } from "../schemas/report.schema.js";
 import {
   getStats,
   getDailyActivity,
@@ -9,6 +10,10 @@ import {
   listUsers,
   blockUser,
   unblockUser,
+  listReportsController,
+  getReportedUsersSummaryController,
+  getReportDetailController,
+  resolveReportController,
 } from "../controllers/admin.controller.js";
 
 const router = Router();
@@ -26,5 +31,20 @@ router.post(
   blockUser,
 );
 router.post("/users/:id/unblock", requireAdmin, unblockUser);
+
+router.get(
+  "/reports",
+  requireAdmin,
+  validate({ query: listReportsQuerySchema }),
+  listReportsController,
+);
+router.get("/reports/summary", requireAdmin, getReportedUsersSummaryController);
+router.get("/reports/:id", requireAdmin, getReportDetailController);
+router.post(
+  "/reports/:id/resolve",
+  requireAdmin,
+  validate({ body: resolveReportSchema }),
+  resolveReportController,
+);
 
 export default router;

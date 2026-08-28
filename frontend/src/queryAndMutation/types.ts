@@ -345,6 +345,7 @@ export type PostComment = {
   repliesCount?: number;
   mentionedUsers: MentionUser[];
   isBlocked?: boolean;
+  isRemoved?: boolean;
 };
 
 export type PostCommentsPage = {

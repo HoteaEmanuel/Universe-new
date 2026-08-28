@@ -41,6 +41,7 @@ export const getPost = async (req: Request, res: Response) => {
       },
     });
     if (!post) throw new Error("Post not found");
+    if (post.removedAt) throw new Error("Post not found");
     if (req.blockedIds?.has(post.userId)) throw new Error("Post not found");
     const savedPost = await prisma.savedPost.findUnique({
       where: { userId_postId: { userId: req.userId as string, postId: id } },

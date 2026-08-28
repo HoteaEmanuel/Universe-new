@@ -72,6 +72,37 @@ enum UserAccountStatusValue {
   blocked
 }
 
+enum ReportTargetType {
+  user_profile
+  post
+  comment
+}
+
+enum ReportReason {
+  spam
+  harassment_or_bullying
+  hate_speech
+  nudity_or_sexual_content
+  violence_or_dangerous_content
+  misinformation
+  impersonation
+  self_harm_or_suicide
+  intellectual_property
+  other
+}
+
+enum ReportStatus {
+  pending
+  resolved
+  dismissed
+}
+
+enum ReportAction {
+  none
+  content_removed
+  user_blocked
+}
+
 model User {
   id                        String                   @id @default(uuid())
   firstName                 String?
@@ -139,23 +170,28 @@ model User {
   mentionedInGroupMessages GroupMessage[]         @relation("GroupMessageMentions")
   accountStatus            UserAccountStatus?     @relation("UserAccountStatus")
   issuedUserBlocks         UserAccountStatus[]    @relation("UserBlockIssuedBy")
+  reportsFiled             Report[]               @relation("ReportReporter")
+  reportsReceived          Report[]               @relation("ReportedUser")
+  reportsReviewed          Report[]               @relation("ReportReviewedBy")
+  removedPostsIssued       Post[]                 @relation("PostRemovedBy")
+  removedCommentsIssued    Comment[]              @relation("CommentRemovedBy")
 
   @@index([university])
   @@map("users")
 }
 
 model UserAccountStatus {
-  id              String                  @id @default(uuid())
-  userId          String                  @unique
-  user            User                    @relation("UserAccountStatus", fields: [userId], references: [id], onDelete: Cascade)
-  status          UserAccountStatusValue  @default(active)
-  reason          String?
-  blockedAt       DateTime?
-  blockedByUserId String?
-  blockedBy       User?                   @relation("UserBlockIssuedBy", fields: [blockedByUserId], references: [id], onDelete: SetNull)
+  id                 String                 @id @default(uuid())
+  userId             String                 @unique
+  user               User                   @relation("UserAccountStatus", fields: [userId], references: [id], onDelete: Cascade)
+  status             UserAccountStatusValue @default(active)
+  reason             String?
+  blockedAt          DateTime?
+  blockedByUserId    String?
+  blockedBy          User?                  @relation("UserBlockIssuedBy", fields: [blockedByUserId], references: [id], onDelete: SetNull)
   blockedEmailSentAt DateTime?
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
 
   @@index([status])
   @@map("user_account_statuses")
@@ -174,27 +210,32 @@ model UserPreferences {
 }
 
 model Post {
-  id              String                   @id @default(uuid())
-  userId          String
-  user            User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  imagesUrls      String[]                 @default([])
-  imagesPublicIds String[]                 @default([])
-  title           String
-  body            String?
-  location        String?
-  type            PostType        @default(standard)
-  opportunityType OpportunityType?
-  workplaceType   WorkplaceType?
-  companyName     String?
-  applyUrl        String?
-  deadlineAt      DateTime?
-  expiresAt       DateTime?
+  id                  String                   @id @default(uuid())
+  userId              String
+  user                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  imagesUrls          String[]                 @default([])
+  imagesPublicIds     String[]                 @default([])
+  title               String
+  body                String?
+  location            String?
+  type                PostType                 @default(standard)
+  opportunityType     OpportunityType?
+  workplaceType       WorkplaceType?
+  companyName         String?
+  applyUrl            String?
+  deadlineAt          DateTime?
+  expiresAt           DateTime?
   opportunityClosedAt DateTime?
-  tags            Tag[]                    @relation("PostTags")
-  mentionedUsers  User[]                   @relation("PostMentions")
-  createdAt       DateTime                 @default(now())
-  updatedAt       DateTime                 @updatedAt
-  searchVector    Unsupported("tsvector")?
+  tags                Tag[]                    @relation("PostTags")
+  mentionedUsers      User[]                   @relation("PostMentions")
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  searchVector        Unsupported("tsvector")?
+
+  removedAt       DateTime?
+  removedReason   String?
+  removedByUserId String?
+  removedBy       User?     @relation("PostRemovedBy", fields: [removedByUserId], references: [id], onDelete: SetNull)
 
   eventId String? @unique
   event   Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
@@ -205,6 +246,7 @@ model Post {
   likes         Like[]
   savedBy       SavedPost[]
   notifications Notification[]
+  reports       Report[]
 
   sharedInMessages      Message[]
   sharedInGroupMessages GroupMessage[]
@@ -213,6 +255,7 @@ model Post {
   @@index([type, createdAt(sort: Desc)])
   @@index([type, opportunityType, workplaceType])
   @@index([type, deadlineAt])
+  @@index([removedAt])
   @@map("posts")
 }
 
@@ -239,13 +282,20 @@ model Comment {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  removedAt       DateTime?
+  removedReason   String?
+  removedByUserId String?
+  removedBy       User?     @relation("CommentRemovedBy", fields: [removedByUserId], references: [id], onDelete: SetNull)
+
   likes          CommentLike[]
   mentionedUsers User[]         @relation("CommentMentions")
   notifications  Notification[]
+  reports        Report[]
 
   @@index([postId])
   @@index([userId])
   @@index([parentId])
+  @@index([removedAt])
   @@map("comments")
 }
 
@@ -689,4 +739,51 @@ model ResourceHelpfulVote {
 
   @@unique([resourceId, userId])
   @@map("resource_helpful_votes")
+}
+
+model Report {
+  id String @id @default(uuid())
+
+  // Nullable + a username snapshot so a reporter deleting their account
+  // doesn't erase the report record itself (see reportedUserId below,
+  // which is what the admin queue actually keys off of).
+  reporterId       String?
+  reporter         User?   @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  reporterUsername String
+
+  // Always the content owner, even for post/comment reports - this is what
+  // lets the admin queue group "all reports against this person" in one query.
+  reportedUserId String
+  reportedUser   User   @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
+
+  targetType ReportTargetType
+  postId     String?
+  post       Post?            @relation(fields: [postId], references: [id], onDelete: SetNull)
+  commentId  String?
+  comment    Comment?         @relation(fields: [commentId], references: [id], onDelete: SetNull)
+
+  // Frozen copy of the reported content at report time (title/body/image
+  // URLs/author username). Posts and comments are hard-deleted elsewhere in
+  // this app, so without this the evidence disappears the moment the
+  // reported user deletes it.
+  targetSnapshot Json?
+
+  reason  ReportReason
+  details String?
+
+  status ReportStatus @default(pending)
+  action ReportAction @default(none)
+
+  reviewedByUserId String?
+  reviewedBy       User?     @relation("ReportReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  reviewedAt       DateTime?
+  resolutionNote   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([reportedUserId, status])
+  @@index([reporterId])
+  @@map("reports")
 }

@@ -83,6 +83,36 @@ export const findCommentById = async (commentId: string) => {
   });
 };
 
+export const findCommentForReport = async (commentId: string) => {
+  return prisma.comment.findUnique({
+    where: { id: commentId },
+    select: {
+      id: true,
+      text: true,
+      userId: true,
+      postId: true,
+      user: { select: { username: true } },
+    },
+  });
+};
+
+interface SoftDeleteCommentInput {
+  commentId: string;
+  reason?: string;
+  byUserId: string;
+}
+
+export const softDeleteComment = async (data: SoftDeleteCommentInput) => {
+  return prisma.comment.update({
+    where: { id: data.commentId },
+    data: {
+      removedAt: new Date(),
+      removedReason: data.reason,
+      removedByUserId: data.byUserId,
+    },
+  });
+};
+
 export const getLikedCommentIds = async (commentIds: string[], userId: string) => {
   if (commentIds.length === 0) return new Set<string>();
   const likes = await prisma.commentLike.findMany({
