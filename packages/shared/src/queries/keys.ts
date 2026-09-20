@@ -26,6 +26,12 @@ export const postKeys = {
   opportunities: (filters: OpportunityFilters) => ["opportunities", filters] as const,
 };
 
+export const commentKeys = {
+  list: (postId: string) => ["comments", postId] as const,
+  replies: (postId: string, parentId: string) => ["comment-replies", postId, parentId] as const,
+  count: (postId: string) => ["comments-count", postId] as const,
+};
+
 export const userKeys = {
   all: () => ["allUsers"] as const,
   detail: (id: string) => ["user", id] as const,
