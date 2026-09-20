@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { useUserStore } from "@/store/userStore";
+import { createUsersApi } from "@universe/shared/api";
+import { httpClient } from "@/lib/api";
 import { validateUsernameFormat } from "@/utils/usernameValidation";
+
+const usersApi = createUsersApi(httpClient);
 
 export type UsernameAvailabilityState =
   | "idle"
@@ -15,7 +18,6 @@ export const useUsernameAvailability = (
   currentUsername: string,
   candidateUsername: string,
 ) => {
-  const { checkUsernameAvailability } = useUserStore();
   const [availability, setAvailability] = useState<UsernameAvailabilityState>("idle");
   const [message, setMessage] = useState("");
 
@@ -36,7 +38,8 @@ export const useUsernameAvailability = (
 
     setAvailability("checking");
     const timer = window.setTimeout(() => {
-      checkUsernameAvailability(username)
+      usersApi
+        .checkUsernameAvailability(username)
         .then((result) => {
           setAvailability(result.available ? "available" : "unavailable");
           setMessage(
@@ -51,7 +54,7 @@ export const useUsernameAvailability = (
         });
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [checkUsernameAvailability, currentUsername, candidateUsername]);
+  }, [currentUsername, candidateUsername]);
 
   return { availability, message };
 };

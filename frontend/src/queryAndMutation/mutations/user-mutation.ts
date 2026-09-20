@@ -1,119 +1,74 @@
-import { useUserStore } from "../../store/userStore";
-import { useQueryClient } from "@tanstack/react-query";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createUsersApi } from "@universe/shared/api";
+import { createUserMutations } from "@universe/shared/mutations";
 import { toast } from "sonner";
-export const useFollowMutation = (toFollowUserId?: string, userId?: string) => {
-  const { followUser } = useUserStore();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => followUser(toFollowUserId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["following", userId] });
-      queryClient.invalidateQueries({
-        queryKey: ["followers", toFollowUserId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["isFollowing", toFollowUserId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["followersNo", toFollowUserId],
-      });
+import { httpClient } from "@/lib/api";
 
-      queryClient.invalidateQueries({
-        queryKey:["notifications",toFollowUserId]
-      })
-    },
-  });
-};
-export const useUnfollowMutation = (unfollowedUserId?: string, userId?: string) => {
-  const { unfollowUser } = useUserStore();
+const usersApi = createUsersApi(httpClient);
+
+export const useFollowMutation = (toFollowUserId?: string, userId?: string) => {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => unfollowUser(unfollowedUserId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["following", userId] });
-      queryClient.invalidateQueries({
-        queryKey: ["followers", unfollowedUserId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["isFollowing", unfollowedUserId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["followersNo", unfollowedUserId],
-      });
-    },
-  });
+  return useMutation(createUserMutations(usersApi, queryClient).follow(toFollowUserId, userId));
+};
+
+export const useUnfollowMutation = (unfollowedUserId?: string, userId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation(
+    createUserMutations(usersApi, queryClient).unfollow(unfollowedUserId, userId),
+  );
 };
 
 export const useSavePostMutation = (postId: string, userId?: string) => {
-  const { savePost } = useUserStore();
   const queryClient = useQueryClient();
+  const shared = createUserMutations(usersApi, queryClient).savePost(postId, userId);
   return useMutation({
-    mutationFn: () => savePost(postId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["saved_posts", userId] });
-      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+    ...shared,
+    onSuccess: (...args) => {
+      shared.onSuccess?.(...args);
       toast.success("Post saved successfully");
     },
   });
 };
 
 export const useUnsavePostMutation = (postId: string, userId?: string) => {
-  const { unsavePost } = useUserStore();
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => unsavePost(postId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["saved_posts", userId] });
-      queryClient.invalidateQueries({ queryKey: ["post", postId] });
-      // toast.success("Post saved successfully");
-    },
-  });
+  return useMutation(createUserMutations(usersApi, queryClient).unsavePost(postId, userId));
+};
+
+export const useUpdateUsernameMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(createUserMutations(usersApi, queryClient).updateUsername());
 };
 
 export const useUpdateProfilePicture = () => {
-  const { updateProfilePicture } = useUserStore();
   const queryClient = useQueryClient();
+  const shared = createUserMutations(usersApi, queryClient).updateProfilePicture<File>();
   return useMutation({
-    mutationFn: (file: File) => updateProfilePicture(file),
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth_user"] });
+    ...shared,
+    onSuccess: (...args) => {
+      shared.onSuccess?.(...args);
       toast.success("Profile image updated");
     },
   });
 };
 
 export const useCompleteOnboardingMutation = () => {
-  const { completeOnboarding } = useUserStore();
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => completeOnboarding(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth_user"] });
-    },
-  });
+  return useMutation(createUserMutations(usersApi, queryClient).completeOnboarding());
 };
 
 export const useMarkAppTourSeenMutation = () => {
-  const { markAppTourSeen } = useUserStore();
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => markAppTourSeen(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth_user"] });
-    },
-  });
+  return useMutation(createUserMutations(usersApi, queryClient).markAppTourSeen());
 };
 
 export const useUpdateBioMutation = () => {
-  const { updateBio } = useUserStore();
-
   const queryClient = useQueryClient();
+  const shared = createUserMutations(usersApi, queryClient).updateBio();
   return useMutation({
-    mutationFn: (bio: string) => updateBio(bio),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth_user"] });
+    ...shared,
+    onSuccess: (...args) => {
+      shared.onSuccess?.(...args);
       toast.success("Bio updated successfully");
     },
   });

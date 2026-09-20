@@ -31,4 +31,5 @@ export type HttpClient = {
   createForm(): FormDataLike;
   postForm<T>(path: string, form: FormDataLike): Promise<T>;
   patchForm<T>(path: string, form: FormDataLike): Promise<T>;
+  putForm<T>(path: string, form: FormDataLike): Promise<T>;
 };

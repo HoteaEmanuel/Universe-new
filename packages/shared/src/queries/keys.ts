@@ -25,3 +25,16 @@ export const postKeys = {
   shareRecipients: () => ["shareRecipients"] as const,
   opportunities: (filters: OpportunityFilters) => ["opportunities", filters] as const,
 };
+
+export const userKeys = {
+  all: () => ["allUsers"] as const,
+  detail: (id: string) => ["user", id] as const,
+  byUsername: (username: string) => ["userByUsername", username] as const,
+  followers: (id: string) => ["followers", id] as const,
+  following: (id: string) => ["following", id] as const,
+  relevantFollowers: (id: string, search?: string) => ["followers-relevant", id, search] as const,
+  relevantFollowing: (id: string, search?: string) => ["following-relevant", id, search] as const,
+  universityPeople: () => ["university-people"] as const,
+  isFollowing: (id: string) => ["isFollowing", id] as const,
+  mentionSearch: (query: string) => ["mention-search", query] as const,
+};

@@ -11,6 +11,22 @@ const API_URL =
   import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:5000/api";
 axios.defaults.withCredentials = true;
 
+// Carries the backend's `code`/HTTP status alongside the message, so call
+// sites that need to branch on a specific failure (e.g. `USERNAME_TAKEN`)
+// don't need to reach back into an axios-shaped `error.response` — going
+// through this client instead of raw axios would otherwise have silently
+// dropped that information.
+export class ApiError extends Error {
+  code?: string;
+  status?: number;
+  constructor(message: string, options?: { code?: string; status?: number }) {
+    super(message);
+    this.name = "ApiError";
+    this.code = options?.code;
+    this.status = options?.status;
+  }
+}
+
 // The old per-store code was inconsistent: some methods threw
 // `new Error(error as string)` (a type-cast that doesn't convert
 // anything - the message ends up "[object Object]"), others caught the
@@ -21,8 +37,8 @@ axios.defaults.withCredentials = true;
 // instead of a silent `undefined`.
 const unwrap = (error: unknown, fallback: string): never => {
   if (error instanceof AxiosError) {
-    const message = (error.response?.data as { message?: string } | undefined)?.message;
-    throw new Error(message ?? fallback);
+    const data = error.response?.data as { message?: string; code?: string } | undefined;
+    throw new ApiError(data?.message ?? fallback, { code: data?.code, status: error.response?.status });
   }
   throw error;
 };
@@ -74,6 +90,16 @@ export const httpClient: HttpClient = {
   async patchForm(path, form) {
     try {
       const { data } = await axios.patch(`${API_URL}${path}`, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return data;
+    } catch (error) {
+      return unwrap(error, "Request failed");
+    }
+  },
+  async putForm(path, form) {
+    try {
+      const { data } = await axios.put(`${API_URL}${path}`, form, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       return data;
