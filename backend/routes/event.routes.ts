@@ -13,7 +13,7 @@ import {
   eventParticipantsQuerySchema,
   banEventParticipantSchema,
   eventBansQuerySchema,
-} from "../schemas/event.schema.js";
+} from "@universe/shared/schemas/event.schema.js";
 import {
   createEventController,
   getEventController,

@@ -22,7 +22,7 @@ import type { Prisma } from "../generated/prisma/client.js";
 import type {
   CreateReportInput as CreateReportSchemaInput,
   ResolveReportInput as ResolveReportSchemaInput,
-} from "../schemas/report.schema.js";
+} from "@universe/shared/schemas/report.schema.js";
 
 export class SelfReportError extends Error {}
 export class DuplicateReportError extends Error {}

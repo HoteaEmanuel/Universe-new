@@ -11,7 +11,7 @@ import {
   getLikedCommentIds,
   getPostCommentsPage,
 } from "../repository/comment.repository.js";
-import type { CommentQueryInput } from "../schemas/comment.schema.js";
+import type { CommentQueryInput } from "@universe/shared/schemas/comment.schema.js";
 
 const TOMBSTONE_TEXT = "This comment is unavailable.";
 const REMOVED_TEXT = "This comment was removed for violating community guidelines.";

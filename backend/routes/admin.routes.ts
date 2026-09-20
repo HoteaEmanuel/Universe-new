@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { requireAdmin } from "../middleware/authorization.js";
 import { validate } from "../middleware/validate.js";
-import { blockUserSchema, listUsersQuerySchema } from "../schemas/admin.schema.js";
-import { listReportsQuerySchema, resolveReportSchema } from "../schemas/report.schema.js";
+import { blockUserSchema, listUsersQuerySchema } from "@universe/shared/schemas/admin.schema.js";
+import { listReportsQuerySchema, resolveReportSchema } from "@universe/shared/schemas/report.schema.js";
 import {
   getStats,
   getDailyActivity,

@@ -6,7 +6,7 @@ import {
   getMyPollVoteController,
 } from "../controllers/poll.controller.js";
 import { validate } from "../middleware/validate.js";
-import { voteOnPollSchema } from "../schemas/poll.schema.js";
+import { voteOnPollSchema } from "@universe/shared/schemas/poll.schema.js";
 
 router.get("/:id/my-vote", getMyPollVoteController);
 router.post("/:id/vote", validate({ body: voteOnPollSchema }), voteOnPollController);

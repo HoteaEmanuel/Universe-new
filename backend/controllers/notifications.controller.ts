@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { prisma } from "../database/prisma.js";
 import { getNotificationsPage } from "../repository/notification.repository.js";
-import type { NotificationQueryInput } from "../schemas/notification.schema.js";
+import type { NotificationQueryInput } from "@universe/shared/schemas/notification.schema.js";
 
 export const getUserNotifications = async (req: Request, res: Response) => {
   try {

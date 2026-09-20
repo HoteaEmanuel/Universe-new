@@ -15,7 +15,7 @@ import {
   commentQuerySchema,
   replyParamsSchema,
   sendCommentSchema,
-} from "../schemas/comment.schema.js";
+} from "@universe/shared/schemas/comment.schema.js";
 const router = express.Router();
 
 const commentRateLimiter = createRateLimiter({

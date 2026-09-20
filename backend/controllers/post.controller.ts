@@ -9,7 +9,7 @@ import {
   getShareRecipientGroups,
 } from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
-import type { UsersWhoLikedQueryInput, SharePostInput, OpportunitiesQueryInput } from "../schemas/post.schema.js";
+import type { UsersWhoLikedQueryInput, SharePostInput, OpportunitiesQueryInput } from "@universe/shared/schemas/post.schema.js";
 import {
   createNewPost,
   deletePost,

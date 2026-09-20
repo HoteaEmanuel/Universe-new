@@ -1,7 +1,7 @@
 import express from "express";
 import { getNews, getTopNews } from "../controllers/news.controller.js";
 import { validate } from "../middleware/validate.js";
-import { newsCategoryParamSchema } from "../schemas/news.schema.js";
+import { newsCategoryParamSchema } from "@universe/shared/schemas/news.schema.js";
 const router = express.Router();
 router.get(
   "/news/:category",

@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "main": "ap",
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "frontend",
+    "mobile-app"
+  ],
   "scripts": {
     "postinstall": "prisma generate",
     "predev": "prisma generate",
@@ -23,6 +28,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@universe/shared": "*",
     "@aws-sdk/client-s3": "^3.1111.0",
     "@google/generative-ai": "^0.24.1",
     "@huggingface/inference": "^4.13.11",

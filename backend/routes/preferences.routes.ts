@@ -4,7 +4,7 @@ import {
   updatePreferences,
 } from "../controllers/preferences.controller.js";
 import { validate } from "../middleware/validate.js";
-import { updatePreferencesSchema } from "../schemas/preferences.schema.js";
+import { updatePreferencesSchema } from "@universe/shared/schemas/preferences.schema.js";
 
 const router = express.Router();
 

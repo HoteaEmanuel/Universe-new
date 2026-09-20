@@ -21,7 +21,7 @@ import {
   ReportAlreadyResolvedError,
   InvalidReportActionError,
 } from "../services/report.service.js";
-import type { ListReportsQueryInput, ResolveReportInput } from "../schemas/report.schema.js";
+import type { ListReportsQueryInput, ResolveReportInput } from "@universe/shared/schemas/report.schema.js";
 
 export const getStats = async (_req: Request, res: Response) => {
   try {

@@ -1,0 +1,38 @@
+{
+  "name": "@universe/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schemas/admin.schema.js": "./src/schemas/admin.schema.ts",
+    "./schemas/ai.schema.js": "./src/schemas/ai.schema.ts",
+    "./schemas/auth.schema.js": "./src/schemas/auth.schema.ts",
+    "./schemas/block.schema.js": "./src/schemas/block.schema.ts",
+    "./schemas/comment.schema.js": "./src/schemas/comment.schema.ts",
+    "./schemas/conversation.schema.js": "./src/schemas/conversation.schema.ts",
+    "./schemas/event.schema.js": "./src/schemas/event.schema.ts",
+    "./schemas/group.schema.js": "./src/schemas/group.schema.ts",
+    "./schemas/groupResource.schema.js": "./src/schemas/groupResource.schema.ts",
+    "./schemas/news.schema.js": "./src/schemas/news.schema.ts",
+    "./schemas/notification.schema.js": "./src/schemas/notification.schema.ts",
+    "./schemas/poll.schema.js": "./src/schemas/poll.schema.ts",
+    "./schemas/post.schema.js": "./src/schemas/post.schema.ts",
+    "./schemas/preferences.schema.js": "./src/schemas/preferences.schema.ts",
+    "./schemas/report.schema.js": "./src/schemas/report.schema.ts",
+    "./schemas/search.schema.js": "./src/schemas/search.schema.ts",
+    "./schemas/user.schema.js": "./src/schemas/user.schema.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2"
+  }
+}

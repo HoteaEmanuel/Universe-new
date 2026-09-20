@@ -1,5 +1,5 @@
 import { prisma } from "../database/prisma.js";
-import type { NotificationType } from "../types/shared.js";
+import type { NotificationType } from "@universe/shared";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 
 const NOTIFICATION_ACTION_USER_SELECT = {

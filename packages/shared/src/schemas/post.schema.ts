@@ -28,6 +28,10 @@ const opportunityType = z.enum([
   "campus_ambassador",
 ]);
 const workplaceType = z.enum(["onsite", "hybrid", "remote"]);
+// Relies on the runtime's global `URL` constructor, present in Node and
+// browsers today. When mobile starts validating with this schema
+// (Phase 2), confirm the target Hermes/RN version has it natively or add
+// a polyfill (e.g. react-native-url-polyfill) — don't assume.
 const httpsUrl = z.string().url("Enter a valid application link").refine(
   (value) => new URL(value).protocol === "https:",
   "Application links must use HTTPS",

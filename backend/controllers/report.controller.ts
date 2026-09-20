@@ -5,7 +5,7 @@ import {
   ReportRateLimitError,
   SelfReportError,
 } from "../services/report.service.js";
-import type { CreateReportInput } from "../schemas/report.schema.js";
+import type { CreateReportInput } from "@universe/shared/schemas/report.schema.js";
 
 export const createReportController = async (req: Request, res: Response) => {
   try {
