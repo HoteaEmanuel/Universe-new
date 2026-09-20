@@ -7,6 +7,9 @@
   "types": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./api": "./src/api/index.ts",
+    "./queries": "./src/queries/index.ts",
+    "./mutations": "./src/mutations/index.ts",
     "./schemas/admin.schema.js": "./src/schemas/admin.schema.ts",
     "./schemas/ai.schema.js": "./src/schemas/ai.schema.ts",
     "./schemas/auth.schema.js": "./src/schemas/auth.schema.ts",
@@ -30,6 +33,9 @@
   },
   "dependencies": {
     "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.90.7"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

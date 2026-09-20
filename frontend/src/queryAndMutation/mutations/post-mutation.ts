@@ -1,20 +1,21 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { usePostStore } from "../../store/postStore";
+import { createPostsApi } from "@universe/shared/api";
+import { createPostMutations } from "@universe/shared/mutations";
 import { toast } from "sonner";
 import type { CreatePostPayload, UpdatePostPayload } from "../types";
+import { httpClient } from "@/lib/api";
 
 export type { CreatePostPayload, UpdatePostPayload };
 
+const postsApi = createPostsApi(httpClient);
+
 export const useCreatePostMutation = () => {
   const queryClient = useQueryClient();
-  const { createPost } = usePostStore();
+  const shared = createPostMutations(postsApi, queryClient).create<File>();
   return useMutation({
-    mutationFn: (post: CreatePostPayload) => createPost(post),
-    onSuccess: (_, post) => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      if (post.type === "opportunity") {
-        queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-      }
+    ...shared,
+    onSuccess: (data, post, onMutateResult, context) => {
+      shared.onSuccess?.(data, post, onMutateResult, context);
       toast.success("Post created");
     },
     onError: (err: Error) => {
@@ -25,51 +26,24 @@ export const useCreatePostMutation = () => {
 
 export const useLikeMutation = (postId: string) => {
   const queryClient = useQueryClient();
-  const { likePost } = usePostStore();
-  return useMutation({
-    mutationFn: () => likePost({ postId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts", postId] });
-      queryClient.invalidateQueries({ queryKey: ["likes", postId] });
-    },
-  });
+  return useMutation(createPostMutations(postsApi, queryClient).like(postId));
 };
 
 export const useUnlikeMutation = (postId: string) => {
   const queryClient = useQueryClient();
-  const { unlikePost } = usePostStore();
-  return useMutation({
-    mutationFn: () => unlikePost({ postId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts", postId] });
-      queryClient.invalidateQueries({ queryKey: ["likes", postId] });
-    },
-  });
+  return useMutation(createPostMutations(postsApi, queryClient).unlike(postId));
 };
 
 export const useUpdatePostMutation = (userId?: string) => {
   const queryClient = useQueryClient();
-  const { updatePost } = usePostStore();
-  return useMutation({
-    mutationFn: async (data: UpdatePostPayload) => await updatePost(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["userPosts", userId] });
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-    },
-  });
+  return useMutation(createPostMutations(postsApi, queryClient).update<File>(userId));
 };
 
 export const useSharePostMutation = (postId: string) => {
-  const { sharePost } = usePostStore();
+  const queryClient = useQueryClient();
+  const shared = createPostMutations(postsApi, queryClient).share(postId);
   return useMutation({
-    mutationFn: ({
-      recipientIds,
-      groupIds,
-    }: {
-      recipientIds: string[];
-      groupIds: string[];
-    }) => sharePost(postId, recipientIds, groupIds),
+    ...shared,
     onSuccess: () => {
       toast.success("Post sent");
     },
@@ -81,25 +55,16 @@ export const useSharePostMutation = (postId: string) => {
 
 export const useDeletePostMutation = (postId: string, userId?: string) => {
   const queryClient = useQueryClient();
-  const { deletePost } = usePostStore();
-  return useMutation({
-    mutationFn: async () => await deletePost(postId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["userPosts", userId] });
-    },
-  });
+  return useMutation(createPostMutations(postsApi, queryClient).remove(postId, userId));
 };
 
 export const useSetOpportunityClosedMutation = (postId: string) => {
   const queryClient = useQueryClient();
-  const { setOpportunityClosed } = usePostStore();
+  const shared = createPostMutations(postsApi, queryClient).setOpportunityClosed(postId);
   return useMutation({
-    mutationFn: (closed: boolean) => setOpportunityClosed(postId, closed),
-    onSuccess: (_, closed) => {
-      queryClient.invalidateQueries({ queryKey: ["opportunities"] });
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+    ...shared,
+    onSuccess: (data, closed, onMutateResult, context) => {
+      shared.onSuccess?.(data, closed, onMutateResult, context);
       toast.success(closed ? "Applications closed" : "Opportunity reopened");
     },
     onError: (error: Error) => toast.error(error.message),
