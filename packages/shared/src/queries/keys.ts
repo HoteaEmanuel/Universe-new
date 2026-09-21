@@ -82,6 +82,17 @@ export const groupKeys = {
   mentionSearch: (groupId: string, query: string) => ["group-mention-search", groupId, query] as const,
 };
 
+export const notificationKeys = {
+  list: (userId: string) => ["notifications", userId] as const,
+  history: (userId: string) => ["notifications-history", userId] as const,
+  unread: (userId: string) => ["unread-notifications", userId] as const,
+  newMessages: (userId: string) => ["new-messages", userId] as const,
+};
+
+export const pollKeys = {
+  myVote: (pollId: string) => ["myPollVote", pollId] as const,
+};
+
 export const conversationKeys = {
   userByConvo: (id: string) => ["conversations_users", id] as const,
   userConversationsAll: () => ["user-conversations"] as const,

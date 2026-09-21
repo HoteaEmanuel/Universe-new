@@ -3,6 +3,8 @@ export * from "./conversations.js";
 export * from "./events.js";
 export * from "./groups.js";
 export * from "./keys.js";
+export * from "./notifications.js";
 export * from "./pageHelpers.js";
+export * from "./polls.js";
 export * from "./posts.js";
 export * from "./users.js";
