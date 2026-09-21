@@ -15,6 +15,7 @@ type FormFieldProps = {
   maxLength?: number;
   currentLength?: number;
   disabled?: boolean;
+  autoFocus?: boolean;
 };
 
 const FormField = ({
@@ -29,6 +30,7 @@ const FormField = ({
   maxLength,
   currentLength = 0,
   disabled = false,
+  autoFocus = false,
 }: FormFieldProps) => {
   const errorId = error ? `${id}-error` : undefined;
   const isMaxed = maxLength !== undefined && currentLength >= maxLength;
@@ -69,8 +71,10 @@ const FormField = ({
           autoComplete={autoComplete}
           maxLength={maxLength}
           disabled={disabled}
+          autoFocus={autoFocus}
           aria-invalid={!!error || isMaxed}
           aria-describedby={errorId}
+
           className={Icon ? "h-10 pl-8" : "h-10"}
           {...registration}
         />
