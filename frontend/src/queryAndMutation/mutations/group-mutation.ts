@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { createGroupsApi } from "@universe/shared/api";
-import { createGroupMutations } from "@universe/shared/mutations";
+import { createGroupMutations, appendOptimisticMessage } from "@universe/shared/mutations";
 import { useAuthStore } from "../../store/authStore";
 import { toast } from "sonner";
 import type {
@@ -9,7 +9,6 @@ import type {
   NewFilesMessagePayload,
   NewVoiceMessagePayload,
 } from "../../features/chat/types";
-import { appendOptimisticMessage } from "../../features/chat/utils/messagePageCache";
 import { httpClient } from "@/lib/api";
 
 const groupsApi = createGroupsApi(httpClient);

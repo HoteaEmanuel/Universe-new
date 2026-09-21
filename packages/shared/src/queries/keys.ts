@@ -81,3 +81,15 @@ export const groupKeys = {
     ["course-resources", groupId, category, search] as const,
   mentionSearch: (groupId: string, query: string) => ["group-mention-search", groupId, query] as const,
 };
+
+export const conversationKeys = {
+  userByConvo: (id: string) => ["conversations_users", id] as const,
+  userConversationsAll: () => ["user-conversations"] as const,
+  userConversations: (search: string) => ["user-conversations", search] as const,
+  archivedAll: () => ["archived-conversations"] as const,
+  archived: (search: string) => ["archived-conversations", search] as const,
+  messages: (id: string) => ["conversation_messages", id] as const,
+  resources: (type: string, id: string) => ["conversation-resources", type, id] as const,
+  byUsersIds: (id: string) => ["conversations", id] as const,
+  convoUsers: () => ["convo-users"] as const,
+};
