@@ -1,206 +1,60 @@
-import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useGroupStore } from "../../store/groupStore";
-import type {
-  ChatMessagePage,
-  ChatResourcePage,
-  ChatUser,
-  CourseResourcePage,
-  GroupBanPage,
-  GroupConversation,
-  GroupConversationsPage,
-  GroupMember,
-  GroupMemberPage,
-  ResourceCategory,
-  ResourceType,
-} from "../../features/chat/types";
-import type { MentionUser } from "../types";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { createGroupsApi } from "@universe/shared/api";
+import { createGroupQueries } from "@universe/shared/queries";
+import type { ResourceCategory, ResourceType } from "../../features/chat/types";
+import { httpClient } from "@/lib/api";
 
-export const useGetUserGroupsInfinite = (userId: string | undefined, search: string) => {
-  const { getUserGroups } = useGroupStore();
-  return useInfiniteQuery<GroupConversationsPage>({
-    queryKey: ["user-groups", userId, search],
-    queryFn: ({ pageParam }) =>
-      getUserGroups(userId as string, {
-        cursor: pageParam as string | undefined,
-        search,
-      }),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
-    enabled: !!userId,
-    placeholderData: keepPreviousData,
-  });
-};
+const groupsApi = createGroupsApi(httpClient);
+const groupQueries = createGroupQueries(groupsApi);
+
+export const useGetUserGroupsInfinite = (userId: string | undefined, search: string) =>
+  useInfiniteQuery(groupQueries.userGroups(userId, search));
 
 export const useGetDiscoverablePublicGroups = (
   enabled = true,
   courseTag?: string,
   universityOnly?: boolean,
   limit?: number,
-) => {
-  const { getDiscoverablePublicGroups } = useGroupStore();
-  return useQuery<GroupConversation[]>({
-    queryFn: () => getDiscoverablePublicGroups(courseTag, universityOnly, limit),
-    queryKey: ["discoverable-public-groups", courseTag, universityOnly, limit],
-    enabled,
-  });
-};
+) => useQuery(groupQueries.discoverablePublic(enabled, courseTag, universityOnly, limit));
 
-export const useGetCourseCatalog = (enabled = true, groupId?: string) => {
-  const { getCourseCatalog } = useGroupStore();
-  return useQuery<string[]>({
-    queryFn: () => getCourseCatalog(groupId),
-    queryKey: ["course-catalog", groupId],
-    enabled,
-  });
-};
+export const useGetCourseCatalog = (enabled = true, groupId?: string) =>
+  useQuery(groupQueries.courseCatalog(enabled, groupId));
 
-export const useGetGroupById = (id?: string) => {
-  const { getGroupById } = useGroupStore();
-  return useQuery<GroupConversation>({
-    queryFn: () => getGroupById(id as string),
-    queryKey: ["group", id],
-    enabled: !!id,
-  });
-};
+export const useGetGroupById = (id?: string) => useQuery(groupQueries.detail(id));
 
-export const useGetGroupMessagesInfinite = (id?: string) => {
-  const { getGroupMessages } = useGroupStore();
-  return useInfiniteQuery<ChatMessagePage>({
-    queryKey: ["group-messages", id],
-    queryFn: ({ pageParam }) =>
-      getGroupMessages(id as string, pageParam as string | undefined),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
-    enabled: !!id,
-  });
-};
+export const useGetGroupMessagesInfinite = (id?: string) => useInfiniteQuery(groupQueries.messages(id));
 
-export const useGetGroupResourcesInfinite = <T,>(type: ResourceType, id?: string) => {
-  const { getGroupResources } = useGroupStore();
-  return useInfiniteQuery<ChatResourcePage<T>>({
-    queryKey: ["group-resources", type, id],
-    queryFn: ({ pageParam }) =>
-      getGroupResources(id as string, type, pageParam as string | undefined) as Promise<
-        ChatResourcePage<T>
-      >,
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
-    enabled: !!id,
-  });
-};
+export const useGetGroupResourcesInfinite = <T,>(type: ResourceType, id?: string) =>
+  useInfiniteQuery(groupQueries.resources<T>(type, id));
 
-export const useGetGroupMembers = (groupId?: string) => {
-  const { getGroupMembers } = useGroupStore();
-  return useQuery<GroupMember[]>({
-    queryFn: () => getGroupMembers(groupId as string),
-    queryKey: ["group-members", groupId],
-    enabled: !!groupId,
-  });
-};
+export const useGetGroupMembers = (groupId?: string) => useQuery(groupQueries.members(groupId));
 
-export const useGetGroupMembersInfiniteQuery = (
-  groupId?: string,
-  enabled = true,
-  search?: string,
-) => {
-  const { getGroupMembersPage } = useGroupStore();
-  return useInfiniteQuery<GroupMemberPage>({
-    queryKey: ["group-members-page", groupId, search],
-    queryFn: ({ pageParam }) =>
-      getGroupMembersPage(groupId as string, pageParam as string | undefined, search),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
-    enabled: !!groupId && enabled,
-  });
-};
+export const useGetGroupMembersInfiniteQuery = (groupId?: string, enabled = true, search?: string) =>
+  useInfiniteQuery(groupQueries.membersPage(groupId, enabled, search));
 
-export const useGetActiveGroupMembers = (groupId?: string) => {
-  const { getActiveMembers } = useGroupStore();
-  return useQuery<ChatUser[]>({
-    queryFn: () => getActiveMembers(groupId as string),
-    queryKey: ["active-group-members", groupId],
-    enabled: !!groupId,
-  });
-};
+export const useGetActiveGroupMembers = (groupId?: string) =>
+  useQuery(groupQueries.activeMembers(groupId));
 
-export const useGetGroupMemberById = (groupId?: string) => {
-  const { getGroupMemberById } = useGroupStore();
-  return useQuery<GroupMember>({
-    queryFn: () => getGroupMemberById(groupId as string),
-    queryKey: ["group-member", groupId],
-    enabled: !!groupId,
-  });
-};
+export const useGetGroupMemberById = (groupId?: string) => useQuery(groupQueries.memberById(groupId));
 
-export const useGetUsersFromSameUniversityNotInGroupQuery = (
-  groupId?: string,
-) => {
-  const { getUsersFromSameUniversityNotInGroup } = useGroupStore();
-  return useQuery<ChatUser[]>({
-    queryFn: () => getUsersFromSameUniversityNotInGroup(groupId as string),
-    queryKey: ["usersFromSameUniversityNotInGroup", groupId],
-    enabled: !!groupId,
-  });
-};
+export const useGetUsersFromSameUniversityNotInGroupQuery = (groupId?: string) =>
+  useQuery(groupQueries.usersFromSameUniversityNotInGroup(groupId));
 
-export const useCheckUserIsAdminQuery = (groupId?: string, userId?: string) => {
-  const { checkUserIsAdmin } = useGroupStore();
-  return useQuery<boolean>({
-    queryFn: () => checkUserIsAdmin(groupId as string, userId as string),
-    queryKey: ["checkUserIsAdmin", groupId, userId],
-    enabled: !!groupId && !!userId,
-  });
-};
+export const useCheckUserIsAdminQuery = (groupId?: string, userId?: string) =>
+  useQuery(groupQueries.checkUserIsAdmin(groupId, userId));
 
-export const useGetGroupBansInfinite = (groupId?: string, enabled = true) => {
-  const { getGroupBans } = useGroupStore();
-  return useInfiniteQuery<GroupBanPage>({
-    queryKey: ["group-bans", groupId],
-    queryFn: ({ pageParam }) =>
-      getGroupBans(groupId as string, pageParam as string | undefined),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
-    enabled: !!groupId && enabled,
-  });
-};
+export const useGetGroupBansInfinite = (groupId?: string, enabled = true) =>
+  useInfiniteQuery(groupQueries.bans(groupId, enabled));
 
 export const useGetCourseResourcesInfiniteQuery = (
   groupId?: string,
   enabled = true,
   category?: ResourceCategory,
   search?: string,
-) => {
-  const { getCourseResourcesPage } = useGroupStore();
-  return useInfiniteQuery<CourseResourcePage>({
-    queryKey: ["course-resources", groupId, category, search],
-    queryFn: ({ pageParam }) =>
-      getCourseResourcesPage(groupId as string, {
-        cursor: pageParam as string | undefined,
-        category,
-        search,
-      }),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
-    enabled: !!groupId && enabled,
-  });
-};
+) => useInfiniteQuery(groupQueries.courseResources(groupId, enabled, category, search));
 
 export const useGroupMentionSearchUsersQuery = (
   groupId: string | undefined,
   query: string,
   enabled: boolean,
-) => {
-  const { getGroupMentionSearchUsers } = useGroupStore();
-  return useQuery<MentionUser[]>({
-    queryKey: ["group-mention-search", groupId, query],
-    queryFn: () => getGroupMentionSearchUsers(groupId as string, query),
-    enabled: !!groupId && enabled,
-    staleTime: 30_000,
-  });
-};
+) => useQuery(groupQueries.mentionSearchUsers(groupId, query, enabled));

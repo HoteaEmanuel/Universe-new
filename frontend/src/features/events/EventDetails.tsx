@@ -29,7 +29,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuthStore } from "@/store/authStore";
-import { useEventStore } from "@/store/eventStore";
 import { useGetEventQuery } from "@/queryAndMutation/queries/event-queries";
 import {
   useRsvpEventMutation,
@@ -37,6 +36,7 @@ import {
   useCancelEventMutation,
   useJoinEventChatMutation,
 } from "@/queryAndMutation/mutations/event-mutation";
+import { downloadEventIcs } from "./downloadEventIcs";
 import { formatEventDateTime, buildGoogleCalendarUrl } from "./utils/formatEventDate";
 import { urlPathName } from "@/utils/urlPathFromName";
 import EventParticipantsModal from "./components/EventParticipantsModal";
@@ -47,7 +47,6 @@ const EventDetails = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { data: event, isPending } = useGetEventQuery(id);
-  const { downloadEventIcs } = useEventStore();
   const rsvpMutation = useRsvpEventMutation(id);
   const cancelRsvpMutation = useCancelRsvpMutation(id);
   const cancelEventMutation = useCancelEventMutation(id);

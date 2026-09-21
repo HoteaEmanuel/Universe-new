@@ -1,3 +1,4 @@
+import type { EventParticipantStatus } from "../domain.js";
 import type { OpportunityFilters } from "../post.js";
 
 // One key namespace per domain instead of ad-hoc string arrays scattered
@@ -43,4 +44,40 @@ export const userKeys = {
   universityPeople: () => ["university-people"] as const,
   isFollowing: (id: string) => ["isFollowing", id] as const,
   mentionSearch: (query: string) => ["mention-search", query] as const,
+};
+
+export const eventKeys = {
+  detail: (id: string) => ["event", id] as const,
+  discover: () => ["events-discover"] as const,
+  upcomingUniversity: (limit?: number) => ["events-upcoming-university", limit] as const,
+  mineAll: () => ["events-mine"] as const,
+  mine: (scope: string) => ["events-mine", scope] as const,
+  participants: (id: string, status?: EventParticipantStatus, search?: string) =>
+    ["event-participants", id, status, search] as const,
+  bans: (id: string) => ["event-bans", id] as const,
+};
+
+export const groupKeys = {
+  detail: (id: string) => ["group", id] as const,
+  userGroupsAll: () => ["user-groups"] as const,
+  userGroups: (userId: string, search: string) => ["user-groups", userId, search] as const,
+  discoverablePublicAll: () => ["discoverable-public-groups"] as const,
+  discoverablePublic: (courseTag?: string, universityOnly?: boolean, limit?: number) =>
+    ["discoverable-public-groups", courseTag, universityOnly, limit] as const,
+  courseCatalog: (groupId?: string) => ["course-catalog", groupId] as const,
+  messages: (id: string) => ["group-messages", id] as const,
+  resources: (type: string, id: string) => ["group-resources", type, id] as const,
+  members: (groupId: string) => ["group-members", groupId] as const,
+  membersPage: (groupId: string, search?: string) => ["group-members-page", groupId, search] as const,
+  activeMembers: (groupId: string) => ["active-group-members", groupId] as const,
+  memberById: (groupId: string) => ["group-member", groupId] as const,
+  usersFromSameUniversityNotInGroup: (groupId: string) =>
+    ["usersFromSameUniversityNotInGroup", groupId] as const,
+  checkUserIsAdmin: (groupId: string, userId: string) =>
+    ["checkUserIsAdmin", groupId, userId] as const,
+  bans: (groupId: string) => ["group-bans", groupId] as const,
+  courseResourcesAll: (groupId: string) => ["course-resources", groupId] as const,
+  courseResources: (groupId: string, category?: string, search?: string) =>
+    ["course-resources", groupId, category, search] as const,
+  mentionSearch: (groupId: string, query: string) => ["group-mention-search", groupId, query] as const,
 };

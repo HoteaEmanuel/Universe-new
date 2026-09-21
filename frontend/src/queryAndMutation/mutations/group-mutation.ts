@@ -1,36 +1,26 @@
 import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
-import { useGroupStore } from "../../store/groupStore";
+import { createGroupsApi } from "@universe/shared/api";
+import { createGroupMutations } from "@universe/shared/mutations";
 import { useAuthStore } from "../../store/authStore";
 import { toast } from "sonner";
 import type {
   ChatMessage,
   ChatMessagePage,
-  GroupVisibility,
-  NewCourseResourcePayload,
   NewFilesMessagePayload,
-  NewMessagePayload,
-  NewPollMessagePayload,
   NewVoiceMessagePayload,
-  ResourceCategory,
 } from "../../features/chat/types";
-import {
-  appendOptimisticMessage,
-  setReactionInPages,
-  updateMessageInPages,
-} from "../../features/chat/utils/messagePageCache";
+import { appendOptimisticMessage } from "../../features/chat/utils/messagePageCache";
+import { httpClient } from "@/lib/api";
+
+const groupsApi = createGroupsApi(httpClient);
 
 export const useCreateGroupMutation = () => {
   const queryClient = useQueryClient();
-  const { createGroup } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).create();
   return useMutation({
-    mutationFn: (data: {
-      name: string;
-      description?: string;
-      visibility?: GroupVisibility;
-      courseTag?: string;
-    }) => createGroup(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-groups"] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Group created");
     },
   });
@@ -38,13 +28,11 @@ export const useCreateGroupMutation = () => {
 
 export const useSetGroupCourseTagMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { setGroupCourseTag } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).setCourseTag(groupId);
   return useMutation({
-    mutationFn: (courseTag: string | null) =>
-      setGroupCourseTag(groupId as string, courseTag),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
-      queryClient.invalidateQueries({ queryKey: ["user-groups"] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Course updated");
     },
   });
@@ -52,56 +40,27 @@ export const useSetGroupCourseTagMutation = (groupId?: string) => {
 
 export const useSendMessageToGroupMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { sendMessageToGroup } = useGroupStore();
   const { user } = useAuthStore() as { user: { id: string } | null };
-
-  return useMutation({
-    mutationFn: (message: NewMessagePayload) =>
-      sendMessageToGroup(groupId as string, message),
-    onMutate: async (message) => {
-      if (!groupId) return;
-      const queryKey = ["group-messages", groupId];
-      await queryClient.cancelQueries({ queryKey });
-      const previous =
-        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
-      const optimisticMessage: ChatMessage = {
-        id: `optimistic-${Date.now()}`,
-        content: message.messageText || undefined,
-        senderId: user?.id ?? "",
-        groupId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
-        appendOptimisticMessage(old, optimisticMessage),
-      );
-      return { previous };
-    },
-    onError: (_error, _message, context) => {
-      if (groupId && context?.previous) {
-        queryClient.setQueryData(["group-messages", groupId], context.previous);
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["group-messages", groupId] });
-    },
-  });
+  return useMutation(createGroupMutations(groupsApi, queryClient).sendMessage<File>(groupId, user?.id));
 };
 
+// Kept app-local rather than in the shared `createGroupMutations` factory:
+// the optimistic preview needs real DOM `File` metadata
+// (`file.name`/`size`/`type`, `URL.createObjectURL`), which the DOM-free
+// shared package can't touch generically. The network call itself
+// (`groupsApi.sendFilesMessage`) still goes through the shared api layer.
 export const useSendFilesMessageToGroupMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { sendFilesMessageToGroup } = useGroupStore();
   const { user } = useAuthStore() as { user: { id: string } | null };
+  const queryKey = ["group-messages", groupId];
 
   return useMutation({
     mutationFn: (message: NewFilesMessagePayload) =>
-      sendFilesMessageToGroup(groupId as string, message),
+      groupsApi.sendFilesMessage<File>(groupId as string, message),
     onMutate: async (message) => {
       if (!groupId) return;
-      const queryKey = ["group-messages", groupId];
       await queryClient.cancelQueries({ queryKey });
-      const previous =
-        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
+      const previous = queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
       const optimisticMessage: ChatMessage = {
         id: `optimistic-${Date.now()}`,
         content: message.messageText || undefined,
@@ -124,29 +83,29 @@ export const useSendFilesMessageToGroupMutation = (groupId?: string) => {
     },
     onError: (_error, _message, context) => {
       if (groupId && context?.previous) {
-        queryClient.setQueryData(["group-messages", groupId], context.previous);
+        queryClient.setQueryData(queryKey, context.previous);
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["group-messages", groupId] });
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 };
 
+// Same rationale as `useSendFilesMessageToGroupMutation` above - the
+// optimistic preview needs a real DOM `Blob` (`URL.createObjectURL`).
 export const useSendVoiceMessageToGroupMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { sendVoiceMessageToGroup } = useGroupStore();
   const { user } = useAuthStore() as { user: { id: string } | null };
+  const queryKey = ["group-messages", groupId];
 
   return useMutation({
     mutationFn: (message: NewVoiceMessagePayload) =>
-      sendVoiceMessageToGroup(groupId as string, message),
+      groupsApi.sendVoiceMessage<Blob>(groupId as string, message),
     onMutate: async (message) => {
       if (!groupId) return;
-      const queryKey = ["group-messages", groupId];
       await queryClient.cancelQueries({ queryKey });
-      const previous =
-        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
+      const previous = queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
       const optimisticMessage: ChatMessage = {
         id: `optimistic-${Date.now()}`,
         audioUrl: URL.createObjectURL(message.audio),
@@ -163,177 +122,44 @@ export const useSendVoiceMessageToGroupMutation = (groupId?: string) => {
     },
     onError: (_error, _message, context) => {
       if (groupId && context?.previous) {
-        queryClient.setQueryData(["group-messages", groupId], context.previous);
+        queryClient.setQueryData(queryKey, context.previous);
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["group-messages", groupId] });
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 };
 
 export const useSendPollMessageToGroupMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { sendPollMessageToGroup } = useGroupStore();
   const { user } = useAuthStore() as { user: { id: string } | null };
-
-  return useMutation({
-    mutationFn: (message: NewPollMessagePayload) =>
-      sendPollMessageToGroup(groupId as string, message),
-    onMutate: async (message) => {
-      if (!groupId) return;
-      const queryKey = ["group-messages", groupId];
-      await queryClient.cancelQueries({ queryKey });
-      const previous =
-        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
-      const optimisticMessage: ChatMessage = {
-        id: `optimistic-${Date.now()}`,
-        senderId: user?.id ?? "",
-        groupId,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        poll: {
-          id: `optimistic-poll-${Date.now()}`,
-          question: message.question,
-          authorId: user?.id ?? "",
-          closesAt: message.closesAt ?? null,
-          closedAt: null,
-          status: "open",
-          totalVotes: 0,
-          options: message.options.map((text, index) => ({
-            id: `optimistic-option-${index}`,
-            text,
-            position: index,
-            voteCount: 0,
-          })),
-        },
-      };
-      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
-        appendOptimisticMessage(old, optimisticMessage),
-      );
-      return { previous };
-    },
-    onError: (_error, _message, context) => {
-      if (groupId && context?.previous) {
-        queryClient.setQueryData(["group-messages", groupId], context.previous);
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["group-messages", groupId] });
-    },
-  });
+  return useMutation(createGroupMutations(groupsApi, queryClient).sendPollMessage(groupId, user?.id));
 };
 
 export const useEditMessageInGroupMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { editMessageInGroup } = useGroupStore();
-  const queryKey = ["group-messages", groupId];
-
-  return useMutation({
-    mutationFn: ({ id, newContent }: { id: string; newContent: string }) =>
-      editMessageInGroup(id, newContent),
-    onMutate: async ({ id, newContent }) => {
-      if (!groupId) return;
-      await queryClient.cancelQueries({ queryKey });
-      const previous =
-        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
-      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
-        updateMessageInPages(old, id, (m) => ({
-          ...m,
-          content: newContent,
-          edited: true,
-        })),
-      );
-      return { previous };
-    },
-    onError: (_error, _vars, context) => {
-      if (groupId && context?.previous) {
-        queryClient.setQueryData(queryKey, context.previous);
-      }
-    },
-    onSettled: () => {
-      if (groupId) queryClient.invalidateQueries({ queryKey });
-    },
-  });
+  return useMutation(createGroupMutations(groupsApi, queryClient).editMessage(groupId));
 };
 
 export const useReactToGroupMessageMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { reactToGroupMessage } = useGroupStore();
   const { user } = useAuthStore() as { user: { id: string } | null };
-  const queryKey = ["group-messages", groupId];
-
-  return useMutation({
-    mutationFn: ({ id, emoji }: { id: string; emoji: string }) =>
-      reactToGroupMessage(id, emoji),
-    onMutate: async ({ id, emoji }) => {
-      if (!groupId || !user) return;
-      await queryClient.cancelQueries({ queryKey });
-      const previous =
-        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
-      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
-        setReactionInPages(old, id, user.id, emoji),
-      );
-      return { previous };
-    },
-    onError: (_error, _vars, context) => {
-      if (groupId && context?.previous) {
-        queryClient.setQueryData(queryKey, context.previous);
-      }
-    },
-    onSettled: () => {
-      if (groupId) queryClient.invalidateQueries({ queryKey });
-    },
-  });
+  return useMutation(createGroupMutations(groupsApi, queryClient).reactToMessage(groupId, user?.id));
 };
 
 export const useDeleteMessageInGroupMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { deleteMessageInGroup } = useGroupStore();
-  const queryKey = ["group-messages", groupId];
-
-  return useMutation({
-    mutationFn: (messageId: string) => deleteMessageInGroup(messageId),
-    onMutate: async (messageId) => {
-      if (!groupId) return;
-      await queryClient.cancelQueries({ queryKey });
-      const previous =
-        queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
-      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
-        updateMessageInPages(old, messageId, (m) => ({
-          ...m,
-          deleted: true,
-          content: undefined,
-          imageUrls: [],
-          attachments: [],
-        })),
-      );
-      return { previous };
-    },
-    onError: (_error, _messageId, context) => {
-      if (groupId && context?.previous) {
-        queryClient.setQueryData(queryKey, context.previous);
-      }
-    },
-    onSettled: () => {
-      if (groupId) queryClient.invalidateQueries({ queryKey });
-    },
-  });
+  return useMutation(createGroupMutations(groupsApi, queryClient).deleteMessage(groupId));
 };
 
 export const useAddMemberToGroupMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { addMemberToGroup } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).addMember(groupId);
   return useMutation({
-    mutationFn: (userId: string) =>
-      addMemberToGroup(groupId as string, userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
-      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
-      queryClient.invalidateQueries({ queryKey: ["user-groups"] });
-      queryClient.invalidateQueries({
-        queryKey: ["discoverable-public-groups"],
-      });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Member added to group");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -342,11 +168,11 @@ export const useAddMemberToGroupMutation = (groupId?: string) => {
 
 export const useLeaveGroupMutation = () => {
   const queryClient = useQueryClient();
-  const { leaveGroup } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).leave();
   return useMutation({
-    mutationFn: (groupId: string) => leaveGroup(groupId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-groups"] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("You have left the group");
     },
   });
@@ -354,13 +180,11 @@ export const useLeaveGroupMutation = () => {
 
 export const usePromoteMemberToAdminMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { makeUserAdmin } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).promoteToAdmin(groupId);
   return useMutation({
-    mutationFn: (userId: string) =>
-      makeUserAdmin(groupId as string, userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
-      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Member promoted to admin");
     },
   });
@@ -368,13 +192,11 @@ export const usePromoteMemberToAdminMutation = (groupId?: string) => {
 
 export const useBanGroupMemberMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { banGroupMember } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).banMember(groupId);
   return useMutation({
-    mutationFn: ({ userId, reason }: { userId: string; reason?: string }) =>
-      banGroupMember(groupId as string, userId, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
-      queryClient.invalidateQueries({ queryKey: ["group-bans", groupId] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Member removed and banned");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -383,11 +205,11 @@ export const useBanGroupMemberMutation = (groupId?: string) => {
 
 export const useUnbanGroupMemberMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { unbanGroupMember } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).unbanMember(groupId);
   return useMutation({
-    mutationFn: (userId: string) => unbanGroupMember(groupId as string, userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["group-bans", groupId] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Member unbanned");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -396,11 +218,11 @@ export const useUnbanGroupMemberMutation = (groupId?: string) => {
 
 export const useUpdateGroupImageMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { updateGroupImage } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).updateImage<File>(groupId);
   return useMutation({
-    mutationFn: (image: File) => updateGroupImage(groupId as string, image),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["group", groupId] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Group image updated");
     },
   });
@@ -408,12 +230,11 @@ export const useUpdateGroupImageMutation = (groupId?: string) => {
 
 export const useAddCourseResourceMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { addCourseResource } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).addCourseResource<File>(groupId);
   return useMutation({
-    mutationFn: (payload: NewCourseResourcePayload) =>
-      addCourseResource(groupId as string, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Resource added");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -422,20 +243,11 @@ export const useAddCourseResourceMutation = (groupId?: string) => {
 
 export const useUpdateCourseResourceMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { updateCourseResource } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).updateCourseResource(groupId);
   return useMutation({
-    mutationFn: ({
-      resourceId,
-      ...payload
-    }: {
-      resourceId: string;
-      title?: string;
-      description?: string;
-      category?: ResourceCategory;
-      week?: string;
-    }) => updateCourseResource(groupId as string, resourceId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Resource updated");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -444,12 +256,11 @@ export const useUpdateCourseResourceMutation = (groupId?: string) => {
 
 export const useDeleteCourseResourceMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { deleteCourseResource } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).deleteCourseResource(groupId);
   return useMutation({
-    mutationFn: (resourceId: string) =>
-      deleteCourseResource(groupId as string, resourceId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Resource deleted");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -458,26 +269,21 @@ export const useDeleteCourseResourceMutation = (groupId?: string) => {
 
 export const useToggleCourseResourcePinMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { toggleCourseResourcePin } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).toggleCourseResourcePin(groupId);
   return useMutation({
-    mutationFn: (resourceId: string) =>
-      toggleCourseResourcePin(groupId as string, resourceId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
-    },
+    ...shared,
     onError: (error: Error) => toast.error(error.message),
   });
 };
 
 export const useDownloadCourseResourceMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { downloadCourseResource } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).downloadCourseResource(groupId);
   return useMutation({
-    mutationFn: (resourceId: string) =>
-      downloadCourseResource(groupId as string, resourceId),
-    onSuccess: (data) => {
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       if (data.url) window.open(data.url, "_blank", "noopener,noreferrer");
-      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -485,13 +291,9 @@ export const useDownloadCourseResourceMutation = (groupId?: string) => {
 
 export const useToggleCourseResourceHelpfulMutation = (groupId?: string) => {
   const queryClient = useQueryClient();
-  const { toggleCourseResourceHelpful } = useGroupStore();
+  const shared = createGroupMutations(groupsApi, queryClient).toggleCourseResourceHelpful(groupId);
   return useMutation({
-    mutationFn: (resourceId: string) =>
-      toggleCourseResourceHelpful(groupId as string, resourceId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["course-resources", groupId] });
-    },
+    ...shared,
     onError: (error: Error) => toast.error(error.message),
   });
 };

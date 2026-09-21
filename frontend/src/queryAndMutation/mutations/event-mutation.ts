@@ -1,16 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createEventsApi } from "@universe/shared/api";
+import { createEventMutations } from "@universe/shared/mutations";
 import { toast } from "sonner";
-import { useEventStore } from "../../store/eventStore";
-import type { CreateEventPayload, UpdateEventPayload } from "../types";
+import { httpClient } from "@/lib/api";
+
+const eventsApi = createEventsApi(httpClient);
 
 export const useCreateEventMutation = () => {
   const queryClient = useQueryClient();
-  const { createEvent } = useEventStore();
+  const shared = createEventMutations(eventsApi, queryClient).create();
   return useMutation({
-    mutationFn: (data: CreateEventPayload) => createEvent(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["events-discover"] });
-      queryClient.invalidateQueries({ queryKey: ["events-mine"] });
+    ...shared,
+    onSuccess: (data, post, onMutateResult, context) => {
+      shared.onSuccess?.(data, post, onMutateResult, context);
       toast.success("Event created");
     },
   });
@@ -18,13 +20,11 @@ export const useCreateEventMutation = () => {
 
 export const useUpdateEventMutation = (eventId?: string) => {
   const queryClient = useQueryClient();
-  const { updateEvent } = useEventStore();
+  const shared = createEventMutations(eventsApi, queryClient).update(eventId);
   return useMutation({
-    mutationFn: (data: UpdateEventPayload) => updateEvent(eventId as string, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
-      queryClient.invalidateQueries({ queryKey: ["events-discover"] });
-      queryClient.invalidateQueries({ queryKey: ["events-mine"] });
+    ...shared,
+    onSuccess: (data, post, onMutateResult, context) => {
+      shared.onSuccess?.(data, post, onMutateResult, context);
       toast.success("Event updated");
     },
   });
@@ -32,40 +32,31 @@ export const useUpdateEventMutation = (eventId?: string) => {
 
 export const useCancelEventMutation = (eventId?: string) => {
   const queryClient = useQueryClient();
-  const { cancelEvent } = useEventStore();
+  const shared = createEventMutations(eventsApi, queryClient).cancel(eventId);
   return useMutation({
-    mutationFn: () => cancelEvent(eventId as string),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
-      queryClient.invalidateQueries({ queryKey: ["events-discover"] });
-      queryClient.invalidateQueries({ queryKey: ["events-mine"] });
+    ...shared,
+    onSuccess: (data, post, onMutateResult, context) => {
+      shared.onSuccess?.(data, post, onMutateResult, context);
       toast.success("Event cancelled");
     },
   });
 };
 
-export const useUpdateEventCoverImageMutation = (eventId?: string) => {
+// No success toast here on purpose: every call site chains this after its
+// own create/update mutation succeeds (see EventFormModal.tsx), which
+// already shows its own toast - a second one here would be redundant.
+export const useUpdateEventCoverImageMutation = () => {
   const queryClient = useQueryClient();
-  const { updateEventCoverImage } = useEventStore();
-  return useMutation({
-    mutationFn: (image: File) => updateEventCoverImage(eventId as string, image),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
-      toast.success("Event cover image updated");
-    },
-  });
+  return useMutation(createEventMutations(eventsApi, queryClient).updateCoverImage<File>());
 };
 
 export const useRsvpEventMutation = (eventId?: string) => {
   const queryClient = useQueryClient();
-  const { rsvpToEvent } = useEventStore();
+  const shared = createEventMutations(eventsApi, queryClient).rsvp(eventId);
   return useMutation({
-    mutationFn: (status: "going" | "interested") =>
-      rsvpToEvent(eventId as string, status),
-    onSuccess: (participant) => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
-      queryClient.invalidateQueries({ queryKey: ["events-mine"] });
-      queryClient.invalidateQueries({ queryKey: ["event-participants", eventId] });
+    ...shared,
+    onSuccess: (participant, status, onMutateResult, context) => {
+      shared.onSuccess?.(participant, status, onMutateResult, context);
       toast.success(
         participant.status === "waitlisted"
           ? "You're on the waitlist"
@@ -80,23 +71,23 @@ export const useRsvpEventMutation = (eventId?: string) => {
 
 export const useCancelRsvpMutation = (eventId?: string) => {
   const queryClient = useQueryClient();
-  const { cancelRsvp } = useEventStore();
+  const shared = createEventMutations(eventsApi, queryClient).cancelRsvp(eventId);
   return useMutation({
-    mutationFn: () => cancelRsvp(eventId as string),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
-      queryClient.invalidateQueries({ queryKey: ["events-mine"] });
-      queryClient.invalidateQueries({ queryKey: ["event-participants", eventId] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("RSVP removed");
     },
   });
 };
 
 export const useJoinEventChatMutation = (eventId?: string) => {
-  const { joinEventChat } = useEventStore();
+  const queryClient = useQueryClient();
+  const shared = createEventMutations(eventsApi, queryClient).joinChat(eventId);
   return useMutation({
-    mutationFn: () => joinEventChat(eventId as string),
-    onSuccess: () => {
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Joined the event chat");
     },
   });
@@ -104,14 +95,11 @@ export const useJoinEventChatMutation = (eventId?: string) => {
 
 export const useBanEventParticipantMutation = (eventId?: string) => {
   const queryClient = useQueryClient();
-  const { banEventParticipant } = useEventStore();
+  const shared = createEventMutations(eventsApi, queryClient).banParticipant(eventId);
   return useMutation({
-    mutationFn: ({ userId, reason }: { userId: string; reason?: string }) =>
-      banEventParticipant(eventId as string, userId, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event", eventId] });
-      queryClient.invalidateQueries({ queryKey: ["event-participants", eventId] });
-      queryClient.invalidateQueries({ queryKey: ["event-bans", eventId] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Participant removed and banned");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -120,11 +108,11 @@ export const useBanEventParticipantMutation = (eventId?: string) => {
 
 export const useUnbanEventParticipantMutation = (eventId?: string) => {
   const queryClient = useQueryClient();
-  const { unbanEventParticipant } = useEventStore();
+  const shared = createEventMutations(eventsApi, queryClient).unbanParticipant(eventId);
   return useMutation({
-    mutationFn: (userId: string) => unbanEventParticipant(eventId as string, userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event-bans", eventId] });
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Participant unbanned");
     },
     onError: (error: Error) => toast.error(error.message),
