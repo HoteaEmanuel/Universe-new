@@ -7,3 +7,11 @@ export const cursorPagination = <T extends { hasMore: boolean; nextCursor: strin
   getNextPageParam: (lastPage: T) =>
     lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
 });
+
+// For the offset-paginated `SearchPage<T>` shape (`{ items, hasMore }`, no
+// cursor) - the next offset is the running total of items seen so far.
+export const offsetPagination = <T extends { hasMore: boolean; items: unknown[] }>() => ({
+  initialPageParam: 0,
+  getNextPageParam: (lastPage: T, allPages: T[]) =>
+    lastPage.hasMore ? allPages.reduce((sum, page) => sum + page.items.length, 0) : undefined,
+});

@@ -1,23 +1,15 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useReportStore, type ReportsFilters } from "@/store/reportStore";
-import type { ReportsPage } from "@/features/moderation/types";
+import { createReportsApi } from "@universe/shared/api";
+import { createReportQueries } from "@universe/shared/queries";
+import type { ReportsFilters } from "@/features/moderation/types";
+import { httpClient } from "@/lib/api";
 
-export const useGetReportsInfiniteQuery = (filters: ReportsFilters) => {
-  const { getReportsPage } = useReportStore();
-  return useInfiniteQuery<ReportsPage>({
-    queryKey: ["adminReports", filters],
-    queryFn: ({ pageParam }) =>
-      getReportsPage(filters, pageParam as string | undefined),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage) =>
-      lastPage.hasMore ? (lastPage.nextCursor ?? undefined) : undefined,
-  });
-};
+export type { ReportsFilters };
 
-export const useGetReportedUsersSummaryQuery = () => {
-  const { getReportedUsersSummary } = useReportStore();
-  return useQuery({
-    queryKey: ["adminReportsSummary"],
-    queryFn: () => getReportedUsersSummary(),
-  });
-};
+const reportsApi = createReportsApi(httpClient);
+const reportQueries = createReportQueries(reportsApi);
+
+export const useGetReportsInfiniteQuery = (filters: ReportsFilters) =>
+  useInfiniteQuery(reportQueries.list(filters));
+
+export const useGetReportedUsersSummaryQuery = () => useQuery(reportQueries.summary());

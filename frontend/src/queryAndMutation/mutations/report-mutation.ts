@@ -1,12 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useReportStore } from "@/store/reportStore";
-import type { CreateReportPayload, ReportResolveAction } from "@/features/moderation/types";
+import { createReportsApi } from "@universe/shared/api";
+import { createReportMutations } from "@universe/shared/mutations";
+import { httpClient } from "@/lib/api";
+
+const reportsApi = createReportsApi(httpClient);
 
 export const useCreateReportMutation = () => {
-  const { createReport } = useReportStore();
+  const queryClient = useQueryClient();
+  const shared = createReportMutations(reportsApi, queryClient).create();
   return useMutation({
-    mutationFn: (payload: CreateReportPayload) => createReport(payload),
+    ...shared,
     onSuccess: () => {
       toast.success("Report submitted. Thanks for helping keep Universe safe.");
     },
@@ -15,24 +19,13 @@ export const useCreateReportMutation = () => {
 };
 
 export const useResolveReportMutation = () => {
-  const { resolveReport } = useReportStore();
   const queryClient = useQueryClient();
+  const shared = createReportMutations(reportsApi, queryClient).resolve();
   return useMutation({
-    mutationFn: ({
-      id,
-      action,
-      note,
-    }: {
-      id: string;
-      action: ReportResolveAction;
-      note?: string;
-    }) => resolveReport(id, action, note),
-    onSuccess: () => {
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("Report resolved");
-      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
-      queryClient.invalidateQueries({ queryKey: ["adminReportsSummary"] });
-      queryClient.invalidateQueries({ queryKey: ["adminStats"] });
-      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
     },
     onError: (error: Error) => toast.error(error.message),
   });

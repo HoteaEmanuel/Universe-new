@@ -1,4 +1,5 @@
 import type { EventParticipantStatus } from "../domain.js";
+import type { ReportsFilters } from "../moderation.js";
 import type { OpportunityFilters } from "../post.js";
 
 // One key namespace per domain instead of ad-hoc string arrays scattered
@@ -91,6 +92,27 @@ export const notificationKeys = {
 
 export const pollKeys = {
   myVote: (pollId: string) => ["myPollVote", pollId] as const,
+};
+
+export const adminKeys = {
+  stats: () => ["adminStats"] as const,
+  dailyActivity: () => ["adminDailyActivity"] as const,
+  topUniversities: () => ["adminTopUniversities"] as const,
+  usersAll: () => ["adminUsers"] as const,
+  users: (search: string) => ["adminUsers", search] as const,
+};
+
+export const searchKeys = {
+  overview: (query: string) => ["search-overview", query] as const,
+  users: (query: string) => ["search-users", query] as const,
+  posts: (query: string) => ["search-posts", query] as const,
+  groups: (query: string) => ["search-groups", query] as const,
+};
+
+export const reportKeys = {
+  listAll: () => ["adminReports"] as const,
+  list: (filters: ReportsFilters) => ["adminReports", filters] as const,
+  summary: () => ["adminReportsSummary"] as const,
 };
 
 export const conversationKeys = {

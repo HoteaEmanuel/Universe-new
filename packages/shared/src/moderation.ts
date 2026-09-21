@@ -51,6 +51,13 @@ export type Report = {
 
 export type ReportsPage = NamedCursorPage<"reports", Report>;
 
+export type ReportsFilters = {
+  status?: ReportStatus;
+  reason?: ReportReason;
+  targetType?: ReportTargetType;
+  search?: string;
+};
+
 export type ReportedUserSummaryRow = {
   user: ReportUserSummary;
   pendingCount: number;
