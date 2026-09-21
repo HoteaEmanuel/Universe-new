@@ -8,4 +8,5 @@ export * from "./post.js";
 export * from "./chat.js";
 export * from "./moderation.js";
 export * from "./notification.js";
+export * from "./preferences.js";
 export * from "./search.js";

@@ -102,6 +102,14 @@ export const adminKeys = {
   users: (search: string) => ["adminUsers", search] as const,
 };
 
+export const blockKeys = {
+  blockedUsers: () => ["blocked-users"] as const,
+};
+
+export const preferenceKeys = {
+  detail: (userId: string) => ["preferences", userId] as const,
+};
+
 export const searchKeys = {
   overview: (query: string) => ["search-overview", query] as const,
   users: (query: string) => ["search-users", query] as const,
