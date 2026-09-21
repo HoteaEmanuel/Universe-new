@@ -26,7 +26,7 @@ import type {
   EventParticipantsQueryInput,
   BanEventParticipantInput,
   EventBansQueryInput,
-} from "../schemas/event.schema.js";
+} from "@universe/shared/schemas/event.schema.js";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong";

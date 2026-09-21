@@ -14,7 +14,7 @@ import { requireSelf } from "../middleware/authorization.js";
 import {
   idParamSchema,
   notificationQuerySchema,
-} from "../schemas/notification.schema.js";
+} from "@universe/shared/schemas/notification.schema.js";
 
 const notificationsRateLimiter = createRateLimiter({
   windowMs: 60_000,

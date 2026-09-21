@@ -21,7 +21,7 @@ import type {
   ChangePasswordInput,
   DeleteAccountInput,
   FollowListQueryInput,
-} from "../schemas/user.schema.js";
+} from "@universe/shared/schemas/user.schema.js";
 import {
   canonicalizeUsername,
   isValidUsername,

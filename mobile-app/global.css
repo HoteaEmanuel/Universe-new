@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.postImage{
+    @apply w-1/2 h-64 object-cover rounded-t-2xl;
+}
+
+.violet-bg{
+    @apply bg-violet-950; 
+}
+
+.violet-bg-active{
+    @apply bg-violet-500;
+}
+.btn-start{
+    @apply bg-violet-900 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded;
+}
+.btn{
+    @apply flex-row justify-center items-center gap-2 bg-violet-900 active:bg-violet-700 text-white font-bold py-2 px-4 rounded;
+}
+.btn-remove{
+    @apply flex-row justify-center items-center gap-2 border border-gray-800 text-white font-bold py-2 px-4 rounded;
+}
+.postsContainer{
+    /* @apply flex grid grid-cols-2 gap-4; */
+}

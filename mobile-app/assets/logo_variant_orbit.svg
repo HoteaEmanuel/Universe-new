@@ -1,0 +1,30 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="orbitGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+<stop offset="0%" stop-color="#2c3e50"/>
+<stop offset="100%" stop-color="#4ca1af"/>
+</linearGradient>
+<linearGradient id="capGrad" x1="100" y1="100" x2="400" y2="400" gradientUnits="userSpaceOnUse">
+<stop offset="0%" stop-color="#141E30"/>
+<stop offset="100%" stop-color="#243B55"/>
+</linearGradient>
+</defs>
+
+<!-- Background circle (optional, or transparent) -->
+<!-- <circle cx="256" cy="256" r="256" fill="#f0f0f0"/> -->
+
+<!-- Orbital Ring -->
+<path d="M256 50C142.2 50 50 142.2 50 256c0 113.8 92.2 206 206 206s206-92.2 206-206C462 142.2 369.8 50 256 50zm0 30c97.2 0 176 78.8 176 176S353.2 432 256 432 80 353.2 80 256 158.8 80 256 80z" fill="url(#orbitGrad)" opacity="0.8"/>
+
+<!-- Planet/Star on Orbit -->
+<circle cx="256" cy="65" r="20" fill="#FFD700"/>
+
+<!-- Graduation Cap (Mortarboard) -->
+<path d="M256 160L100 240l156 80 156-80-156-80z" fill="url(#capGrad)"/>
+<path d="M412 240v60c0 0-40 40-156 40-116 0-156-40-156-40v-60" stroke="url(#capGrad)" stroke-width="10" stroke-linecap="round" fill="none"/>
+
+<!-- Tassel -->
+<path d="M256 240v60c0 10 5 20 10 20s10-10 10-20v-60" stroke="#FFD700" stroke-width="5"/>
+<circle cx="276" cy="300" r="8" fill="#FFD700"/>
+
+</svg>

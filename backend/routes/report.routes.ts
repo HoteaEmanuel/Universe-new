@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { validate } from "../middleware/validate.js";
-import { createReportSchema } from "../schemas/report.schema.js";
+import { createReportSchema } from "@universe/shared/schemas/report.schema.js";
 import { createReportController } from "../controllers/report.controller.js";
 
 const router = Router();

@@ -1,21 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useBlockStore } from "../../store/blockStore";
+import { createBlockApi } from "@universe/shared/api";
+import { createBlockMutations } from "@universe/shared/mutations";
+import { httpClient } from "@/lib/api";
 
-const invalidateAfterBlockChange = (queryClient: ReturnType<typeof useQueryClient>) => {
-  queryClient.invalidateQueries({ queryKey: ["blocked-users"] });
-  queryClient.invalidateQueries({ queryKey: ["user-conversations"] });
-  queryClient.invalidateQueries({ queryKey: ["archived-conversations"] });
-  queryClient.invalidateQueries({ queryKey: ["conversation_messages"] });
-};
+const blockApi = createBlockApi(httpClient);
 
 export const useBlockUserMutation = () => {
   const queryClient = useQueryClient();
-  const { blockUser } = useBlockStore();
+  const shared = createBlockMutations(blockApi, queryClient).block();
   return useMutation({
-    mutationFn: (userId: string) => blockUser(userId),
-    onSuccess: () => {
-      invalidateAfterBlockChange(queryClient);
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("User blocked");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -24,11 +21,11 @@ export const useBlockUserMutation = () => {
 
 export const useUnblockUserMutation = () => {
   const queryClient = useQueryClient();
-  const { unblockUser } = useBlockStore();
+  const shared = createBlockMutations(blockApi, queryClient).unblock();
   return useMutation({
-    mutationFn: (userId: string) => unblockUser(userId),
-    onSuccess: () => {
-      invalidateAfterBlockChange(queryClient);
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("User unblocked");
     },
     onError: (error: Error) => toast.error(error.message),

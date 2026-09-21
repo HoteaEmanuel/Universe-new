@@ -35,7 +35,7 @@ import {
   mentionSearchQuerySchema,
   changePasswordSchema,
   deleteAccountSchema,
-} from "../schemas/user.schema.js";
+} from "@universe/shared/schemas/user.schema.js";
 import { imageUpload } from "../lib/imageUpload.js";
 import { verifyUploadedFiles } from "../lib/validateUpload.js";
 

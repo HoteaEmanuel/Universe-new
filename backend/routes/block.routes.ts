@@ -5,7 +5,7 @@ import {
   getBlockedUsersController,
 } from "../controllers/block.controller.js";
 import { validate } from "../middleware/validate.js";
-import { blockUserSchema } from "../schemas/block.schema.js";
+import { blockUserSchema } from "@universe/shared/schemas/block.schema.js";
 
 const router = express.Router();
 

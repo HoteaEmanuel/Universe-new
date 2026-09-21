@@ -3,7 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Camera, GraduationCap, BookOpen } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { useUpdateBioMutation } from "@/queryAndMutation/mutations/user-mutation";
+import {
+  useUpdateBioMutation,
+  useUpdateUsernameMutation,
+} from "@/queryAndMutation/mutations/user-mutation";
 import ProfileImageModal from "@/Modals/ProfileImageModal";
 import PostFormCard from "@/features/posts/components/PostFormCard";
 import TextareaField from "@/components/TextareaField";
@@ -16,7 +19,7 @@ import UserAvatar from "@/components/UserAvatar";
 import { getFullName } from "@/utils/fullName";
 import { BIO_MAX_LENGTH } from "@/constants/profileForm";
 import type { ProfileUser } from "./types";
-import { useUserStore } from "@/store/userStore";
+import { ApiError } from "@/lib/api";
 import { validateUsernameFormat } from "@/utils/usernameValidation";
 import { useUsernameAvailability } from "@/hooks/useUsernameAvailability";
 
@@ -34,7 +37,7 @@ const EditProfile = () => {
     user?: ProfileUser;
     updateCurrentUser: (updates: Partial<ProfileUser>) => void;
   };
-  const { updateUsername } = useUserStore();
+  const { mutateAsync: updateUsername } = useUpdateUsernameMutation();
   const [openImageModal, setOpenImageModal] = useState(false);
   const { mutateAsync: updateBio, isPending } = useUpdateBioMutation();
   const {
@@ -65,12 +68,12 @@ const EditProfile = () => {
       await updateBio(data.bio);
       navigate("/profile");
     } catch (error) {
-      const response = error as { response?: { status?: number; data?: { message?: string; code?: string } } };
+      const apiError = error instanceof ApiError ? error : undefined;
       setError("username", {
         message:
-          response.response?.status === 409 || response.response?.data?.code === "USERNAME_TAKEN"
+          apiError?.status === 409 || apiError?.code === "USERNAME_TAKEN"
             ? "That username was just claimed. Please choose another."
-            : response.response?.data?.message ?? "Could not save your profile. Please try again.",
+            : (apiError?.message ?? "Could not save your profile. Please try again."),
       });
     }
   };

@@ -41,7 +41,7 @@ import type {
   EventVisibility,
   EventParticipantStatus,
 } from "../generated/prisma/client.js";
-import type { EventStatus, EventType } from "../types/shared.js";
+import type { EventStatus, EventType } from "@universe/shared";
 
 export { EventBannedError };
 

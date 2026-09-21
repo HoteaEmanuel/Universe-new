@@ -39,7 +39,7 @@ import type {
   GroupBansQueryInput,
   GroupMembersQueryInput,
   GroupsListQueryInput,
-} from "../schemas/group.schema.js";
+} from "@universe/shared/schemas/group.schema.js";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong";

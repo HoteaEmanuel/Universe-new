@@ -22,8 +22,8 @@ import { useStepWizard } from "@/hooks/useStepWizard";
 import {
   useCreateEventMutation,
   useUpdateEventMutation,
+  useUpdateEventCoverImageMutation,
 } from "@/queryAndMutation/mutations/event-mutation";
-import { useEventStore } from "@/store/eventStore";
 import type { EventDetails, EventVisibility } from "@/queryAndMutation/types";
 import {
   EVENT_DESCRIPTION_MAX_LENGTH,
@@ -82,7 +82,7 @@ const EventFormModal = (props: EventFormModalProps) => {
   const { mutate: createEvent, isPending: isCreating } = useCreateEventMutation();
   const { mutate: updateEvent, isPending: isUpdating } = useUpdateEventMutation(event?.id);
   const isPending = mode === "create" ? isCreating : isUpdating;
-  const { updateEventCoverImage } = useEventStore();
+  const { mutateAsync: updateEventCoverImage } = useUpdateEventCoverImageMutation();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -152,7 +152,7 @@ const EventFormModal = (props: EventFormModalProps) => {
         {
           onSuccess: (createdEvent) => {
             if (coverImage instanceof File) {
-              updateEventCoverImage(createdEvent.id, coverImage)
+              updateEventCoverImage({ eventId: createdEvent.id, image: coverImage })
                 .then(() => invalidateEventQueries(createdEvent.id))
                 .catch(() =>
                   toast.error("Event created, but the cover image failed to upload"),
@@ -165,7 +165,7 @@ const EventFormModal = (props: EventFormModalProps) => {
       updateEvent(payload, {
         onSuccess: () => {
           if (coverImage instanceof File) {
-            updateEventCoverImage(event.id, coverImage)
+            updateEventCoverImage({ eventId: event.id, image: coverImage })
               .then(() => invalidateEventQueries(event.id))
               .catch(() =>
                 toast.error("Event updated, but the cover image failed to upload"),

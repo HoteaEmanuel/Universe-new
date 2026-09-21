@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ShieldOff, ShieldCheck } from "lucide-react";
 import { useGetUsersInfiniteQuery } from "@/queryAndMutation/queries/admin-queries";
 import { useUnblockUserMutation } from "@/queryAndMutation/mutations/admin-mutation";
-import type { AdminUser } from "@/store/adminStore";
+import type { AdminUser } from "@universe/shared";
 import UserAvatar from "@/components/UserAvatar";
 import UserListSkeleton from "@/components/UserListSkeleton";
 import SearchInput from "@/components/SearchInput";

@@ -2,9 +2,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Camera } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { useUserStore } from "@/store/userStore";
-import { useUpdateBioMutation } from "@/queryAndMutation/mutations/user-mutation";
+import {
+  useUpdateBioMutation,
+  useUpdateUsernameMutation,
+} from "@/queryAndMutation/mutations/user-mutation";
 import { useUsernameAvailability } from "@/hooks/useUsernameAvailability";
+import { ApiError } from "@/lib/api";
 import { validateUsernameFormat } from "@/utils/usernameValidation";
 import ProfileImageModal from "@/Modals/ProfileImageModal";
 import TextareaField from "@/components/TextareaField";
@@ -33,7 +36,7 @@ const IdentityStep = ({ user, onNext }: IdentityStepProps) => {
   const { updateCurrentUser } = useAuthStore() as {
     updateCurrentUser: (updates: Partial<ProfileUser>) => void;
   };
-  const { updateUsername } = useUserStore();
+  const { mutateAsync: updateUsername } = useUpdateUsernameMutation();
   const { mutateAsync: updateBio, isPending } = useUpdateBioMutation();
   const [openImageModal, setOpenImageModal] = useState(false);
   const {
@@ -65,12 +68,12 @@ const IdentityStep = ({ user, onNext }: IdentityStepProps) => {
       }
       onNext();
     } catch (error) {
-      const response = error as { response?: { status?: number; data?: { message?: string; code?: string } } };
+      const apiError = error instanceof ApiError ? error : undefined;
       setError("username", {
         message:
-          response.response?.status === 409 || response.response?.data?.code === "USERNAME_TAKEN"
+          apiError?.status === 409 || apiError?.code === "USERNAME_TAKEN"
             ? "That username was just claimed. Please choose another."
-            : (response.response?.data?.message ?? "Could not save your profile. Please try again."),
+            : (apiError?.message ?? "Could not save your profile. Please try again."),
       });
     }
   };

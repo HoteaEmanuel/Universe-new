@@ -9,7 +9,7 @@ import { validate } from "../middleware/validate.js";
 import {
   searchOverviewQuerySchema,
   searchQuerySchema,
-} from "../schemas/search.schema.js";
+} from "@universe/shared/schemas/search.schema.js";
 
 const router = express.Router();
 

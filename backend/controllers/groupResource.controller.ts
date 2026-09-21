@@ -14,7 +14,7 @@ import type {
   CreateGroupResourceInput,
   GroupResourcesQueryInput,
   UpdateGroupResourceInput,
-} from "../schemas/groupResource.schema.js";
+} from "@universe/shared/schemas/groupResource.schema.js";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong";

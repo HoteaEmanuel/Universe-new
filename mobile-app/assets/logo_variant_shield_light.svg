@@ -1,0 +1,31 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialGradient id="spaceGradLight" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) rotate(90) scale(256)">
+<stop offset="0%" stop-color="#7B1FA2"/>
+<stop offset="100%" stop-color="#E1BEE7"/>
+</radialGradient>
+<linearGradient id="goldGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+<stop offset="0%" stop-color="#FFD700"/>
+<stop offset="50%" stop-color="#FFA500"/>
+<stop offset="100%" stop-color="#FFD700"/>
+</linearGradient>
+</defs>
+
+<!-- White background for light mode context -->
+<circle cx="256" cy="256" r="256" fill="#ffffff"/>
+
+<!-- Shield Outline -->
+<path d="M256 50C150 50 60 100 60 180c0 160 80 240 196 290 116-50 196-130 196-290 0-80-90-130-196-130z" fill="url(#spaceGradLight)" stroke="url(#goldGrad)" stroke-width="15"/>
+
+<!-- Stars inside shield (purple/white contrast) -->
+<circle cx="150" cy="150" r="3" fill="#FFF"/>
+<circle cx="350" cy="200" r="4" fill="#FFF"/>
+<circle cx="200" cy="300" r="2" fill="#FFF"/>
+<circle cx="300" cy="100" r="3" fill="#FFF"/>
+<circle cx="256" cy="256" r="5" fill="#FFF" opacity="0.8"/>
+
+<!-- Open Book Icon inside shield -->
+<path d="M160 220c0 0 20-10 40-10s40 10 56 20c16-10 36-20 56-20s40 10 40 10v100c0 0-20-10-40-10s-40 10-56 20c-16-10-36-20-56-20s-40 10-40 10V220z" fill="#FFF" opacity="0.9"/>
+<path d="M256 230v100" stroke="#FFF" stroke-width="5" stroke-linecap="round"/>
+
+</svg>

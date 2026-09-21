@@ -1,7 +1,7 @@
 import router from "express";
 import { generateHashtags, listModels } from "../controllers/aiController.js";
 import { validate } from "../middleware/validate.js";
-import { generateHashtagsSchema } from "../schemas/ai.schema.js";
+import { generateHashtagsSchema } from "@universe/shared/schemas/ai.schema.js";
 
 const aiRouter = router.Router();
 aiRouter.post(

@@ -12,7 +12,7 @@ import {
   getConversationMessagesPage,
 } from "../repository/message.repository.js";
 import { findBlockEitherDirection } from "../repository/block.repository.js";
-import type { ConversationsListQueryInput } from "../schemas/conversation.schema.js";
+import type { ConversationsListQueryInput } from "@universe/shared/schemas/conversation.schema.js";
 
 import {
   deleteMessage,

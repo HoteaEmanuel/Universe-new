@@ -71,13 +71,13 @@ import {
   groupBansQuerySchema,
   groupMembersQuerySchema,
   groupsListQuerySchema,
-} from "../schemas/group.schema.js";
-import { sendGroupPollMessageSchema } from "../schemas/poll.schema.js";
+} from "@universe/shared/schemas/group.schema.js";
+import { sendGroupPollMessageSchema } from "@universe/shared/schemas/poll.schema.js";
 import {
   createGroupResourceSchema,
   updateGroupResourceSchema,
   groupResourcesQuerySchema,
-} from "../schemas/groupResource.schema.js";
+} from "@universe/shared/schemas/groupResource.schema.js";
 const router = express.Router();
 
 const groupActionRateLimiter = createRateLimiter({

@@ -1,35 +1,37 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useAdminStore } from "@/store/adminStore";
+import { createAdminApi } from "@universe/shared/api";
+import { createAdminMutations } from "@universe/shared/mutations";
+import { httpClient } from "@/lib/api";
+
+const adminApi = createAdminApi(httpClient);
 
 export const useBlockUserMutation = () => {
-  const { blockUser } = useAdminStore();
   const queryClient = useQueryClient();
+  const shared = createAdminMutations(adminApi, queryClient).blockUser();
   return useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason?: string }) => blockUser(id, reason),
+    ...shared,
     onError: () => {
       toast.error("Could not block user");
     },
-    onSuccess: () => {
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("User blocked");
-      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
-      queryClient.invalidateQueries({ queryKey: ["adminStats"] });
     },
   });
 };
 
 export const useUnblockUserMutation = () => {
-  const { unblockUser } = useAdminStore();
   const queryClient = useQueryClient();
+  const shared = createAdminMutations(adminApi, queryClient).unblockUser();
   return useMutation({
-    mutationFn: (id: string) => unblockUser(id),
+    ...shared,
     onError: () => {
       toast.error("Could not unblock user");
     },
-    onSuccess: () => {
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
       toast.success("User unblocked");
-      queryClient.invalidateQueries({ queryKey: ["adminUsers"] });
-      queryClient.invalidateQueries({ queryKey: ["adminStats"] });
     },
   });
 };

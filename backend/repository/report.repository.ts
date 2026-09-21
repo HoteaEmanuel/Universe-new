@@ -1,6 +1,6 @@
 import { prisma } from "../database/prisma.js";
 import { userNameSearchClause } from "../lib/userSearchClause.js";
-import { reportReasonEnum } from "../schemas/report.schema.js";
+import { reportReasonEnum } from "@universe/shared/schemas/report.schema.js";
 import type {
   Prisma,
   ReportTargetType,

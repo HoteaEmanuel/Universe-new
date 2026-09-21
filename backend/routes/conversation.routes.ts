@@ -40,7 +40,7 @@ import {
   mediaQuerySchema,
   reactToMessageSchema,
   conversationsListQuerySchema,
-} from "../schemas/conversation.schema.js";
+} from "@universe/shared/schemas/conversation.schema.js";
 const router = express.Router();
 
 router.get(

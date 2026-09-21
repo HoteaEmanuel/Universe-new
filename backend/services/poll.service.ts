@@ -6,7 +6,7 @@ import {
   closePollRow,
 } from "../repository/poll.repository.js";
 import { findGroupMember } from "../repository/group-members.repository.js";
-import type { PollStatus } from "../types/shared.js";
+import type { PollStatus } from "@universe/shared";
 
 type PollWithRelations = NonNullable<Awaited<ReturnType<typeof findPollById>>>;
 

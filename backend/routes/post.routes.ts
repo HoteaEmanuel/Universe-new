@@ -40,7 +40,7 @@ import {
   sharePostSchema,
   opportunitiesQuerySchema,
   opportunityStatusSchema,
-} from "../schemas/post.schema.js";
+} from "@universe/shared/schemas/post.schema.js";
 
 router.get(
   "/posts/opportunities",

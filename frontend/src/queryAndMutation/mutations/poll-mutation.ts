@@ -1,41 +1,28 @@
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { usePollStore } from "../../store/pollStore";
+import { createPollsApi } from "@universe/shared/api";
+import { createPollMutations } from "@universe/shared/mutations";
+import { httpClient } from "@/lib/api";
 
-export const useVoteOnPollMutation = (
-  pollId: string,
-  invalidateKeys: QueryKey[] = [],
-) => {
+const pollsApi = createPollsApi(httpClient);
+
+export const useVoteOnPollMutation = (pollId: string, invalidateKeys: QueryKey[] = []) => {
   const queryClient = useQueryClient();
-  const { voteOnPoll } = usePollStore();
+  const shared = createPollMutations(pollsApi, queryClient).vote(pollId, invalidateKeys);
   return useMutation({
-    mutationFn: (optionId: string) => voteOnPoll(pollId, optionId),
-    onMutate: async (optionId) => {
-      const queryKey = ["myPollVote", pollId];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<string | null>(queryKey);
-      queryClient.setQueryData(queryKey, optionId);
-      return { previous };
-    },
-    onError: (error: Error, _optionId, context) => {
-      queryClient.setQueryData(["myPollVote", pollId], context?.previous ?? null);
+    ...shared,
+    onError: (error: Error, optionId, onMutateResult, context) => {
+      shared.onError?.(error, optionId, onMutateResult, context);
       toast.error(error.message);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["myPollVote", pollId] });
-      invalidateKeys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
     },
   });
 };
 
 export const useClosePollMutation = (pollId: string, invalidateKeys: QueryKey[] = []) => {
   const queryClient = useQueryClient();
-  const { closePoll } = usePollStore();
+  const shared = createPollMutations(pollsApi, queryClient).close(pollId, invalidateKeys);
   return useMutation({
-    mutationFn: () => closePoll(pollId),
+    ...shared,
     onError: (error: Error) => toast.error(error.message),
-    onSuccess: () => {
-      invalidateKeys.forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
-    },
   });
 };

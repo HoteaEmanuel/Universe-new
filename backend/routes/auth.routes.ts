@@ -31,7 +31,7 @@ import {
   googleMobileSchema,
   googleMobileExchangeSchema,
   refreshMobileSchema,
-} from "../schemas/auth.schema.js";
+} from "@universe/shared/schemas/auth.schema.js";
 const router = express.Router();
 router.post("/check-auth", verifyToken, checkAuth);
 router.get(

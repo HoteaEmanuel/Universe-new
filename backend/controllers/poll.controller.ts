@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { voteOnPoll, closePoll, getMyPollVote } from "../services/poll.service.js";
-import type { VoteOnPollInput } from "../schemas/poll.schema.js";
+import type { VoteOnPollInput } from "@universe/shared/schemas/poll.schema.js";
 
 const errorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong";

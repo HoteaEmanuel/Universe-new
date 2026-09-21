@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { usePollStore } from "../../store/pollStore";
+import { createPollsApi } from "@universe/shared/api";
+import { createPollQueries } from "@universe/shared/queries";
+import { httpClient } from "@/lib/api";
 
-export const useGetMyPollVoteQuery = (pollId?: string) => {
-  const { getMyPollVote } = usePollStore();
-  return useQuery({
-    queryFn: () => getMyPollVote(pollId as string),
-    queryKey: ["myPollVote", pollId],
-    enabled: !!pollId,
-  });
-};
+const pollsApi = createPollsApi(httpClient);
+const pollQueries = createPollQueries(pollsApi);
+
+export const useGetMyPollVoteQuery = (pollId?: string) => useQuery(pollQueries.myVote(pollId));
