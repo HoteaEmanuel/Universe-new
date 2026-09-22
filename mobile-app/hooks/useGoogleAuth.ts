@@ -1,4 +1,4 @@
-// mobile-app/hooks/useGoogleAuth.js
+// mobile-app/hooks/useGoogleAuth.ts
 import { useState, useEffect } from "react";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
@@ -10,11 +10,15 @@ WebBrowser.maybeCompleteAuthSession();
 
 export const useGoogleAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
-  // Ascultă deep links
+
+  // Listens for deep links. Note: this handles a `token`/`user` query-param
+  // shape that the actual mobile OAuth flow doesn't send anymore — the real
+  // flow is auth-callback.tsx exchanging a `code` param. Kept as-is (ported,
+  // not fixed) since untangling which deep-link shape is still live is out
+  // of scope for the auth-screens UI redesign this hook was converted for.
   useEffect(() => {
-    const handleDeepLink = async (event) => {
+    const handleDeepLink = async (event: { url: string }) => {
       const { url } = event;
-      console.log("🔗 Deep link received:", url);
 
       if (url?.includes("auth-callback")) {
         try {
@@ -24,39 +28,29 @@ export const useGoogleAuth = () => {
           const userJson = queryParams?.user;
 
           if (error) {
-            console.error("❌ Auth error:", error);
+            console.error("Auth error:", error);
             alert("Authentication failed. Please try again.");
             return;
           }
 
           if (token) {
-            console.log("✅ Token received");
+            await SecureStore.setItemAsync("jwtToken", String(token));
 
-            // Salvează token în SecureStore
-            await SecureStore.setItemAsync("jwtToken", token);
-
-            // Parse user data
-            let user = null;
             if (userJson) {
-              user = JSON.parse(decodeURIComponent(userJson));
+              JSON.parse(decodeURIComponent(String(userJson)));
             }
 
-            console.log("✅ User logged in:", user?.email);
-
-            // Navighează la home
             router.replace("/home");
           }
         } catch (error) {
-          console.error("❌ Deep link error:", error);
+          console.error("Deep link error:", error);
           alert("Authentication failed. Please try again.");
         }
       }
     };
 
-    // Subscribe la deep link events
     const subscription = Linking.addEventListener("url", handleDeepLink);
 
-    // Check dacă app-ul s-a deschis cu un deep link
     Linking.getInitialURL().then((url) => {
       if (url) {
         handleDeepLink({ url });
@@ -70,15 +64,12 @@ export const useGoogleAuth = () => {
     try {
       setIsLoading(true);
 
-      const API_URL =
+      const API_URL: string =
         Constants.expoConfig?.extra?.API_URL || "https://abc123.ngrok-free.app";
 
-      console.log("🌐 Opening browser:", `${API_URL}/auth/google/mobile-init`);
-
-      // Deschide browser către backend
       await WebBrowser.openBrowserAsync(`${API_URL}/auth/google/mobile-init`);
     } catch (error) {
-      console.error("❌ Error opening browser:", error);
+      console.error("Error opening browser:", error);
       alert("Failed to open login page");
     } finally {
       setIsLoading(false);

@@ -1,9 +1,9 @@
-import axios from "axios";
+import axios, { type InternalAxiosRequestConfig } from "axios";
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
 import { router } from "expo-router";
 
-const API_URL = Constants.expoConfig?.extra?.API_URL || "http://10.0.2.2:5000";
+const API_URL: string = Constants.expoConfig?.extra?.API_URL || "http://10.0.2.2:5000";
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -38,9 +38,9 @@ const clearSessionAndRedirect = async () => {
 // rotates the refresh token — a second call with the now-stale token would
 // fail. Every 401 that arrives while a refresh is already in flight awaits
 // the same promise instead of starting a new one.
-let refreshPromise = null;
+let refreshPromise: Promise<string> | null = null;
 
-const refreshAccessToken = () => {
+const refreshAccessToken = (): Promise<string> => {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       const refreshToken = await SecureStore.getItemAsync("refreshToken");
@@ -50,7 +50,7 @@ const refreshAccessToken = () => {
       });
       await SecureStore.setItemAsync("accessToken", data.accessToken);
       await SecureStore.setItemAsync("refreshToken", data.refreshToken);
-      return data.accessToken;
+      return data.accessToken as string;
     })().finally(() => {
       refreshPromise = null;
     });
@@ -71,10 +71,13 @@ const NO_REFRESH_PATHS = [
   "/auth/resend-verify-email",
 ];
 
+type RetriableConfig = InternalAxiosRequestConfig & { _retriedAfterRefresh?: boolean };
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const { config, response } = error;
+    const config = error.config as RetriableConfig | undefined;
+    const response = error.response;
     const url = config?.url ?? "";
     if (
       response?.status !== 401 ||
@@ -86,9 +89,12 @@ api.interceptors.response.use(
 
     try {
       const accessToken = await refreshAccessToken();
-      config._retriedAfterRefresh = true;
-      config.headers.Authorization = `Bearer ${accessToken}`;
-      return api.request(config);
+      if (config) {
+        config._retriedAfterRefresh = true;
+        config.headers.Authorization = `Bearer ${accessToken}`;
+        return api.request(config);
+      }
+      return Promise.reject(error);
     } catch {
       await clearSessionAndRedirect();
       return Promise.reject(error);

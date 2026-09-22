@@ -1,14 +1,13 @@
-// app/auth-callback.tsx
 import { useEffect } from "react";
-import { View, Text, ActivityIndicator, ScrollView } from "react-native";
+import { View, Text, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import api from "../utils/api";
 import { useAuthStore } from "../store/authStore";
 
 export default function AuthCallback() {
-  const { code, error } = useLocalSearchParams();
-  const { setUser } = useAuthStore();
+  const { code, error } = useLocalSearchParams<{ code?: string; error?: string }>();
+  const setUser = useAuthStore((state) => state.setUser);
 
   useEffect(() => {
     const handleAuth = async () => {
@@ -20,9 +19,7 @@ export default function AuthCallback() {
 
       if (code) {
         try {
-          const response = await api.post("/auth/google/mobile-exchange", {
-            code,
-          });
+          const response = await api.post("/auth/google/mobile-exchange", { code });
           const { accessToken, refreshToken, user } = response.data;
 
           await SecureStore.setItemAsync("accessToken", accessToken);
@@ -30,7 +27,7 @@ export default function AuthCallback() {
 
           setUser(user);
           router.replace("/home");
-        } catch (err) {
+        } catch {
           alert("Authentication failed");
           router.replace("/login");
         }
@@ -40,14 +37,16 @@ export default function AuthCallback() {
     };
 
     handleAuth();
+    // Runs once on mount for the one-shot deep-link exchange; code/error
+    // come from the initial route params and don't change during this
+    // screen's lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: "#000", padding: 20 }}>
-      <ActivityIndicator size="large" color="#fff" style={{ marginTop: 20 }} />
-      <Text style={{ color: "#fff", textAlign: "center", marginTop: 10 }}>
-        Processing...
-      </Text>
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: "#0a0710", alignItems: "center", justifyContent: "center", gap: 12 }}>
+      <ActivityIndicator size="large" color="#fafafa" />
+      <Text style={{ color: "#fafafa" }}>Processing...</Text>
+    </View>
   );
 }
