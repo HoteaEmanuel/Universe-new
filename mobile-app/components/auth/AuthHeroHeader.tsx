@@ -1,5 +1,5 @@
 import { View, Text, Image, useWindowDimensions } from "react-native";
-import Svg, { Defs, LinearGradient, Stop, Path } from "react-native-svg";
+import Svg, { Defs, LinearGradient, RadialGradient, Stop, Path, Circle } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Logo1 from "../../assets/logo_1.png";
 import { authPalette } from "./authPalette";
@@ -29,6 +29,11 @@ const AuthHeroHeader = ({ tagline }: AuthHeroHeaderProps) => {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const height = BASE_HEIGHT + insets.top;
+  // Same corner-glow accents the approved mockup had (radial-gradient, CSS
+  // only) — the flat 3-stop linear gradient that shipped instead of them is
+  // what read as empty. Circles with real pixel cx/cy/r rather than "%" on
+  // the shape itself, same reasoning as the path above.
+  const glowSize = Math.max(width, height);
 
   return (
     <View style={{ height }}>
@@ -43,10 +48,30 @@ const AuthHeroHeader = ({ tagline }: AuthHeroHeaderProps) => {
             <Stop offset="48%" stopColor={authPalette.heroGradient[1]} />
             <Stop offset="100%" stopColor={authPalette.heroGradient[2]} />
           </LinearGradient>
+          <RadialGradient id="heroGlowLight" cx="50%" cy="50%" r="50%">
+            <Stop offset="0%" stopColor="#ffffff" stopOpacity={0.22} />
+            <Stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+          </RadialGradient>
+          <RadialGradient id="heroGlowAccent" cx="50%" cy="50%" r="50%">
+            <Stop offset="0%" stopColor="#d946ef" stopOpacity={0.28} />
+            <Stop offset="100%" stopColor="#d946ef" stopOpacity={0} />
+          </RadialGradient>
         </Defs>
         <Path
           d={roundedBottomRectPath(width, height, CORNER_RADIUS)}
           fill="url(#heroGradient)"
+        />
+        <Circle
+          cx={width * 0.12}
+          cy={height * 0.08}
+          r={glowSize * 0.42}
+          fill="url(#heroGlowLight)"
+        />
+        <Circle
+          cx={width * 0.92}
+          cy={height * 0.9}
+          r={glowSize * 0.46}
+          fill="url(#heroGlowAccent)"
         />
       </Svg>
 
@@ -57,7 +82,7 @@ const AuthHeroHeader = ({ tagline }: AuthHeroHeaderProps) => {
           paddingBottom: 20,
           paddingHorizontal: 24,
         }}
-        className="items-center justify-center gap-2.5"
+        className="items-center justify-center gap-3"
       >
         <View className="flex-row items-center gap-3">
           <View
@@ -69,13 +94,16 @@ const AuthHeroHeader = ({ tagline }: AuthHeroHeaderProps) => {
               elevation: 8,
             }}
           >
-            <Image source={Logo1} style={{ width: 50, height: 50 }} resizeMode="contain" />
+            <Image source={Logo1} style={{ width: 64, height: 64 }} resizeMode="contain" />
           </View>
-          <Text className="font-kaushan text-4xl text-white" style={{ lineHeight: 40 }}>
+          <Text
+            className="font-kaushan text-white"
+            style={{ fontSize: 46, lineHeight: 52 }}
+          >
             Universe
           </Text>
         </View>
-        <Text className="text-sm font-medium text-white/90" style={{ letterSpacing: 0.3 }}>
+        <Text className="text-base font-medium text-white/90" style={{ letterSpacing: 0.3 }}>
           {tagline}
         </Text>
       </View>
