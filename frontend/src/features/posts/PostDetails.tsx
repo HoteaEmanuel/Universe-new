@@ -14,9 +14,8 @@ import {
 import { useIsFollowingQuery } from "@/queryAndMutation/queries/user-queries";
 import {
   useFollowMutation,
-  useSavePostMutation,
+  useToggleSavePostMutation,
   useUnfollowMutation,
-  useUnsavePostMutation,
 } from "@/queryAndMutation/mutations/user-mutation";
 import {
   useLikeMutation,
@@ -109,11 +108,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
 
   const likeMutation = useLikeMutation(postId ?? "");
   const unlikeMutation = useUnlikeMutation(postId ?? "");
-  const { mutate: savePostMutation } = useSavePostMutation(
-    postId ?? "",
-    user.id,
-  );
-  const { mutate: unsavePostMutation } = useUnsavePostMutation(
+  const { mutate: toggleSavePostMutation } = useToggleSavePostMutation(
     postId ?? "",
     user.id,
   );
@@ -160,14 +155,10 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
     }
   };
 
-  const handleSaveClick = () => {
-    setIsSaved(true);
-    savePostMutation(undefined, { onError: () => setIsSaved(false) });
-  };
-
-  const handleUnsaveClick = () => {
-    setIsSaved(false);
-    unsavePostMutation(undefined, { onError: () => setIsSaved(true) });
+  const handleToggleSaveClick = () => {
+    const next = !isSaved;
+    setIsSaved(next);
+    toggleSavePostMutation(undefined, { onError: () => setIsSaved(!next) });
   };
 
   const spinner = (
@@ -377,27 +368,19 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
             <MessageCircle className="size-6 text-foreground/80" />
             {userId !== user.id && (
               <div className="ml-auto">
-                {!isSaved ? (
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="icon-hover-btn"
-                    onClick={handleSaveClick}
-                    aria-label="Save post"
-                  >
-                    <Bookmark className="size-6 text-foreground/80 hover:text-foreground" />
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="icon-hover-btn"
-                    onClick={handleUnsaveClick}
-                    aria-label="Unsave post"
-                  >
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="icon-hover-btn"
+                  onClick={handleToggleSaveClick}
+                  aria-label={isSaved ? "Unsave post" : "Save post"}
+                >
+                  {isSaved ? (
                     <BookmarkCheck className="size-6 text-foreground" fill="currentColor" />
-                  </Button>
-                )}
+                  ) : (
+                    <Bookmark className="size-6 text-foreground/80 hover:text-foreground" />
+                  )}
+                </Button>
               </div>
             )}
           </div>

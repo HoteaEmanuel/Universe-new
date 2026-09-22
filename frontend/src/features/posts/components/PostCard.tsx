@@ -20,9 +20,8 @@ import {
 import { useIsFollowingQuery } from "@/queryAndMutation/queries/user-queries";
 import {
   useFollowMutation,
-  useSavePostMutation,
+  useToggleSavePostMutation,
   useUnfollowMutation,
-  useUnsavePostMutation,
 } from "@/queryAndMutation/mutations/user-mutation";
 import { useGetPostCommentsCount } from "@/queryAndMutation/queries/comments-queries";
 import {
@@ -97,13 +96,9 @@ const PostCard = ({ post }: PostCardProps) => {
     useGetPostCommentsCount(postId);
   const likeMutation = useLikeMutation(postId);
   const unlikeMutation = useUnlikeMutation(postId);
-  const { mutate: savePostMutation } = useSavePostMutation(postId, user_.id);
+  const { mutate: toggleSavePostMutation } = useToggleSavePostMutation(postId, user_.id);
   const followMutation = useFollowMutation(userId, user_.id);
   const unfollowMutation = useUnfollowMutation(userId, user_.id);
-  const { mutate: unsavePostMutation } = useUnsavePostMutation(
-    postId,
-    user_.id,
-  );
 
   const [showSaveOption, setShowSaveOption] = useState<string | false>(false);
   const postTime = formatDateDetailed(post.createdAt.toString());
@@ -162,13 +157,14 @@ const PostCard = ({ post }: PostCardProps) => {
     unfollowMutation.mutate();
   };
 
-  const handleSaveClick = (e: MouseEvent) => {
+  const handleToggleSaveClick = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsSaved(true);
-    savePostMutation(undefined, {
+    const next = !isSaved;
+    setIsSaved(next);
+    toggleSavePostMutation(undefined, {
       onError: () => {
-        setIsSaved(false);
+        setIsSaved(!next);
       },
     });
   };
@@ -192,16 +188,6 @@ const PostCard = ({ post }: PostCardProps) => {
     e.preventDefault();
     e.stopPropagation();
     setShowShareModal(true);
-  };
-  const handleUnSavePostClick = (e: MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsSaved(false);
-    unsavePostMutation(undefined, {
-      onError: () => {
-        setIsSaved(true);
-      },
-    });
   };
   if (
     isPendingCheckLiked ||
@@ -431,33 +417,21 @@ const PostCard = ({ post }: PostCardProps) => {
           <Send className="size-6 text-foreground/80 hover:text-foreground" />
         </Button>
         <div className="relative ml-auto">
-          {userId !== user_.id && !isSaved && (
+          {userId !== user_.id && (
             <Button
               variant="ghost"
               size="icon-sm"
               className="icon-hover-btn"
-              onClick={handleSaveClick}
-              onMouseEnter={() => setShowSaveOption("Save post")}
+              onClick={handleToggleSaveClick}
+              onMouseEnter={() => setShowSaveOption(isSaved ? "Unsave post" : "Save post")}
               onMouseLeave={() => setShowSaveOption(false)}
-              aria-label="Save post"
+              aria-label={isSaved ? "Unsave post" : "Save post"}
             >
-              <Bookmark className="size-6 text-foreground/80 hover:text-foreground" />
-            </Button>
-          )}
-          {userId !== user_.id && isSaved && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="icon-hover-btn"
-              onClick={handleUnSavePostClick}
-              onMouseEnter={() => setShowSaveOption("Unsave post")}
-              onMouseLeave={() => setShowSaveOption(false)}
-              aria-label="Unsave post"
-            >
-              <BookmarkCheck
-                className="size-6 text-foreground"
-                fill="currentColor"
-              />
+              {isSaved ? (
+                <BookmarkCheck className="size-6 text-foreground" fill="currentColor" />
+              ) : (
+                <Bookmark className="size-6 text-foreground/80 hover:text-foreground" />
+              )}
             </Button>
           )}
           {showSaveOption && (

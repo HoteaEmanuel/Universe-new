@@ -8,41 +8,52 @@ const usersApi = createUsersApi(httpClient);
 
 export const useFollowMutation = (toFollowUserId?: string, userId?: string) => {
   const queryClient = useQueryClient();
-  return useMutation(createUserMutations(usersApi, queryClient).follow(toFollowUserId, userId));
-};
-
-export const useUnfollowMutation = (unfollowedUserId?: string, userId?: string) => {
-  const queryClient = useQueryClient();
   return useMutation(
-    createUserMutations(usersApi, queryClient).unfollow(unfollowedUserId, userId),
+    createUserMutations(usersApi, queryClient).follow(toFollowUserId, userId),
   );
 };
 
-export const useSavePostMutation = (postId: string, userId?: string) => {
+export const useUnfollowMutation = (
+  unfollowedUserId?: string,
+  userId?: string,
+) => {
   const queryClient = useQueryClient();
-  const shared = createUserMutations(usersApi, queryClient).savePost(postId, userId);
+  return useMutation(
+    createUserMutations(usersApi, queryClient).unfollow(
+      unfollowedUserId,
+      userId,
+    ),
+  );
+};
+
+export const useToggleSavePostMutation = (postId: string, userId?: string) => {
+  const queryClient = useQueryClient();
+  const shared = createUserMutations(usersApi, queryClient).toggleSavePost(
+    postId,
+    userId,
+  );
   return useMutation({
     ...shared,
-    onSuccess: (...args) => {
-      shared.onSuccess?.(...args);
-      toast.success("Post saved successfully");
+    onSuccess: (data, ...rest) => {
+      shared.onSuccess?.(data, ...rest);
+      if (data.data.saved) toast.success("Post saved successfully");
     },
   });
 };
 
-export const useUnsavePostMutation = (postId: string, userId?: string) => {
-  const queryClient = useQueryClient();
-  return useMutation(createUserMutations(usersApi, queryClient).unsavePost(postId, userId));
-};
-
 export const useUpdateUsernameMutation = () => {
   const queryClient = useQueryClient();
-  return useMutation(createUserMutations(usersApi, queryClient).updateUsername());
+  return useMutation(
+    createUserMutations(usersApi, queryClient).updateUsername(),
+  );
 };
 
 export const useUpdateProfilePicture = () => {
   const queryClient = useQueryClient();
-  const shared = createUserMutations(usersApi, queryClient).updateProfilePicture<File>();
+  const shared = createUserMutations(
+    usersApi,
+    queryClient,
+  ).updateProfilePicture<File>();
   return useMutation({
     ...shared,
     onSuccess: (...args) => {
@@ -54,12 +65,16 @@ export const useUpdateProfilePicture = () => {
 
 export const useCompleteOnboardingMutation = () => {
   const queryClient = useQueryClient();
-  return useMutation(createUserMutations(usersApi, queryClient).completeOnboarding());
+  return useMutation(
+    createUserMutations(usersApi, queryClient).completeOnboarding(),
+  );
 };
 
 export const useMarkAppTourSeenMutation = () => {
   const queryClient = useQueryClient();
-  return useMutation(createUserMutations(usersApi, queryClient).markAppTourSeen());
+  return useMutation(
+    createUserMutations(usersApi, queryClient).markAppTourSeen(),
+  );
 };
 
 export const useUpdateBioMutation = () => {
