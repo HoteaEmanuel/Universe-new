@@ -16,3 +16,8 @@ export const useUnfollowMutation = (unfollowedUserId?: string, userId?: string) 
     createUserMutations(usersApi, queryClient).unfollow(unfollowedUserId, userId),
   );
 };
+
+export const useToggleSavePostMutation = (postId: string, userId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation(createUserMutations(usersApi, queryClient).toggleSavePost(postId, userId));
+};

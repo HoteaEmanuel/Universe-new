@@ -16,8 +16,7 @@ import { useIsFollowingQuery } from "../../queryAndMutation/queries/user-queries
 import {
   useFollowMutation,
   useUnfollowMutation,
-  useSavePostMutation,
-  useUnsavePostMutation,
+  useToggleSavePostMutation,
 } from "../../queryAndMutation/mutations/user-mutation";
 import { Colors } from "../../constants/colors";
 import { IconSizes } from "../../constants/iconSizes";
@@ -62,8 +61,7 @@ const PostCard = ({ post }: PostCardProps) => {
   const unlikeMutation = useUnlikeMutation(post.id);
   const followMutation = useFollowMutation(post.userId, currentUserId);
   const unfollowMutation = useUnfollowMutation(post.userId, currentUserId);
-  const { mutate: savePost } = useSavePostMutation(post.id, currentUserId);
-  const { mutate: unsavePost } = useUnsavePostMutation(post.id, currentUserId);
+  const { mutate: toggleSavePost } = useToggleSavePostMutation(post.id, currentUserId);
 
   const isPending =
     creatorPending ||
@@ -79,13 +77,9 @@ const PostCard = ({ post }: PostCardProps) => {
   };
 
   const handleSave = () => {
-    if (isSaved) {
-      setIsSaved(false);
-      unsavePost(undefined, { onError: () => setIsSaved(true) });
-    } else {
-      setIsSaved(true);
-      savePost(undefined, { onError: () => setIsSaved(false) });
-    }
+    const next = !isSaved;
+    setIsSaved(next);
+    toggleSavePost(undefined, { onError: () => setIsSaved(!next) });
   };
 
   const handleShare = async () => {

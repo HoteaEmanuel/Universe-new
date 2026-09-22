@@ -325,3 +325,9 @@ export const findSavedPostByIds = async (userId: string, postId: string) => {
 export const createSavedPost = async (userId: string, postId: string) => {
   return prisma.savedPost.create({ data: { userId, postId } });
 };
+
+export const deleteSavedPost = async (userId: string, postId: string) => {
+  return prisma.savedPost.delete({
+    where: { userId_postId: { userId, postId } },
+  });
+};

@@ -5,6 +5,7 @@ import {
 } from "../repository/follow.repository.js";
 import {
   createSavedPost,
+  deleteSavedPost,
   findPostById,
   findSavedPostByIds,
 } from "../repository/post.repository.js";
@@ -14,7 +15,7 @@ import {
   emitNewNotification,
 } from "../repository/notification.repository.js";
 
-export const savePost = async (data: { postId: string; authUserId: string }) => {
+export const toggleSavePost = async (data: { postId: string; authUserId: string }) => {
   const { postId, authUserId } = data;
   const post = await findPostById(postId);
   if (!post) throw new Error("Post not found");
@@ -26,9 +27,11 @@ export const savePost = async (data: { postId: string; authUserId: string }) => 
   }
   const alreadySaved = await findSavedPostByIds(authUserId, postId);
   if (alreadySaved) {
-    throw new Error("Already saved");
+    await deleteSavedPost(authUserId, postId);
+    return { saved: false };
   }
-  return createSavedPost(authUserId, postId);
+  await createSavedPost(authUserId, postId);
+  return { saved: true };
 };
 
 export const follow = async (data: { authUserId: string; followerId: string }) => {

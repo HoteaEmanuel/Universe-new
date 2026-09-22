@@ -1,7 +1,6 @@
 import express from "express";
 import {
   updateUserImage,
-  unsavePost,
   followController,
   unfollowController,
   getUserById,
@@ -18,7 +17,7 @@ import {
   getUserByUsername,
   checkUsernameAvailability,
   updateUsername,
-  savePostController,
+  toggleSavePostController,
   completeOnboarding,
   markAppTourSeen,
   changePassword,
@@ -87,8 +86,7 @@ router.put(
   verifyUploadedFiles("image"),
   updateUserImage,
 );
-router.post("/posts/save/:id", savePostController);
-router.post("/posts/unsave/:id", unsavePost);
+router.post("/posts/toggle-save/:id", toggleSavePostController);
 router.post("/follow", validate({ body: followSchema }), followController);
 router.post(
   "/unfollow",

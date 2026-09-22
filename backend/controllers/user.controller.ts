@@ -13,7 +13,7 @@ import {
   deleteUser,
   PUBLIC_PROFILE_SELECT,
 } from "../repository/user.repository.js";
-import { follow, savePost, unfollow } from "../services/user.service.js";
+import { follow, toggleSavePost, unfollow } from "../services/user.service.js";
 import { getViewerRelevantUserIds } from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
 import { userNameSearchClause } from "../lib/userSearchClause.js";
@@ -224,27 +224,19 @@ export const updateUserImage = async (req: Request, res: Response) => {
   }
 };
 
-export const savePostController = async (req: Request, res: Response) => {
+export const toggleSavePostController = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const data = { authUserId: req.userId as string, postId: id };
-    const savedPost = await savePost(data);
-    return res.status(200).json({ message: "Saved the post", data: savedPost });
+    const { saved } = await toggleSavePost(data);
+    return res.status(200).json({
+      message: saved ? "Saved the post" : "Post was unsaved",
+      data: { saved },
+    });
   } catch (error) {
     return res
       .status(400)
       .json({ message: error instanceof Error ? error.message : "" });
-  }
-};
-
-export const unsavePost = async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id as string;
-    const userId = req.userId as string;
-    await prisma.savedPost.deleteMany({ where: { userId, postId: id } });
-    return res.status(200).json({ message: "Post was unsaved" });
-  } catch (error) {
-    return res.status(400).json({ error });
   }
 };
 

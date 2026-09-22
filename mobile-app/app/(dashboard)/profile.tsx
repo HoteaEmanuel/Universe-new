@@ -13,7 +13,7 @@ import ProfilePostGrid from "../../components/profile/ProfilePostGrid";
 
 const Profile = () => {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"] ?? Colors.light;
+  const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const { user, logOut } = useAuthStore();
 
   const handleLogout = () => {

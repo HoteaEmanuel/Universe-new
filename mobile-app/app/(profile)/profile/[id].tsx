@@ -19,7 +19,7 @@ import ProfilePostGrid from "../../../components/profile/ProfilePostGrid";
 
 const UserProfile = () => {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"] ?? Colors.light;
+  const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const { user: authUser } = useAuthStore();
   const { id } = useLocalSearchParams<{ id: string }>();
 

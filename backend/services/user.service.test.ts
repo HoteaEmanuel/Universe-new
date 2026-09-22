@@ -7,6 +7,7 @@ vi.mock("../repository/follow.repository.js", () => ({
 }));
 vi.mock("../repository/post.repository.js", () => ({
   createSavedPost: vi.fn(),
+  deleteSavedPost: vi.fn(),
   findPostById: vi.fn(),
   findSavedPostByIds: vi.fn(),
 }));
@@ -24,19 +25,24 @@ import {
   findFollow,
 } from "../repository/follow.repository.js";
 import { createNotification, emitNewNotification } from "../repository/notification.repository.js";
-import { createSavedPost, findPostById, findSavedPostByIds } from "../repository/post.repository.js";
+import {
+  createSavedPost,
+  deleteSavedPost,
+  findPostById,
+  findSavedPostByIds,
+} from "../repository/post.repository.js";
 import { findUserById } from "../repository/user.repository.js";
-import { follow, savePost, unfollow } from "./user.service.js";
+import { follow, toggleSavePost, unfollow } from "./user.service.js";
 
 describe("user.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("savePost", () => {
+  describe("toggleSavePost", () => {
     it("rejects for an unknown post", async () => {
       vi.mocked(findPostById).mockResolvedValue(null);
-      await expect(savePost({ postId: "post-1", authUserId: "user-1" })).rejects.toThrow(
+      await expect(toggleSavePost({ postId: "post-1", authUserId: "user-1" })).rejects.toThrow(
         "Post not found",
       );
     });
@@ -45,30 +51,35 @@ describe("user.service", () => {
       vi.mocked(findPostById).mockResolvedValue({ id: "post-1", userId: "user-1" } as never);
       vi.mocked(findUserById).mockResolvedValue({ id: "user-1" } as never);
 
-      await expect(savePost({ postId: "post-1", authUserId: "user-1" })).rejects.toThrow(
+      await expect(toggleSavePost({ postId: "post-1", authUserId: "user-1" })).rejects.toThrow(
         "Saving works only for other users posts",
       );
     });
 
-    it("rejects saving the same post twice", async () => {
-      vi.mocked(findPostById).mockResolvedValue({ id: "post-1", userId: "author-1" } as never);
-      vi.mocked(findUserById).mockResolvedValue({ id: "user-1" } as never);
-      vi.mocked(findSavedPostByIds).mockResolvedValue({ id: "saved-1" } as never);
-
-      await expect(savePost({ postId: "post-1", authUserId: "user-1" })).rejects.toThrow(
-        "Already saved",
-      );
-      expect(createSavedPost).not.toHaveBeenCalled();
-    });
-
-    it("saves the post", async () => {
+    it("saves the post when it wasn't already saved", async () => {
       vi.mocked(findPostById).mockResolvedValue({ id: "post-1", userId: "author-1" } as never);
       vi.mocked(findUserById).mockResolvedValue({ id: "user-1" } as never);
       vi.mocked(findSavedPostByIds).mockResolvedValue(null);
 
-      await savePost({ postId: "post-1", authUserId: "user-1" });
+      await expect(
+        toggleSavePost({ postId: "post-1", authUserId: "user-1" }),
+      ).resolves.toEqual({ saved: true });
 
       expect(createSavedPost).toHaveBeenCalledWith("user-1", "post-1");
+      expect(deleteSavedPost).not.toHaveBeenCalled();
+    });
+
+    it("unsaves the post when it was already saved", async () => {
+      vi.mocked(findPostById).mockResolvedValue({ id: "post-1", userId: "author-1" } as never);
+      vi.mocked(findUserById).mockResolvedValue({ id: "user-1" } as never);
+      vi.mocked(findSavedPostByIds).mockResolvedValue({ id: "saved-1" } as never);
+
+      await expect(
+        toggleSavePost({ postId: "post-1", authUserId: "user-1" }),
+      ).resolves.toEqual({ saved: false });
+
+      expect(deleteSavedPost).toHaveBeenCalledWith("user-1", "post-1");
+      expect(createSavedPost).not.toHaveBeenCalled();
     });
   });
 
