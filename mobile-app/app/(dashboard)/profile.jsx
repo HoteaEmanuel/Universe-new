@@ -1,10 +1,10 @@
-import { View, Text, Pressable, FlatList, ScrollView } from "react-native";
+import { View, Text, Pressable, FlatList, ScrollView, Alert } from "react-native";
 import React from "react";
 import ThemedView from "../../components/ThemedView";
 import { useAuthStore } from "../../store/authStore";
 import ThemedText from "../../components/ThemedText";
 import { Image } from "react-native";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { getUserFullName } from "../../utils/user/getUserFullName";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/colors";
@@ -18,7 +18,22 @@ import ThemedPostCard from "../../components/ThemedPostCard.jsx";
 import { SafeAreaView } from "react-native-safe-area-context";
 import PostsContainer from "../../components/PostsContainer.jsx";
 const Profile = () => {
-  const { user } = useAuthStore();
+  const { user, logOut } = useAuthStore();
+
+  const handleLogout = () => {
+    Alert.alert("Log out", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Log out",
+        style: "destructive",
+        onPress: async () => {
+          await logOut();
+          router.replace("/login");
+        },
+      },
+    ]);
+  };
+
   const { data: followersData, isLoading: followersLoading } =
     useGetFollowersQuery(user?.id);
   const { data: followingData, isLoading: followingLoading } =
@@ -36,11 +51,13 @@ const Profile = () => {
   return (
     <ThemedView safe={true}>
       <Ionicons
-        name="menu-outline"
+        name="log-out-outline"
         size={24}
         color={"#fff"}
         className="absolute top-10 right-5"
-        onPress={() => {}}
+        accessibilityRole="button"
+        accessibilityLabel="Log out"
+        onPress={handleLogout}
       />
       <View className="flex-row p-10 mt-10">
         {" "}
