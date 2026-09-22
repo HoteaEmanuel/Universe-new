@@ -1,7 +1,6 @@
 import { View, Text, Image, Pressable, ActivityIndicator } from "react-native";
 import React from "react";
 import ThemedView from "./ThemedView";
-import { usePostUserQuery } from "../queryAndMutation/queries/post-queries";
 import ThemedText from "./ThemedText";
 import { getUserFullName } from "../utils/user/getUserFullName";
 import { router } from "expo-router";
@@ -26,8 +25,8 @@ const ProfileCard = ({ userId, ...props }) => {
     >
       <Pressable
         onPress={() => {
-          user.id !== creator._id
-            ? router.push(`/profile/${creator._id}`)
+          user.id !== creator.id
+            ? router.push(`/profile/${creator.id}`)
             : router.push("/profile");
         }}
         className="w-10 h-10"

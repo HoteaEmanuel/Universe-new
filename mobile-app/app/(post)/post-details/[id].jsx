@@ -56,9 +56,8 @@ const PostDetails = () => {
       <View className="flex-row items-center gap-2 p-1">
         {liked ? (
           <TouchableOpacity
-            onPress={async (e) => {
-              // e.stopPropagation();
-              unlikePost({ postId: post._id });
+            onPress={() => {
+              unlikePost();
             }}
           >
             <Ionicons
@@ -69,10 +68,8 @@ const PostDetails = () => {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            onPress={async (e) => {
-              console.log("BTN PRESSED");
-              e.stopPropagation();
-              likePost({ postId: post._id });
+            onPress={() => {
+              likePost();
             }}
           >
             <Ionicons
@@ -102,8 +99,8 @@ const PostDetails = () => {
       {post?.title && (
         <ThemedText className="text-2xl font-bold p-4">{post.title}</ThemedText>
       )}
-      {post?.caption && (
-        <ThemedText className="p-4 text-lg">{post.caption}</ThemedText>
+      {post?.body && (
+        <ThemedText className="p-4 text-lg">{post.body}</ThemedText>
       )}
     </ThemedView>
   );

@@ -21,12 +21,12 @@ import PostsContainer from "../../components/PostsContainer.jsx";
 const Profile = () => {
   const { user } = useAuthStore();
   const { data: followersData, isLoading: followersLoading } =
-    useGetFollowersQuery(user?._id);
+    useGetFollowersQuery(user?.id);
   const { data: followingData, isLoading: followingLoading } =
-    useGetFollowingQuery(user?._id);
+    useGetFollowingQuery(user?.id);
 
   const { data: userPostsData, isLoading: userPostsLoading } =
-    useGetUserPostsQuery(user?._id);
+    useGetUserPostsQuery(user?.id);
   if (followersLoading || followingLoading || userPostsLoading) {
     return (
       <ThemedView safe={true} className="flex-1 items-center justify-center">

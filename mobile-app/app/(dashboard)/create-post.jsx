@@ -39,15 +39,17 @@ const CreatePost = () => {
 
   const onSubmit = async (data) => {
     try {
-      let post = {
+      const post = {
         title: data.title,
         tags: data.tags,
+        images: selectedImages.map((image) => ({
+          uri: image.uri,
+          name: image.fileName ?? "photo.jpg",
+          type: image.mimeType ?? "image/jpeg",
+        })),
       };
-      if (data.caption) post.caption = data.caption;
-      if (selectedImages.length) post.images = selectedImages;
-      console.log("CREATING POST: ", post);
+      if (data.caption) post.body = data.caption;
       createPost(post);
-      //router.back();
     } catch (error) {
       reset();
     }

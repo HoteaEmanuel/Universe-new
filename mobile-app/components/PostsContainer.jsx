@@ -18,7 +18,7 @@ const PostsContainer = ({posts}) => {
         gap: 16,
         paddingVertical: 8,
       }}
-      keyExtractor={(item) => item._id}
+      keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
         <View style={{ flex: 1 }}>
           <ThemedPostCard post={item} personal={true} />

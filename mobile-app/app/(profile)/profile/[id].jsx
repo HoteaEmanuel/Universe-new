@@ -127,25 +127,6 @@ const UserProfile = () => {
         </View>
       </View>
       <ThemedText className="text-2xl font-bold px-5">Posts</ThemedText>
-      {/* <FlatList
-        data={userPosts}
-        numColumns={2}
-        direction="column"
-        columnWrapperStyle={{
-          gap: 16,
-          paddingHorizontal: 8,
-        }}
-        contentContainerStyle={{
-          gap: 16,
-          paddingVertical: 8,
-        }}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <View style={{ flex: 1 }}>
-            <ThemedPostCard post={item} personal={true} />
-          </View>
-        )}
-      /> */}
       <PostsContainer posts={userPosts} />
     </ThemedView>
   );

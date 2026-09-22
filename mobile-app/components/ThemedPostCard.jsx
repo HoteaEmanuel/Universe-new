@@ -27,15 +27,15 @@ const ThemedPostCard = ({ post, personal, style }) => {
 
   const theme = Colors[colorScheme] || Colors.light;
   console.log("POST : ");
-  const { data: likes, isLoading } = useGetLikesQuery(post._id);
+  const { data: likes, isLoading } = useGetLikesQuery(post.id);
 
-  const { data: liked, isLoading: likedLoading } = usePostLikedQuery(post._id);
+  const { data: liked, isLoading: likedLoading } = usePostLikedQuery(post.id);
 
   const { data: comments, isLoading: commentsLoading } =
-    useGetPostCommentsCount(post._id);
+    useGetPostCommentsCount(post.id);
 
-  const { mutate: likePost } = useLikeMutation(post._id);
-  const { mutate: unlikePost } = useUnlikeMutation(post._id);
+  const { mutate: likePost } = useLikeMutation(post.id);
+  const { mutate: unlikePost } = useUnlikeMutation(post.id);
   if (isLoading || commentsLoading || likedLoading)
     return (
       <ThemedView safe={true} className="flex-1 items-center justify-center">
@@ -46,7 +46,7 @@ const ThemedPostCard = ({ post, personal, style }) => {
   console.log("POST IS LIKED : " + liked);
   return (
     <TouchableOpacity
-      onPress={() => router.push(`/post-details/${post._id}`)}
+      onPress={() => router.push(`/post-details/${post.id}`)}
       className="w-full  rounded-2xl overflow-hidden p-3 border border-gray-800"
       style={[
         {
@@ -74,8 +74,8 @@ const ThemedPostCard = ({ post, personal, style }) => {
             <View className="w-full h-10 p-1">
               <ProfileCard
                 userId={post.userId}
-                postId={post._id}
-                key={`${post._id}-profile`}
+                postId={post.id}
+                key={`${post.id}-profile`}
               />
             </View>
           )}
@@ -85,18 +85,16 @@ const ThemedPostCard = ({ post, personal, style }) => {
               {post.title}
             </ThemedText>
           )}
-          {post.caption && (
+          {post.body && (
             <ThemedText className="p-2 text-xs flex-row">
-              {post.caption.substr(0, 100) +
-                (post.caption.length > 100 ? "..." : "")}
+              {post.body.substr(0, 100) + (post.body.length > 100 ? "..." : "")}
             </ThemedText>
           )}
           <View className="flex-row items-center gap-2 p-1">
             {liked ? (
               <TouchableOpacity
-                onPress={async (e) => {
-                  // e.stopPropagation();
-                  unlikePost({ postId: post._id });
+                onPress={() => {
+                  unlikePost();
                 }}
               >
                 <Ionicons
@@ -107,9 +105,8 @@ const ThemedPostCard = ({ post, personal, style }) => {
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                onPress={async (e) => {
-                  console.log("BTN PRESSED");
-                  likePost({ postId: post._id });
+                onPress={() => {
+                  likePost();
                 }}
               >
                 <Ionicons
@@ -123,8 +120,7 @@ const ThemedPostCard = ({ post, personal, style }) => {
             <ThemedText className="text-sm font-bold">{likes}</ThemedText>
             <TouchableOpacity
               onPress={() => {
-                console.log("TO COMMENTS");
-                router.push(`comments/${post._id}`);
+                router.push(`comments/${post.id}`);
               }}
               className="flex-row items-center gap-2"
             >
