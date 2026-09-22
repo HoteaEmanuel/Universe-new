@@ -30,6 +30,23 @@ config.resolver = {
     path.resolve(projectRoot, "node_modules"),
     path.resolve(monorepoRoot, "node_modules"),
   ],
+  // packages/shared's internal imports use TypeScript's ESM convention —
+  // e.g. `from "./admin.js"` pointing at admin.ts — which tsc (moduleResolution:
+  // "bundler") and Vite (frontend) resolve natively, but Metro doesn't by
+  // default: it treats an explicit ".js" specifier as literal and won't try
+  // ".ts"/".tsx" for it. Strip the extension and let Metro's normal
+  // sourceExts probing (which does include ts/tsx) find the real file,
+  // falling back to the literal specifier for genuine .js/.jsx files.
+  resolveRequest: (context, moduleName, platform) => {
+    if (/^\.{1,2}\//.test(moduleName) && /\.jsx?$/.test(moduleName)) {
+      try {
+        return context.resolveRequest(context, moduleName.replace(/\.jsx?$/, ""), platform);
+      } catch {
+        // Fall through: a real .js/.jsx file, or genuinely missing.
+      }
+    }
+    return context.resolveRequest(context, moduleName, platform);
+  },
 };
 
 module.exports = withNativeWind(config, { input: "./global.css" });
