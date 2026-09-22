@@ -9,6 +9,7 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import { router } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "../../store/authStore";
 import { useGoogleAuth } from "../../hooks/useGoogleAuth";
 import AuthHeroHeader from "../../components/auth/AuthHeroHeader";
@@ -21,6 +22,7 @@ import AuthSwitchLink from "../../components/auth/AuthSwitchLink";
 import { authPalette } from "../../components/auth/authPalette";
 
 const Login = () => {
+  const insets = useSafeAreaInsets();
   const logIn = useAuthStore((state) => state.logIn);
   const isLoading = useAuthStore((state) => state.isLoading);
   const { promptAsync, isLoading: isGoogleLoading } = useGoogleAuth();
@@ -55,7 +57,7 @@ const Login = () => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 24 }}
           keyboardShouldPersistTaps="handled"
         >
           <AuthHeroHeader tagline="Connect. Discover. Share." />
