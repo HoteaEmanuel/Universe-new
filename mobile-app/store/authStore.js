@@ -6,6 +6,7 @@ import * as SecureStore from "expo-secure-store";
 const API_URL =
   Constants.expoConfig?.extra?.API_URL ||
   "https://nongerundively-vatic-manie.ngrok-free.dev/api";
+const BASE_URL = API_URL.replace(/\/api\/?$/, "");
 axios.defaults.withCredentials = true;
 export const useAuthStore = create((set, get) => ({
   user: null,
@@ -117,8 +118,8 @@ export const useAuthStore = create((set, get) => ({
       });
 
       // Asynchronously save the acces token and the refresh token
-      await SecureStore.setItemAsync("accessToken", JSON.parse(response.data.accessToken));
-      await SecureStore.setItemAsync("refreshToken",JSON.parse(response.data.refreshToken));
+      await SecureStore.setItemAsync("accessToken", response.data.accessToken);
+      await SecureStore.setItemAsync("refreshToken", response.data.refreshToken);
 
       set({ isAuthenticated: true, user: response?.data?.user || null });
       get().connectSocket();
@@ -241,6 +242,6 @@ export const useAuthStore = create((set, get) => ({
   },
   disconnectSocket: () => {
     if (get().socket?.connected) get().socket.disconnect();
-    get().socket.on();
+    set({ socket: null });
   },
 }));

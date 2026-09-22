@@ -5,7 +5,7 @@ import { useAuthStore } from "../../store/authStore";
 import ThemedText from "../../components/ThemedText";
 import { Image } from "react-native";
 import { Link } from "expo-router";
-import { getUserFullName } from "../utils/user/getUserFullName";
+import { getUserFullName } from "../../utils/user/getUserFullName";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "../../constants/colors";
 import {

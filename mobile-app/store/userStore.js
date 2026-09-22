@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import Constants from 'expo-constants';
-import api from "../app/utils/api";
+import api from "../utils/api";
 const API_URL =
   Constants.expoConfig?.extra?.API_URL || "https://nongerundively-vatic-manie.ngrok-free.dev/api";
 api.defaults.withCredentials = true;

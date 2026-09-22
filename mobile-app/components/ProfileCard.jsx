@@ -3,7 +3,7 @@ import React from "react";
 import ThemedView from "./ThemedView";
 import { usePostUserQuery } from "../queryAndMutation/queries/post-queries";
 import ThemedText from "./ThemedText";
-import { getUserFullName } from "../app/utils/user/getUserFullName";
+import { getUserFullName } from "../utils/user/getUserFullName";
 import { router } from "expo-router";
 import { useAuthStore } from "../store/authStore";
 import { useGetUserByIdQuery } from "../queryAndMutation/queries/user-queries";

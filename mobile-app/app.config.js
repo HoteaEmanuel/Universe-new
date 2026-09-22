@@ -24,6 +24,9 @@ export default {
       },
       package: "com.mobileapp",
       edgeToEdgeEnabled: true,
+      // Dev-only: API_URL above is a plain http:// LAN address, and Android
+      // blocks cleartext traffic by default since API 28.
+      usesCleartextTraffic: true,
     },
     web: {
       favicon: "./assets/favicon.png",
@@ -34,6 +37,7 @@ export default {
       "expo-font",
       "expo-web-browser",
       "expo-secure-store",
+      "expo-status-bar",
     ],
     extra: {
       googleAndroidClientId:
@@ -42,7 +46,11 @@ export default {
         "788808129281-on2jplq5hc5li0h0bu23lhna7vb5buta.apps.googleusercontent.com",
       googleWebClientId:
         "788808129281-mdg03bvui7o1biuf005t91ng5ofpml4u.apps.googleusercontent.com",
-      API_URL: "https://nongerundively-vatic-manie.ngrok-free.dev/api",
+      // LAN IP of the dev machine. Regular API calls work fine over the
+      // local network; only Google OAuth needs a public HTTPS URL (Google's
+      // redirect requirement), so it's the one flow that stays broken until
+      // this points at a real deployed domain.
+      API_URL: "http://192.168.1.129:5000/api",
       "eas": {
         "projectId": "bf4d1d00-f474-4ea5-8390-93fcc0ac119c"
       }

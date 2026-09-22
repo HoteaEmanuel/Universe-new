@@ -5,7 +5,7 @@ import ThemedView from "./ThemedView";
 import ProfileCard from "./ProfileCard";
 import { useGetUserByIdQuery } from "../queryAndMutation/queries/user-queries";
 import { Image, ActivityIndicator } from "react-native";
-import { getUserFullName } from "../app/utils/user/getUserFullName";
+import { getUserFullName } from "../utils/user/getUserFullName";
 const Comment = ({ comment }) => {
   console.log("COMMENT HERE: ", comment);
   const { data: creator, isPending } = useGetUserByIdQuery(comment.userId);

@@ -5,7 +5,7 @@ const API_URL =
   Constants.expoConfig?.extra?.API_URL ||
   "https://nongerundively-vatic-manie.ngrok-free.dev/api";
 
-  import api from "../app/utils/api";
+  import api from "../utils/api";
 axios.defaults.withCredentials = true;
 export const useCommentsStore = create((set) => ({
   isLoading: false,

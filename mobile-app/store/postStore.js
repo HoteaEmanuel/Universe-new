@@ -1,7 +1,7 @@
 import axios from "axios";
 import { create } from "zustand";
 import Constants from "expo-constants";
-import api from "../app/utils/api";
+import api from "../utils/api";
 const API_URL =
   Constants.expoConfig?.extra?.API_URL || "http://localhost:5000/api";
 axios.defaults.withCredentials = true;
@@ -73,7 +73,7 @@ export const usePostStore = create((set) => ({
       if (post?.caption) formData.append("caption", post.caption);
       if (post?.location) formData.append("location", post.location);
       formData.append("tags", post.tags);
-      post.images.forEach((item) => {
+      (post.images || []).forEach((item) => {
         formData.append("images", {
           uri: item.uri,
           name: item.fileName,

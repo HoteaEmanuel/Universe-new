@@ -11,8 +11,6 @@ module.exports = {
     extend: {
       fontFamily: {
         poppins: ["Poppins_400Regular"],
-      },
-      fontFamily: {
         kaushan: ["KaushanScript_400Regular"],
       },
     },

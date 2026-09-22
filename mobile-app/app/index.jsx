@@ -22,7 +22,7 @@ const index = () => {
         </View>
 
         <ThemedText title={true} className="text-7xl font-kaushan pr-25">
-          Universe'
+          Universe&apos;
         </ThemedText>
         <Spacer height={30} />
         <ThemedText className="text-4xl font-bold">

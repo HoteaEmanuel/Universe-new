@@ -17,7 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
 import { useState } from "react";
 import { useAuthStore } from "../../store/authStore";
-import { useGoogleAuth } from "../hooks/useGoogleAuth.js";
+import { useGoogleAuth } from "../../hooks/useGoogleAuth.js";
 import { cssInterop, styled } from "nativewind";
 import { PressableScale } from "pressto";
 import { Colors } from "../../constants/colors.js";
@@ -69,7 +69,7 @@ const Login = () => {
           </View>
 
           <ThemedText title={true} className="text-7xl font-kaushan pr-25">
-            Universe'
+            Universe&apos;
           </ThemedText>
           <Spacer height={15} />
           {/* <ThemedText title={true} className="text-2xl font-bold font-sans">
@@ -121,7 +121,7 @@ const Login = () => {
             flexDirection="row"
             className="gap-2 w-3/4 items-center justify-center"
           >
-            <ThemedText>Don't have an account? -</ThemedText>
+            <ThemedText>Don&apos;t have an account? -</ThemedText>
             <Link href="/signup">
               <ThemedText className="text-xl underline">Sign Up</ThemedText>
             </Link>

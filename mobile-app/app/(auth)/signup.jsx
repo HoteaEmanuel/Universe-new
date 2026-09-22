@@ -11,7 +11,7 @@ import Logo1 from "../../assets/logo_1.png";
 import { Image } from "react-native";
 import { useState } from "react";
 import { useAuthStore } from "../../store/authStore";
-import { useGoogleAuth } from "../hooks/useGoogleAuth.js";
+import { useGoogleAuth } from "../../hooks/useGoogleAuth.js";
 const SignUp = () => {
   const { signUp } = useAuthStore();
   const [email, setEmail] = useState("");
@@ -45,7 +45,7 @@ const SignUp = () => {
         <View className="items-center w-full ">
           <Image source={Logo1} className="w-60 h-40" />
           <ThemedText title={true} className="text-7xl font-kaushan pr-25">
-            Universe'
+            Universe&apos;
           </ThemedText>
           <Spacer height={15} />
           <ThemedText title={true} className="text-2xl font-bold font-sans">

@@ -9,7 +9,7 @@ import ThemedView from "../../../components/ThemedView";
 import ProfileCard from "../../../components/ProfileCard";
 import { Image } from "react-native";
 import ThemedText from "../../../components/ThemedText";
-import { getUserFullName } from "../../utils/user/getUserFullName";
+import { getUserFullName } from "../../../utils/user/getUserFullName";
 import { Ionicons } from "@expo/vector-icons";
 import {
   useGetFollowersQuery,

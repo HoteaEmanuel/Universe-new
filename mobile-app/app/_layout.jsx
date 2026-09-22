@@ -1,18 +1,17 @@
-import { View, Text } from "react-native";
 import { useEffect } from "react";
-import { useRef } from "react";
 import {
   useFonts,
   KaushanScript_400Regular,
 } from "@expo-google-fonts/kaushan-script";
 import React from "react";
-import { router, Stack } from "expo-router";
+import { Stack } from "expo-router";
 import "../global.css";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "react-native";
 import { Colors } from "../constants/colors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useAuthStore } from "../store/authStore";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -26,10 +25,16 @@ const RootLayout = () => {
     KaushanScript_400Regular,
   });
   const colorScheme = useColorScheme();
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+  const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const theme = Colors[colorScheme] || Colors.light;
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || isCheckingAuth) {
     return null;
   }
   return (

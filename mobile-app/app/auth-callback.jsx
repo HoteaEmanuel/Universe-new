@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { View, Text, ActivityIndicator, ScrollView } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import api from "./utils/api";
+import api from "../utils/api";
 import { useAuthStore } from "../store/authStore";
 
 export default function AuthCallback() {
@@ -25,8 +25,8 @@ export default function AuthCallback() {
           });
           const { accessToken, refreshToken, user } = response.data;
 
-          await SecureStore.setItemAsync("accessToken", JSON.parse(accessToken));
-          await SecureStore.setItemAsync("refreshToken", JSON.parse(refreshToken));
+          await SecureStore.setItemAsync("accessToken", accessToken);
+          await SecureStore.setItemAsync("refreshToken", refreshToken);
 
           setUser(user);
           router.replace("/home");
