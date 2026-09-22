@@ -10,7 +10,6 @@ declare global {
       CLIENT_URL: string;
       FRONTEND_URL: string;
       BACKEND_URL_: string;
-      MAILTRAP_TOKEN: string;
       UPSTASH_REDIS_REST_URL: string;
       UPSTASH_REDIS_REST_TOKEN: string;
       UPSTASH_REDIS_URL: string;
