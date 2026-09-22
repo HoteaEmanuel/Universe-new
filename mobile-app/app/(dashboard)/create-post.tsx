@@ -24,7 +24,7 @@
  *   operate, key 882b4450), locked by the user over THE ROLL (Guided
  *   Sequential Reveal) and Step Wizard/Sheet.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, Keyboard, TouchableWithoutFeedback, Alert, useColorScheme } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Ionicons } from "@expo/vector-icons";
@@ -36,7 +36,11 @@ import ComposerField from "../../components/post/ComposerField";
 import ExpandingSection from "../../components/post/ExpandingSection";
 import ComposerImagePicker from "../../components/post/ComposerImagePicker";
 import ComposerSubmitBar from "../../components/post/ComposerSubmitBar";
+import LocationAutocompleteField from "../../components/post/LocationAutocompleteField";
+import { PressableScale } from "../../lib/styled";
 import { useCreatePostMutation } from "../../queryAndMutation/mutations/post-mutation";
+import { useSuggestHashtagsQuery } from "../../queryAndMutation/queries/ai-queries";
+import { useDebounce } from "../../hooks/useDebounce";
 import { confirmDiscardChanges } from "../../utils/confirmDiscardChanges";
 import { Colors } from "../../constants/colors";
 import {
@@ -138,6 +142,7 @@ const CreatePost = () => {
     control,
     handleSubmit,
     watch,
+    setValue,
     reset,
     formState: { errors },
   } = useForm<CreatePostFormValues>({
@@ -148,8 +153,30 @@ const CreatePost = () => {
   const tagsValue = watch("tags");
   const locationValue = watch("location");
 
+  const debouncedBody = useDebounce(bodyValue, 1500);
+  const { data: suggestedHashtags } = useSuggestHashtagsQuery(bodyValue, debouncedBody);
+  const [hasAutoExpandedTags, setHasAutoExpandedTags] = useState(false);
+
   const toggleSection = (key: SectionKey) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  // Tags are required to post (see constants/postForm.ts), but the row
+  // starts collapsed, so a disabled Post button with unexplained AI
+  // suggestions sitting hidden behind an accordion is the exact "no
+  // feedback" complaint this was built to fix — surface them by opening
+  // the row once, the first time a suggestion set lands.
+  useEffect(() => {
+    if (!hasAutoExpandedTags && (suggestedHashtags?.length ?? 0) > 0) {
+      setExpanded((prev) => ({ ...prev, tags: true }));
+      setHasAutoExpandedTags(true);
+    }
+  }, [suggestedHashtags, hasAutoExpandedTags]);
+
+  const handleAddHashtag = (tag: string) => {
+    const words = tagsValue.trim().length ? tagsValue.trim().split(/\s+/) : [];
+    if (words.includes(tag)) return;
+    setValue("tags", [...words, tag].join(" "), { shouldValidate: true, shouldDirty: true });
+  };
 
   const disabled = titleValue.trim().length === 0 || tagsValue.trim().length === 0;
   const hasContent =
@@ -295,11 +322,12 @@ const CreatePost = () => {
                           : true,
                     }}
                     render={({ field }) => (
-                      <ComposerField
-                        label="Location"
-                        placeholder="Add a location"
+                      <LocationAutocompleteField
                         value={field.value}
                         onChangeText={field.onChange}
+                        onSelect={(value) =>
+                          setValue("location", value, { shouldValidate: true, shouldDirty: true })
+                        }
                         onBlur={field.onBlur}
                         error={errors.location?.message}
                         maxLength={LOCATION_MAX_LENGTH}
@@ -344,6 +372,22 @@ const CreatePost = () => {
                       />
                     )}
                   />
+                  {(suggestedHashtags?.length ?? 0) > 0 ? (
+                    <View className="flex-row flex-wrap gap-2">
+                      {suggestedHashtags!.map((tag) => (
+                        <PressableScale
+                          key={tag}
+                          onPress={() => handleAddHashtag(tag)}
+                          className="rounded-full px-3 py-1.5"
+                          style={{ backgroundColor: theme.uiBackground, borderWidth: 1, borderColor: theme.borderColor }}
+                        >
+                          <Text className="text-xs" style={{ color: theme.text }}>
+                            #{tag}
+                          </Text>
+                        </PressableScale>
+                      ))}
+                    </View>
+                  ) : null}
                 </ExpandingSection>
               </View>
             </View>
