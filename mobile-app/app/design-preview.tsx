@@ -34,7 +34,7 @@ const buttonLabel = tv({
     variant: {
       primary: "text-primary-foreground",
       secondary: "text-secondary-foreground",
-      destructive: "text-white",
+      destructive: "text-destructive-foreground",
       outline: "text-foreground",
       ghost: "text-foreground",
     },
@@ -51,7 +51,13 @@ const SEMANTIC_TOKENS = [
   ["bg-secondary", "text-secondary-foreground"],
   ["bg-muted", "text-muted-foreground"],
   ["bg-accent", "text-accent-foreground"],
-  ["bg-destructive", "text-white"],
+];
+
+const STATUS_TOKENS = [
+  ["bg-destructive", "text-destructive-foreground"],
+  ["bg-success", "text-success-foreground"],
+  ["bg-warning", "text-warning-foreground"],
+  ["bg-info", "text-info-foreground"],
 ];
 
 const BRAND_RAMP = [
@@ -68,10 +74,52 @@ const BRAND_RAMP = [
   "bg-brand-950",
 ];
 
+// Paired with the px values declared in global.css so a mismatch between the
+// label and the rendered box is visible rather than silent.
+const TYPE_SCALE = [
+  ["text-2xs", "10 / 14"],
+  ["text-xs", "12 / 16"],
+  ["text-sm", "14 / 20"],
+  ["text-base", "16 / 24"],
+  ["text-lg", "18 / 28"],
+  ["text-xl", "20 / 28"],
+  ["text-2xl", "24 / 32"],
+  ["text-3xl", "30 / 36"],
+  ["text-4xl", "36 / 40"],
+];
+
+const NUMERIC_SPACING = [
+  ["w-1", 4],
+  ["w-2", 8],
+  ["w-3", 12],
+  ["w-4", 16],
+  ["w-6", 24],
+  ["w-8", 32],
+  ["w-12", 48],
+  ["w-16", 64],
+];
+
+const NAMED_SPACING = [
+  ["w-stack", 12],
+  ["w-gutter", 20],
+  ["w-section", 32],
+  ["w-touch", 44],
+];
+
+const FONTS = [
+  ["font-poppins", "Poppins Regular"],
+  ["font-poppins-medium", "Poppins Medium"],
+  ["font-poppins-semibold", "Poppins SemiBold"],
+  ["font-poppins-bold", "Poppins Bold"],
+  ["font-kaushan", "Kaushan Script"],
+];
+
 const RADII = ["rounded-sm", "rounded-md", "rounded-lg", "rounded-xl", "rounded-2xl", "rounded-3xl"];
 
+const SHADOWS = ["shadow-card", "shadow-elevated", "shadow-modal"];
+
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <View className="gap-3">
+  <View className="gap-stack">
     <Text className="text-foreground text-lg font-bold">{title}</Text>
     {children}
   </View>
@@ -82,7 +130,7 @@ const DesignPreview = () => {
 
   return (
     <ScrollView className="flex-1 bg-background">
-      <View className="gap-8 p-5 pt-14">
+      <View className="gap-section p-gutter pt-14">
         <View className="gap-2">
           <Text className="text-foreground text-2xl font-bold">Design tokens</Text>
           <Text className="text-muted-foreground">Active theme: {theme}</Text>
@@ -119,12 +167,61 @@ const DesignPreview = () => {
           ))}
         </Section>
 
+        <Section title="Status colors">
+          {STATUS_TOKENS.map(([bg, fg]) => (
+            <View key={bg} className={`${bg} h-14 justify-center rounded-lg px-4`}>
+              <Text className={`${fg} font-semibold`}>{bg}</Text>
+            </View>
+          ))}
+        </Section>
+
         <Section title="Brand ramp">
           <View className="flex-row flex-wrap gap-1">
             {BRAND_RAMP.map((bg) => (
               <View key={bg} className={`${bg} h-12 w-12 rounded-md`} />
             ))}
           </View>
+        </Section>
+
+        <Section title="Type scale">
+          {TYPE_SCALE.map(([size, spec]) => (
+            <View key={size} className="flex-row items-baseline gap-3">
+              <Text className={`${size} text-foreground flex-1`}>Universe</Text>
+              <Text className="text-2xs text-muted-foreground">
+                {size} · {spec}
+              </Text>
+            </View>
+          ))}
+        </Section>
+
+        <Section title="Font families">
+          {FONTS.map(([font, label]) => (
+            <Text key={font} className={`${font} text-foreground text-xl`}>
+              {label}
+            </Text>
+          ))}
+        </Section>
+
+        <Section title="Spacing scale">
+          {NUMERIC_SPACING.map(([cls, px]) => (
+            <View key={cls as string} className="flex-row items-center gap-3">
+              <View className={`${cls} h-4 rounded-sm bg-primary`} />
+              <Text className="text-2xs text-muted-foreground">
+                {cls} · {px}px
+              </Text>
+            </View>
+          ))}
+        </Section>
+
+        <Section title="Named spacing">
+          {NAMED_SPACING.map(([cls, px]) => (
+            <View key={cls as string} className="flex-row items-center gap-3">
+              <View className={`${cls} h-4 rounded-sm bg-accent-foreground`} />
+              <Text className="text-2xs text-muted-foreground">
+                {cls} · {px}px
+              </Text>
+            </View>
+          ))}
         </Section>
 
         <Section title="Button variants">
@@ -152,12 +249,26 @@ const DesignPreview = () => {
           </View>
         </Section>
 
+        <Section title="Elevation">
+          <View className="flex-row flex-wrap gap-4 p-2">
+            {SHADOWS.map((shadow) => (
+              <View
+                key={shadow}
+                className={`${shadow} h-16 w-24 items-center justify-center rounded-lg bg-card`}
+              >
+                <Text className="text-card-foreground text-2xs">{shadow}</Text>
+              </View>
+            ))}
+          </View>
+        </Section>
+
         <Section title="Icon color from tokens">
           <View className="flex-row items-center gap-4 rounded-lg bg-card p-4 border border-border">
             <Ionicons name="heart" size={28} colorClassName="accent-like" />
             <Ionicons name="school" size={28} colorClassName="accent-primary" />
+            <Ionicons name="checkmark-circle" size={28} colorClassName="accent-success" />
             <Ionicons name="alert-circle" size={28} colorClassName="accent-destructive" />
-            <Text className="text-muted-foreground text-xs">colorClassName + accent-</Text>
+            <Text className="text-muted-foreground text-2xs">colorClassName + accent-</Text>
           </View>
         </Section>
       </View>

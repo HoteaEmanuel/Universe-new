@@ -3,6 +3,12 @@ import {
   useFonts,
   KaushanScript_400Regular,
 } from "@expo-google-fonts/kaushan-script";
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from "@expo-google-fonts/poppins";
 import React from "react";
 import { Stack } from "expo-router";
 import "../global.css";
@@ -21,8 +27,15 @@ const queryClient = new QueryClient({
   },
 });
 const RootLayout = () => {
+  // Each Poppins weight is a separate family: Android won't synthesize bold
+  // for a custom font, so global.css exposes them as font-poppins-* tokens
+  // and every one of them has to be registered here to resolve.
   const [fontsLoaded] = useFonts({
     KaushanScript_400Regular,
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
   });
   const colorScheme = useColorScheme();
   const checkAuth = useAuthStore((state) => state.checkAuth);

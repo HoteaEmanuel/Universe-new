@@ -50,9 +50,11 @@ config.resolver = {
 };
 
 // withUniwindConfig must be the outermost wrapper.
-// polyfills.rem: 14 matches NativeWind's rem base so existing spacing/sizing
-// utilities don't shift after the migration.
+// polyfills.rem is the pixel value of 1rem at build time. global.css declares
+// the spacing, type and radius scales in px, so this only reaches the handful
+// of Tailwind defaults we don't override (max-w-*, breakpoints). 16 makes
+// those match the web build instead of NativeWind's old 14px native base.
 module.exports = withUniwindConfig(config, {
   cssEntryFile: "./global.css",
-  polyfills: { rem: 14 },
+  polyfills: { rem: 16 },
 });

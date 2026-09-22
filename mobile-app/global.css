@@ -1,10 +1,19 @@
 @import "tailwindcss";
 @import "uniwind";
 
-/* Static, theme-independent tokens. --color-brand-* aliases Tailwind's
-   built-in violet ramp (frontend/src/index.css does the same) so a single
-   rename swaps the brand color on both platforms at once. */
+/* ---------------------------------------------------------------------------
+   Static, theme-independent tokens.
+
+   Every length here is declared in px rather than rem. On the web rem is a
+   user-scalable unit, but under React Native it's only a build-time constant
+   (metro.config.cjs -> polyfills.rem), so rem buys us nothing at runtime and
+   costs us a layer of indirection when reading the scale. px says what it
+   means. The *values* still mirror Tailwind's web defaults, so `p-4` and
+   `text-base` are the same size in the app as they are in frontend/.
+   --------------------------------------------------------------------------- */
 @theme {
+  /* --color-brand-* aliases Tailwind's built-in violet ramp (frontend/src/index.css
+     does the same) so a single rename swaps the brand color on both platforms. */
   --color-brand-50: var(--color-violet-50);
   --color-brand-100: var(--color-violet-100);
   --color-brand-200: var(--color-violet-200);
@@ -19,8 +28,62 @@
 
   --color-like: #ed4956;
 
+  /* Android doesn't synthesize weights for custom font families: asking for
+     `fontWeight: 700` on "Poppins_400Regular" silently renders regular. Each
+     weight is therefore its own family token (`font-poppins-bold`, not
+     `font-poppins font-bold`), and each must be registered in useFonts().
+
+     Deliberately NOT setting --font-sans: that would make Poppins the default
+     family app-wide and break every existing `font-bold`/`font-semibold` on
+     Android. The system font stays the default; reach for Poppins explicitly. */
   --font-poppins: "Poppins_400Regular";
+  --font-poppins-medium: "Poppins_500Medium";
+  --font-poppins-semibold: "Poppins_600SemiBold";
+  --font-poppins-bold: "Poppins_700Bold";
   --font-kaushan: "KaushanScript_400Regular";
+
+  /* Base step for the whole numeric spacing scale: p-1 = 4px, p-4 = 16px,
+     gap-6 = 24px, and so on for every m-/p-/gap-/size-/w-/h- utility. */
+  --spacing: 4px;
+
+  /* Named spacing for the handful of measurements that should be decided once
+     and reused, rather than re-picked per screen. These generate the same
+     utilities as the numeric scale: px-gutter, gap-section, min-h-touch. */
+  --spacing-gutter: 20px; /* horizontal screen padding */
+  --spacing-section: 32px; /* gap between major blocks on a screen */
+  --spacing-stack: 12px; /* gap between siblings inside a block */
+  --spacing-touch: 44px; /* minimum tappable size (iOS HIG 44pt / MD 48dp) */
+
+  /* Type scale. The paired --text-*--line-height is what makes `text-lg` set
+     both size and leading in one class. Prefer these over `leading-*`: the
+     default leading utilities are unitless ratios, and RN reads a bare number
+     as pixels, so `leading-tight` would mean 1.25px. */
+  --text-2xs: 10px;
+  --text-2xs--line-height: 14px;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
+  --text-base: 16px;
+  --text-base--line-height: 24px;
+  --text-lg: 18px;
+  --text-lg--line-height: 28px;
+  --text-xl: 20px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 32px;
+  --text-3xl: 30px;
+  --text-3xl--line-height: 36px;
+  --text-4xl: 36px;
+  --text-4xl--line-height: 40px;
+  --text-5xl: 48px;
+  --text-5xl--line-height: 48px;
+
+  /* Elevation, named by role instead of by blur radius, so a card and a sheet
+     can't drift apart across screens. */
+  --shadow-card: 0px 1px 3px rgb(0 0 0 / 0.1);
+  --shadow-elevated: 0px 4px 12px rgb(0 0 0 / 0.12);
+  --shadow-modal: 0px 12px 32px rgb(0 0 0 / 0.24);
 }
 
 /* Semantic utility names (bg-primary, text-muted-foreground, ...) resolved
@@ -44,6 +107,14 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-overlay: var(--overlay);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -78,10 +149,18 @@
       --accent: var(--color-brand-50);
       --accent-foreground: var(--color-brand-800);
       --destructive: oklch(0.577 0.245 27.325);
+      --destructive-foreground: oklch(0.985 0 0);
+      --success: oklch(0.627 0.194 149.214);
+      --success-foreground: oklch(0.985 0 0);
+      --warning: oklch(0.769 0.188 70.08);
+      --warning-foreground: oklch(0.145 0 0);
+      --info: oklch(0.546 0.245 262.881);
+      --info-foreground: oklch(0.985 0 0);
+      --overlay: oklch(0 0 0 / 40%);
       --border: oklch(0 0 0 / 4%);
       --input: oklch(0 0 0 / 6%);
       --ring: var(--color-brand-400);
-      --radius: 0.625rem;
+      --radius: 10px;
     }
 
     @variant dark {
@@ -99,11 +178,21 @@
       --muted-foreground: oklch(0.708 0 0);
       --accent: oklch(0.269 0 0 / 60%);
       --accent-foreground: var(--color-brand-200);
+      /* Light-on-light fails here: the dark-mode status colors are the 400-level
+         ramp steps, so their foregrounds are near-black, not white. */
       --destructive: oklch(0.704 0.191 22.216);
+      --destructive-foreground: oklch(0.145 0 0);
+      --success: oklch(0.792 0.209 151.711);
+      --success-foreground: oklch(0.145 0 0);
+      --warning: oklch(0.828 0.189 84.429);
+      --warning-foreground: oklch(0.145 0 0);
+      --info: oklch(0.707 0.165 254.624);
+      --info-foreground: oklch(0.145 0 0);
+      --overlay: oklch(0 0 0 / 60%);
       --border: oklch(1 0 0 / 10%);
       --input: oklch(1 0 0 / 15%);
       --ring: var(--color-brand-400);
-      --radius: 0.625rem;
+      --radius: 10px;
     }
   }
 }
