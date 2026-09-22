@@ -1,13 +1,12 @@
 import { create } from "zustand";
-import axios from "axios";
 import { io } from "socket.io-client";
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
+import api from "../utils/api";
 const API_URL =
   Constants.expoConfig?.extra?.API_URL ||
   "https://nongerundively-vatic-manie.ngrok-free.dev/api";
 const BASE_URL = API_URL.replace(/\/api\/?$/, "");
-axios.defaults.withCredentials = true;
 export const useAuthStore = create((set, get) => ({
   user: null,
   isLoading: false,
@@ -31,7 +30,7 @@ export const useAuthStore = create((set, get) => ({
   }) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${API_URL}/auth/signup`, {
+      const response = await api.post("/auth/signup", {
         firstName,
         lastName,
         name,
@@ -73,9 +72,7 @@ export const useAuthStore = create((set, get) => ({
   },
   getBusinessRegistrations: async () => {
     try {
-      const response = await axios.get(
-        `${API_URL}/auth/business-account-registrations`,
-      );
+      const response = await api.get("/auth/business-account-registrations");
       return response.data.businessRegistrations;
     } catch (error) {
       set({ error: error?.response?.data?.message || "Login failed" });
@@ -86,8 +83,8 @@ export const useAuthStore = create((set, get) => ({
   },
   acceptBusinessRegistration: async (id) => {
     try {
-      const response = await axios.post(
-        `${API_URL}/auth/accept-business-registration/${id}`,
+      const response = await api.post(
+        `/auth/accept-business-registration/${id}`,
       );
       return response;
     } catch (error) {
@@ -99,8 +96,8 @@ export const useAuthStore = create((set, get) => ({
   },
   rejectBusinessRegistration: async (id) => {
     try {
-      const response = await axios.post(
-        `${API_URL}/auth/reject-business-registration/${id}`,
+      const response = await api.post(
+        `/auth/reject-business-registration/${id}`,
       );
       return response;
     } catch (error) {
@@ -112,7 +109,7 @@ export const useAuthStore = create((set, get) => ({
   logIn: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${API_URL}/auth/login/mobile`, {
+      const response = await api.post("/auth/login/mobile", {
         email,
         password,
       });
@@ -136,7 +133,7 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       console.log(API_URL);
-      await axios.post(`${API_URL}/auth/forgot-password`, { email });
+      await api.post("/auth/forgot-password", { email });
     } catch (error) {
       set({ error: error.response.data.message || "Request failed" });
       throw error;
@@ -147,7 +144,7 @@ export const useAuthStore = create((set, get) => ({
   resetPassword: async (token, password) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${API_URL}/auth/reset-password/${token}`, { password });
+      await api.post(`/auth/reset-password/${token}`, { password });
     } catch (eroare) {
       set({ error: eroare.response.data.message || "Request failed" });
       throw eroare;
@@ -158,7 +155,7 @@ export const useAuthStore = create((set, get) => ({
   sendVerificationEmail: async (email) => {
     set({ isLoading: true, isAuthenticated: false, error: null });
     try {
-      await axios.post(`${API_URL}/auth/resend-verify-email`, { email });
+      await api.post("/auth/resend-verify-email", { email });
     } catch (error) {
       set({
         isLoading: false,
@@ -172,7 +169,7 @@ export const useAuthStore = create((set, get) => ({
   verifyEmail: async (email, verificationCode) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post(`${API_URL}/auth/verify-email`, { email, verificationCode });
+      await api.post("/auth/verify-email", { email, verificationCode });
       set({ isVerified: true, isLoading: false });
     } catch (eroare) {
       set({
@@ -187,7 +184,7 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const refreshToken = await SecureStore.getItemAsync("refreshToken");
-      await axios.post(`${API_URL}/auth/logout`, { refreshToken });
+      await api.post("/auth/logout", { refreshToken });
       await SecureStore.deleteItemAsync("accessToken");
       await SecureStore.deleteItemAsync("refreshToken");
       get().disconnectSocket();
@@ -206,7 +203,7 @@ export const useAuthStore = create((set, get) => ({
       isCheckingAuth: true,
     });
     try {
-      const response = await axios.post(`${API_URL}/auth/check-auth`);
+      const response = await api.post("/auth/check-auth");
       set({
         isAuthenticated: true,
         isCheckingAuth: false,

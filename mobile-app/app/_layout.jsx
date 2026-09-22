@@ -54,8 +54,9 @@ const RootLayout = () => {
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
           <Stack.Screen name="(dashboard)" options={{ headerShown: false }} />
-          <Stack.Screen name="(post)" options={{ headerShown: false }} />
-          <Stack.Screen name="(profile)" options={{ headerShown: false }} />
+          <Stack.Screen name="(post)/post-details/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="(profile)/profile/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="(comments)/comments/[id]" options={{ headerShown: false }} />
         </Stack>
       </QueryClientProvider>
     </GestureHandlerRootView>

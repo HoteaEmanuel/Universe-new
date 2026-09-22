@@ -183,8 +183,8 @@ export const loginMobile = async (req: Request, res: Response) => {
     return res.status(200).json({
       message: "Logged in successfully",
       user: userExists,
-      accessToken: JSON.stringify(accessToken),
-      refreshToken: JSON.stringify(refreshToken),
+      accessToken,
+      refreshToken,
     });
   } catch (error) {
     return res.status(400).json({ message: "Could not log in" });
@@ -364,8 +364,8 @@ export const exchangeGoogleMobileCodeController = async (
     return res.status(200).json({
       message: "Logged in successfully",
       user,
-      accessToken: JSON.stringify(exchange.accessToken),
-      refreshToken: JSON.stringify(exchange.refreshToken),
+      accessToken: exchange.accessToken,
+      refreshToken: exchange.refreshToken,
     });
   } catch (error) {
     return res.status(400).json({ message: "Could not log in" });

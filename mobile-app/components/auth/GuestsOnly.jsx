@@ -1,18 +1,18 @@
-import { View, Text } from "react-native";
-import React from "react";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { useRouter } from "expo-router";
 const GuestsOnly = ({ children }) => {
-  const { user } = useAuthStore();
+  // Selecting just the id (a stable string) instead of the whole `user`
+  // object: `user` gets a new object reference from every store update
+  // (even unrelated ones, e.g. socket/onlineUsers), which was re-firing
+  // this effect and calling router.replace repeatedly.
+  const userId = useAuthStore((state) => state.user?.id);
   const router = useRouter();
   useEffect(() => {
-    if (user != null) {
-      // Dacă e user, redirecționează la dashboard
-      console.log("USER IS LOGGED IN");
+    if (userId != null) {
       router.replace("/profile");
     }
-  }, [user]);
+  }, [userId, router]);
   return children;
 };
 

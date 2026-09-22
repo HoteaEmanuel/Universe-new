@@ -58,11 +58,29 @@ const refreshAccessToken = () => {
   return refreshPromise;
 };
 
+// A 401 from these is a credential failure, not an expired session — there's
+// nothing to refresh, and treating them as one would wipe the session and
+// bounce to /login on every wrong password.
+const NO_REFRESH_PATHS = [
+  "/auth/login",
+  "/auth/signup",
+  "/auth/refresh-mobile",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+  "/auth/verify-email",
+  "/auth/resend-verify-email",
+];
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { config, response } = error;
-    if (response?.status !== 401 || config?._retriedAfterRefresh) {
+    const url = config?.url ?? "";
+    if (
+      response?.status !== 401 ||
+      config?._retriedAfterRefresh ||
+      NO_REFRESH_PATHS.some((path) => url.startsWith(path))
+    ) {
       return Promise.reject(error);
     }
 

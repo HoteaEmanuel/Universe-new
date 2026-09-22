@@ -1,15 +1,16 @@
-import { View, Text } from "react-native";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { router } from "expo-router";
 const LoggedUserOnly = ({ children }) => {
-  const { user } = useAuthStore();
+  // See the identical note in GuestsOnly.jsx: select the id, not the whole
+  // `user` object, so this effect doesn't re-fire on every unrelated store
+  // update.
+  const userId = useAuthStore((state) => state.user?.id);
   useEffect(() => {
-    if (user==null) {
-      // Dacă nu e user, redirecționează la login
+    if (userId == null) {
       router.replace("/login");
     }
-  }, [user]);
+  }, [userId]);
   return children;
 };
 

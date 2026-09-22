@@ -175,7 +175,11 @@ describe("auth.routes", () => {
   });
 
   describe("POST /login/mobile", () => {
-    it("returns stringified access/refresh tokens on success", async () => {
+    // Tokens go out as plain strings, matching POST /refresh-mobile. They used
+    // to be JSON.stringify'd here (and only here), so a client storing the
+    // value verbatim sent `Bearer "eyJ..."` — quotes included — and every
+    // authenticated request 401'd.
+    it("returns plain access/refresh tokens on success", async () => {
       vi.mocked(login).mockResolvedValue({ id: "user-1" } as never);
       vi.mocked(generateJwtMobile).mockResolvedValue({
         accessToken: "access-1",
@@ -187,8 +191,8 @@ describe("auth.routes", () => {
         .send({ email: "jane@unibuc.ro", password: "secret123" });
 
       expect(res.status).toBe(200);
-      expect(res.body.accessToken).toBe(JSON.stringify("access-1"));
-      expect(res.body.refreshToken).toBe(JSON.stringify("refresh-1"));
+      expect(res.body.accessToken).toBe("access-1");
+      expect(res.body.refreshToken).toBe("refresh-1");
     });
 
     it("returns a generic 400 if token generation fails, hiding the real error", async () => {
