@@ -10,3 +10,5 @@ export * from "./moderation.js";
 export * from "./notification.js";
 export * from "./preferences.js";
 export * from "./search.js";
+export * from "./utils/formatDate.js";
+export * from "./utils/formatCount.js";

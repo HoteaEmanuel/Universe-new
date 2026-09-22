@@ -36,18 +36,9 @@ export const createUserMutations = (api: UsersApi, queryClient: QueryClient) => 
   // this codebase produces (the real saved-posts list key is postKeys.saved,
   // ["savedPosts", id]) — so saving/unsaving a post never refreshed the
   // Saved Posts tab. Fixed to the real key.
-  savePost: (postId: string, userId?: string) =>
+  toggleSavePost: (postId: string, userId?: string) =>
     mutationOptions({
-      mutationFn: () => api.savePost(postId),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: postKeys.saved(userId ?? "") });
-        queryClient.invalidateQueries({ queryKey: postKeys.detail(postId) });
-      },
-    }),
-
-  unsavePost: (postId: string, userId?: string) =>
-    mutationOptions({
-      mutationFn: () => api.unsavePost(postId),
+      mutationFn: () => api.toggleSavePost(postId),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: postKeys.saved(userId ?? "") });
         queryClient.invalidateQueries({ queryKey: postKeys.detail(postId) });

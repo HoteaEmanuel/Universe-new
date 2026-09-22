@@ -19,6 +19,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { useAuthStore } from "../store/authStore";
+import ConfirmDialog from "../components/ConfirmDialog";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -73,6 +74,7 @@ const RootLayout = () => {
             <Stack.Screen name="(profile)/profile/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="(comments)/comments/[id]" options={{ headerShown: false }} />
           </Stack>
+          <ConfirmDialog />
         </QueryClientProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>

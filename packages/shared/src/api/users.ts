@@ -58,11 +58,8 @@ export const createUsersApi = (client: HttpClient) => ({
 
   unfollow: (id: string) => client.post<{ message: string }>("/unfollow", { unfollowId: id }),
 
-  savePost: (postId: string) =>
-    client.post<{ message: string }>(`/posts/save/${postId}`),
-
-  unsavePost: (postId: string) =>
-    client.post<{ message: string }>(`/posts/unsave/${postId}`),
+  toggleSavePost: (postId: string) =>
+    client.post<{ message: string; data: { saved: boolean } }>(`/posts/toggle-save/${postId}`),
 
   updateBio: (bio: string) => client.patch<{ message: string }>("/update-bio", { bio }),
 
