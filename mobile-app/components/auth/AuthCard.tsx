@@ -1,11 +1,14 @@
-import { View, type ViewProps } from "react-native";
+import { View, StyleSheet, type ViewProps } from "react-native";
+import { BlurView } from "expo-blur";
 import { authPalette } from "./authPalette";
 
-// The glass panel below the hero. It's a semi-transparent tint, not a true
-// blur: Uniwind stubs `backdropFilter` to a no-op for React Native (no
-// native equivalent without expo-blur's BlurView), and the approved "clean"
-// direction sits on a flat background anyway, so a real blur would have had
-// nothing complex behind it to blur.
+// The glass panel below the hero. A real backdrop blur (matching the
+// approved mockup) needs expo-blur's BlurView — Uniwind's own
+// `backdropFilter` is stubbed to a no-op for React Native, there's no
+// pure-style equivalent. The outer View keeps overflow: hidden so the
+// BlurView (and the tint on top of it) are clipped to the rounded corners;
+// unlike the hero's SVG shape, BlurView is a real RN-managed native view,
+// so it clips correctly through the parent's own overflow + borderRadius.
 const AuthCard = ({ style, children, ...props }: ViewProps) => {
   return (
     <View
@@ -13,13 +16,10 @@ const AuthCard = ({ style, children, ...props }: ViewProps) => {
         {
           marginTop: -36,
           marginHorizontal: 24,
-          backgroundColor: authPalette.cardBg,
+          borderRadius: 28,
+          overflow: "hidden",
           borderWidth: 1,
           borderColor: authPalette.cardBorder,
-          borderRadius: 28,
-          padding: 22,
-          paddingTop: 28,
-          gap: 16,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 20 },
           shadowOpacity: 0.5,
@@ -30,7 +30,17 @@ const AuthCard = ({ style, children, ...props }: ViewProps) => {
       ]}
       {...props}
     >
-      {children}
+      <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+      <View
+        style={{
+          backgroundColor: authPalette.cardBg,
+          padding: 22,
+          paddingTop: 28,
+          gap: 16,
+        }}
+      >
+        {children}
+      </View>
     </View>
   );
 };
