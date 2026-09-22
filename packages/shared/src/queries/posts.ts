@@ -1,5 +1,6 @@
-import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
-import type { createPostsApi } from "../api/posts.js";
+import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { createPostsApi } from "../api/posts.js";
+import type { HttpClient } from "../api/client.js";
 import type { OpportunityFilters } from "../post.js";
 import { postKeys } from "./keys.js";
 import { cursorPagination } from "./pageHelpers.js";
@@ -95,3 +96,29 @@ export const createPostQueries = (api: PostsApi) => ({
       ...cursorPagination(),
     }),
 });
+
+// Ready-to-use hooks for every read-only, side-effect-free post query — see
+// the identical note on createUserQueryHooks in ./users.ts for why this
+// exists instead of each app redeclaring the same useQuery wrapper.
+export const createPostQueryHooks = (httpClient: HttpClient) => {
+  const api = createPostsApi(httpClient);
+  const queries = createPostQueries(api);
+  return {
+    useGetPostQuery: (id?: string) => useQuery(queries.detail(id)),
+    useGetPublicPostQuery: (id?: string) => useQuery(queries.public(id)),
+    usePostUserQuery: (id?: string) => useQuery(queries.author(id)),
+    useGetUserPostsQuery: (id?: string) => useQuery(queries.byUser(id)),
+    useGetSavedPostsQuery: (id: string) => useQuery(queries.saved(id)),
+    useCheckPostIsSaved: (id: string) => useQuery(queries.savedStatus(id)),
+    useGetRelatedPostsQuery: (tag: string) => useQuery(queries.related(tag)),
+    useGetPostsByNameQuery: (name: string) => useQuery(queries.byName(name)),
+    useGetLikesQuery: (postId: string) => useQuery(queries.likesCount(postId)),
+    useGetRelevantLikerQuery: (postId: string) => useQuery(queries.relevantLiker(postId)),
+    usePostLikedQuery: (postId: string) => useQuery(queries.liked(postId)),
+    useGetShareRecipientsQuery: (enabled: boolean) => useQuery(queries.shareRecipients(enabled)),
+    useGetPostsInfiniteQuery: (feedSelector: string) => useInfiniteQuery(queries.feed(feedSelector)),
+    useGetUsersWhoLikedInfiniteQuery: (postId: string) => useInfiniteQuery(queries.whoLiked(postId)),
+    useOpportunitiesInfiniteQuery: (filters: OpportunityFilters) =>
+      useInfiniteQuery(queries.opportunities(filters)),
+  };
+};

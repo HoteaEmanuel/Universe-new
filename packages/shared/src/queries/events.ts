@@ -1,11 +1,12 @@
-import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
-import type { createEventsApi } from "../api/events.js";
+import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { createEventsApi } from "../api/events.js";
+import type { HttpClient } from "../api/client.js";
 import type { EventParticipantStatus } from "../domain.js";
 import { eventKeys } from "./keys.js";
 import { cursorPagination } from "./pageHelpers.js";
 
 type EventsApi = ReturnType<typeof createEventsApi>;
-type MyEventsScope = "hosting" | "going" | "interested" | "waitlisted";
+export type MyEventsScope = "hosting" | "going" | "interested" | "waitlisted";
 
 export const createEventQueries = (api: EventsApi) => ({
   detail: (id?: string) =>
@@ -59,3 +60,27 @@ export const createEventQueries = (api: EventsApi) => ({
       enabled: !!id && enabled,
     }),
 });
+
+// Ready-to-use hooks for every read-only, side-effect-free event query —
+// see the identical note on createUserQueryHooks in ./users.ts for why this
+// exists instead of each app redeclaring the same useQuery wrapper.
+export const createEventQueryHooks = (httpClient: HttpClient) => {
+  const api = createEventsApi(httpClient);
+  const queries = createEventQueries(api);
+  return {
+    useGetEventQuery: (id?: string) => useQuery(queries.detail(id)),
+    useDiscoverEventsInfiniteQuery: (enabled = true) => useInfiniteQuery(queries.discover(enabled)),
+    useUpcomingUniversityEventsQuery: (enabled = true, limit?: number) =>
+      useQuery(queries.upcomingUniversity(limit, enabled)),
+    useMyEventsInfiniteQuery: (scope: MyEventsScope, enabled = true) =>
+      useInfiniteQuery(queries.mine(scope, enabled)),
+    useGetEventParticipantsInfiniteQuery: (
+      id?: string,
+      status?: EventParticipantStatus,
+      enabled = true,
+      search?: string,
+    ) => useInfiniteQuery(queries.participants(id, status, search, enabled)),
+    useGetEventBansInfiniteQuery: (id?: string, enabled = true) =>
+      useInfiniteQuery(queries.bans(id, enabled)),
+  };
+};

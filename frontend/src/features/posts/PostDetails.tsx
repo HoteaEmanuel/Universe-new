@@ -95,10 +95,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
     };
   }, [socket, postId]);
 
-  const { data: creator, isPending: isPendingPostUser } = usePostUserQuery(
-    userId ?? "",
-    postId ?? "",
-  );
+  const { data: creator, isPending: isPendingPostUser } = usePostUserQuery(userId ?? "");
   const { data: liked, isPending: isPendingCheckLiked } = usePostLikedQuery(
     postId ?? "",
   );

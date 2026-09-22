@@ -1,5 +1,12 @@
-import { infiniteQueryOptions, keepPreviousData, queryOptions } from "@tanstack/react-query";
-import type { createGroupsApi } from "../api/groups.js";
+import {
+  infiniteQueryOptions,
+  keepPreviousData,
+  queryOptions,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
+import { createGroupsApi } from "../api/groups.js";
+import type { HttpClient } from "../api/client.js";
 import type { ResourceType } from "../chat.js";
 import type { ResourceCategory } from "../domain.js";
 import { groupKeys } from "./keys.js";
@@ -122,3 +129,49 @@ export const createGroupQueries = (api: GroupsApi) => ({
       staleTime: 30_000,
     }),
 });
+
+// Ready-to-use hooks for every read-only, side-effect-free group query —
+// see the identical note on createUserQueryHooks in ./users.ts for why this
+// exists instead of each app redeclaring the same useQuery wrapper.
+export const createGroupQueryHooks = (httpClient: HttpClient) => {
+  const api = createGroupsApi(httpClient);
+  const queries = createGroupQueries(api);
+  return {
+    useGetUserGroupsInfinite: (userId: string | undefined, search: string) =>
+      useInfiniteQuery(queries.userGroups(userId, search)),
+    useGetDiscoverablePublicGroups: (
+      enabled = true,
+      courseTag?: string,
+      universityOnly?: boolean,
+      limit?: number,
+    ) => useQuery(queries.discoverablePublic(enabled, courseTag, universityOnly, limit)),
+    useGetCourseCatalog: (enabled = true, groupId?: string) =>
+      useQuery(queries.courseCatalog(enabled, groupId)),
+    useGetGroupById: (id?: string) => useQuery(queries.detail(id)),
+    useGetGroupMessagesInfinite: (id?: string) => useInfiniteQuery(queries.messages(id)),
+    useGetGroupResourcesInfinite: <T,>(type: ResourceType, id?: string) =>
+      useInfiniteQuery(queries.resources<T>(type, id)),
+    useGetGroupMembers: (groupId?: string) => useQuery(queries.members(groupId)),
+    useGetGroupMembersInfiniteQuery: (groupId?: string, enabled = true, search?: string) =>
+      useInfiniteQuery(queries.membersPage(groupId, enabled, search)),
+    useGetActiveGroupMembers: (groupId?: string) => useQuery(queries.activeMembers(groupId)),
+    useGetGroupMemberById: (groupId?: string) => useQuery(queries.memberById(groupId)),
+    useGetUsersFromSameUniversityNotInGroupQuery: (groupId?: string) =>
+      useQuery(queries.usersFromSameUniversityNotInGroup(groupId)),
+    useCheckUserIsAdminQuery: (groupId?: string, userId?: string) =>
+      useQuery(queries.checkUserIsAdmin(groupId, userId)),
+    useGetGroupBansInfinite: (groupId?: string, enabled = true) =>
+      useInfiniteQuery(queries.bans(groupId, enabled)),
+    useGetCourseResourcesInfiniteQuery: (
+      groupId?: string,
+      enabled = true,
+      category?: ResourceCategory,
+      search?: string,
+    ) => useInfiniteQuery(queries.courseResources(groupId, enabled, category, search)),
+    useGroupMentionSearchUsersQuery: (
+      groupId: string | undefined,
+      query: string,
+      enabled: boolean,
+    ) => useQuery(queries.mentionSearchUsers(groupId, query, enabled)),
+  };
+};

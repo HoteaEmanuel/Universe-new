@@ -1,5 +1,6 @@
-import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
-import type { createNotificationsApi } from "../api/notifications.js";
+import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { createNotificationsApi } from "../api/notifications.js";
+import type { HttpClient } from "../api/client.js";
 import { notificationKeys } from "./keys.js";
 import { cursorPagination } from "./pageHelpers.js";
 
@@ -35,3 +36,18 @@ export const createNotificationQueries = (api: NotificationsApi) => ({
       enabled: !!userId,
     }),
 });
+
+// Ready-to-use hooks for every read-only, side-effect-free notification
+// query — see the identical note on createUserQueryHooks in ./users.ts for
+// why this exists instead of each app redeclaring the same useQuery
+// wrapper.
+export const createNotificationQueryHooks = (httpClient: HttpClient) => {
+  const api = createNotificationsApi(httpClient);
+  const queries = createNotificationQueries(api);
+  return {
+    useGetUserNotifications: (userId?: string) => useQuery(queries.list(userId)),
+    useGetNotificationsHistoryInfinite: (userId?: string) => useInfiniteQuery(queries.history(userId)),
+    useGetUnreadNotifications: (userId?: string) => useQuery(queries.unread(userId)),
+    useGetNewMessageNotifications: (userId?: string) => useQuery(queries.newMessages(userId)),
+  };
+};

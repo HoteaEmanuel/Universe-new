@@ -1,5 +1,6 @@
-import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
-import type { createCommentsApi } from "../api/comments.js";
+import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { createCommentsApi } from "../api/comments.js";
+import type { HttpClient } from "../api/client.js";
 import { commentKeys } from "./keys.js";
 import { cursorPagination } from "./pageHelpers.js";
 
@@ -29,3 +30,17 @@ export const createCommentQueries = (api: CommentsApi) => ({
       enabled: !!postId,
     }),
 });
+
+// Ready-to-use hooks for every read-only, side-effect-free comment query —
+// see the identical note on createUserQueryHooks in ./users.ts for why this
+// exists instead of each app redeclaring the same useQuery wrapper.
+export const createCommentQueryHooks = (httpClient: HttpClient) => {
+  const api = createCommentsApi(httpClient);
+  const queries = createCommentQueries(api);
+  return {
+    useGetPostCommentsInfinite: (postId?: string) => useInfiniteQuery(queries.list(postId)),
+    useGetCommentRepliesInfinite: (postId?: string, parentId?: string) =>
+      useInfiniteQuery(queries.replies(postId, parentId)),
+    useGetPostCommentsCount: (postId?: string) => useQuery(queries.count(postId)),
+  };
+};

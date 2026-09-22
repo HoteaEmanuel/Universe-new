@@ -1,5 +1,12 @@
-import { infiniteQueryOptions, keepPreviousData, queryOptions } from "@tanstack/react-query";
-import type { createConversationsApi } from "../api/conversations.js";
+import {
+  infiniteQueryOptions,
+  keepPreviousData,
+  queryOptions,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
+import { createConversationsApi } from "../api/conversations.js";
+import type { HttpClient } from "../api/client.js";
 import { conversationKeys } from "./keys.js";
 import { cursorPagination } from "./pageHelpers.js";
 
@@ -64,3 +71,24 @@ export const createConversationQueries = (api: ConversationsApi) => ({
       queryFn: () => api.listConvoUsers(),
     }),
 });
+
+// Ready-to-use hooks for every read-only, side-effect-free conversation
+// query — see the identical note on createUserQueryHooks in ./users.ts for
+// why this exists instead of each app redeclaring the same useQuery
+// wrapper.
+export const createConversationQueryHooks = (httpClient: HttpClient) => {
+  const api = createConversationsApi(httpClient);
+  const queries = createConversationQueries(api);
+  return {
+    useGetUserByConvoId: (id?: string) => useQuery(queries.userByConvoId(id)),
+    useGetUserConversationsInfinite: (search: string) =>
+      useInfiniteQuery(queries.userConversations(search)),
+    useGetArchivedConversationsInfinite: (search: string, enabled = true) =>
+      useInfiniteQuery(queries.archivedConversations(search, enabled)),
+    useGetConvoMessagesInfinite: (id?: string) => useInfiniteQuery(queries.messages(id)),
+    useGetConvoResourcesInfinite: <T,>(type: ResourceType, id?: string) =>
+      useInfiniteQuery(queries.resources<T>(type, id)),
+    useGetConversationByUsersIdsQuery: (id?: string) => useQuery(queries.byUsersIds(id)),
+    useGetConvoUsers: () => useQuery(queries.convoUsers()),
+  };
+};
