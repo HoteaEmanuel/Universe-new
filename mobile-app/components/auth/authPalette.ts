@@ -8,12 +8,12 @@
 // one source instead of repeating raw hex/rgba through JSX.
 export const authPalette = {
   pageBg: "#0a0710",
-  // Darker, more nuanced than a flat brand-700→900 wash: still opens on a
-  // recognizable brand violet near the logo, but the far corner drops past
-  // brand-950 toward near-black instead of bottoming out mid-violet, for
-  // real tonal range across the band rather than one saturated value.
-  heroGradient: ["#7008e7", "#4d179a", "#180a2e"] as const,
-  heroGradientLocations: [0, 0.45, 1] as const,
+  // Same radial wash as the frontend landing page's hero
+  // (frontend/src/index.css .cascade-page: radial-gradient(circle at 16%
+  // 8%, #4e286f 0, #24113f 28%, #160a2a 60%)) — kept in sync so the mobile
+  // auth screens and the marketing site open on the same background.
+  heroGradient: ["#4e286f", "#24113f", "#160a2a"] as const,
+  heroGradientLocations: [0, 0.28, 0.6] as const,
   cardBg: "rgba(20,16,26,0.62)",
   cardBorder: "rgba(166,132,255,0.16)",
   fieldBg: "rgba(255,255,255,0.06)",
@@ -28,4 +28,5 @@ export const authPalette = {
   link: "#c4b4ff",
   ctaBg: "#fafafa",
   ctaText: "#5d0ec0",
+  error: "#ff8a8a",
 } as const;

@@ -28,7 +28,9 @@ const AuthPrimaryButton = ({ label, onPress, loading, disabled }: AuthPrimaryBut
       {loading ? (
         <ActivityIndicator color={authPalette.ctaText} />
       ) : (
-        <Text style={{ color: authPalette.ctaText, fontWeight: "700", fontSize: 15 }}>{label}</Text>
+        <Text className="text-base font-bold" style={{ color: authPalette.ctaText }}>
+          {label}
+        </Text>
       )}
     </PressableScale>
   );

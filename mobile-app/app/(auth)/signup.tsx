@@ -1,15 +1,10 @@
-import { useState } from "react";
-import {
-  View,
-  Text,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableWithoutFeedback,
-} from "react-native";
+import { Keyboard, TouchableWithoutFeedback, View, Text } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { signupSchema, type SignupInput } from "@universe/shared/schemas/auth.schema.js";
 import { useAuthStore } from "../../store/authStore";
 import { useGoogleAuth } from "../../hooks/useGoogleAuth";
 import AuthHeroHeader from "../../components/auth/AuthHeroHeader";
@@ -27,21 +22,22 @@ const SignUp = () => {
   const isLoading = useAuthStore((state) => state.isLoading);
   const { promptAsync, isLoading: isGoogleLoading } = useGoogleAuth();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<SignupInput>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { accountType: "normal", email: "", password: "" },
+  });
 
-  const handleSignUp = async () => {
-    if (!email.trim() || !password.trim()) {
-      setError("Please fill in all fields");
-      return;
-    }
-    setError("");
+  const onSubmit = async ({ email, password, accountType }: SignupInput) => {
     try {
-      await signUp({ email, password });
+      await signUp({ email, password, accountType });
       router.replace("/home");
     } catch {
-      setError("Sign up failed. Please try again.");
+      setError("root", { message: "Sign up failed. Please try again." });
     }
   };
 
@@ -49,85 +45,99 @@ const SignUp = () => {
     try {
       await promptAsync();
     } catch {
-      setError("Google sign up failed. Please try again.");
+      setError("root", { message: "Google sign up failed. Please try again." });
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: authPalette.pageBg }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 24 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <AuthHeroHeader tagline="Join your course community." />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <KeyboardAwareScrollView
+        style={{ flex: 1, backgroundColor: authPalette.pageBg }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 24 }}
+        keyboardShouldPersistTaps="handled"
+        bottomOffset={24}
+      >
+        <AuthHeroHeader tagline="Join your course community." />
 
-          <AuthCard>
-            <View>
-              <Text style={{ fontSize: 24, fontWeight: "700", color: authPalette.textPrimary }}>
-                Create your account
-              </Text>
-              <Text style={{ fontSize: 13, color: authPalette.textMuted, marginTop: 4 }}>
-                Takes less than a minute.
-              </Text>
-            </View>
+        <AuthCard>
+          <View>
+            <Text className="text-2xl font-bold" style={{ color: authPalette.textPrimary }}>
+              Create your account
+            </Text>
+            <Text className="text-sm" style={{ color: authPalette.textMuted, marginTop: 4 }}>
+              Takes less than a minute.
+            </Text>
+          </View>
 
-            {error ? (
-              <Text style={{ fontSize: 13, color: "#ff8a8a" }}>{error}</Text>
-            ) : null}
+          {errors.root?.message ? (
+            <Text className="text-sm" style={{ color: authPalette.error }}>
+              {errors.root.message}
+            </Text>
+          ) : null}
 
-            <AuthTextField
-              id="signup-email"
-              label="Email"
-              icon="mail-outline"
-              placeholder="you@university.edu"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
-            />
-
-            <AuthTextField
-              id="signup-password"
-              label="Password"
-              icon="lock-closed-outline"
-              placeholder="Create a password"
-              value={password}
-              onChangeText={setPassword}
-              isPassword
-              autoCapitalize="none"
-              autoComplete="password-new"
-              hint="At least 8 characters"
-            />
-
-            <AuthPrimaryButton
-              label="Create account"
-              onPress={handleSignUp}
-              loading={isLoading}
-            />
-
-            <AuthDivider />
-
-            <GoogleButton
-              label="Continue with Google"
-              onPress={handleGoogleSignUp}
-              loading={isGoogleLoading}
-            />
-          </AuthCard>
-
-          <AuthSwitchLink
-            prompt="Already have an account?"
-            actionLabel="Login"
-            href="/login"
+          <Controller
+            control={control}
+            name="email"
+            render={({ field }) => (
+              <AuthTextField
+                id="signup-email"
+                label="Email"
+                icon="mail-outline"
+                placeholder="you@university.edu"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                error={errors.email?.message}
+                autoCapitalize="none"
+                autoComplete="email"
+                keyboardType="email-address"
+              />
+            )}
           />
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+
+          <Controller
+            control={control}
+            name="password"
+            render={({ field }) => (
+              <AuthTextField
+                id="signup-password"
+                label="Password"
+                icon="lock-closed-outline"
+                placeholder="Create a password"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                error={errors.password?.message}
+                isPassword
+                autoCapitalize="none"
+                autoComplete="password-new"
+                hint="At least 8 characters"
+              />
+            )}
+          />
+
+          <AuthPrimaryButton
+            label="Create account"
+            onPress={handleSubmit(onSubmit)}
+            loading={isLoading}
+          />
+
+          <AuthDivider />
+
+          <GoogleButton
+            label="Continue with Google"
+            onPress={handleGoogleSignUp}
+            loading={isGoogleLoading}
+          />
+        </AuthCard>
+
+        <AuthSwitchLink
+          prompt="Already have an account?"
+          actionLabel="Login"
+          href="/login"
+        />
+      </KeyboardAwareScrollView>
+    </TouchableWithoutFeedback>
   );
 };
 

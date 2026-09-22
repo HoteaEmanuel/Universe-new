@@ -11,9 +11,11 @@ type AuthSwitchLinkProps = {
 const AuthSwitchLink = ({ prompt, actionLabel, href }: AuthSwitchLinkProps) => {
   return (
     <View style={{ marginTop: 20, flexDirection: "row", justifyContent: "center", gap: 6 }}>
-      <Text style={{ fontSize: 13, color: authPalette.textMuted }}>{prompt}</Text>
+      <Text className="text-sm" style={{ color: authPalette.textMuted }}>
+        {prompt}
+      </Text>
       <Link href={href}>
-        <Text style={{ fontSize: 13, fontWeight: "600", color: authPalette.link }}>
+        <Text className="text-sm font-semibold" style={{ color: authPalette.link }}>
           {actionLabel}
         </Text>
       </Link>

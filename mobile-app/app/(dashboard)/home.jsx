@@ -1,10 +1,9 @@
-import { View } from "react-native";
 import React from "react";
 import ThemedView from "../../components/ThemedView";
 import ThemedText from "../../components/ThemedText";
 import { FlatList } from "react-native";
 import { useGetPostsInfiniteQuery } from "../../queryAndMutation/queries/post-queries";
-import ThemedPostCard from "../../components/ThemedPostCard";
+import PostCard from "../../components/post/PostCard";
 const Home = () => {
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useGetPostsInfiniteQuery("Global");
@@ -25,11 +24,8 @@ const Home = () => {
           if (hasNextPage && !isFetchingNextPage) fetchNextPage();
         }}
         onEndReachedThreshold={0.5}
-        renderItem={({ item }) => (
-          <View style={{ flex: 1, marginBottom: 50, paddingHorizontal: 8 }}>
-            <ThemedPostCard post={item} personal={false} />
-          </View>
-        )}
+        contentContainerStyle={{ gap: 12, padding: 16 }}
+        renderItem={({ item }) => <PostCard post={item} />}
       />
     </ThemedView>
   );

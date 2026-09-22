@@ -1,15 +1,10 @@
-import { useState } from "react";
-import {
-  View,
-  Text,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TouchableWithoutFeedback,
-} from "react-native";
+import { Keyboard, TouchableWithoutFeedback, View, Text } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, type LoginInput } from "@universe/shared/schemas/auth.schema.js";
 import { useAuthStore } from "../../store/authStore";
 import { useGoogleAuth } from "../../hooks/useGoogleAuth";
 import AuthHeroHeader from "../../components/auth/AuthHeroHeader";
@@ -27,21 +22,22 @@ const Login = () => {
   const isLoading = useAuthStore((state) => state.isLoading);
   const { promptAsync, isLoading: isGoogleLoading } = useGoogleAuth();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      setError("Please fill in all fields");
-      return;
-    }
-    setError("");
+  const onSubmit = async ({ email, password }: LoginInput) => {
     try {
       await logIn(email, password);
       router.replace("/home");
     } catch {
-      setError("Login failed. Please check your credentials.");
+      setError("root", { message: "Login failed. Please check your credentials." });
     }
   };
 
@@ -50,75 +46,89 @@ const Login = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: authPalette.pageBg }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 24 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <AuthHeroHeader tagline="Connect. Discover. Share." />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <KeyboardAwareScrollView
+        style={{ flex: 1, backgroundColor: authPalette.pageBg }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom + 24 }}
+        keyboardShouldPersistTaps="handled"
+        bottomOffset={24}
+      >
+        <AuthHeroHeader tagline="Connect. Discover. Share." />
 
-          <AuthCard>
-            <View>
-              <Text style={{ fontSize: 26, fontWeight: "700", color: authPalette.textPrimary }}>
-                Login
-              </Text>
-              <Text style={{ fontSize: 13, color: authPalette.textMuted, marginTop: 4 }}>
-                Right where you left off.
-              </Text>
-            </View>
+        <AuthCard>
+          <View>
+            <Text className="text-2xl font-bold" style={{ color: authPalette.textPrimary }}>
+              Login
+            </Text>
+            <Text className="text-sm" style={{ color: authPalette.textMuted, marginTop: 4 }}>
+              Right where you left off.
+            </Text>
+          </View>
 
-            {error ? (
-              <Text style={{ fontSize: 13, color: "#ff8a8a" }}>{error}</Text>
-            ) : null}
+          {errors.root?.message ? (
+            <Text className="text-sm" style={{ color: authPalette.error }}>
+              {errors.root.message}
+            </Text>
+          ) : null}
 
-            <AuthTextField
-              id="login-email"
-              label="Email"
-              icon="mail-outline"
-              placeholder="you@university.edu"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
-            />
-
-            <AuthTextField
-              id="login-password"
-              label="Password"
-              icon="lock-closed-outline"
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              isPassword
-              autoCapitalize="none"
-              autoComplete="password"
-            />
-
-            <AuthPrimaryButton label="Login" onPress={handleLogin} loading={isLoading} />
-
-            <AuthDivider />
-
-            <GoogleButton
-              label="Continue with Google"
-              onPress={handleGoogleLogin}
-              loading={isGoogleLoading}
-            />
-          </AuthCard>
-
-          <AuthSwitchLink
-            prompt="Don't have an account?"
-            actionLabel="Sign Up"
-            href="/signup"
+          <Controller
+            control={control}
+            name="email"
+            render={({ field }) => (
+              <AuthTextField
+                id="login-email"
+                label="Email"
+                icon="mail-outline"
+                placeholder="you@university.edu"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                error={errors.email?.message}
+                autoCapitalize="none"
+                autoComplete="email"
+                keyboardType="email-address"
+              />
+            )}
           />
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+
+          <Controller
+            control={control}
+            name="password"
+            render={({ field }) => (
+              <AuthTextField
+                id="login-password"
+                label="Password"
+                icon="lock-closed-outline"
+                placeholder="Enter your password"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                error={errors.password?.message}
+                isPassword
+                autoCapitalize="none"
+                autoComplete="password"
+              />
+            )}
+          />
+
+          <AuthPrimaryButton label="Login" onPress={handleSubmit(onSubmit)} loading={isLoading} />
+
+          <AuthDivider />
+
+          <GoogleButton
+            label="Continue with Google"
+            onPress={handleGoogleLogin}
+            loading={isGoogleLoading}
+          />
+        </AuthCard>
+
+        <AuthSwitchLink
+          prompt="Don't have an account?"
+          actionLabel="Sign Up"
+          href="/signup"
+        />
+      </KeyboardAwareScrollView>
+    </TouchableWithoutFeedback>
   );
 };
 

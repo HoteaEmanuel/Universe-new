@@ -2,6 +2,7 @@ import { View, Text, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { PressableScale } from "../../lib/styled";
 import { authPalette } from "./authPalette";
+import { IconSizes } from "../../constants/iconSizes";
 
 type GoogleButtonProps = {
   label: string;
@@ -32,8 +33,8 @@ const GoogleButton = ({ label, onPress, loading }: GoogleButtonProps) => {
         <ActivityIndicator color={authPalette.textPrimary} />
       ) : (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <Ionicons name="logo-google" size={18} color={authPalette.textPrimary} />
-          <Text style={{ color: authPalette.textPrimary, fontSize: 14, fontWeight: "500" }}>
+          <Ionicons name="logo-google" size={IconSizes.md} color={authPalette.textPrimary} />
+          <Text className="text-sm font-medium" style={{ color: authPalette.textPrimary }}>
             {label}
           </Text>
         </View>

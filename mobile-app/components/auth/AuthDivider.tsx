@@ -5,7 +5,9 @@ const AuthDivider = () => {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <View style={{ flex: 1, height: 1, backgroundColor: authPalette.divider }} />
-      <Text style={{ fontSize: 12, color: authPalette.textMuted }}>or</Text>
+      <Text className="text-xs" style={{ color: authPalette.textMuted }}>
+        or
+      </Text>
       <View style={{ flex: 1, height: 1, backgroundColor: authPalette.divider }} />
     </View>
   );

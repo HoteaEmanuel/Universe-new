@@ -17,6 +17,7 @@ import { useColorScheme } from "react-native";
 import { Colors } from "../constants/colors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { useAuthStore } from "../store/authStore";
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,26 +53,28 @@ const RootLayout = () => {
   }
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <StatusBar style="auto" />
-        <Stack
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: theme.navBackground,
-            },
-            headerTitleStyle: {
-              color: theme.title,
-            },
-          }}
-        >
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
-          <Stack.Screen name="(dashboard)" options={{ headerShown: false }} />
-          <Stack.Screen name="(post)/post-details/[id]" options={{ headerShown: false }} />
-          <Stack.Screen name="(profile)/profile/[id]" options={{ headerShown: false }} />
-          <Stack.Screen name="(comments)/comments/[id]" options={{ headerShown: false }} />
-        </Stack>
-      </QueryClientProvider>
+      <KeyboardProvider>
+        <QueryClientProvider client={queryClient}>
+          <StatusBar style="auto" />
+          <Stack
+            screenOptions={{
+              headerStyle: {
+                backgroundColor: theme.navBackground,
+              },
+              headerTitleStyle: {
+                color: theme.title,
+              },
+            }}
+          >
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
+            <Stack.Screen name="(dashboard)" options={{ headerShown: false }} />
+            <Stack.Screen name="(post)/post-details/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="(profile)/profile/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="(comments)/comments/[id]" options={{ headerShown: false }} />
+          </Stack>
+        </QueryClientProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 };
