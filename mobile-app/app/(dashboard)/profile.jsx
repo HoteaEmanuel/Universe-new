@@ -12,7 +12,6 @@ import {
   useGetFollowersQuery,
   useGetFollowingQuery,
 } from "../../queryAndMutation/queries/user-queries.js";
-import "../../global.css";
 import { ActivityIndicator } from "react-native";
 import { useGetUserPostsQuery } from "../../queryAndMutation/queries/post-queries.js";
 import ThemedPostCard from "../../components/ThemedPostCard.jsx";

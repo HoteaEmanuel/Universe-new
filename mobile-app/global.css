@@ -1,27 +1,132 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "uniwind";
 
-.postImage{
-    @apply w-1/2 h-64 object-cover rounded-t-2xl;
+/* Static, theme-independent tokens. --color-brand-* aliases Tailwind's
+   built-in violet ramp (frontend/src/index.css does the same) so a single
+   rename swaps the brand color on both platforms at once. */
+@theme {
+  --color-brand-50: var(--color-violet-50);
+  --color-brand-100: var(--color-violet-100);
+  --color-brand-200: var(--color-violet-200);
+  --color-brand-300: var(--color-violet-300);
+  --color-brand-400: var(--color-violet-400);
+  --color-brand-500: var(--color-violet-500);
+  --color-brand-600: var(--color-violet-600);
+  --color-brand-700: var(--color-violet-700);
+  --color-brand-800: var(--color-violet-800);
+  --color-brand-900: var(--color-violet-900);
+  --color-brand-950: var(--color-violet-950);
+
+  --color-like: #ed4956;
+
+  --font-poppins: "Poppins_400Regular";
+  --font-kaushan: "KaushanScript_400Regular";
 }
 
-.violet-bg{
-    @apply bg-violet-950; 
+/* Semantic utility names (bg-primary, text-muted-foreground, ...) resolved
+   from the light/dark custom properties below — same two-layer structure
+   as frontend/src/index.css, so the same semantic names mean the same
+   thing on both platforms even though the raw values are declared per
+   platform (mobile has its own dark-first palette, not identical to web's). */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-.violet-bg-active{
-    @apply bg-violet-500;
+/* Uniwind requires every theme variant to declare the exact same set of
+   variables (a mismatch is a runtime error), so --radius is repeated in
+   both blocks even though the value doesn't change between them. */
+@layer theme {
+  :root {
+    @variant light {
+      --background: oklch(0.985 0 0);
+      --foreground: oklch(0.145 0 0);
+      --card: oklch(1 0 0);
+      --card-foreground: oklch(0.145 0 0);
+      --popover: oklch(1 0 0);
+      --popover-foreground: oklch(0.145 0 0);
+      --primary: var(--color-brand-800);
+      --primary-foreground: oklch(0.985 0 0);
+      --secondary: oklch(0.97 0 0);
+      --secondary-foreground: oklch(0.205 0 0);
+      --muted: oklch(0.97 0 0);
+      --muted-foreground: oklch(0.556 0 0);
+      --accent: var(--color-brand-50);
+      --accent-foreground: var(--color-brand-800);
+      --destructive: oklch(0.577 0.245 27.325);
+      --border: oklch(0 0 0 / 4%);
+      --input: oklch(0 0 0 / 6%);
+      --ring: var(--color-brand-400);
+      --radius: 0.625rem;
+    }
+
+    @variant dark {
+      --background: oklch(0.09 0.006 70);
+      --foreground: oklch(0.985 0 0);
+      --card: oklch(0.19 0.006 70);
+      --card-foreground: oklch(0.985 0 0);
+      --popover: oklch(0.19 0.006 70);
+      --popover-foreground: oklch(0.985 0 0);
+      --primary: var(--color-brand-600);
+      --primary-foreground: oklch(0.985 0 0);
+      --secondary: oklch(0.269 0 0);
+      --secondary-foreground: oklch(0.985 0 0);
+      --muted: oklch(0.269 0 0);
+      --muted-foreground: oklch(0.708 0 0);
+      --accent: oklch(0.269 0 0 / 60%);
+      --accent-foreground: var(--color-brand-200);
+      --destructive: oklch(0.704 0.191 22.216);
+      --border: oklch(1 0 0 / 10%);
+      --input: oklch(1 0 0 / 15%);
+      --ring: var(--color-brand-400);
+      --radius: 0.625rem;
+    }
+  }
 }
-.btn-start{
-    @apply bg-violet-900 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded;
+
+/* Pre-Uniwind utility classes, kept as-is until Phase 3c replaces every
+   call site with the new ui/ primitives. */
+.postImage {
+  @apply w-1/2 h-64 object-cover rounded-t-2xl;
 }
-.btn{
-    @apply flex-row justify-center items-center gap-2 bg-violet-900 active:bg-violet-700 text-white font-bold py-2 px-4 rounded;
+
+.violet-bg {
+  @apply bg-violet-950;
 }
-.btn-remove{
-    @apply flex-row justify-center items-center gap-2 border border-gray-800 text-white font-bold py-2 px-4 rounded;
+
+.violet-bg-active {
+  @apply bg-violet-500;
 }
-.postsContainer{
-    /* @apply flex grid grid-cols-2 gap-4; */
+.btn-start {
+  @apply bg-violet-900 hover:bg-violet-700 text-white font-bold py-2 px-4 rounded;
+}
+.btn {
+  @apply flex-row justify-center items-center gap-2 bg-violet-900 active:bg-violet-700 text-white font-bold py-2 px-4 rounded;
+}
+.btn-remove {
+  @apply flex-row justify-center items-center gap-2 border border-gray-800 text-white font-bold py-2 px-4 rounded;
 }

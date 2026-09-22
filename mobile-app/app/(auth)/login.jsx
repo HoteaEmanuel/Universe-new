@@ -14,28 +14,22 @@ import Logo1 from "../../assets/logo_1.png";
 import Spacer from "../../components/Spacer";
 import ThemeTextInput from "../../components/ThemeTextInput";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect } from "react";
+import React from "react";
 import { useState } from "react";
 import { useAuthStore } from "../../store/authStore";
 import { useGoogleAuth } from "../../hooks/useGoogleAuth.js";
-import { cssInterop, styled } from "nativewind";
-import { PressableScale } from "pressto";
-import { Colors } from "../../constants/colors.js";
+import { PressableScale } from "../../lib/styled";
 // import Logo from "../../assets/images/.svg";
 const Login = () => {
-  const { logIn, user } = useAuthStore();
+  const { logIn } = useAuthStore();
   const { promptAsync } = useGoogleAuth();
 
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [password, setPassword] = useState("");
   const handleGoogleLogin = async () => {
-    console.log("Google login initiated");
     await promptAsync();
   };
-  useEffect(() => {
-    console.log(user);
-  }, [user]);
   const [showPassword, setShowPassword] = useState(false);
   const handleNormalLogin = async () => {
     console.log(email, password);
@@ -51,7 +45,6 @@ const Login = () => {
       setError("Login failed. Please check your credentials.");
     }
   };
-  cssInterop(PressableScale, { className: "style" });
   return (
     <TouchableWithoutFeedback
       onPress={() => {

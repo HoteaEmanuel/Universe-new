@@ -1,5 +1,5 @@
 const { getDefaultConfig } = require("expo/metro-config");
-const { withNativeWind } = require("nativewind/metro");
+const { withUniwindConfig } = require("uniwind/metro");
 const path = require("path");
 
 const projectRoot = __dirname;
@@ -49,4 +49,10 @@ config.resolver = {
   },
 };
 
-module.exports = withNativeWind(config, { input: "./global.css" });
+// withUniwindConfig must be the outermost wrapper.
+// polyfills.rem: 14 matches NativeWind's rem base so existing spacing/sizing
+// utilities don't shift after the migration.
+module.exports = withUniwindConfig(config, {
+  cssEntryFile: "./global.css",
+  polyfills: { rem: 14 },
+});

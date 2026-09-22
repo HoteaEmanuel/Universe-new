@@ -9,7 +9,7 @@ import * as SecureStore from "expo-secure-store";
 import { Image } from "react-native";
 import Logo1 from "../assets/logo_1.png";
 import Spacer from "../components/Spacer";
-import { PressableScale } from "pressto";
+import { PressableScale } from "../lib/styled";
 const index = () => {
   return (
     <ThemedView className="items-center gap-10 h-full" safe={true}>
