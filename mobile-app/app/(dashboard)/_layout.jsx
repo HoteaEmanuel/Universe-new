@@ -33,6 +33,19 @@ const DashboardLayout = () => {
           }}
         />
         <Tabs.Screen
+          name="chat"
+          options={{
+            title: "Chat",
+            tabBarIcon: ({ focused }) => (
+              <Ionicons
+                name={focused ? "chatbubble-ellipses" : "chatbubble-ellipses-outline"}
+                size={24}
+                color={focused ? theme.tabIconColourFocused : theme.tabIconColour}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="profile"
           options={{
             title: "Profile",
