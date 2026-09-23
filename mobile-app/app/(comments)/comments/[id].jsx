@@ -5,7 +5,7 @@ import ThemedView from "../../../components/ThemedView";
 import ThemedText from "../../../components/ThemedText";
 import { useGetPostCommentsInfinite } from "../../../queryAndMutation/queries/comments-queries";
 import { Colors } from "../../../constants/colors";
-import Comment from "../../../components/Comment";
+import Comment from "../../../components/comments/Comment";
 const Comments = () => {
   const { id } = useLocalSearchParams();
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
@@ -30,7 +30,7 @@ const Comments = () => {
         onEndReachedThreshold={0.5}
         renderItem={({ item }) => (
           <View style={{ flex: 1, padding: 8 }}>
-            <Comment comment={item} />
+            <Comment comment={item} postId={id} />
           </View>
         )}
       />

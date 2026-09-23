@@ -1,7 +1,9 @@
-import { View, Text, Pressable, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, FlatList, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { formatDateDetailed, formatCount } from "@universe/shared";
+import { KeyboardStickyView } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { formatDateDetailed, formatCount, type PostComment } from "@universe/shared";
 import { useAuthStore } from "@store/authStore";
 import {
   useGetPostQuery,
@@ -10,7 +12,10 @@ import {
   usePostLikedQuery,
   useGetRelevantLikerQuery,
 } from "@queryAndMutation/queries/post-queries";
-import { useGetPostCommentsCount } from "@queryAndMutation/queries/comments-queries";
+import {
+  useGetPostCommentsInfinite,
+  useGetPostCommentsCount,
+} from "@queryAndMutation/queries/comments-queries";
 import { useLikeMutation, useUnlikeMutation } from "@queryAndMutation/mutations/post-mutation";
 import { useIsFollowingQuery } from "@queryAndMutation/queries/user-queries";
 import { useFollowMutation, useUnfollowMutation } from "@queryAndMutation/mutations/user-mutation";
@@ -21,12 +26,15 @@ import ThemedView from "@components/ThemedView";
 import UserAvatar from "@components/UserAvatar";
 import PostImageCarousel from "@components/post/PostImageCarousel";
 import AnimatedLikeButton from "@components/post/AnimatedLikeButton";
+import Comment from "@components/comments/Comment";
+import CommentInput from "@components/comments/CommentInput";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 const PostDetails = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
+  const insets = useSafeAreaInsets();
   const currentUserId = useAuthStore((state) => state.user?.id);
 
   const { data: post, isPending: postPending } = useGetPostQuery(id);
@@ -34,8 +42,15 @@ const PostDetails = () => {
   const { data: liked, isPending: likedPending } = usePostLikedQuery(id);
   const { data: likes, isPending: likesPending } = useGetLikesQuery(id);
   const { data: relevantLiker, isPending: relevantLikerPending } = useGetRelevantLikerQuery(id);
-  const { data: commentsCount, isPending: commentsPending } = useGetPostCommentsCount(id);
+  const { data: commentsCount } = useGetPostCommentsCount(id);
   const { data: isFollowing, isPending: followingPending } = useIsFollowingQuery(post?.userId);
+  const {
+    data: commentsData,
+    isPending: commentsPending,
+    fetchNextPage: fetchNextCommentsPage,
+    hasNextPage: hasNextCommentsPage,
+    isFetchingNextPage: isFetchingNextCommentsPage,
+  } = useGetPostCommentsInfinite(id);
 
   const likeMutation = useLikeMutation(id);
   const unlikeMutation = useUnlikeMutation(id);
@@ -48,7 +63,6 @@ const PostDetails = () => {
     likedPending ||
     likesPending ||
     relevantLikerPending ||
-    commentsPending ||
     followingPending;
 
   const handleLike = () => {
@@ -84,134 +98,178 @@ const PostDetails = () => {
   const hasImages = !!post.imagesUrls?.length;
   const goToProfile = () => router.push(isOwnPost ? "/profile" : `/profile/${post.userId}`);
 
-  return (
-    <ThemedView safe fullHeight>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-        <View className="flex-row items-center justify-between px-4 pt-2">
-          <PressableScale onPress={() => router.back()} hitSlop={8}>
-            <Ionicons name="chevron-back" size={IconSizes.xl} color={theme.iconMuted} />
-          </PressableScale>
-        </View>
+  const comments = commentsData?.pages.flatMap((page) => page.comments) ?? [];
 
-        <View className="flex-row items-center gap-3 px-4 py-3">
-          <UserAvatar user={creator} size={36} iconColor={theme.iconMuted} onPress={goToProfile} />
-          <Pressable
-            onPress={goToProfile}
-            className="flex-1"
-            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+  const header = (
+    <>
+      <View className="flex-row items-center justify-between px-4 pt-2">
+        <PressableScale onPress={() => router.back()} hitSlop={8}>
+          <Ionicons name="chevron-back" size={IconSizes.xl} color={theme.iconMuted} />
+        </PressableScale>
+      </View>
+
+      <View className="flex-row items-center gap-3 px-4 py-3">
+        <UserAvatar user={creator} size={36} iconColor={theme.iconMuted} onPress={goToProfile} />
+        <Pressable
+          onPress={goToProfile}
+          className="flex-1"
+          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+        >
+          <Text className="text-sm font-semibold" style={{ color: theme.title }} numberOfLines={1}>
+            {displayName}
+          </Text>
+          <Text className="text-xs" style={{ color: theme.tabIconColour }} numberOfLines={1}>
+            {formatDateDetailed(post.createdAt)}
+            {post.location ? ` · ${post.location}` : ""}
+          </Text>
+        </Pressable>
+
+        {!isOwnPost ? (
+          <PressableScale
+            onPress={() => (isFollowing ? unfollowMutation.mutate() : followMutation.mutate())}
+            className="rounded-full px-3 py-1.5"
+            style={
+              isFollowing
+                ? { borderWidth: 1, borderColor: theme.borderColor }
+                : { backgroundColor: Colors.primary }
+            }
           >
-            <Text className="text-sm font-semibold" style={{ color: theme.title }} numberOfLines={1}>
-              {displayName}
-            </Text>
-            <Text className="text-xs" style={{ color: theme.tabIconColour }} numberOfLines={1}>
-              {formatDateDetailed(post.createdAt)}
-              {post.location ? ` · ${post.location}` : ""}
-            </Text>
-          </Pressable>
-
-          {!isOwnPost ? (
-            <PressableScale
-              onPress={() => (isFollowing ? unfollowMutation.mutate() : followMutation.mutate())}
-              className="rounded-full px-3 py-1.5"
-              style={
-                isFollowing
-                  ? { borderWidth: 1, borderColor: theme.borderColor }
-                  : { backgroundColor: Colors.primary }
-              }
+            <Text
+              className="text-xs font-semibold"
+              style={{ color: isFollowing ? theme.tabIconColour : "#ffffff" }}
             >
-              <Text
-                className="text-xs font-semibold"
-                style={{ color: isFollowing ? theme.tabIconColour : "#ffffff" }}
-              >
-                {isFollowing ? "Following" : "Follow"}
-              </Text>
-            </PressableScale>
+              {isFollowing ? "Following" : "Follow"}
+            </Text>
+          </PressableScale>
+        ) : null}
+      </View>
+
+      {hasImages ? <PostImageCarousel images={post.imagesUrls} /> : null}
+
+      {post.title || post.body ? (
+        <View className="gap-1 px-4 pt-3">
+          {post.title ? (
+            <Text className="text-sm font-semibold" style={{ color: theme.title }}>
+              {post.title}
+            </Text>
+          ) : null}
+          {post.body ? (
+            <Text className="text-sm" style={{ color: theme.text }}>
+              {post.body}
+            </Text>
           ) : null}
         </View>
+      ) : null}
 
-        {hasImages ? <PostImageCarousel images={post.imagesUrls} /> : null}
-
-        {post.title || post.body ? (
-          <View className="gap-1 px-4 pt-3">
-            {post.title ? (
-              <Text className="text-sm font-semibold" style={{ color: theme.title }}>
-                {post.title}
-              </Text>
-            ) : null}
-            {post.body ? (
-              <Text className="text-sm" style={{ color: theme.text }}>
-                {post.body}
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
-
-        {post.tags?.length > 0 ? (
-          <View className="flex-row flex-wrap gap-2 px-4 pt-3">
-            {post.tags.map((tag) => (
-              <View
-                key={tag}
-                className="rounded-full px-2.5 py-1"
-                style={{ backgroundColor: theme.borderColor }}
-              >
-                <Text className="text-2xs" style={{ color: theme.tabIconColour }}>
-                  #{tag}
-                </Text>
-              </View>
-            ))}
-          </View>
-        ) : null}
-
-        <View className="flex-row items-center gap-5 px-4 pt-4">
-          <AnimatedLikeButton
-            liked={!!liked}
-            onPress={handleLike}
-            color={Colors.like}
-            mutedColor={theme.iconMuted}
-          />
-          <Ionicons name="chatbubble-outline" size={IconSizes.xl} color={theme.iconMuted} />
-        </View>
-
-        <View className="gap-1 px-4 pt-2">
-          {relevantLiker ? (
-            <View className="flex-row items-center gap-1.5">
-              <UserAvatar user={relevantLiker} size={16} iconColor={theme.iconMuted} />
-              <Text className="flex-1 text-sm" style={{ color: theme.text }} numberOfLines={1}>
-                Liked by{" "}
-                <Text className="font-semibold" style={{ color: theme.title }}>
-                  {relevantLiker.firstName || relevantLiker.name}
-                </Text>
-                {!!likes && likes > 1
-                  ? ` and ${formatCount(likes - 1)} other${likes - 1 === 1 ? "" : "s"}`
-                  : ""}
+      {post.tags?.length > 0 ? (
+        <View className="flex-row flex-wrap gap-2 px-4 pt-3">
+          {post.tags.map((tag) => (
+            <View
+              key={tag}
+              className="rounded-full px-2.5 py-1"
+              style={{ backgroundColor: theme.borderColor }}
+            >
+              <Text className="text-2xs" style={{ color: theme.tabIconColour }}>
+                #{tag}
               </Text>
             </View>
-          ) : (
-            <Text className="text-sm font-semibold" style={{ color: theme.title }}>
-              {formatCount(likes ?? 0)} {likes === 1 ? "like" : "likes"}
-            </Text>
-          )}
+          ))}
         </View>
+      ) : null}
 
-        <View
-          className="mx-4 mt-4 rounded-2xl border p-4"
-          style={{ borderColor: theme.borderColor }}
-        >
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-semibold" style={{ color: theme.title }}>
-              Comments
-            </Text>
-            {!!commentsCount && (
-              <Text className="text-xs" style={{ color: theme.tabIconColour }}>
-                {formatCount(commentsCount)}
+      <View className="flex-row items-center gap-5 px-4 pt-4">
+        <AnimatedLikeButton
+          liked={!!liked}
+          onPress={handleLike}
+          color={Colors.like}
+          mutedColor={theme.iconMuted}
+        />
+        <Ionicons name="chatbubble-outline" size={IconSizes.xl} color={theme.iconMuted} />
+      </View>
+
+      <View className="gap-1 px-4 pt-2">
+        {relevantLiker ? (
+          <View className="flex-row items-center gap-1.5">
+            <UserAvatar user={relevantLiker} size={16} iconColor={theme.iconMuted} />
+            <Text className="flex-1 text-sm" style={{ color: theme.text }} numberOfLines={1}>
+              Liked by{" "}
+              <Text className="font-semibold" style={{ color: theme.title }}>
+                {relevantLiker.firstName || relevantLiker.name}
               </Text>
-            )}
+              {!!likes && likes > 1
+                ? ` and ${formatCount(likes - 1)} other${likes - 1 === 1 ? "" : "s"}`
+                : ""}
+            </Text>
           </View>
-          <Text className="pt-6 text-center text-sm" style={{ color: theme.tabIconColour }}>
-            The comment thread is coming to this screen soon.
+        ) : (
+          <Text className="text-sm font-semibold" style={{ color: theme.title }}>
+            {formatCount(likes ?? 0)} {likes === 1 ? "like" : "likes"}
           </Text>
+        )}
+      </View>
+
+      <View className="flex-row items-center justify-between px-4 pb-2 pt-5">
+        <Text className="text-sm font-semibold" style={{ color: theme.title }}>
+          Comments
+        </Text>
+        {!!commentsCount && (
+          <Text className="text-xs" style={{ color: theme.tabIconColour }}>
+            {formatCount(commentsCount)}
+          </Text>
+        )}
+      </View>
+    </>
+  );
+
+  return (
+    <ThemedView safe fullHeight style={{ paddingBottom: 0 }}>
+      <FlatList<PostComment>
+        className="flex-1"
+        data={comments}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View className="px-4">
+            <Comment comment={item} postId={id} />
+          </View>
+        )}
+        ListHeaderComponent={header}
+        ListEmptyComponent={
+          commentsPending ? (
+            <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: 16 }} />
+          ) : (
+            <Text
+              className="px-4 pt-2 text-center text-sm"
+              style={{ color: theme.tabIconColour }}
+            >
+              No comments yet — start the conversation.
+            </Text>
+          )
+        }
+        ListFooterComponent={
+          isFetchingNextCommentsPage ? (
+            <ActivityIndicator size="small" color={Colors.primary} style={{ marginVertical: 12 }} />
+          ) : null
+        }
+        onEndReached={() => {
+          if (hasNextCommentsPage && !isFetchingNextCommentsPage) fetchNextCommentsPage();
+        }}
+        onEndReachedThreshold={0.5}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
+      />
+
+      <KeyboardStickyView>
+        <View
+          style={{
+            backgroundColor: theme.background,
+            borderTopWidth: 1,
+            borderTopColor: theme.borderColor,
+            paddingBottom: insets.bottom,
+          }}
+        >
+          <CommentInput postId={id} />
         </View>
-      </ScrollView>
+      </KeyboardStickyView>
     </ThemedView>
   );
 };
