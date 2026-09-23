@@ -45,7 +45,10 @@ const Profile = () => {
   return (
     <ThemedView safe fullHeight>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-        <View className="flex-row justify-end px-4 pt-2">
+        <View className="flex-row items-center justify-end gap-4 px-4 pt-2">
+          <PressableScale onPress={() => router.push("/settings")} hitSlop={8}>
+            <Ionicons name="settings-outline" size={IconSizes.xl} color={theme.iconMuted} />
+          </PressableScale>
           <PressableScale onPress={handleLogout} hitSlop={8}>
             <Ionicons name="log-out-outline" size={IconSizes.xl} color={theme.iconMuted} />
           </PressableScale>

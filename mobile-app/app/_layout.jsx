@@ -73,6 +73,15 @@ const RootLayout = () => {
             <Stack.Screen name="(post)/post-details/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="(profile)/profile/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="(comments)/comments/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="(settings)/settings/index" options={{ headerShown: false }} />
+            <Stack.Screen name="(settings)/settings/edit-profile" options={{ headerShown: false }} />
+            <Stack.Screen name="(settings)/settings/change-password" options={{ headerShown: false }} />
+            <Stack.Screen name="(settings)/settings/delete-account" options={{ headerShown: false }} />
+            <Stack.Screen name="(settings)/settings/notifications" options={{ headerShown: false }} />
+            <Stack.Screen name="(settings)/settings/appearance" options={{ headerShown: false }} />
+            <Stack.Screen name="(settings)/settings/privacy" options={{ headerShown: false }} />
+            <Stack.Screen name="(settings)/settings/legal-terms" options={{ headerShown: false }} />
+            <Stack.Screen name="(settings)/settings/suggest-more" options={{ headerShown: false }} />
           </Stack>
           <ConfirmDialog />
         </QueryClientProvider>
