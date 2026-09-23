@@ -12,7 +12,6 @@ export type Post = {
   location?: string;
   tags: string[];
   imagesUrls: string[];
-  likes: string[];
   isSaved?: boolean;
   createdAt: string;
   event?: EventSummary | null;

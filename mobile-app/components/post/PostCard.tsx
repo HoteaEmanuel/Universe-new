@@ -11,7 +11,10 @@ import {
   useGetRelevantLikerQuery,
 } from "@queryAndMutation/queries/post-queries";
 import { useGetPostCommentsCount } from "@queryAndMutation/queries/comments-queries";
-import { useLikeMutation, useUnlikeMutation } from "@queryAndMutation/mutations/post-mutation";
+import {
+  useLikeMutation,
+  useUnlikeMutation,
+} from "@queryAndMutation/mutations/post-mutation";
 import { useIsFollowingQuery } from "@queryAndMutation/queries/user-queries";
 import {
   useFollowMutation,
@@ -23,6 +26,7 @@ import { IconSizes } from "@constants/iconSizes";
 import { PressableScale } from "@lib/styled";
 import UserAvatar from "@components/UserAvatar";
 import PostImageCarousel from "./PostImageCarousel";
+import AnimatedLikeButton from "./AnimatedLikeButton";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type PostCardProps = {
@@ -49,20 +53,26 @@ const PostCard = ({ post }: PostCardProps) => {
   const [isTruncated, setIsTruncated] = useState(false);
   const [isSaved, setIsSaved] = useState(post.isSaved);
 
-  const { data: creator, isPending: creatorPending } = usePostUserQuery(post.userId);
-  const { data: liked, isPending: likedPending } = usePostLikedQuery(post.id);
-  const { data: isFollowing, isPending: followingPending } = useIsFollowingQuery(post.userId);
-  const { data: likes, isPending: likesPending } = useGetLikesQuery(post.id);
-  const { data: relevantLiker, isPending: relevantLikerPending } = useGetRelevantLikerQuery(
-    post.id,
+  const { data: creator, isPending: creatorPending } = usePostUserQuery(
+    post.userId,
   );
-  const { data: commentsCount, isPending: commentsPending } = useGetPostCommentsCount(post.id);
+  const { data: liked, isPending: likedPending } = usePostLikedQuery(post.id);
+  const { data: isFollowing, isPending: followingPending } =
+    useIsFollowingQuery(post.userId);
+  const { data: likes, isPending: likesPending } = useGetLikesQuery(post.id);
+  const { data: relevantLiker, isPending: relevantLikerPending } =
+    useGetRelevantLikerQuery(post.id);
+  const { data: commentsCount, isPending: commentsPending } =
+    useGetPostCommentsCount(post.id);
 
   const likeMutation = useLikeMutation(post.id);
   const unlikeMutation = useUnlikeMutation(post.id);
   const followMutation = useFollowMutation(post.userId, currentUserId);
   const unfollowMutation = useUnfollowMutation(post.userId, currentUserId);
-  const { mutate: toggleSavePost } = useToggleSavePostMutation(post.id, currentUserId);
+  const { mutate: toggleSavePost } = useToggleSavePostMutation(
+    post.id,
+    currentUserId,
+  );
 
   const isPending =
     creatorPending ||
@@ -93,8 +103,9 @@ const PostCard = ({ post }: PostCardProps) => {
   };
 
   const goToPost = () => router.push(`/post-details/${post.id}`);
-  const goToComments = () => router.push(`/comments/${post.id}`);
-  const goToProfile = () => router.push(isOwnPost ? "/profile" : `/profile/${post.userId}`);
+  const goToComments = () => router.push(`/post-details/${post.id}`);
+  const goToProfile = () =>
+    router.push(isOwnPost ? "/profile" : `/profile/${post.userId}`);
 
   if (isPending) {
     return (
@@ -110,14 +121,19 @@ const PostCard = ({ post }: PostCardProps) => {
   if (!creator) return null;
 
   const displayName =
-    [creator.firstName, creator.lastName].filter(Boolean).join(" ") || creator.name || "Unknown";
+    [creator.firstName, creator.lastName].filter(Boolean).join(" ") ||
+    creator.name ||
+    "Unknown";
   const hasImages = !!post.imagesUrls?.length;
 
   const caption: ReactNode =
     post.title || post.body ? (
       <View className="gap-1 px-4">
         {post.title ? (
-          <Text className="text-sm font-semibold" style={{ color: textPrimary }}>
+          <Text
+            className="text-sm font-semibold"
+            style={{ color: textPrimary }}
+          >
             {post.title}
           </Text>
         ) : null}
@@ -126,7 +142,8 @@ const PostCard = ({ post }: PostCardProps) => {
             <Text
               numberOfLines={showMore ? undefined : 3}
               onTextLayout={(event) => {
-                if (!showMore && event.nativeEvent.lines.length > 3) setIsTruncated(true);
+                if (!showMore && event.nativeEvent.lines.length > 3)
+                  setIsTruncated(true);
               }}
               className="text-sm"
               style={{ color: textBody }}
@@ -155,16 +172,29 @@ const PostCard = ({ post }: PostCardProps) => {
       style={{ backgroundColor: cardBg, borderWidth: 1, borderColor: border }}
     >
       <View className="flex-row items-center gap-3 px-4 py-3">
-        <UserAvatar user={creator} size={36} iconColor={theme.iconMuted} onPress={goToProfile} />
+        <UserAvatar
+          user={creator}
+          size={36}
+          iconColor={theme.iconMuted}
+          onPress={goToProfile}
+        />
         <Pressable
           onPress={goToProfile}
           className="flex-1"
           style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
         >
-          <Text className="text-sm font-semibold" style={{ color: textPrimary }} numberOfLines={1}>
+          <Text
+            className="text-sm font-semibold"
+            style={{ color: textPrimary }}
+            numberOfLines={1}
+          >
             {displayName}
           </Text>
-          <Text className="text-xs" style={{ color: textMuted }} numberOfLines={1}>
+          <Text
+            className="text-xs"
+            style={{ color: textMuted }}
+            numberOfLines={1}
+          >
             {formatDateDetailed(post.createdAt)}
             {post.location ? ` · ${post.location}` : ""}
           </Text>
@@ -172,7 +202,9 @@ const PostCard = ({ post }: PostCardProps) => {
 
         {!isOwnPost ? (
           <PressableScale
-            onPress={() => (isFollowing ? unfollowMutation.mutate() : followMutation.mutate())}
+            onPress={() =>
+              isFollowing ? unfollowMutation.mutate() : followMutation.mutate()
+            }
             className="rounded-full px-3 py-1.5"
             style={
               isFollowing
@@ -194,24 +226,34 @@ const PostCard = ({ post }: PostCardProps) => {
       {!hasImages && caption ? <View className="h-3" /> : null}
 
       {hasImages ? (
-        <Pressable onPress={goToPost} style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}>
+        <Pressable
+          onPress={goToPost}
+          style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
+        >
           <PostImageCarousel images={post.imagesUrls} />
         </Pressable>
       ) : null}
 
       <View className="flex-row items-center gap-5 px-4 pt-3">
-        <PressableScale onPress={handleLike} hitSlop={6}>
+        <AnimatedLikeButton
+          liked={!!liked}
+          onPress={handleLike}
+          color={Colors.like}
+          mutedColor={theme.iconMuted}
+        />
+        <PressableScale onPress={goToComments} hitSlop={6}>
           <Ionicons
-            name={liked ? "heart" : "heart-outline"}
-            size={IconSizes["2xl"]}
-            color={liked ? Colors.like : theme.iconMuted}
+            name="chatbubble-outline"
+            size={IconSizes.xl}
+            color={theme.iconMuted}
           />
         </PressableScale>
-        <PressableScale onPress={goToComments} hitSlop={6}>
-          <Ionicons name="chatbubble-outline" size={IconSizes.xl} color={theme.iconMuted} />
-        </PressableScale>
         <PressableScale onPress={handleShare} hitSlop={6}>
-          <Ionicons name="paper-plane-outline" size={IconSizes.xl} color={theme.iconMuted} />
+          <Ionicons
+            name="paper-plane-outline"
+            size={IconSizes.xl}
+            color={theme.iconMuted}
+          />
         </PressableScale>
 
         {!isOwnPost ? (
@@ -228,8 +270,16 @@ const PostCard = ({ post }: PostCardProps) => {
       <View className="gap-1 px-4 pt-2">
         {relevantLiker ? (
           <View className="flex-row items-center gap-1.5">
-            <UserAvatar user={relevantLiker} size={16} iconColor={theme.iconMuted} />
-            <Text className="flex-1 text-sm" style={{ color: textBody }} numberOfLines={1}>
+            <UserAvatar
+              user={relevantLiker}
+              size={16}
+              iconColor={theme.iconMuted}
+            />
+            <Text
+              className="flex-1 text-sm"
+              style={{ color: textBody }}
+              numberOfLines={1}
+            >
               Liked by{" "}
               <Text className="font-semibold" style={{ color: textPrimary }}>
                 {relevantLiker.firstName || relevantLiker.name}
@@ -240,7 +290,10 @@ const PostCard = ({ post }: PostCardProps) => {
             </Text>
           </View>
         ) : (
-          <Text className="text-sm font-semibold" style={{ color: textPrimary }}>
+          <Text
+            className="text-sm font-semibold"
+            style={{ color: textPrimary }}
+          >
             {formatCount(likes ?? 0)} {likes === 1 ? "like" : "likes"}
           </Text>
         )}
@@ -252,7 +305,8 @@ const PostCard = ({ post }: PostCardProps) => {
             style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
             <Text className="text-sm" style={{ color: textMuted }}>
-              View {formatCount(commentsCount)} {commentsCount === 1 ? "comment" : "comments"}
+              View {formatCount(commentsCount)}{" "}
+              {commentsCount === 1 ? "comment" : "comments"}
             </Text>
           </Pressable>
         ) : null}
@@ -263,7 +317,11 @@ const PostCard = ({ post }: PostCardProps) => {
       {post.tags?.length > 0 ? (
         <View className="flex-row flex-wrap gap-2 px-4 pb-4 pt-3">
           {post.tags.map((tag) => (
-            <View key={tag} className="rounded-full px-2.5 py-1" style={{ backgroundColor: border }}>
+            <View
+              key={tag}
+              className="rounded-full px-2.5 py-1"
+              style={{ backgroundColor: border }}
+            >
               <Text className="text-2xs" style={{ color: textMuted }}>
                 #{tag}
               </Text>

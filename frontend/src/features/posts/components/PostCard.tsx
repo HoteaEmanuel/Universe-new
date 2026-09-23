@@ -17,6 +17,7 @@ import {
   usePostLikedQuery,
   usePostUserQuery,
 } from "@/queryAndMutation/queries/post-queries";
+import { postKeys } from "@universe/shared/queries";
 import { useIsFollowingQuery } from "@/queryAndMutation/queries/user-queries";
 import {
   useFollowMutation,
@@ -107,15 +108,15 @@ const PostCard = ({ post }: PostCardProps) => {
     e.stopPropagation();
 
     const prevLikes =
-      queryClient.getQueryData<number>(["likes", postId]) ?? post.likes.length;
+      queryClient.getQueryData<number>(postKeys.likesCount(postId)) ?? likes ?? 0;
     const prevLiked =
-      queryClient.getQueryData<boolean>(["userLiked", postId]) ?? !!liked;
+      queryClient.getQueryData<boolean>(postKeys.liked(postId)) ?? !!liked;
 
     queryClient.setQueryData<number>(
-      ["likes", postId],
+      postKeys.likesCount(postId),
       (old) => (old ?? prevLikes) + (prevLiked ? -1 : 1),
     );
-    queryClient.setQueryData(["userLiked", postId], !prevLiked);
+    queryClient.setQueryData(postKeys.liked(postId), !prevLiked);
 
     if (!prevLiked) {
       setLikePop(true);
@@ -124,8 +125,8 @@ const PostCard = ({ post }: PostCardProps) => {
     }
 
     const rollback = () => {
-      queryClient.setQueryData(["likes", postId], prevLikes);
-      queryClient.setQueryData(["userLiked", postId], prevLiked);
+      queryClient.setQueryData(postKeys.likesCount(postId), prevLikes);
+      queryClient.setQueryData(postKeys.liked(postId), prevLiked);
     };
 
     if (!prevLiked) {
