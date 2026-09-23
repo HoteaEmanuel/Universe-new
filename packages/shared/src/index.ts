@@ -12,3 +12,5 @@ export * from "./preferences.js";
 export * from "./search.js";
 export * from "./utils/formatDate.js";
 export * from "./utils/formatCount.js";
+export * from "./utils/usernameValidation.js";
+export * from "./utils/fullName.js";

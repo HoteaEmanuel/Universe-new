@@ -4,7 +4,7 @@ import { prisma } from "../database/prisma.js";
 import {
   PUBLIC_USER_SELECT,
   createUserWithGeneratedUsername,
-  findUserById,
+  findUserWithPasswordById,
 } from "../repository/user.repository.js";
 import { generateToken } from "../utils/generateTokenJwt.js";
 import { generateJwtMobile } from "../utils/generateJwtMobile.js";
@@ -40,18 +40,14 @@ const errorMessage = (error: unknown) =>
  */
 export const checkAuth = async (req: Request, res: Response) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.userId },
-      omit: {
-        password: true,
-        resetPasswordExpiresAt: true,
-        resetPasswordToken: true,
-      },
-    });
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
     if (!user) return res.status(401).json({ message: "User not found" });
-    return res
-      .status(200)
-      .json({ succes: "true", message: "User is authenticated", user });
+    const { password, resetPasswordExpiresAt, resetPasswordToken, ...safeUser } = user;
+    return res.status(200).json({
+      succes: "true",
+      message: "User is authenticated",
+      user: { ...safeUser, hasPassword: !!password },
+    });
   } catch (error) {
     return res.status(401).json({ message: "Unauth" });
   }
@@ -356,14 +352,15 @@ export const exchangeGoogleMobileCodeController = async (
       return res.status(400).json({ message: "Invalid or expired code" });
     }
 
-    const user = await findUserById(exchange.userId);
-    if (!user) {
+    const fullUser = await findUserWithPasswordById(exchange.userId);
+    if (!fullUser) {
       return res.status(404).json({ message: "User not found" });
     }
+    const { password, resetPasswordExpiresAt, resetPasswordToken, ...safeUser } = fullUser;
 
     return res.status(200).json({
       message: "Logged in successfully",
-      user,
+      user: { ...safeUser, hasPassword: !!password },
       accessToken: exchange.accessToken,
       refreshToken: exchange.refreshToken,
     });

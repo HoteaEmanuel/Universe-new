@@ -1,6 +1,7 @@
 import {
   BLOCKED_ACCOUNT_EMAIL,
   PASSWORD_CHANGED_EMAIL,
+  PASSWORD_SET_EMAIL,
   RESET_PASSWORD_EMAIL,
   UNBLOCKED_ACCOUNT_EMAIL,
   VERIFICATION_EMAIL,
@@ -76,6 +77,20 @@ export const sendPasswordChangedEmail = async (user) => {
     });
   } catch (error) {
     console.log("Could not send password-changed email");
+  }
+};
+export const sendPasswordSetEmail = async (user) => {
+  try {
+    transporter.sendMail({
+      to: user.email,
+      subject: "A password was set for your Universe account",
+      html: PASSWORD_SET_EMAIL.replace(
+        "{{USER_NAME}}",
+        user.firstName || user.name || "there",
+      ),
+    });
+  } catch (error) {
+    console.log("Could not send password-set email");
   }
 };
 // Called directly from the admin block controller rather than through

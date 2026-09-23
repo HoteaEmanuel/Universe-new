@@ -10,7 +10,10 @@ import DeleteAccountDialog from "./components/DeleteAccountDialog";
 const SettingsAccount = () => {
   const { user } = useAuthStore();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const hasPassword = !user?.googleId;
+  // Not derived from googleId — a Google-linked account can also set a
+  // password later (see the backend changePassword controller's first-time
+  // "set password" branch), and would then need it verified here too.
+  const hasPassword = Boolean(user?.hasPassword);
 
   useEffect(() => {
     document.title = "Account";

@@ -47,7 +47,10 @@ export const followListQuerySchema = z.object({
 export type FollowListQueryInput = z.infer<typeof followListQuerySchema>;
 
 export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
+  // Optional: omitted when a Google-only account is setting a password for
+  // the first time (nothing to verify against yet). The controller enforces
+  // it's present and correct whenever the account already has a password.
+  currentPassword: z.string().min(1).optional(),
   newPassword: z
     .string()
     .min(8, "New password must be at least 8 characters long"),

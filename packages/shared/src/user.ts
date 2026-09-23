@@ -21,6 +21,8 @@ export type User = {
   bio?: string | null;
   role: UserRole;
   googleId?: string | null;
+
+  hasPassword?: boolean;
   accountType: AccountType;
   identityVerified?: string;
   createdAt?: string;

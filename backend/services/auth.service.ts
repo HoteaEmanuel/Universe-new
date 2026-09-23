@@ -61,7 +61,7 @@ export const login = async (body: LoginBody) => {
   });
 
   const { password: _password, ...safeUser } = updatedUser;
-  return safeUser;
+  return { ...safeUser, hasPassword: !!updatedUser.password };
 };
 
 interface SignUpBody {

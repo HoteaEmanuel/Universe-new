@@ -27,7 +27,8 @@ const DeleteAccountDialog = ({ open, onOpenChange }: DeleteAccountDialogProps) =
   const [confirmUsername, setConfirmUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const hasPassword = !user?.googleId;
+  // Not derived from googleId — see the matching note in SettingsAccount.tsx.
+  const hasPassword = Boolean(user?.hasPassword);
   const canConfirm =
     confirmUsername === user?.username && (!hasPassword || password.length > 0);
 

@@ -47,8 +47,12 @@ type AuthState = {
 
   clearError: () => void;
   setUser: (user: AuthUser | null) => void;
+  updateCurrentUser: (updates: Partial<AuthUser>) => void;
   signUp: (payload: SignUpPayload) => Promise<void>;
   changeProfilePicture: (image: string) => Promise<void>;
+
+  changePassword: (newPassword: string, currentPassword?: string) => Promise<void>;
+  deleteAccount: (password?: string) => Promise<void>;
   getBusinessRegistrations: () => Promise<unknown>;
   acceptBusinessRegistration: (id: string) => Promise<unknown>;
   rejectBusinessRegistration: (id: string) => Promise<unknown>;
@@ -76,6 +80,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setUser: (user) => {
     set({ user, isAuthenticated: true });
   },
+  updateCurrentUser: (updates) =>
+    set((state) => ({
+      user: state.user ? { ...state.user, ...updates } : null,
+    })),
 
   signUp: async ({ firstName, lastName, name, major, email, password, accountType }) => {
     set({ isLoading: true, error: null });
@@ -210,6 +218,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await api.post("/auth/verify-email", { email, verificationCode });
     } catch (error) {
       set({ error: messageFrom(error, "Verification failed") });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  changePassword: async (newPassword, currentPassword) => {
+    set({ isLoading: true, error: null });
+    try {
+      await api.post("/change-password", { currentPassword, newPassword });
+    } catch (error) {
+      set({ error: messageFrom(error, "Could not change password") });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  deleteAccount: async (password) => {
+    set({ isLoading: true, error: null });
+    try {
+      await api.post("/delete-account", { password });
+      await SecureStore.deleteItemAsync("accessToken");
+      await SecureStore.deleteItemAsync("refreshToken");
+      get().disconnectSocket();
+      set({ isAuthenticated: false, user: null });
+    } catch (error) {
+      set({ error: messageFrom(error, "Could not delete account") });
       throw error;
     } finally {
       set({ isLoading: false });

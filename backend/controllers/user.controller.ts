@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import type {} from "multer";
 import bcryptjs from "bcryptjs";
 import { uploadImage, deleteImages } from "../lib/storage.js";
-import { sendPasswordChangedEmail } from "../mail-service/sendMail.js";
+import { sendPasswordChangedEmail, sendPasswordSetEmail } from "../mail-service/sendMail.js";
 import { prisma } from "../database/prisma.js";
 // Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
 // import { redis } from "../lib/redis.js";
@@ -639,19 +639,20 @@ export const changePassword = async (req: Request, res: Response) => {
     const userId = req.userId as string;
     const { currentPassword, newPassword } = req.body as ChangePasswordInput;
     const user = await findUserWithPasswordById(userId);
-    if (!user || !user.password) {
-      return res.status(400).json({
-        message:
-          "This account signs in with Google and has no password to change",
-      });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    const passwordsMatch = await bcryptjs.compare(
-      currentPassword,
-      user.password,
-    );
-    if (!passwordsMatch) {
-      return res.status(401).json({ message: "Current password is incorrect" });
+    // A Google-only account has no password yet — this is a first-time
+    // "set password" rather than a "change password", so there's nothing to
+    // verify against. An account that already has one still requires it.
+    const isSettingPasswordForFirstTime = !user.password;
+    if (!isSettingPasswordForFirstTime) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: "Enter your current password" });
+      }
+      const passwordsMatch = await bcryptjs.compare(currentPassword, user.password as string);
+      if (!passwordsMatch) {
+        return res.status(401).json({ message: "Current password is incorrect" });
+      }
     }
 
     const salt = await bcryptjs.genSalt(10);
@@ -663,9 +664,17 @@ export const changePassword = async (req: Request, res: Response) => {
       refreshToken: null,
     });
 
-    await sendPasswordChangedEmail(user);
+    if (isSettingPasswordForFirstTime) {
+      await sendPasswordSetEmail(user);
+    } else {
+      await sendPasswordChangedEmail(user);
+    }
 
-    return res.status(200).json({ message: "Password changed successfully" });
+    return res.status(200).json({
+      message: isSettingPasswordForFirstTime
+        ? "Password set successfully"
+        : "Password changed successfully",
+    });
   } catch (error) {
     return res.status(400).json({ message: "Could not change password", error });
   }
