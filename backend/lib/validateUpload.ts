@@ -58,7 +58,18 @@ async function verifyFile(
     detectedMime === "application/x-cfb" &&
     (ext === "doc" || ext === "xls");
 
-  if (!detectedMime || (!allowedMimeTypes.has(detectedMime) && !isLegacyOfficeFile)) {
+  // Android's recorder (expo-audio, MPEG_4 output) writes an MPEG-4 audio
+  // container whose `ftyp` major brand isn't Apple's "M4A " — magic-byte
+  // detection reports it as the generic "video/mp4", or as "audio/x-m4a" on
+  // the rare occasion the brand IS "M4A ". This endpoint only ever receives
+  // voice recordings, so both are known-audio for this kind.
+  const isMp4FamilyAudio =
+    kind === "audio" && (detectedMime === "video/mp4" || detectedMime === "audio/x-m4a");
+
+  if (
+    !detectedMime ||
+    (!allowedMimeTypes.has(detectedMime) && !isLegacyOfficeFile && !isMp4FamilyAudio)
+  ) {
     throw new UnsupportedFileTypeError(
       "File content does not match an allowed file type",
     );
@@ -68,7 +79,9 @@ async function verifyFile(
     ? ext === "doc"
       ? "application/msword"
       : "application/vnd.ms-excel"
-    : detectedMime;
+    : isMp4FamilyAudio
+      ? "audio/mp4"
+      : detectedMime;
 
   if (kind === "image") {
     const format = SHARP_FORMAT_BY_MIME[verifiedMime];

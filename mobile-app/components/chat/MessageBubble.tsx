@@ -5,6 +5,9 @@ import { Colors } from "@constants/colors";
 import UserAvatar from "@components/UserAvatar";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 import { formatMessageDetail, formatMessageTime } from "@utils/chatMessageTime";
+import MessageImageGrid from "./MessageImageGrid";
+import MessageFileList from "./MessageFileList";
+import AudioMessagePlayer from "./AudioMessagePlayer";
 
 const AVATAR_SIZE = 24;
 
@@ -46,15 +49,43 @@ const MessageBubble = ({ message, isOwn, variant, showSender }: MessageBubblePro
 
         <Pressable
           onPress={() => setShowDetail((prev) => !prev)}
-          className="rounded-2xl px-3 py-2"
-          style={{ backgroundColor: isOwn ? Colors.primary : theme.uiBackground }}
+          className="gap-1"
+          style={{ alignItems: isOwn ? "flex-end" : "flex-start" }}
         >
-          <Text
-            className="text-sm"
-            style={{ color: isOwn ? "#ffffff" : theme.text, fontStyle: message.deleted ? "italic" : "normal" }}
-          >
-            {message.deleted ? "This message was deleted" : message.content}
-          </Text>
+          {!message.deleted && message.imageUrls && message.imageUrls.length > 0 && (
+            <MessageImageGrid images={message.imageUrls} />
+          )}
+
+          {!message.deleted && message.attachments && message.attachments.length > 0 && (
+            <MessageFileList attachments={message.attachments} isOwn={isOwn} />
+          )}
+
+          {!message.deleted && message.audioUrl && (
+            <View
+              className="rounded-2xl px-2 py-1"
+              style={{ backgroundColor: isOwn ? Colors.primary : theme.uiBackground }}
+            >
+              <AudioMessagePlayer
+                audioUrl={message.audioUrl}
+                durationSec={message.audioDurationSec}
+                isOwn={isOwn}
+              />
+            </View>
+          )}
+
+          {(message.deleted || message.content) && (
+            <View
+              className="rounded-2xl px-3 py-2"
+              style={{ backgroundColor: isOwn ? Colors.primary : theme.uiBackground }}
+            >
+              <Text
+                className="text-sm"
+                style={{ color: isOwn ? "#ffffff" : theme.text, fontStyle: message.deleted ? "italic" : "normal" }}
+              >
+                {message.deleted ? "This message was deleted" : message.content}
+              </Text>
+            </View>
+          )}
         </Pressable>
 
         <Text className="px-1 pt-0.5 text-2xs" style={{ color: theme.tabIconColour }}>

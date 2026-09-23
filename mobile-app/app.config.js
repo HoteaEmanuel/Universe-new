@@ -38,6 +38,21 @@ export default {
       "expo-web-browser",
       "expo-secure-store",
       "expo-status-bar",
+      [
+        "expo-audio",
+        {
+          microphonePermission:
+            "Allow $(PRODUCT_NAME) to access your microphone to record voice messages.",
+        },
+      ],
+      [
+        "expo-media-library",
+        {
+          photosPermission: "Allow $(PRODUCT_NAME) to save photos to your library.",
+          savePhotosPermission: "Allow $(PRODUCT_NAME) to save photos to your library.",
+          isAccessMediaLocationEnabled: false,
+        },
+      ],
     ],
     extra: {
       googleAndroidClientId:

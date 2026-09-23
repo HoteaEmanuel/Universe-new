@@ -1,24 +1,99 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { createConversationsApi } from "@universe/shared/api";
-import { createConversationMutations } from "@universe/shared/mutations";
+import { createConversationMutations, appendOptimisticMessage } from "@universe/shared/mutations";
+import { conversationKeys } from "@universe/shared/queries";
+import type { ChatMessage, ChatMessagePage } from "@universe/shared";
 import { useAuthStore } from "@store/authStore";
+import type { RNFile } from "@utils/chatFile";
 import { httpClient } from "../../lib/http";
 
 const conversationsApi = createConversationsApi(httpClient);
 
-// Mirrors frontend/src/queryAndMutation/mutations/conversation-mutation.ts'
-// useSendMessageMutation. Only the text-send path is ported for now — mobile
-// has no image/file/voice attachment UI yet, so those sibling hooks
-// (useSendFilesMessageMutation etc.) stay web-only until that's built.
-// `<never>` for the shared factory's `TFile` generic since this hook never
-// passes `images`.
 export const useSendMessageMutation = (conversationId?: string) => {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id);
   return useMutation(
-    createConversationMutations(conversationsApi, queryClient).sendMessage<never>(
+    createConversationMutations(conversationsApi, queryClient).sendMessage<RNFile>(
       conversationId,
       userId,
     ),
   );
+};
+
+
+export const useSendFilesMessageMutation = (conversationId?: string) => {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id);
+  const queryKey = conversationKeys.messages(conversationId ?? "");
+
+  return useMutation({
+    mutationFn: (message: { messageText: string; files: RNFile[] }) =>
+      conversationsApi.sendFilesMessage<RNFile>(conversationId as string, message),
+    onMutate: async (message) => {
+      if (!conversationId) return;
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
+      const optimisticMessage: ChatMessage = {
+        id: `optimistic-${Date.now()}`,
+        content: message.messageText || undefined,
+        attachments: message.files.map((file, index) => ({
+          id: `optimistic-file-${index}`,
+          fileUrl: file.uri,
+          fileName: file.name,
+          fileSize: file.size ?? 0,
+          mimeType: file.type,
+        })),
+        senderId: userId ?? "",
+        conversationId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
+        appendOptimisticMessage(old, optimisticMessage),
+      );
+      return { previous };
+    },
+    onError: (_error, _message, context) => {
+      if (conversationId && context?.previous) queryClient.setQueryData(queryKey, context.previous);
+    },
+    onSettled: () => {
+      if (conversationId) queryClient.invalidateQueries({ queryKey });
+    },
+  });
+};
+
+
+export const useSendVoiceMessageMutation = (conversationId?: string) => {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id);
+  const queryKey = conversationKeys.messages(conversationId ?? "");
+
+  return useMutation({
+    mutationFn: (message: { audio: RNFile; durationSec: number }) =>
+      conversationsApi.sendVoiceMessage<RNFile>(conversationId as string, message),
+    onMutate: async (message) => {
+      if (!conversationId) return;
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<InfiniteData<ChatMessagePage>>(queryKey);
+      const optimisticMessage: ChatMessage = {
+        id: `optimistic-${Date.now()}`,
+        audioUrl: message.audio.uri,
+        audioDurationSec: message.durationSec,
+        senderId: userId ?? "",
+        conversationId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      queryClient.setQueryData<InfiniteData<ChatMessagePage>>(queryKey, (old) =>
+        appendOptimisticMessage(old, optimisticMessage),
+      );
+      return { previous };
+    },
+    onError: (_error, _message, context) => {
+      if (conversationId && context?.previous) queryClient.setQueryData(queryKey, context.previous);
+    },
+    onSettled: () => {
+      if (conversationId) queryClient.invalidateQueries({ queryKey });
+    },
+  });
 };
