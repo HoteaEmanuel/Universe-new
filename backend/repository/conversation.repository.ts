@@ -64,7 +64,7 @@ export const findConversationById = async (id: string) => {
 export const markConversationRead = async (conversationId: string, userId: string) => {
   const conversation = await prisma.conversation.findUnique({
     where: { id: conversationId },
-    select: { participantOneId: true, participantTwoId: true },
+    select: { participantOneId: true, participantTwoId: true, updatedAt: true },
   });
   if (!conversation) return null;
   const field =
@@ -73,7 +73,11 @@ export const markConversationRead = async (conversationId: string, userId: strin
       : "lastReadAtParticipantTwo";
   return prisma.conversation.update({
     where: { id: conversationId },
-    data: { [field]: new Date() },
+    // Reading a conversation isn't new activity — pin `updatedAt` back to
+    // its current value so this doesn't bump it. The list is ordered by
+    // `updatedAt` DESC, so without this, just opening a thread (with
+    // nothing new sent) would shove it to the top.
+    data: { [field]: new Date(), updatedAt: conversation.updatedAt },
   });
 };
 

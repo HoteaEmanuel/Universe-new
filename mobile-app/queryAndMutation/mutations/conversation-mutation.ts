@@ -63,6 +63,19 @@ export const useSendFilesMessageMutation = (conversationId?: string) => {
 };
 
 
+export const useStartConversationMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(createConversationMutations(conversationsApi, queryClient).start());
+};
+
+export const useMarkConversationReadMutation = (conversationId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation(
+    createConversationMutations(conversationsApi, queryClient).markRead(conversationId),
+  );
+};
+
+
 export const useSendVoiceMessageMutation = (conversationId?: string) => {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id);

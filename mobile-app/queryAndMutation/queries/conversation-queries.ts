@@ -5,4 +5,5 @@ export const {
   useGetUserConversationsInfinite,
   useGetUserByConvoId,
   useGetConvoMessagesInfinite,
+  useGetConversationByUsersIdsQuery,
 } = createConversationQueryHooks(httpClient);

@@ -1,5 +1,15 @@
-import { useEffect, useMemo, useRef } from "react";
-import { View, Text, Image, FlatList, ActivityIndicator, Platform } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  View,
+  Text,
+  Image,
+  FlatList,
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+} from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { KeyboardAvoidingView, useKeyboardState } from "react-native-keyboard-controller";
@@ -12,6 +22,7 @@ import {
   useGetConvoMessagesInfinite,
   useGetUserByConvoId,
 } from "@queryAndMutation/queries/conversation-queries";
+import { useMarkConversationReadMutation } from "@queryAndMutation/mutations/conversation-mutation";
 import {
   useGetGroupById,
   useGetGroupMessagesInfinite,
@@ -121,6 +132,13 @@ const ConversationThread = () => {
   const fetchNextPage = isGroup ? fetchNextGroupPage : fetchNextConvoPage;
   const canSend = isGroup ? true : (convoPages?.pages[0]?.canSend ?? true);
 
+  // Groups have no read-cursor support server-side yet — this only applies
+  // to DMs, matching web's Conversation.tsx (which has no Group.tsx
+  // equivalent for read tracking either).
+  const { mutate: markConversationRead } = useMarkConversationReadMutation(
+    isGroup ? undefined : id,
+  );
+
   // Pages arrive newest-page-first, each page's own messages oldest→newest —
   // same shape web's Conversation.tsx/Group.tsx unwind. Reversed again below
   // for the inverted FlatList (newest-first, index 0 renders at the bottom).
@@ -169,6 +187,27 @@ const ConversationThread = () => {
     return rows.slice().reverse();
   }, [chronological, isGroup, currentUserId]);
 
+  // "Seen" should mean you're actually looking at the newest message, not
+  // just "the thread screen is open" — otherwise scrolling up into old
+  // history, or a new message arriving while you're up there, would falsely
+  // mark it read. This list is inverted, so the newest message sits at
+  // scroll offset 0 — "am I at the bottom?" is just "is that offset near 0?".
+  const BOTTOM_THRESHOLD = 40;
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const lastReadMessageIdRef = useRef<string | null>(null);
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    setIsAtBottom(event.nativeEvent.contentOffset.y <= BOTTOM_THRESHOLD);
+  };
+
+  const latestMessageId = threadRows[0]?.kind === "message" ? threadRows[0].message.id : null;
+
+  useEffect(() => {
+    if (isGroup || !latestMessageId || !isAtBottom) return;
+    if (lastReadMessageIdRef.current === latestMessageId) return;
+    lastReadMessageIdRef.current = latestMessageId;
+    markConversationRead();
+  }, [isGroup, latestMessageId, isAtBottom, markConversationRead]);
+
   useEffect(() => {
     if (!socket || !id) return;
     const event = isGroup ? "newGroupMessage" : "newMessage";
@@ -208,49 +247,55 @@ const ConversationThread = () => {
           />
         </PressableScale>
 
-        {isPendingHeader ? (
-          <View
-            style={{
-              width: HEADER_AVATAR_SIZE,
-              height: HEADER_AVATAR_SIZE,
-              borderRadius: HEADER_AVATAR_SIZE / 2,
-              backgroundColor: theme.uiBackground,
-            }}
-          />
-        ) : headerAvatarSrc ? (
-          <Image
-            source={{ uri: headerAvatarSrc }}
-            style={{
-              width: HEADER_AVATAR_SIZE,
-              height: HEADER_AVATAR_SIZE,
-              borderRadius: HEADER_AVATAR_SIZE / 2,
-            }}
-          />
-        ) : (
-          <View
-            className="items-center justify-center rounded-full"
-            style={{
-              width: HEADER_AVATAR_SIZE,
-              height: HEADER_AVATAR_SIZE,
-              backgroundColor: getAvatarColor(id ?? ""),
-            }}
-          >
-            <Text
-              className="text-xs font-semibold"
-              style={{ color: "#ffffff" }}
-            >
-              {getInitials(headerTitle || "?")}
-            </Text>
-          </View>
-        )}
-
-        <Text
-          className="flex-1 text-base font-bold"
-          style={{ color: theme.title }}
-          numberOfLines={1}
+        <Pressable
+          className="flex-1 flex-row items-center gap-3"
+          disabled={isGroup || !otherUser?.id}
+          onPress={() => router.push(`/profile/${otherUser?.id}`)}
         >
-          {headerTitle}
-        </Text>
+          {isPendingHeader ? (
+            <View
+              style={{
+                width: HEADER_AVATAR_SIZE,
+                height: HEADER_AVATAR_SIZE,
+                borderRadius: HEADER_AVATAR_SIZE / 2,
+                backgroundColor: theme.uiBackground,
+              }}
+            />
+          ) : headerAvatarSrc ? (
+            <Image
+              source={{ uri: headerAvatarSrc }}
+              style={{
+                width: HEADER_AVATAR_SIZE,
+                height: HEADER_AVATAR_SIZE,
+                borderRadius: HEADER_AVATAR_SIZE / 2,
+              }}
+            />
+          ) : (
+            <View
+              className="items-center justify-center rounded-full"
+              style={{
+                width: HEADER_AVATAR_SIZE,
+                height: HEADER_AVATAR_SIZE,
+                backgroundColor: getAvatarColor(id ?? ""),
+              }}
+            >
+              <Text
+                className="text-xs font-semibold"
+                style={{ color: "#ffffff" }}
+              >
+                {getInitials(headerTitle || "?")}
+              </Text>
+            </View>
+          )}
+
+          <Text
+            className="flex-1 text-base font-bold"
+            style={{ color: theme.title }}
+            numberOfLines={1}
+          >
+            {headerTitle}
+          </Text>
+        </Pressable>
       </View>
 
       {/* Wraps both the list and the input footer — one source of truth for
@@ -275,6 +320,8 @@ const ConversationThread = () => {
             keyExtractor={(item) => item.id}
             inverted
             maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
+            onScroll={handleScroll}
+            scrollEventThrottle={200}
             renderItem={({ item }) =>
               item.kind === "separator" ? (
                 <DaySeparator label={item.label} />

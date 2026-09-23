@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View, Text, Pressable } from "react-native";
+import { router } from "expo-router";
 import { getFullName, type ChatMessage } from "@universe/shared";
 import { Colors } from "@constants/colors";
 import UserAvatar from "@components/UserAvatar";
@@ -28,23 +29,44 @@ const MessageBubble = ({ message, isOwn, variant, showSender }: MessageBubblePro
   return (
     <View
       className={`flex-row px-4 py-0.5 ${isOwn ? "justify-end" : "justify-start"}`}
+      style={{ alignItems: "flex-start" }}
     >
       {isGroupOther ? (
-        <View style={{ width: AVATAR_SIZE, marginRight: 8 }}>
+        // The username label sits above the bubble as its own line — the
+        // avatar should line up with the bubble (the actual message start),
+        // not with that label, so it's pushed down by the label's height.
+        <View
+          style={{
+            width: AVATAR_SIZE,
+            height: AVATAR_SIZE,
+            marginRight: 8,
+            marginTop: showSender ? AVATAR_SIZE : 0,
+          }}
+        >
           {showSender ? (
-            <UserAvatar user={message.sender} size={AVATAR_SIZE} iconColor={theme.iconMuted} />
+            <UserAvatar
+              user={message.sender}
+              size={AVATAR_SIZE}
+              iconColor={theme.iconMuted}
+              onPress={() => router.push(`/profile/${message.senderId}`)}
+            />
           ) : null}
         </View>
       ) : null}
 
       <View className="max-w-[78%]" style={{ alignItems: isOwn ? "flex-end" : "flex-start" }}>
         {isGroupOther && showSender ? (
-          <Text
-            className="px-1 pb-0.5 text-xs font-semibold"
-            style={{ color: theme.tabIconColour }}
+          <Pressable
+            onPress={() => router.push(`/profile/${message.senderId}`)}
+            style={{ height: AVATAR_SIZE, justifyContent: "center" }}
           >
-            {getFullName(message.sender)}
-          </Text>
+            <Text
+              className="px-1 text-xs font-semibold"
+              style={{ color: theme.tabIconColour }}
+            >
+              {getFullName(message.sender)}
+            </Text>
+          </Pressable>
         ) : null}
 
         <Pressable

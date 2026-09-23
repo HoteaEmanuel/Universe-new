@@ -7,6 +7,7 @@ import {
   useGetFollowersQuery,
   useGetFollowingQuery,
 } from "@queryAndMutation/queries/user-queries";
+import { useGetConversationByUsersIdsQuery } from "@queryAndMutation/queries/conversation-queries";
 import ThemedView from "@components/ThemedView";
 import { useGetUserPostsQuery } from "@queryAndMutation/queries/post-queries";
 import { useFollowMutation, useUnfollowMutation } from "@queryAndMutation/mutations/user-mutation";
@@ -29,6 +30,7 @@ const UserProfile = () => {
   const { data: followingData, isLoading: followingLoading } = useGetFollowingQuery(id);
   const { data: isFollowingData, isLoading: isFollowingLoading } = useIsFollowingQuery(id);
   const { data: userPosts, isLoading: userPostsLoading } = useGetUserPostsQuery(id);
+  const { data: conversation } = useGetConversationByUsersIdsQuery(id);
 
   const { mutate: followUser } = useFollowMutation(id, authUser?.id);
   const { mutate: unfollowUser } = useUnfollowMutation(id, authUser?.id);
@@ -58,9 +60,13 @@ const UserProfile = () => {
           followingCount={followingData?.length ?? 0}
           isFollowing={!!isFollowingData}
           onFollowToggle={() => (isFollowingData ? unfollowUser() : followUser())}
-          onMessage={() => {
-            console.log("TO MESSAGES");
-          }}
+          onMessage={() =>
+            router.push(
+              conversation
+                ? { pathname: "/(chat)/conversation/[id]", params: { id: conversation.id } }
+                : { pathname: "/(chat)/new-conversation/[id]", params: { id } },
+            )
+          }
         />
 
         <ProfilePostGrid
