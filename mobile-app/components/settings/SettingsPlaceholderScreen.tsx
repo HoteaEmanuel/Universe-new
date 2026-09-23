@@ -1,14 +1,15 @@
-import { View, Text, useColorScheme } from "react-native";
-import ThemedView from "../ThemedView";
-import { Colors } from "../../constants/colors";
+import { View, Text } from "react-native";
+import ThemedView from "@components/ThemedView";
+import { Colors } from "@constants/colors";
 import SettingsScreenHeader from "./SettingsScreenHeader";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type SettingsPlaceholderScreenProps = {
   title: string;
 };
 
 const SettingsPlaceholderScreen = ({ title }: SettingsPlaceholderScreenProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
 
   return (

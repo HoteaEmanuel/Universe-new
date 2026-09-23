@@ -1,6 +1,7 @@
 import { Children, Fragment, type ReactNode } from "react";
-import { View, Text, useColorScheme } from "react-native";
-import { Colors } from "../../constants/colors";
+import { View, Text } from "react-native";
+import { Colors } from "@constants/colors";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type SettingsSectionProps = {
   title?: string;
@@ -8,7 +9,7 @@ type SettingsSectionProps = {
 };
 
 const SettingsSection = ({ title, children }: SettingsSectionProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const rows = Children.toArray(children);
 

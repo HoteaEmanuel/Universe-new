@@ -1,9 +1,10 @@
-import { View, Text, useColorScheme } from "react-native";
+import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { type Post } from "@universe/shared";
-import { Colors } from "../../constants/colors";
-import { IconSizes } from "../../constants/iconSizes";
-import PostCard from "../post/PostCard";
+import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
+import PostCard from "@components/post/PostCard";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type ProfilePostGridProps = {
   posts?: Post[];
@@ -16,7 +17,7 @@ type ProfilePostGridProps = {
 // ScrollView, and nesting a virtualized list inside that would fight it for
 // the scroll gesture instead of the whole page scrolling as one.
 const ProfilePostGrid = ({ posts = [], emptyTitle, emptyDescription }: ProfilePostGridProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
 
   if (posts.length === 0) {

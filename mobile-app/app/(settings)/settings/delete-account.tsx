@@ -5,18 +5,18 @@ import {
   Alert,
   Keyboard,
   TouchableWithoutFeedback,
-  useColorScheme,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Ionicons } from "@expo/vector-icons";
-import ThemedView from "../../../components/ThemedView";
-import SettingsScreenHeader from "../../../components/settings/SettingsScreenHeader";
-import SettingsPrimaryButton from "../../../components/settings/SettingsPrimaryButton";
-import SettingsPasswordField from "../../../components/settings/SettingsPasswordField";
-import ComposerField from "../../../components/post/ComposerField";
-import { useAuthStore } from "../../../store/authStore";
-import { useDeleteAccountMutation } from "../../../queryAndMutation/mutations/account-mutation";
-import { Colors } from "../../../constants/colors";
+import ThemedView from "@components/ThemedView";
+import SettingsScreenHeader from "@components/settings/SettingsScreenHeader";
+import SettingsPrimaryButton from "@components/settings/SettingsPrimaryButton";
+import SettingsPasswordField from "@components/settings/SettingsPasswordField";
+import ComposerField from "@components/post/ComposerField";
+import { useAuthStore } from "@store/authStore";
+import { useDeleteAccountMutation } from "@queryAndMutation/mutations/account-mutation";
+import { Colors } from "@constants/colors";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 const WARNING_ICON_SIZE = 40;
 
@@ -28,7 +28,7 @@ const CONSEQUENCES: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = 
 ];
 
 const DeleteAccount = () => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const user = useAuthStore((state) => state.user);
   // Not derived from googleId — a Google-linked account can also have set a
@@ -39,10 +39,14 @@ const DeleteAccount = () => {
 
   const { mutateAsync: deleteAccount, isPending } = useDeleteAccountMutation();
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [confirmUsername, setConfirmUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const canConfirm = confirmUsername === username && (!hasPassword || password.length > 0);
+  const passwordsMismatch = hasPassword && confirmPassword.length > 0 && password !== confirmPassword;
+  const canConfirm =
+    confirmUsername === username &&
+    (!hasPassword || (password.length > 0 && password === confirmPassword));
 
   const handleDelete = async () => {
     setError(null);
@@ -104,12 +108,25 @@ const DeleteAccount = () => {
               }}
             >
               {hasPassword ? (
-                <SettingsPasswordField
-                  label="Confirm your password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChangeText={setPassword}
-                />
+                <>
+                  <SettingsPasswordField
+                    label="Password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChangeText={setPassword}
+                    showRevealToggle={false}
+                    preventCopyPaste
+                  />
+                  <SettingsPasswordField
+                    label="Confirm password"
+                    autoComplete="current-password"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    showRevealToggle={false}
+                    preventCopyPaste
+                    error={passwordsMismatch ? "Passwords don't match" : undefined}
+                  />
+                </>
               ) : null}
 
               <ComposerField

@@ -1,8 +1,9 @@
-import { View, Text, useColorScheme } from "react-native";
+import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../constants/colors";
-import { IconSizes } from "../../constants/iconSizes";
-import { PressableScale } from "../../lib/styled";
+import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
+import { PressableScale } from "@lib/styled";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type SettingsRowProps = {
   title: string;
@@ -13,7 +14,7 @@ type SettingsRowProps = {
 };
 
 const SettingsRow = ({ title, subtitle, icon, onPress, danger = false }: SettingsRowProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const iconColor = danger ? Colors.warning : theme.iconMuted;
   const titleColor = danger ? Colors.warning : theme.title;

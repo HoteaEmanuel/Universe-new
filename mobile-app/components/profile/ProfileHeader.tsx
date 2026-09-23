@@ -1,11 +1,12 @@
-import { View, Text, useColorScheme } from "react-native";
+import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { formatCount } from "@universe/shared";
-import { Colors } from "../../constants/colors";
-import { IconSizes } from "../../constants/iconSizes";
-import { PressableScale } from "../../lib/styled";
-import { getUserFullName } from "../../utils/user/getUserFullName";
-import UserAvatar from "../UserAvatar";
+import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
+import { PressableScale } from "@lib/styled";
+import { getUserFullName } from "@utils/user/getUserFullName";
+import UserAvatar from "@components/UserAvatar";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 export type ProfileHeaderUser = {
   profilePicture?: string | null;
@@ -52,7 +53,7 @@ const ProfileHeader = ({
   onFollowToggle,
   onMessage,
 }: ProfileHeaderProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const border = theme.borderColor;
   const textPrimary = theme.title;

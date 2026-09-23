@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Keyboard,
   TouchableWithoutFeedback,
-  useColorScheme,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useForm, Controller } from "react-hook-form";
@@ -15,20 +14,21 @@ import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { validateUsernameFormat, getFullName } from "@universe/shared";
-import ThemedView from "../../../components/ThemedView";
-import SettingsScreenHeader from "../../../components/settings/SettingsScreenHeader";
-import SettingsPrimaryButton from "../../../components/settings/SettingsPrimaryButton";
-import ComposerField from "../../../components/post/ComposerField";
-import { useAuthStore } from "../../../store/authStore";
+import ThemedView from "@components/ThemedView";
+import SettingsScreenHeader from "@components/settings/SettingsScreenHeader";
+import SettingsPrimaryButton from "@components/settings/SettingsPrimaryButton";
+import ComposerField from "@components/post/ComposerField";
+import { useAuthStore } from "@store/authStore";
 import {
   useUpdateUsernameMutation,
   useUpdateBioMutation,
   useUpdateProfilePictureMutation,
-} from "../../../queryAndMutation/mutations/user-mutation";
-import { useUsernameAvailability } from "../../../hooks/useUsernameAvailability";
-import { BIO_MAX_LENGTH } from "../../../constants/profileForm";
-import { Colors } from "../../../constants/colors";
-import { IconSizes } from "../../../constants/iconSizes";
+} from "@queryAndMutation/mutations/user-mutation";
+import { useUsernameAvailability } from "@hooks/useUsernameAvailability";
+import { BIO_MAX_LENGTH } from "@constants/profileForm";
+import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 const AVATAR_SIZE = 96;
 
@@ -38,7 +38,7 @@ type EditProfileValues = {
 };
 
 const EditProfile = () => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const { user, updateCurrentUser, changeProfilePicture } = useAuthStore();
   const [photoError, setPhotoError] = useState<string | null>(null);

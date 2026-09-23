@@ -1,14 +1,15 @@
-import { View, Text, Alert, Keyboard, TouchableWithoutFeedback, useColorScheme } from "react-native";
+import { View, Text, Alert, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useForm, Controller } from "react-hook-form";
 import { router } from "expo-router";
-import ThemedView from "../../../components/ThemedView";
-import SettingsScreenHeader from "../../../components/settings/SettingsScreenHeader";
-import SettingsPrimaryButton from "../../../components/settings/SettingsPrimaryButton";
-import SettingsPasswordField from "../../../components/settings/SettingsPasswordField";
-import { useAuthStore } from "../../../store/authStore";
-import { useChangePasswordMutation } from "../../../queryAndMutation/mutations/account-mutation";
-import { Colors } from "../../../constants/colors";
+import ThemedView from "@components/ThemedView";
+import SettingsScreenHeader from "@components/settings/SettingsScreenHeader";
+import SettingsPrimaryButton from "@components/settings/SettingsPrimaryButton";
+import SettingsPasswordField from "@components/settings/SettingsPasswordField";
+import { useAuthStore } from "@store/authStore";
+import { useChangePasswordMutation } from "@queryAndMutation/mutations/account-mutation";
+import { Colors } from "@constants/colors";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type ChangePasswordValues = {
   currentPassword: string;
@@ -17,7 +18,7 @@ type ChangePasswordValues = {
 };
 
 const ChangePassword = () => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const user = useAuthStore((state) => state.user);
   // The account already has a password to verify against vs. this being a

@@ -1,4 +1,4 @@
-import { View, ScrollView, ActivityIndicator, useColorScheme } from "react-native";
+import { View, ScrollView, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -6,19 +6,20 @@ import {
   useIsFollowingQuery,
   useGetFollowersQuery,
   useGetFollowingQuery,
-} from "../../../queryAndMutation/queries/user-queries";
-import ThemedView from "../../../components/ThemedView";
-import { useGetUserPostsQuery } from "../../../queryAndMutation/queries/post-queries";
-import { useFollowMutation, useUnfollowMutation } from "../../../queryAndMutation/mutations/user-mutation";
-import { useAuthStore } from "../../../store/authStore";
-import { Colors } from "../../../constants/colors";
-import { IconSizes } from "../../../constants/iconSizes";
-import { PressableScale } from "../../../lib/styled";
-import ProfileHeader from "../../../components/profile/ProfileHeader";
-import ProfilePostGrid from "../../../components/profile/ProfilePostGrid";
+} from "@queryAndMutation/queries/user-queries";
+import ThemedView from "@components/ThemedView";
+import { useGetUserPostsQuery } from "@queryAndMutation/queries/post-queries";
+import { useFollowMutation, useUnfollowMutation } from "@queryAndMutation/mutations/user-mutation";
+import { useAuthStore } from "@store/authStore";
+import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
+import { PressableScale } from "@lib/styled";
+import ProfileHeader from "@components/profile/ProfileHeader";
+import ProfilePostGrid from "@components/profile/ProfilePostGrid";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 const UserProfile = () => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const { user: authUser } = useAuthStore();
   const { id } = useLocalSearchParams<{ id: string }>();

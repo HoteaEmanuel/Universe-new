@@ -1,9 +1,10 @@
-import { View, Text, Image, Pressable, useColorScheme, Alert } from "react-native";
+import { View, Text, Image, Pressable, Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../constants/colors";
-import { IconSizes } from "../../constants/iconSizes";
-import { MAX_IMAGES } from "../../constants/postForm";
+import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
+import { MAX_IMAGES } from "@constants/postForm";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type ComposerImagePickerProps = {
   images: ImagePicker.ImagePickerAsset[];
@@ -13,7 +14,7 @@ type ComposerImagePickerProps = {
 const TILE_CLASS = "aspect-square w-[31%] overflow-hidden rounded-lg";
 
 const ComposerImagePicker = ({ images, onChange }: ComposerImagePickerProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const atLimit = images.length >= MAX_IMAGES;
 

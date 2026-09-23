@@ -2,7 +2,15 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@components/*": ["./components/*"],
+      "@store/*": ["./store/*"],
+      "@hooks/*": ["./hooks/*"],
+      "@constants/*": ["./constants/*"],
+      "@utils/*": ["./utils/*"],
+      "@lib/*": ["./lib/*"],
+      "@queryAndMutation/*": ["./queryAndMutation/*"],
+      "@app/*": ["./app/*"]
     }
   },
   "extends": "expo/tsconfig.base"

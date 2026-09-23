@@ -1,9 +1,10 @@
-import { Modal, Pressable, Text, View, useColorScheme } from "react-native";
+import { Modal, Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../constants/colors";
-import { IconSizes } from "../constants/iconSizes";
-import { PressableScale } from "../lib/styled";
-import { useConfirmDialogStore } from "../store/confirmDialogStore";
+import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
+import { PressableScale } from "@lib/styled";
+import { useConfirmDialogStore } from "@store/confirmDialogStore";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 // Themed stand-in for Alert.alert's confirm/cancel shape — same rounded-2xl
 // card + violet accent language as PostCard/ComposerSubmitBar, since the
@@ -11,7 +12,7 @@ import { useConfirmDialogStore } from "../store/confirmDialogStore";
 // and driven by useConfirmDialogStore so call sites (e.g.
 // utils/confirmDiscardChanges.ts) stay a plain function call.
 const ConfirmDialog = () => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const { visible, title, message, confirmLabel, cancelLabel, destructive, onConfirm, close } =
     useConfirmDialogStore();

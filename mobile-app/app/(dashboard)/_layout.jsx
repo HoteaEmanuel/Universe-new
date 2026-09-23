@@ -1,13 +1,13 @@
 import { View, Text } from "react-native";
 import React from "react";
 import { Tabs } from "expo-router";
-import { useColorScheme } from "react-native";
-import { Colors } from "../../constants/colors";
+import { Colors } from "@constants/colors";
 import { Ionicons } from "@expo/vector-icons";
-import LoggedUserOnly from "../../components/auth/LoggedUserOnly";
+import LoggedUserOnly from "@components/auth/LoggedUserOnly";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 const DashboardLayout = () => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = Colors[colorScheme] || Colors.light;
   return (
     <LoggedUserOnly>

@@ -1,27 +1,27 @@
 import { View, Text, ScrollViewBase, ScrollView } from "react-native";
 import React, { Activity } from "react";
-import ThemedView from "../../../components/ThemedView";
+import ThemedView from "@components/ThemedView";
 import { Image } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { useGetPostQuery } from "../../../queryAndMutation/queries/post-queries";
-import { useGetLikesQuery } from "../../../queryAndMutation/queries/post-queries";
-import { usePostLikedQuery } from "../../../queryAndMutation/queries/post-queries";
-import { useGetPostCommentsCount } from "../../../queryAndMutation/queries/comments-queries";
-import ThemedText from "../../../components/ThemedText";
+import { useGetPostQuery } from "@queryAndMutation/queries/post-queries";
+import { useGetLikesQuery } from "@queryAndMutation/queries/post-queries";
+import { usePostLikedQuery } from "@queryAndMutation/queries/post-queries";
+import { useGetPostCommentsCount } from "@queryAndMutation/queries/comments-queries";
+import ThemedText from "@components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
-import { useLikeMutation } from "../../../queryAndMutation/mutations/post-mutation";
-import { useUnlikeMutation } from "../../../queryAndMutation/mutations/post-mutation";
-import { Colors } from "../../../constants/colors";
-import { useColorScheme } from "react-native";
+import { useLikeMutation } from "@queryAndMutation/mutations/post-mutation";
+import { useUnlikeMutation } from "@queryAndMutation/mutations/post-mutation";
+import { Colors } from "@constants/colors";
 import { TouchableOpacity } from "react-native";
 import { Pressable } from "react-native";
 import { ActivityIndicator } from "react-native";
-import ImageSlider from "../../../components/ImageSlider";
+import ImageSlider from "@components/ImageSlider";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 const PostDetails = () => {
   const { id } = useLocalSearchParams();
 
   const { data: post, isLoading } = useGetPostQuery(id);
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = Colors[colorScheme] || Colors.light;
 
   const { data: likes, isLoading: likesLoading } = useGetLikesQuery(id);

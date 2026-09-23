@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
-import { View, Text, Pressable, useColorScheme } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import Animated, { LinearTransition, FadeIn, FadeOut } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../constants/colors";
-import { IconSizes } from "../../constants/iconSizes";
+import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type ExpandingSectionProps = {
   label: string;
@@ -26,7 +27,7 @@ const ExpandingSection = ({
   onToggle,
   children,
 }: ExpandingSectionProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
 
   return (

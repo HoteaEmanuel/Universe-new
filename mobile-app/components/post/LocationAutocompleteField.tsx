@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ActivityIndicator, Text, TextInput, View, useColorScheme } from "react-native";
-import { Colors } from "../../constants/colors";
-import { PressableScale } from "../../lib/styled";
-import { useDebounce } from "../../hooks/useDebounce";
-import { useSearchLocationsQuery } from "../../queryAndMutation/queries/location-queries";
+import { ActivityIndicator, Text, TextInput, View } from "react-native";
+import { Colors } from "@constants/colors";
+import { PressableScale } from "@lib/styled";
+import { useDebounce } from "@hooks/useDebounce";
+import { useSearchLocationsQuery } from "@queryAndMutation/queries/location-queries";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type LocationAutocompleteFieldProps = {
   value: string;
@@ -30,7 +31,7 @@ const LocationAutocompleteField = ({
   maxLength,
   currentLength,
 }: LocationAutocompleteFieldProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const [isFocused, setIsFocused] = useState(false);
 

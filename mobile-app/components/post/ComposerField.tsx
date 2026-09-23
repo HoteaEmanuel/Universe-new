@@ -1,5 +1,6 @@
-import { View, Text, TextInput, useColorScheme, type TextInputProps } from "react-native";
-import { Colors } from "../../constants/colors";
+import { View, Text, TextInput, type TextInputProps } from "react-native";
+import { Colors } from "@constants/colors";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type ComposerFieldProps = {
   label: string;
@@ -20,7 +21,7 @@ const ComposerField = ({
   multiline,
   ...inputProps
 }: ComposerFieldProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
 
   return (

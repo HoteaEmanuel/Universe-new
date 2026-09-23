@@ -25,30 +25,31 @@
  *   Sequential Reveal) and Step Wizard/Sheet.
  */
 import { useEffect, useState } from "react";
-import { View, Text, Keyboard, TouchableWithoutFeedback, Alert, useColorScheme } from "react-native";
+import { View, Text, Keyboard, TouchableWithoutFeedback, Alert } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import type * as ImagePicker from "expo-image-picker";
-import ThemedView from "../../components/ThemedView";
-import ComposerField from "../../components/post/ComposerField";
-import ExpandingSection from "../../components/post/ExpandingSection";
-import ComposerImagePicker from "../../components/post/ComposerImagePicker";
-import ComposerSubmitBar from "../../components/post/ComposerSubmitBar";
-import LocationAutocompleteField from "../../components/post/LocationAutocompleteField";
-import { PressableScale } from "../../lib/styled";
-import { useCreatePostMutation } from "../../queryAndMutation/mutations/post-mutation";
-import { useSuggestHashtagsQuery } from "../../queryAndMutation/queries/ai-queries";
-import { useDebounce } from "../../hooks/useDebounce";
-import { confirmDiscardChanges } from "../../utils/confirmDiscardChanges";
-import { Colors } from "../../constants/colors";
+import ThemedView from "@components/ThemedView";
+import ComposerField from "@components/post/ComposerField";
+import ExpandingSection from "@components/post/ExpandingSection";
+import ComposerImagePicker from "@components/post/ComposerImagePicker";
+import ComposerSubmitBar from "@components/post/ComposerSubmitBar";
+import LocationAutocompleteField from "@components/post/LocationAutocompleteField";
+import { PressableScale } from "@lib/styled";
+import { useCreatePostMutation } from "@queryAndMutation/mutations/post-mutation";
+import { useSuggestHashtagsQuery } from "@queryAndMutation/queries/ai-queries";
+import { useDebounce } from "@hooks/useDebounce";
+import { confirmDiscardChanges } from "@utils/confirmDiscardChanges";
+import { Colors } from "@constants/colors";
 import {
   TITLE_MAX_LENGTH,
   BODY_MAX_LENGTH,
   LOCATION_MAX_LENGTH,
   TAGS_MAX_LENGTH,
-} from "../../constants/postForm";
+} from "@constants/postForm";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type CreatePostFormValues = {
   title: string;
@@ -64,7 +65,7 @@ type SectionKey = "photos" | "location" | "tags";
 // shape PostCard.tsx renders real posts as, rather than an abstract gradient
 // wash, so it reads as "a new post" rather than generic hero chrome.
 const ComposeStackMark = () => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
 
   return (
@@ -128,7 +129,7 @@ const ComposeStackMark = () => {
 };
 
 const CreatePost = () => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const { mutateAsync: createPost, isPending } = useCreatePostMutation();
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);

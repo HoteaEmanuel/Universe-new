@@ -1,35 +1,36 @@
 import { useState, type ReactNode } from "react";
-import { View, Text, Pressable, Share, useColorScheme, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, Share, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { formatDateDetailed, formatCount, type Post } from "@universe/shared";
-import { useAuthStore } from "../../store/authStore";
+import { useAuthStore } from "@store/authStore";
 import {
   usePostUserQuery,
   useGetLikesQuery,
   usePostLikedQuery,
   useGetRelevantLikerQuery,
-} from "../../queryAndMutation/queries/post-queries";
-import { useGetPostCommentsCount } from "../../queryAndMutation/queries/comments-queries";
-import { useLikeMutation, useUnlikeMutation } from "../../queryAndMutation/mutations/post-mutation";
-import { useIsFollowingQuery } from "../../queryAndMutation/queries/user-queries";
+} from "@queryAndMutation/queries/post-queries";
+import { useGetPostCommentsCount } from "@queryAndMutation/queries/comments-queries";
+import { useLikeMutation, useUnlikeMutation } from "@queryAndMutation/mutations/post-mutation";
+import { useIsFollowingQuery } from "@queryAndMutation/queries/user-queries";
 import {
   useFollowMutation,
   useUnfollowMutation,
   useToggleSavePostMutation,
-} from "../../queryAndMutation/mutations/user-mutation";
-import { Colors } from "../../constants/colors";
-import { IconSizes } from "../../constants/iconSizes";
-import { PressableScale } from "../../lib/styled";
-import UserAvatar from "../UserAvatar";
+} from "@queryAndMutation/mutations/user-mutation";
+import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
+import { PressableScale } from "@lib/styled";
+import UserAvatar from "@components/UserAvatar";
 import PostImageCarousel from "./PostImageCarousel";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type PostCardProps = {
   post: Post;
 };
 
 const PostCard = ({ post }: PostCardProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   // The rest of the app (ThemedView/ThemedText) still runs on this legacy
   // palette rather than Uniwind's newer semantic tokens (bg-card,

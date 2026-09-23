@@ -1,11 +1,12 @@
-import { View, Text, useColorScheme, ScrollView } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import React from "react";
-import { Colors } from "../constants/colors";
+import { Colors } from "@constants/colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 /** @param {{ style?: import("react-native").StyleProp<import("react-native").ViewStyle>, safe?: boolean, fullHeight?: boolean, [key: string]: any }} props */
 const ThemedView = ({ style, safe = false, fullHeight = false, ...props }) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = Colors[colorScheme] || Colors.light;
   const insets = useSafeAreaInsets();
   return (

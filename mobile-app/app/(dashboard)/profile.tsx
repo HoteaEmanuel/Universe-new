@@ -1,18 +1,19 @@
-import { View, ScrollView, Alert, ActivityIndicator, useColorScheme } from "react-native";
+import { View, ScrollView, Alert, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import ThemedView from "../../components/ThemedView";
-import { useAuthStore } from "../../store/authStore";
-import { Colors } from "../../constants/colors";
-import { IconSizes } from "../../constants/iconSizes";
-import { PressableScale } from "../../lib/styled";
-import { useGetFollowersQuery, useGetFollowingQuery } from "../../queryAndMutation/queries/user-queries";
-import { useGetUserPostsQuery } from "../../queryAndMutation/queries/post-queries";
-import ProfileHeader, { type ProfileHeaderUser } from "../../components/profile/ProfileHeader";
-import ProfilePostGrid from "../../components/profile/ProfilePostGrid";
+import ThemedView from "@components/ThemedView";
+import { useAuthStore } from "@store/authStore";
+import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
+import { PressableScale } from "@lib/styled";
+import { useGetFollowersQuery, useGetFollowingQuery } from "@queryAndMutation/queries/user-queries";
+import { useGetUserPostsQuery } from "@queryAndMutation/queries/post-queries";
+import ProfileHeader, { type ProfileHeaderUser } from "@components/profile/ProfileHeader";
+import ProfilePostGrid from "@components/profile/ProfilePostGrid";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 const Profile = () => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const { user, logOut } = useAuthStore();
 

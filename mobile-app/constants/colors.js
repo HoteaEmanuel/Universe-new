@@ -21,15 +21,19 @@ export const Colors = {
     uiBackground: "#120f1a",
   },
   light: {
-    text: "#625f72",
-    title: "#201e2b",
-    background: "#e0dfe8",
-    navBackground: "#e8e7ef",
-    tabIconColour: "#686477",
-    iconColour: "#680477",
-    iconMuted: "#71717a",
-    borderColor: "#9591a5",
-    tabIconColourFocused: "#201e2b",
-    uiBackground: "#d6d5e1",
+    text: "#6b6478",
+    title: "#1c1a24",
+    background: "#faf9fc",
+    navBackground: "#faf9fc",
+    tabIconColour: "#8a8598",
+    iconColour: "#7a3dbf",
+    iconMuted: "#9b96ab",
+    // Mirrors dark's own borderColor/uiBackground pairing above: a light
+    // violet tint at the same brand hue as `primary`, not a flat mid-gray -
+    // keeps cards on-brand and the border a soft edge instead of the muddy,
+    // too-dark line this replaced.
+    borderColor: "#e6e1f0",
+    tabIconColourFocused: "#1c1a24",
+    uiBackground: "#f3f1f9",
   },
 };

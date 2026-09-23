@@ -1,9 +1,10 @@
-import { View, Text, ActivityIndicator, useColorScheme } from "react-native";
+import { View, Text, ActivityIndicator } from "react-native";
 import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "../../constants/colors";
-import { PressableScale } from "../../lib/styled";
-import { IconSizes } from "../../constants/iconSizes";
+import { Colors } from "@constants/colors";
+import { PressableScale } from "@lib/styled";
+import { IconSizes } from "@constants/iconSizes";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 // Same violet brand ramp global.css aliases from Tailwind's built-in scale
 // (--color-brand-500/--color-brand-700) rather than inventing new stops.
@@ -32,7 +33,7 @@ const ComposerSubmitBar = ({
   disabled,
   loading,
 }: ComposerSubmitBarProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
 
   return (

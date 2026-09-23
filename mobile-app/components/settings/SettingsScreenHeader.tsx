@@ -1,10 +1,11 @@
-import { View, useColorScheme } from "react-native";
+import { View } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import ThemedText from "../ThemedText";
-import { Colors } from "../../constants/colors";
-import { IconSizes } from "../../constants/iconSizes";
-import { PressableScale } from "../../lib/styled";
+import ThemedText from "@components/ThemedText";
+import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
+import { PressableScale } from "@lib/styled";
+import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type SettingsScreenHeaderProps = {
   title: string;
@@ -14,7 +15,7 @@ type SettingsScreenHeaderProps = {
 // screen (edit-profile, change-password, delete-account) shares the same
 // back-header instead of re-declaring it three times.
 const SettingsScreenHeader = ({ title }: SettingsScreenHeaderProps) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
 
   return (
