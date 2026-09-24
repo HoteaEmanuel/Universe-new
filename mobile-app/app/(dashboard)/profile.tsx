@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -10,18 +11,21 @@ import { Colors } from "@constants/colors";
 import { IconSizes } from "@constants/iconSizes";
 import { PressableScale } from "@lib/styled";
 import { useGetFollowersQuery, useGetFollowingQuery } from "@queryAndMutation/queries/user-queries";
-import { useGetUserPostsQuery } from "@queryAndMutation/queries/post-queries";
+import { useGetUserPostsQuery, useGetSavedPostsQuery } from "@queryAndMutation/queries/post-queries";
 import { useBulkDeletePostsMutation } from "@queryAndMutation/mutations/post-mutation";
 import ProfileHeader, { type ProfileHeaderUser } from "@components/profile/ProfileHeader";
 import ProfilePostGrid from "@components/profile/ProfilePostGrid";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 import { usePostDragSelect } from "@hooks/usePostDragSelect";
 
+type ProfileTab = "posts" | "saved";
+
 const Profile = () => {
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const insets = useSafeAreaInsets();
   const { user, logOut } = useAuthStore();
+  const [tab, setTab] = useState<ProfileTab>("posts");
 
   const handleLogout = () => {
     useConfirmDialogStore.getState().open({
@@ -40,6 +44,7 @@ const Profile = () => {
   const { data: followersData, isLoading: followersLoading } = useGetFollowersQuery(user?.id);
   const { data: followingData, isLoading: followingLoading } = useGetFollowingQuery(user?.id);
   const { data: userPostsData, isLoading: userPostsLoading } = useGetUserPostsQuery(user?.id);
+  const { data: savedPostsData, isLoading: savedPostsLoading } = useGetSavedPostsQuery(user?.id ?? "");
 
   const {
     selectMode,
@@ -57,6 +62,13 @@ const Profile = () => {
   } = usePostDragSelect(userPostsData ?? []);
 
   const bulkDeleteMutation = useBulkDeletePostsMutation(user?.id);
+
+  // Bulk delete only applies to your own posts - leaving select mode active
+  // wouldn't make sense once you're looking at what you've saved from others.
+  const handleTabChange = (nextTab: ProfileTab) => {
+    if (selectMode) exitSelectMode();
+    setTab(nextTab);
+  };
 
   const handleDeleteSelected = () => {
     const ids = [...selectedIds];
@@ -123,26 +135,74 @@ const Profile = () => {
             followingCount={followingData?.length ?? 0}
           />
 
-          <ProfilePostGrid
-            posts={userPostsData}
-            emptyTitle={
-              <>
-                Give this space some{" "}
-                <Text className="italic" style={{ color: "#f59e0b", fontWeight: "800" }}>
-                  life
-                </Text>
-              </>
-            }
-            emptyDescription="You don't need the perfect post — just something real."
-            emptyIllustration="student-life"
-            showCreateCta
-            selectable
-            selectMode={selectMode}
-            selectedIds={selectedIds}
-            onLongPressTile={enterSelectMode}
-            onToggleSelect={toggleSelect}
-            onLayout={handleGridLayout}
-          />
+          <View
+            className="flex-row justify-center gap-10 border-t"
+            style={{ borderTopColor: theme.borderColor }}
+          >
+            <PressableScale
+              onPress={() => handleTabChange("posts")}
+              className="items-center gap-1 py-3"
+              style={{
+                borderTopWidth: 2,
+                borderTopColor: tab === "posts" ? Colors.primary : "transparent",
+                marginTop: -1,
+              }}
+            >
+              <Ionicons
+                name={tab === "posts" ? "grid" : "grid-outline"}
+                size={IconSizes.md}
+                color={tab === "posts" ? theme.title : theme.tabIconColour}
+              />
+            </PressableScale>
+            <PressableScale
+              onPress={() => handleTabChange("saved")}
+              className="items-center gap-1 py-3"
+              style={{
+                borderTopWidth: 2,
+                borderTopColor: tab === "saved" ? Colors.primary : "transparent",
+                marginTop: -1,
+              }}
+            >
+              <Ionicons
+                name={tab === "saved" ? "bookmark" : "bookmark-outline"}
+                size={IconSizes.md}
+                color={tab === "saved" ? theme.title : theme.tabIconColour}
+              />
+            </PressableScale>
+          </View>
+
+          {tab === "saved" && savedPostsLoading ? (
+            <View className="items-center py-10">
+              <ActivityIndicator color={Colors.primary} />
+            </View>
+          ) : tab === "posts" ? (
+            <ProfilePostGrid
+              posts={userPostsData}
+              emptyTitle={
+                <>
+                  Give this space some{" "}
+                  <Text className="italic" style={{ color: "#f59e0b", fontWeight: "800" }}>
+                    life
+                  </Text>
+                </>
+              }
+              emptyDescription="You don't need the perfect post — just something real."
+              emptyIllustration="student-life"
+              showCreateCta
+              selectable
+              selectMode={selectMode}
+              selectedIds={selectedIds}
+              onLongPressTile={enterSelectMode}
+              onToggleSelect={toggleSelect}
+              onLayout={handleGridLayout}
+            />
+          ) : (
+            <ProfilePostGrid
+              posts={savedPostsData}
+              emptyTitle="No saved posts yet"
+              emptyDescription="Posts you save will show up here."
+            />
+          )}
         </ScrollView>
       </GestureDetector>
 

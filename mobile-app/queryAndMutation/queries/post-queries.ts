@@ -4,6 +4,7 @@ import { httpClient } from "../../lib/http";
 export const {
   useGetPostQuery,
   useGetUserPostsQuery,
+  useGetSavedPostsQuery,
   usePostUserQuery,
   useGetLikesQuery,
   useGetRelevantLikerQuery,
