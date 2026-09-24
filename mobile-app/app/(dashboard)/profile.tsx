@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { View, Text, ScrollView, ActivityIndicator } from "react-native";
 import { GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,6 +15,7 @@ import { useGetUserPostsQuery, useGetSavedPostsQuery } from "@queryAndMutation/q
 import { useBulkDeletePostsMutation } from "@queryAndMutation/mutations/post-mutation";
 import ProfileHeader, { type ProfileHeaderUser } from "@components/profile/ProfileHeader";
 import ProfilePostGrid from "@components/profile/ProfilePostGrid";
+import FollowListSheet, { type FollowListSheetHandle } from "@components/profile/FollowListSheet";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 import { usePostDragSelect } from "@hooks/usePostDragSelect";
 
@@ -26,6 +27,7 @@ const Profile = () => {
   const insets = useSafeAreaInsets();
   const { user, logOut } = useAuthStore();
   const [tab, setTab] = useState<ProfileTab>("posts");
+  const followListSheetRef = useRef<FollowListSheetHandle>(null);
 
   const handleLogout = () => {
     useConfirmDialogStore.getState().open({
@@ -133,6 +135,8 @@ const Profile = () => {
             postsCount={userPostsData?.length ?? 0}
             followersCount={followersData?.length ?? 0}
             followingCount={followingData?.length ?? 0}
+            onFollowersPress={() => followListSheetRef.current?.present("followers")}
+            onFollowingPress={() => followListSheetRef.current?.present("following")}
           />
 
           <View
@@ -237,6 +241,8 @@ const Profile = () => {
           </PressableScale>
         </View>
       ) : null}
+
+      <FollowListSheet ref={followListSheetRef} userId={user?.id} />
     </ThemedView>
   );
 };

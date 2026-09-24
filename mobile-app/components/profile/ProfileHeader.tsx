@@ -28,20 +28,28 @@ type ProfileHeaderProps = {
   isFollowing?: boolean;
   onFollowToggle?: () => void;
   onMessage?: () => void;
+  onFollowersPress?: () => void;
+  onFollowingPress?: () => void;
 };
 
-type StatProps = { value: number; label: string; textPrimary: string; textMuted: string };
+type StatProps = { value: number; label: string; textPrimary: string; textMuted: string; onPress?: () => void };
 
-const Stat = ({ value, label, textPrimary, textMuted }: StatProps) => (
-  <View className="items-center gap-0.5">
-    <Text className="text-base font-bold" style={{ color: textPrimary }}>
-      {formatCount(value)}
-    </Text>
-    <Text className="text-xs" style={{ color: textMuted }}>
-      {label}
-    </Text>
-  </View>
-);
+const Stat = ({ value, label, textPrimary, textMuted, onPress }: StatProps) => {
+  const content = (
+    <View className="items-center gap-0.5">
+      <Text className="text-base font-bold" style={{ color: textPrimary }}>
+        {formatCount(value)}
+      </Text>
+      <Text className="text-xs" style={{ color: textMuted }}>
+        {label}
+      </Text>
+    </View>
+  );
+
+  if (!onPress) return content;
+
+  return <PressableScale onPress={onPress}>{content}</PressableScale>;
+};
 
 const ProfileHeader = ({
   user,
@@ -52,6 +60,8 @@ const ProfileHeader = ({
   isFollowing = false,
   onFollowToggle,
   onMessage,
+  onFollowersPress,
+  onFollowingPress,
 }: ProfileHeaderProps) => {
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
@@ -94,8 +104,20 @@ const ProfileHeader = ({
           textPrimary={textPrimary}
           textMuted={textMuted}
         />
-        <Stat value={followersCount} label="followers" textPrimary={textPrimary} textMuted={textMuted} />
-        <Stat value={followingCount} label="following" textPrimary={textPrimary} textMuted={textMuted} />
+        <Stat
+          value={followersCount}
+          label="followers"
+          textPrimary={textPrimary}
+          textMuted={textMuted}
+          onPress={onFollowersPress}
+        />
+        <Stat
+          value={followingCount}
+          label="following"
+          textPrimary={textPrimary}
+          textMuted={textMuted}
+          onPress={onFollowingPress}
+        />
       </View>
 
       {user.university || user.major ? (

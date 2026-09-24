@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { View, ScrollView, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +18,7 @@ import { IconSizes } from "@constants/iconSizes";
 import { PressableScale } from "@lib/styled";
 import ProfileHeader from "@components/profile/ProfileHeader";
 import ProfilePostGrid from "@components/profile/ProfilePostGrid";
+import FollowListSheet, { type FollowListSheetHandle } from "@components/profile/FollowListSheet";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 const UserProfile = () => {
@@ -24,6 +26,7 @@ const UserProfile = () => {
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const { user: authUser } = useAuthStore();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const followListSheetRef = useRef<FollowListSheetHandle>(null);
 
   const { data: user, isLoading } = useGetUserByIdQuery(id);
   const { data: followersData, isLoading: followersLoading } = useGetFollowersQuery(id);
@@ -67,6 +70,8 @@ const UserProfile = () => {
                 : { pathname: "/(chat)/new-conversation/[id]", params: { id } },
             )
           }
+          onFollowersPress={() => followListSheetRef.current?.present("followers")}
+          onFollowingPress={() => followListSheetRef.current?.present("following")}
         />
 
         <ProfilePostGrid
@@ -76,6 +81,8 @@ const UserProfile = () => {
           emptyIllustration="constellation"
         />
       </ScrollView>
+
+      <FollowListSheet ref={followListSheetRef} userId={id} />
     </ThemedView>
   );
 };

@@ -7,4 +7,6 @@ export const {
   useGetFollowersQuery,
   useIsFollowingQuery,
   useGetAllUsersQuery,
+  useGetRelevantFollowersInfiniteQuery,
+  useGetRelevantFollowingInfiniteQuery,
 } = createUserQueryHooks(httpClient);

@@ -14,11 +14,17 @@ type ThemedBottomSheetProps = {
   children: ReactNode;
   snapPoints?: (string | number)[];
   onDismiss?: () => void;
+  // Set this when `children` is itself a BottomSheetScrollable (e.g.
+  // BottomSheetFlatList) rather than static content. BottomSheetView is
+  // absolutely positioned and sizes to its content, so it can't host a
+  // bounded, virtualized list - the list needs to be the sheet's own
+  // scrollable root instead of nested inside it.
+  scrollable?: boolean;
 };
 
 
 const ThemedBottomSheet = forwardRef<BottomSheetHandle, ThemedBottomSheetProps>(
-  ({ children, snapPoints, onDismiss }, ref) => {
+  ({ children, snapPoints, onDismiss, scrollable = false }, ref) => {
     const colorScheme = useAppColorScheme();
     const theme = colorScheme === "light" ? Colors.light : Colors.dark;
     const points = useMemo(() => snapPoints, [snapPoints]);
@@ -46,10 +52,7 @@ const ThemedBottomSheet = forwardRef<BottomSheetHandle, ThemedBottomSheetProps>(
         backgroundStyle={{ backgroundColor: theme.uiBackground }}
         handleIndicatorStyle={{ backgroundColor: theme.borderColor, width: 40 }}
       >
-        {/* No bottom padding here — each sheet's own content owns its
-            trailing spacing plus safe-area inset, since that varies with
-            what the sheet ends on (a button row, a list, ...). */}
-        <BottomSheetView>{children}</BottomSheetView>
+        {scrollable ? children : <BottomSheetView>{children}</BottomSheetView>}
       </BottomSheetModal>
     );
   },
