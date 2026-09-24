@@ -224,10 +224,16 @@ const PostCard = ({ post }: PostCardProps) => {
       </View>
 
       {post.type === "opportunity" ? (
-        <OpportunitySummary post={post} isOwner={isOwnPost} />
+        <Pressable onPress={goToPost} style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}>
+          <OpportunitySummary post={post} isOwner={isOwnPost} />
+        </Pressable>
       ) : null}
 
-      {!hasImages ? caption : null}
+      {!hasImages ? (
+        <Pressable onPress={goToPost} style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}>
+          {caption}
+        </Pressable>
+      ) : null}
       {!hasImages && caption ? <View className="h-3" /> : null}
 
       {hasImages ? (

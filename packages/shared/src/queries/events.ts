@@ -16,10 +16,10 @@ export const createEventQueries = (api: EventsApi) => ({
       enabled: !!id,
     }),
 
-  discover: (enabled = true) =>
+  discover: (q?: string, enabled = true) =>
     infiniteQueryOptions({
-      queryKey: eventKeys.discover(),
-      queryFn: ({ pageParam }) => api.discover(pageParam),
+      queryKey: eventKeys.discover(q),
+      queryFn: ({ pageParam }) => api.discover(pageParam, q),
       ...cursorPagination(),
       enabled,
     }),
@@ -31,10 +31,10 @@ export const createEventQueries = (api: EventsApi) => ({
       enabled,
     }),
 
-  mine: (scope: MyEventsScope, enabled = true) =>
+  mine: (scope: MyEventsScope, q?: string, enabled = true) =>
     infiniteQueryOptions({
-      queryKey: eventKeys.mine(scope),
-      queryFn: ({ pageParam }) => api.listMine(scope, pageParam),
+      queryKey: eventKeys.mine(scope, q),
+      queryFn: ({ pageParam }) => api.listMine(scope, pageParam, q),
       ...cursorPagination(),
       enabled,
     }),
@@ -69,11 +69,12 @@ export const createEventQueryHooks = (httpClient: HttpClient) => {
   const queries = createEventQueries(api);
   return {
     useGetEventQuery: (id?: string) => useQuery(queries.detail(id)),
-    useDiscoverEventsInfiniteQuery: (enabled = true) => useInfiniteQuery(queries.discover(enabled)),
+    useDiscoverEventsInfiniteQuery: (q?: string, enabled = true) =>
+      useInfiniteQuery(queries.discover(q, enabled)),
     useUpcomingUniversityEventsQuery: (enabled = true, limit?: number) =>
       useQuery(queries.upcomingUniversity(limit, enabled)),
-    useMyEventsInfiniteQuery: (scope: MyEventsScope, enabled = true) =>
-      useInfiniteQuery(queries.mine(scope, enabled)),
+    useMyEventsInfiniteQuery: (scope: MyEventsScope, q?: string, enabled = true) =>
+      useInfiniteQuery(queries.mine(scope, q, enabled)),
     useGetEventParticipantsInfiniteQuery: (
       id?: string,
       status?: EventParticipantStatus,

@@ -65,6 +65,7 @@ export type RsvpEventInput = z.infer<typeof rsvpEventSchema>;
 export const discoverEventsQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
+  q: z.string().trim().max(100).optional(),
 });
 export type DiscoverEventsQueryInput = z.infer<
   typeof discoverEventsQuerySchema
@@ -83,6 +84,7 @@ export const myEventsQuerySchema = z.object({
   scope: z
     .enum(["hosting", "going", "interested", "waitlisted"])
     .default("going"),
+  q: z.string().trim().max(100).optional(),
 });
 export type MyEventsQueryInput = z.infer<typeof myEventsQuerySchema>;
 

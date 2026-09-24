@@ -49,10 +49,11 @@ export const userKeys = {
 
 export const eventKeys = {
   detail: (id: string) => ["event", id] as const,
-  discover: () => ["events-discover"] as const,
+  discoverAll: () => ["events-discover"] as const,
+  discover: (q?: string) => ["events-discover", q ?? ""] as const,
   upcomingUniversity: (limit?: number) => ["events-upcoming-university", limit] as const,
   mineAll: () => ["events-mine"] as const,
-  mine: (scope: string) => ["events-mine", scope] as const,
+  mine: (scope: string, q?: string) => ["events-mine", scope, q ?? ""] as const,
   participants: (id: string, status?: EventParticipantStatus, search?: string) =>
     ["event-participants", id, status, search] as const,
   bans: (id: string) => ["event-bans", id] as const,

@@ -43,11 +43,11 @@ const EventsPage = () => {
   const [activeTab, setActiveTab] = useState<EventsTab>("discover");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const discoverQuery = useDiscoverEventsInfiniteQuery(activeTab === "discover");
-  const hostingQuery = useMyEventsInfiniteQuery("hosting", activeTab === "hosting");
-  const goingQuery = useMyEventsInfiniteQuery("going", activeTab === "going");
-  const interestedQuery = useMyEventsInfiniteQuery("interested", activeTab === "interested");
-  const waitlistedQuery = useMyEventsInfiniteQuery("waitlisted", activeTab === "waitlisted");
+  const discoverQuery = useDiscoverEventsInfiniteQuery(undefined, activeTab === "discover");
+  const hostingQuery = useMyEventsInfiniteQuery("hosting", undefined, activeTab === "hosting");
+  const goingQuery = useMyEventsInfiniteQuery("going", undefined, activeTab === "going");
+  const interestedQuery = useMyEventsInfiniteQuery("interested", undefined, activeTab === "interested");
+  const waitlistedQuery = useMyEventsInfiniteQuery("waitlisted", undefined, activeTab === "waitlisted");
 
   const activeQuery =
     activeTab === "discover"

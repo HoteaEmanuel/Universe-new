@@ -26,6 +26,7 @@ import ThemedView from "@components/ThemedView";
 import UserAvatar from "@components/UserAvatar";
 import PostImageCarousel from "@components/post/PostImageCarousel";
 import AnimatedLikeButton from "@components/post/AnimatedLikeButton";
+import OpportunitySummary from "@components/opportunities/OpportunitySummary";
 import Comment from "@components/comments/Comment";
 import CommentInput from "@components/comments/CommentInput";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
@@ -143,6 +144,10 @@ const PostDetails = () => {
           </PressableScale>
         ) : null}
       </View>
+
+      {post.type === "opportunity" ? (
+        <OpportunitySummary post={post} isOwner={isOwnPost} />
+      ) : null}
 
       {hasImages ? <PostImageCarousel images={post.imagesUrls} /> : null}
 

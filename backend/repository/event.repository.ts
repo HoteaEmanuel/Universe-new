@@ -7,7 +7,7 @@ import type {
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
 import { runSerializable } from "../lib/serializableTransaction.js";
 import { userNameSearchClause } from "../lib/userSearchClause.js";
-import { searchUsers } from "./search.repository.js";
+import { searchUsers, TRIGRAM_THRESHOLD } from "./search.repository.js";
 
 export class EventBannedError extends Error {}
 
@@ -130,6 +130,15 @@ const upcomingOrOngoingFilter = (): Prisma.EventWhereInput => ({
   ],
 });
 
+const findEventIdsMatchingTitle = async (q: string): Promise<string[]> => {
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id FROM events
+    WHERE "searchVector" @@ websearch_to_tsquery('simple', ${q})
+       OR similarity(title, ${q}) > ${TRIGRAM_THRESHOLD}
+  `;
+  return rows.map((row) => row.id);
+};
+
 // Onboarding step 5 candidate pool: soonest upcoming public events created
 // by someone at the viewer's university, capped at `limit`. Simpler than
 // findDiscoverableEvents' relevance-first-page logic below since there's no
@@ -155,17 +164,24 @@ interface FindDiscoverableEventsInput {
   connectedUserIds: string[];
   cursor?: string;
   limit: number;
+  q?: string;
 }
 
 export const findDiscoverableEvents = async ({
   connectedUserIds,
   cursor,
   limit,
+  q,
 }: FindDiscoverableEventsInput) => {
+  const matchingIds = q ? await findEventIdsMatchingTitle(q) : undefined;
+  if (matchingIds && matchingIds.length === 0) {
+    return { items: [], nextCursor: null, hasMore: false };
+  }
   const baseWhere: Prisma.EventWhereInput = {
     visibility: "public",
     cancelledAt: null,
     ...upcomingOrOngoingFilter(),
+    ...(matchingIds ? { id: { in: matchingIds } } : {}),
   };
   const connectedGoingOrInterested: Prisma.EventWhereInput = {
     participants: {
@@ -207,6 +223,7 @@ interface FindMyEventsInput {
   scope: "hosting" | "going" | "interested" | "waitlisted";
   cursor?: string;
   limit: number;
+  q?: string;
 }
 
 export const findMyEvents = async ({
@@ -214,11 +231,18 @@ export const findMyEvents = async ({
   scope,
   cursor,
   limit,
+  q,
 }: FindMyEventsInput) => {
-  const where: Prisma.EventWhereInput =
-    scope === "hosting"
+  const matchingIds = q ? await findEventIdsMatchingTitle(q) : undefined;
+  if (matchingIds && matchingIds.length === 0) {
+    return { items: [], nextCursor: null, hasMore: false };
+  }
+  const where: Prisma.EventWhereInput = {
+    ...(scope === "hosting"
       ? { creatorId: userId }
-      : { participants: { some: { userId, status: scope } } };
+      : { participants: { some: { userId, status: scope } } }),
+    ...(matchingIds ? { id: { in: matchingIds } } : {}),
+  };
 
   const events = await prisma.event.findMany({
     where,

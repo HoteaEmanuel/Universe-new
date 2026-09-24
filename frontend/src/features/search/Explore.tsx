@@ -159,7 +159,7 @@ const Explore = () => {
     isSearching && activeTab === "groups",
   );
   const universityPeopleQuery = useUniversityPeopleInfiniteQuery(hasUniversity);
-  const discoverEventsQuery = useDiscoverEventsInfiniteQuery(!isSearching);
+  const discoverEventsQuery = useDiscoverEventsInfiniteQuery(undefined, !isSearching);
   const discoverEvents =
     discoverEventsQuery.data?.pages.flatMap((page) => page.events) ?? [];
 

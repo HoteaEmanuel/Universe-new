@@ -59,6 +59,19 @@ const DashboardLayout = () => {
           }}
         />
         <Tabs.Screen
+          name="events"
+          options={{
+            title: "Events",
+            tabBarIcon: ({ focused }) => (
+              <Ionicons
+                name={focused ? "calendar" : "calendar-outline"}
+                size={24}
+                color={focused ? theme.tabIconColourFocused : theme.tabIconColour}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="profile"
           options={{
             title: "Profile",

@@ -97,11 +97,12 @@ export const updateEventCoverImageController = async (
 
 export const discoverEventsController = async (req: Request, res: Response) => {
   try {
-    const { cursor, limit } = req.query as unknown as DiscoverEventsQueryInput;
+    const { cursor, limit, q } = req.query as unknown as DiscoverEventsQueryInput;
     const page = await discoverEventsService(
       req.userId as string,
       cursor,
       limit,
+      q,
     );
     return res.status(200).json(page);
   } catch (error) {
@@ -128,12 +129,13 @@ export const upcomingUniversityEventsController = async (
 
 export const myEventsController = async (req: Request, res: Response) => {
   try {
-    const { cursor, limit, scope } = req.query as unknown as MyEventsQueryInput;
+    const { cursor, limit, scope, q } = req.query as unknown as MyEventsQueryInput;
     const page = await myEventsService(
       req.userId as string,
       scope,
       cursor,
       limit,
+      q,
     );
     return res.status(200).json(page);
   } catch (error) {

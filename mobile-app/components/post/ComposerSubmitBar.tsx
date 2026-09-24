@@ -1,6 +1,7 @@
 import { View, Text, ActivityIndicator } from "react-native";
 import Svg, { Defs, LinearGradient, Stop, Rect } from "react-native-svg";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@constants/colors";
 import { PressableScale } from "@lib/styled";
 import { IconSizes } from "@constants/iconSizes";
@@ -35,14 +36,20 @@ const ComposerSubmitBar = ({
 }: ComposerSubmitBarProps) => {
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
+  const insets = useSafeAreaInsets();
 
   return (
     <View
-      className="flex-row items-center gap-3 px-gutter py-4"
+      className="flex-row items-center gap-3 px-gutter pt-4"
       style={{
         backgroundColor: theme.background,
         borderTopWidth: 1,
         borderTopColor: theme.borderColor,
+        // The screens that render this bar zero out ThemedView's own
+        // bottom safe-area padding (full-bleed scroll content), so this
+        // bar has to add it back itself — otherwise Cancel/Post sits flush
+        // against the gesture-nav bar on notchless-home-indicator phones.
+        paddingBottom: Math.max(insets.bottom, 16),
       }}
     >
       <PressableScale onPress={onCancel} className="px-2 py-2.5" enabled={!loading}>

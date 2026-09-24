@@ -32,8 +32,11 @@ export const createEventsApi = (client: HttpClient) => ({
     return client.postForm<unknown>(`/events/${id}/change-cover-image`, form);
   },
 
-  discover: (cursor?: string) =>
-    client.get<EventsPage>("/events/discover", cursor ? { cursor } : undefined),
+  discover: (cursor?: string, q?: string) =>
+    client.get<EventsPage>("/events/discover", {
+      ...(cursor ? { cursor } : {}),
+      ...(q ? { q } : {}),
+    }),
 
   upcomingUniversity: (limit?: number) =>
     client.get<{ events: EventSummary[] }>(
@@ -41,8 +44,12 @@ export const createEventsApi = (client: HttpClient) => ({
       limit ? { limit } : undefined,
     ),
 
-  listMine: (scope: MyEventsScope, cursor?: string) =>
-    client.get<EventsPage>("/events/mine", { scope, ...(cursor ? { cursor } : {}) }),
+  listMine: (scope: MyEventsScope, cursor?: string, q?: string) =>
+    client.get<EventsPage>("/events/mine", {
+      scope,
+      ...(cursor ? { cursor } : {}),
+      ...(q ? { q } : {}),
+    }),
 
   rsvp: async (id: string, status: "going" | "interested") =>
     (await client.post<{ participant: EventParticipant }>(`/events/${id}/rsvp`, { status }))

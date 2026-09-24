@@ -252,6 +252,7 @@ export const discoverEventsService = async (
   viewerId: string,
   cursor: string | undefined,
   limit: number,
+  q?: string,
 ) => {
   const connectedUserIds = Array.from(
     await getFollowConnectedUserIds(viewerId),
@@ -260,6 +261,7 @@ export const discoverEventsService = async (
     connectedUserIds,
     cursor,
     limit,
+    q,
   });
   return { events: items.map(toEventDTO), nextCursor, hasMore };
 };
@@ -285,12 +287,14 @@ export const myEventsService = async (
   scope: "hosting" | "going" | "interested" | "waitlisted",
   cursor: string | undefined,
   limit: number,
+  q?: string,
 ) => {
   const { items, nextCursor, hasMore } = await findMyEvents({
     userId,
     scope,
     cursor,
     limit,
+    q,
   });
   return { events: items.map(toEventDTO), nextCursor, hasMore };
 };
