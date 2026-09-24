@@ -89,6 +89,7 @@ import {
   deriveEventStatus,
   deriveEventType,
   getEventService,
+  inviteToEventService,
   joinEventChatService,
   rsvpEventService,
   updateEventService,
@@ -441,6 +442,92 @@ describe("event.service", () => {
       "This event is private",
     );
     expect(buildIcsCalendar).not.toHaveBeenCalled();
+  });
+
+  describe("inviteToEventService", () => {
+    it("refuses to invite the host", async () => {
+      vi.mocked(findEventById).mockResolvedValue({
+        id: "event-1",
+        creatorId: "host-1",
+        title: "Party",
+      } as never);
+
+      await expect(
+        inviteToEventService("event-1", "host-1", "host-1"),
+      ).rejects.toThrow("The host is already part of this event");
+      expect(acquireEventParticipant).not.toHaveBeenCalled();
+    });
+
+    it("refuses to invite someone already going/interested/waitlisted", async () => {
+      vi.mocked(findEventById).mockResolvedValue({
+        id: "event-1",
+        creatorId: "host-1",
+        title: "Party",
+      } as never);
+      vi.mocked(findEventParticipant).mockResolvedValue({ status: "going" } as never);
+
+      await expect(
+        inviteToEventService("event-1", "host-1", "target-1"),
+      ).rejects.toThrow("This user is already part of the event");
+      expect(acquireEventParticipant).not.toHaveBeenCalled();
+    });
+
+    it("re-invites someone already in 'invited' status", async () => {
+      vi.mocked(findEventById).mockResolvedValue({
+        id: "event-1",
+        creatorId: "host-1",
+        title: "Party",
+      } as never);
+      vi.mocked(findEventParticipant).mockResolvedValue({ status: "invited" } as never);
+      vi.mocked(acquireEventParticipant).mockResolvedValue({ status: "invited" } as never);
+      vi.mocked(createNotification).mockResolvedValue({ id: "notif-1" } as never);
+
+      await inviteToEventService("event-1", "host-1", "target-1");
+
+      expect(acquireEventParticipant).toHaveBeenCalledWith("event-1", "target-1", "invited");
+    });
+
+    it("invites a new user on both public and private events, and notifies them", async () => {
+      vi.mocked(findEventParticipant).mockResolvedValue(null);
+      vi.mocked(acquireEventParticipant).mockResolvedValue({ status: "invited" } as never);
+      vi.mocked(createNotification).mockResolvedValue({ id: "notif-1" } as never);
+
+      for (const visibility of ["public", "private"] as const) {
+        vi.mocked(findEventById).mockResolvedValue({
+          id: "event-1",
+          creatorId: "host-1",
+          title: "Party",
+          visibility,
+        } as never);
+
+        await inviteToEventService("event-1", "host-1", "target-1");
+      }
+
+      expect(acquireEventParticipant).toHaveBeenCalledTimes(2);
+      expect(createNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "target-1",
+          actionUserId: "host-1",
+          type: "event-invite",
+          eventId: "event-1",
+        }),
+      );
+      expect(emitNewNotification).toHaveBeenCalledWith("target-1", { id: "notif-1" });
+    });
+
+    it("lets EventBannedError surface for a banned target", async () => {
+      vi.mocked(findEventById).mockResolvedValue({
+        id: "event-1",
+        creatorId: "host-1",
+        title: "Party",
+      } as never);
+      vi.mocked(findEventParticipant).mockResolvedValue(null);
+      vi.mocked(acquireEventParticipant).mockRejectedValue(new EventBannedError("banned"));
+
+      await expect(
+        inviteToEventService("event-1", "host-1", "target-1"),
+      ).rejects.toThrow(EventBannedError);
+    });
   });
 
   describe("banEventParticipantService", () => {

@@ -93,6 +93,19 @@ export const useJoinEventChatMutation = (eventId?: string) => {
   });
 };
 
+export const useInviteEventParticipantMutation = (eventId?: string) => {
+  const queryClient = useQueryClient();
+  const shared = createEventMutations(eventsApi, queryClient).inviteParticipant(eventId);
+  return useMutation({
+    ...shared,
+    onSuccess: (data, vars, onMutateResult, context) => {
+      shared.onSuccess?.(data, vars, onMutateResult, context);
+      toast.success("Invite sent");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+};
+
 export const useBanEventParticipantMutation = (eventId?: string) => {
   const queryClient = useQueryClient();
   const shared = createEventMutations(eventsApi, queryClient).banParticipant(eventId);

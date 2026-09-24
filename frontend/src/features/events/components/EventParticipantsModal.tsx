@@ -38,6 +38,10 @@ const STATUS_TABS: { key: EventParticipantStatus; label: string }[] = [
   { key: "waitlisted", label: "Waitlisted" },
 ];
 
+const HOST_ONLY_STATUS_TABS: { key: EventParticipantStatus; label: string }[] = [
+  { key: "invited", label: "Invited" },
+];
+
 type ParticipantsStatusListProps = {
   eventId?: string;
   status: EventParticipantStatus;
@@ -135,6 +139,10 @@ const EventParticipantsModal = ({
   } | null>(null);
   const [bannedListOpen, setBannedListOpen] = useState(false);
 
+  const visibleTabs = isHost
+    ? [...STATUS_TABS, ...HOST_ONLY_STATUS_TABS]
+    : STATUS_TABS;
+
   return (
     <Drawer open={open} onOpenChange={(next: boolean) => !next && onClose()}>
       <DrawerContent>
@@ -164,14 +172,14 @@ const EventParticipantsModal = ({
           className="flex flex-1 flex-col gap-2 overflow-hidden px-2"
         >
           <TabsList>
-            {STATUS_TABS.map((tab) => (
+            {visibleTabs.map((tab) => (
               <TabsTrigger key={tab.key} value={tab.key}>
                 {tab.label}
                 {counts ? ` (${counts[tab.key]})` : ""}
               </TabsTrigger>
             ))}
           </TabsList>
-          {STATUS_TABS.map((tab) => (
+          {visibleTabs.map((tab) => (
             <TabsContent
               key={tab.key}
               value={tab.key}

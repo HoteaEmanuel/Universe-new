@@ -91,7 +91,7 @@ export type MyEventsQueryInput = z.infer<typeof myEventsQuerySchema>;
 export const eventParticipantsQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(30),
-  status: z.enum(["going", "interested", "waitlisted"]).optional(),
+  status: z.enum(["going", "interested", "waitlisted", "invited"]).optional(),
   search: z.string().optional(),
 });
 export type EventParticipantsQueryInput = z.infer<

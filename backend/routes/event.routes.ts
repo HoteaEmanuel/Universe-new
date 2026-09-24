@@ -25,6 +25,7 @@ import {
   myEventsController,
   rsvpEventController,
   cancelRsvpController,
+  inviteEventParticipantController,
   getEventParticipantsController,
   joinEventChatController,
   getEventCalendarIcsController,
@@ -55,6 +56,11 @@ router.post(
 );
 router.post("/:id/rsvp", validate({ body: rsvpEventSchema }), rsvpEventController);
 router.delete("/:id/rsvp", cancelRsvpController);
+router.post(
+  "/:id/participants/:userId/invite",
+  requireEventHost,
+  inviteEventParticipantController,
+);
 router.get(
   "/:id/participants",
   validate({ query: eventParticipantsQuerySchema }),

@@ -12,6 +12,10 @@ const NotificationItem = ({ notification }: { notification: Notification }) => {
       navigate(`/post/${notification.postId}`);
       return;
     }
+    if (notification.type === "event-invite" && notification.eventId) {
+      navigate(`/events/${notification.eventId}`);
+      return;
+    }
     if (notification.type === "message") {
       if (notification.conversationId) {
         navigate(`/conversations/${notification.conversationId}`);

@@ -9,6 +9,7 @@ import {
   discoverEventsService,
   upcomingUniversityEventsService,
   myEventsService,
+  inviteToEventService,
   rsvpEventService,
   cancelRsvpService,
   getEventParticipantsService,
@@ -164,6 +165,25 @@ export const cancelRsvpController = async (req: Request, res: Response) => {
     await cancelRsvpService(req.params.id as string, req.userId as string);
     return res.status(200).json({ message: "RSVP removed" });
   } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const inviteEventParticipantController = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    await inviteToEventService(
+      req.params.id as string,
+      req.userId as string,
+      req.params.userId as string,
+    );
+    return res.status(200).json({ message: "Invite sent" });
+  } catch (error) {
+    if (error instanceof EventBannedError) {
+      return res.status(403).json({ message: errorMessage(error) });
+    }
     return res.status(400).json({ message: errorMessage(error) });
   }
 };

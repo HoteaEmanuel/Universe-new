@@ -280,6 +280,7 @@ export const countParticipantsByStatus = async (eventId: string) => {
     going: 0,
     interested: 0,
     waitlisted: 0,
+    invited: 0,
   };
   counts.forEach((row) => {
     result[row.status] = row._count;

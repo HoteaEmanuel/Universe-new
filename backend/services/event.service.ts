@@ -356,6 +356,39 @@ export const cancelRsvpService = async (eventId: string, userId: string) => {
   await emitNewNotification(promoted.userId, notification);
 };
 
+export const inviteToEventService = async (
+  eventId: string,
+  hostUserId: string,
+  targetUserId: string,
+) => {
+  const event = await findEventById(eventId);
+  if (!event) throw new Error("Event not found");
+  if (targetUserId === event.creatorId)
+    throw new Error("The host is already part of this event");
+
+  const existing = await findEventParticipant(eventId, targetUserId);
+  if (existing && existing.status !== "invited")
+    throw new Error("This user is already part of the event");
+
+  const participant = await acquireEventParticipant(
+    eventId,
+    targetUserId,
+    "invited",
+  );
+
+  const notification = await createNotification({
+    userId: targetUserId,
+    actionUserId: hostUserId,
+    type: "event-invite",
+    title: "You're invited!",
+    message: `${event.title} invited you to their event.`,
+    eventId,
+  });
+  await emitNewNotification(targetUserId, notification);
+
+  return participant;
+};
+
 export const getEventParticipantsService = async (
   eventId: string,
   viewerId: string,

@@ -12,12 +12,15 @@ import {
   MessageCircle,
   Ban,
   Pencil,
+  Mail,
+  Lock,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import NotFoundState from "@/components/NotFoundState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,12 +44,13 @@ import { formatEventDateTime, buildGoogleCalendarUrl } from "./utils/formatEvent
 import { urlPathName } from "@/utils/urlPathFromName";
 import EventParticipantsModal from "./components/EventParticipantsModal";
 import EventFormModal from "./components/EventFormModal";
+import InviteToEventModal from "./components/InviteToEventModal";
 
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { data: event, isPending } = useGetEventQuery(id);
+  const { data: event, isPending, isError } = useGetEventQuery(id);
   const rsvpMutation = useRsvpEventMutation(id);
   const cancelRsvpMutation = useCancelRsvpMutation(id);
   const cancelEventMutation = useCancelEventMutation(id);
@@ -54,6 +58,7 @@ const EventDetails = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
 
   useEffect(() => {
     if (event) document.title = event.title;
@@ -69,7 +74,15 @@ const EventDetails = () => {
     );
   }
 
-  if (!event) return null;
+  if (isError || !event) {
+    return (
+      <NotFoundState
+        icon={Lock}
+        title="This event is private"
+        description="You don't have access to this event. Ask the host to invite you."
+      />
+    );
+  }
 
   const isHost = event.creatorId === user?.id;
   const isCancelled = event.status === "cancelled";
@@ -188,7 +201,31 @@ const EventDetails = () => {
         </button>
       </div>
 
-      {!isCancelled && (
+      {!isCancelled && viewerStatus === "invited" && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+          <p className="flex items-center gap-2 text-sm font-medium">
+            <Mail className="size-4 shrink-0 text-primary" />
+            You&apos;re invited to this event
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => rsvpMutation.mutate("going")}
+              disabled={rsvpMutation.isPending || cancelRsvpMutation.isPending}
+            >
+              Accept
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => cancelRsvpMutation.mutate()}
+              disabled={rsvpMutation.isPending || cancelRsvpMutation.isPending}
+            >
+              Decline
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!isCancelled && viewerStatus !== "invited" && (
         <div className="flex flex-wrap gap-2">
           <Button
             variant={viewerStatus === "going" ? "default" : "outline"}
@@ -259,6 +296,14 @@ const EventDetails = () => {
           <Button
             variant="ghost"
             className="gap-1.5"
+            onClick={() => setShowInvite(true)}
+          >
+            <Mail className="size-4" />
+            Invite
+          </Button>
+          <Button
+            variant="ghost"
+            className="gap-1.5"
             onClick={() => setShowEditModal(true)}
           >
             <Pencil className="size-4" />
@@ -309,6 +354,14 @@ const EventDetails = () => {
           event={event}
           open={showEditModal}
           onClose={() => setShowEditModal(false)}
+        />
+      )}
+
+      {isHost && (
+        <InviteToEventModal
+          open={showInvite}
+          onClose={() => setShowInvite(false)}
+          eventId={event.id}
         />
       )}
     </div>

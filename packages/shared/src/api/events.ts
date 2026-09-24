@@ -72,6 +72,9 @@ export const createEventsApi = (client: HttpClient) => ({
   joinChat: async (id: string) =>
     (await client.post<{ group: { id: string } }>(`/events/${id}/join-chat`)).group,
 
+  inviteParticipant: (id: string, userId: string) =>
+    client.post<{ message: string }>(`/events/${id}/participants/${userId}/invite`),
+
   banParticipant: (id: string, userId: string, reason?: string) =>
     client.post<{ message: string }>(`/events/${id}/participants/${userId}/ban`, { reason }),
 

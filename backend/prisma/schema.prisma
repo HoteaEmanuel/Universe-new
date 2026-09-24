@@ -36,6 +36,7 @@ enum EventParticipantStatus {
   going
   interested
   waitlisted
+  invited
 }
 
 enum PostType {

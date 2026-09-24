@@ -78,6 +78,16 @@ export const createEventMutations = (api: EventsApi, queryClient: QueryClient) =
       mutationFn: () => api.joinChat(eventId as string),
     }),
 
+  inviteParticipant: (eventId?: string) =>
+    mutationOptions({
+      mutationFn: (userId: string) => api.inviteParticipant(eventId as string, userId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["event-participants", eventId],
+        });
+      },
+    }),
+
   banParticipant: (eventId?: string) =>
     mutationOptions({
       mutationFn: ({ userId, reason }: { userId: string; reason?: string }) =>

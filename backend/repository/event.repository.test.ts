@@ -71,7 +71,7 @@ describe("event.repository", () => {
 
       const result = await countParticipantsByStatus("event-1");
 
-      expect(result).toEqual({ going: 3, interested: 0, waitlisted: 0 });
+      expect(result).toEqual({ going: 3, interested: 0, waitlisted: 0, invited: 0 });
     });
   });
 

@@ -26,6 +26,7 @@ const TYPE_ICON: Record<string, typeof Heart> = {
   "event-update": CalendarClock,
   "event-cancelled": CalendarX,
   "event-waitlist-promoted": CalendarCheck,
+  "event-invite": Mail,
   "content-removed": ShieldAlert,
   follow: UserPlus,
   message: Mail,
