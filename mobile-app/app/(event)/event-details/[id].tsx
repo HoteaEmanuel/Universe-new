@@ -177,7 +177,15 @@ const EventDetails = () => {
                 </Text>
               </View>
             ) : null}
-            <View className="flex-row items-center gap-2">
+            <PressableScale
+              onPress={() =>
+                router.push({
+                  pathname: "/(event)/event-participants/[id]",
+                  params: { id: event.id, isHost: isHost ? "1" : "0" },
+                })
+              }
+              className="flex-row items-center gap-2 self-start"
+            >
               <Ionicons name="people-outline" size={IconSizes.md} color={theme.tabIconColour} />
               <Text className="flex-1 text-sm" style={{ color: theme.text }}>
                 {event.counts.going} going
@@ -185,10 +193,46 @@ const EventDetails = () => {
                 {event.counts.interested > 0 ? ` · ${event.counts.interested} interested` : ""}
                 {event.counts.waitlisted > 0 ? ` · ${event.counts.waitlisted} waitlisted` : ""}
               </Text>
-            </View>
+            </PressableScale>
           </View>
 
-          {!isCancelled ? (
+          {!isCancelled && viewerStatus === "invited" ? (
+            <View
+              className="gap-3 rounded-2xl p-4"
+              style={{ borderWidth: 1, borderColor: Colors.primary, backgroundColor: `${Colors.primary}0D` }}
+            >
+              <View className="flex-row items-center gap-2">
+                <Ionicons name="mail-outline" size={IconSizes.md} color={Colors.primary} />
+                <Text className="text-sm font-semibold" style={{ color: theme.title }}>
+                  You&apos;re invited to this event
+                </Text>
+              </View>
+              <View className="flex-row flex-wrap gap-2.5">
+                <PressableScale
+                  onPress={() => handleRsvp("going")}
+                  enabled={!rsvpPending}
+                  className="rounded-full px-4 py-2.5"
+                  style={{ backgroundColor: Colors.primary }}
+                >
+                  <Text className="text-xs font-bold" style={{ color: "#ffffff" }}>
+                    Accept
+                  </Text>
+                </PressableScale>
+                <PressableScale
+                  onPress={() => cancelRsvpMutation.mutate()}
+                  enabled={!rsvpPending}
+                  className="rounded-full px-4 py-2.5"
+                  style={{ borderWidth: 1, borderColor: theme.borderColor }}
+                >
+                  <Text className="text-xs font-bold" style={{ color: theme.text }}>
+                    Decline
+                  </Text>
+                </PressableScale>
+              </View>
+            </View>
+          ) : null}
+
+          {!isCancelled && viewerStatus !== "invited" ? (
             <View className="flex-row flex-wrap items-center gap-2.5">
               <PressableScale
                 onPress={() => handleRsvp("going")}
@@ -271,9 +315,18 @@ const EventDetails = () => {
 
           {isHost && !isCancelled ? (
             <View
-              className="flex-row justify-end pt-4"
+              className="flex-row flex-wrap justify-end pt-4"
               style={{ borderTopWidth: 1, borderTopColor: theme.borderColor }}
             >
+              <PressableScale
+                onPress={() => router.push(`/invite-to-event/${event.id}`)}
+                className="flex-row items-center gap-1.5 px-2 py-1.5"
+              >
+                <Ionicons name="mail-outline" size={IconSizes.sm} color={theme.tabIconColour} />
+                <Text className="text-xs font-semibold" style={{ color: theme.tabIconColour }}>
+                  Invite
+                </Text>
+              </PressableScale>
               <PressableScale
                 onPress={() => router.push(`/edit-event/${event.id}`)}
                 className="flex-row items-center gap-1.5 px-2 py-1.5"

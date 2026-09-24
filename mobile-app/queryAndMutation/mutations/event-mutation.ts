@@ -34,3 +34,13 @@ export const useCancelEventMutation = (eventId?: string) => {
   const queryClient = useQueryClient();
   return useMutation(createEventMutations(eventsApi, queryClient).cancel(eventId));
 };
+
+export const useInviteToEventMutation = (eventId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation(createEventMutations(eventsApi, queryClient).inviteParticipant(eventId));
+};
+
+export const useBanEventParticipantMutation = (eventId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation(createEventMutations(eventsApi, queryClient).banParticipant(eventId));
+};

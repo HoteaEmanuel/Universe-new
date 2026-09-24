@@ -7,4 +7,5 @@ export const {
   useGetEventQuery,
   useDiscoverEventsInfiniteQuery,
   useMyEventsInfiniteQuery,
+  useGetEventParticipantsInfiniteQuery,
 } = createEventQueryHooks(httpClient);

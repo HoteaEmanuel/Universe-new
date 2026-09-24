@@ -9,4 +9,5 @@ export const {
   useGetConvoMessageContext,
   useGetConvoResourcesInfinite,
   useGetConversationByUsersIdsQuery,
+  useGetConvoUsers,
 } = createConversationQueryHooks(httpClient);

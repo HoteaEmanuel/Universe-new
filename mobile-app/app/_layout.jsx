@@ -105,6 +105,8 @@ const RootLayout = () => {
                 <Stack.Screen name="(event)/event-details/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="(event)/edit-event/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="(event)/create-event/index" options={{ headerShown: false }} />
+                <Stack.Screen name="(event)/invite-to-event/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="(event)/event-participants/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="(profile)/profile/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="(comments)/comments/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="(chat)/conversation/[id]" options={{ headerShown: false }} />
