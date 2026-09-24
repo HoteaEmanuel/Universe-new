@@ -123,6 +123,8 @@ const RootLayout = () => {
                 <Stack.Screen name="(settings)/settings/appearance" options={{ headerShown: false }} />
                 <Stack.Screen name="(settings)/settings/privacy" options={{ headerShown: false }} />
                 <Stack.Screen name="(settings)/settings/legal-terms" options={{ headerShown: false }} />
+                <Stack.Screen name="(settings)/settings/privacy-policy" options={{ headerShown: false }} />
+                <Stack.Screen name="(settings)/settings/terms-of-service" options={{ headerShown: false }} />
                 <Stack.Screen name="(settings)/settings/suggest-more" options={{ headerShown: false }} />
               </Stack>
               <ConfirmDialog />
