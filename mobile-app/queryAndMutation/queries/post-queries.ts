@@ -9,4 +9,5 @@ export const {
   useGetRelevantLikerQuery,
   usePostLikedQuery,
   useGetPostsInfiniteQuery,
+  useOpportunitiesInfiniteQuery,
 } = createPostQueryHooks(httpClient);

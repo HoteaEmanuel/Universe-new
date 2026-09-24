@@ -25,6 +25,7 @@ import { Colors } from "@constants/colors";
 import { IconSizes } from "@constants/iconSizes";
 import { PressableScale } from "@lib/styled";
 import UserAvatar from "@components/UserAvatar";
+import OpportunitySummary from "@components/opportunities/OpportunitySummary";
 import PostImageCarousel from "./PostImageCarousel";
 import AnimatedLikeButton from "./AnimatedLikeButton";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
@@ -221,6 +222,10 @@ const PostCard = ({ post }: PostCardProps) => {
           </PressableScale>
         ) : null}
       </View>
+
+      {post.type === "opportunity" ? (
+        <OpportunitySummary post={post} isOwner={isOwnPost} />
+      ) : null}
 
       {!hasImages ? caption : null}
       {!hasImages && caption ? <View className="h-3" /> : null}

@@ -53,6 +53,7 @@ export default {
           isAccessMediaLocationEnabled: false,
         },
       ],
+      "@react-native-community/datetimepicker",
     ],
     extra: {
       googleAndroidClientId:

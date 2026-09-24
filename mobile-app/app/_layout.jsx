@@ -19,6 +19,7 @@ import { Colors } from "@constants/colors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useAuthStore } from "@store/authStore";
 import { useThemeStore } from "@store/themeStore";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
@@ -85,40 +86,42 @@ const RootLayout = () => {
               resolved app theme, not just the OS scheme Uniwind would
               otherwise read on its own. */}
           <ScopedTheme theme={colorScheme}>
-            <StatusBar style="auto" />
-            <Stack
-              screenOptions={{
-                headerStyle: {
-                  backgroundColor: theme.navBackground,
-                },
-                headerTitleStyle: {
-                  color: theme.title,
-                },
-              }}
-            >
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
-              <Stack.Screen name="(dashboard)" options={{ headerShown: false }} />
-              <Stack.Screen name="(post)/post-details/[id]" options={{ headerShown: false }} />
-              <Stack.Screen name="(profile)/profile/[id]" options={{ headerShown: false }} />
-              <Stack.Screen name="(comments)/comments/[id]" options={{ headerShown: false }} />
-              <Stack.Screen name="(chat)/conversation/[id]" options={{ headerShown: false }} />
-              <Stack.Screen name="(chat)/new-conversation/[id]" options={{ headerShown: false }} />
-              <Stack.Screen name="(chat)/details/[id]" options={{ headerShown: false }} />
-              <Stack.Screen name="(chat)/media/[id]" options={{ headerShown: false }} />
-              <Stack.Screen name="(chat)/members/[id]" options={{ headerShown: false }} />
-              <Stack.Screen name="(settings)/settings/index" options={{ headerShown: false }} />
-              <Stack.Screen name="(settings)/settings/edit-profile" options={{ headerShown: false }} />
-              <Stack.Screen name="(settings)/settings/change-password" options={{ headerShown: false }} />
-              <Stack.Screen name="(settings)/settings/delete-account" options={{ headerShown: false }} />
-              <Stack.Screen name="(settings)/settings/notifications" options={{ headerShown: false }} />
-              <Stack.Screen name="(settings)/settings/appearance" options={{ headerShown: false }} />
-              <Stack.Screen name="(settings)/settings/privacy" options={{ headerShown: false }} />
-              <Stack.Screen name="(settings)/settings/legal-terms" options={{ headerShown: false }} />
-              <Stack.Screen name="(settings)/settings/suggest-more" options={{ headerShown: false }} />
-            </Stack>
-            <ConfirmDialog />
-            <PreferencesSync />
+            <BottomSheetModalProvider>
+              <StatusBar style="auto" />
+              <Stack
+                screenOptions={{
+                  headerStyle: {
+                    backgroundColor: theme.navBackground,
+                  },
+                  headerTitleStyle: {
+                    color: theme.title,
+                  },
+                }}
+              >
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
+                <Stack.Screen name="(dashboard)" options={{ headerShown: false }} />
+                <Stack.Screen name="(post)/post-details/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="(profile)/profile/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="(comments)/comments/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="(chat)/conversation/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="(chat)/new-conversation/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="(chat)/details/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="(chat)/media/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="(chat)/members/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="(settings)/settings/index" options={{ headerShown: false }} />
+                <Stack.Screen name="(settings)/settings/edit-profile" options={{ headerShown: false }} />
+                <Stack.Screen name="(settings)/settings/change-password" options={{ headerShown: false }} />
+                <Stack.Screen name="(settings)/settings/delete-account" options={{ headerShown: false }} />
+                <Stack.Screen name="(settings)/settings/notifications" options={{ headerShown: false }} />
+                <Stack.Screen name="(settings)/settings/appearance" options={{ headerShown: false }} />
+                <Stack.Screen name="(settings)/settings/privacy" options={{ headerShown: false }} />
+                <Stack.Screen name="(settings)/settings/legal-terms" options={{ headerShown: false }} />
+                <Stack.Screen name="(settings)/settings/suggest-more" options={{ headerShown: false }} />
+              </Stack>
+              <ConfirmDialog />
+              <PreferencesSync />
+            </BottomSheetModalProvider>
           </ScopedTheme>
         </QueryClientProvider>
       </KeyboardProvider>

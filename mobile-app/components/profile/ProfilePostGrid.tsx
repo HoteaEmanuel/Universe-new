@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { type Post } from "@universe/shared";
 import { Colors } from "@constants/colors";
 import { IconSizes } from "@constants/iconSizes";
-import PostCard from "@components/post/PostCard";
+import ProfilePostTile from "@components/profile/ProfilePostTile";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 type ProfilePostGridProps = {
@@ -41,12 +41,12 @@ const ProfilePostGrid = ({ posts = [], emptyTitle, emptyDescription }: ProfilePo
     <View className="flex-row gap-3 px-4 pb-6">
       <View className="flex-1 gap-3">
         {leftColumn.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <ProfilePostTile key={post.id} post={post} />
         ))}
       </View>
       <View className="flex-1 gap-3">
         {rightColumn.map((post) => (
-          <PostCard key={post.id} post={post} />
+          <ProfilePostTile key={post.id} post={post} />
         ))}
       </View>
     </View>

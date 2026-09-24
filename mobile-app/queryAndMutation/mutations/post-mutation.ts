@@ -66,3 +66,8 @@ export const useUnlikeMutation = (postId: string) => {
     },
   });
 };
+
+export const useSetOpportunityClosedMutation = (postId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation(createPostMutations(postsApi, queryClient).setOpportunityClosed(postId));
+};

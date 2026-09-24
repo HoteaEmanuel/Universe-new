@@ -1,8 +1,9 @@
-import { View, ScrollView, Alert, ActivityIndicator } from "react-native";
+import { View, ScrollView, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import ThemedView from "@components/ThemedView";
 import { useAuthStore } from "@store/authStore";
+import { useConfirmDialogStore } from "@store/confirmDialogStore";
 import { Colors } from "@constants/colors";
 import { IconSizes } from "@constants/iconSizes";
 import { PressableScale } from "@lib/styled";
@@ -18,17 +19,17 @@ const Profile = () => {
   const { user, logOut } = useAuthStore();
 
   const handleLogout = () => {
-    Alert.alert("Log out", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log out",
-        style: "destructive",
-        onPress: async () => {
-          await logOut();
-          router.replace("/login");
-        },
+    useConfirmDialogStore.getState().open({
+      title: "Log out?",
+      message: "You'll need to sign back in to use the app again.",
+      confirmLabel: "Log out",
+      destructive: true,
+      icon: "log-out-outline",
+      onConfirm: async () => {
+        await logOut();
+        router.replace("/login");
       },
-    ]);
+    });
   };
 
   const { data: followersData, isLoading: followersLoading } = useGetFollowersQuery(user?.id);

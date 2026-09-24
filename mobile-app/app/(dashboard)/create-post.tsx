@@ -31,32 +31,26 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import type * as ImagePicker from "expo-image-picker";
+import type { OpportunityType, WorkplaceType } from "@universe/shared";
 import ThemedView from "@components/ThemedView";
 import ComposerField from "@components/post/ComposerField";
 import ExpandingSection from "@components/post/ExpandingSection";
 import ComposerImagePicker from "@components/post/ComposerImagePicker";
 import ComposerSubmitBar from "@components/post/ComposerSubmitBar";
 import LocationAutocompleteField from "@components/post/LocationAutocompleteField";
+import PostTypeToggle from "@components/post/PostTypeToggle";
+import OpportunityFields from "@components/post/OpportunityFields";
 import { PressableScale } from "@lib/styled";
+import { useAuthStore } from "@store/authStore";
 import { useCreatePostMutation } from "@queryAndMutation/mutations/post-mutation";
 import { useSuggestHashtagsQuery } from "@queryAndMutation/queries/ai-queries";
 import { useDebounce } from "@hooks/useDebounce";
 import { confirmDiscardChanges } from "@utils/confirmDiscardChanges";
+import { isValidApplyUrl } from "@utils/opportunity";
 import { Colors } from "@constants/colors";
-import {
-  TITLE_MAX_LENGTH,
-  BODY_MAX_LENGTH,
-  LOCATION_MAX_LENGTH,
-  TAGS_MAX_LENGTH,
-} from "@constants/postForm";
+import { TITLE_MAX_LENGTH, BODY_MAX_LENGTH, LOCATION_MAX_LENGTH, TAGS_MAX_LENGTH } from "@constants/postForm";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
-
-type CreatePostFormValues = {
-  title: string;
-  body: string;
-  location: string;
-  tags: string;
-};
+import type { CreatePostFormValues } from "@/types/createPost";
 
 type SectionKey = "photos" | "location" | "tags";
 
@@ -132,12 +126,21 @@ const CreatePost = () => {
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const { mutateAsync: createPost, isPending } = useCreatePostMutation();
+  const user = useAuthStore((state) => state.user);
+  const canPublishOpportunity =
+    user?.role === "admin" ||
+    (user?.accountType === "business" && user?.identityVerified === "true");
+
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [expanded, setExpanded] = useState<Record<SectionKey, boolean>>({
     photos: false,
     location: false,
     tags: false,
   });
+  const [postType, setPostType] = useState<"standard" | "opportunity">("standard");
+  const [opportunityType, setOpportunityType] = useState<OpportunityType | undefined>();
+  const [workplaceType, setWorkplaceType] = useState<WorkplaceType | undefined>();
+  const [deadline, setDeadline] = useState<Date | undefined>();
 
   const {
     control,
@@ -147,12 +150,14 @@ const CreatePost = () => {
     reset,
     formState: { errors },
   } = useForm<CreatePostFormValues>({
-    defaultValues: { title: "", body: "", location: "", tags: "" },
+    defaultValues: { title: "", body: "", location: "", tags: "", companyName: "", applyUrl: "" },
   });
   const titleValue = watch("title");
   const bodyValue = watch("body");
   const tagsValue = watch("tags");
   const locationValue = watch("location");
+  const companyNameValue = watch("companyName");
+  const applyUrlValue = watch("applyUrl");
 
   const debouncedBody = useDebounce(bodyValue, 1500);
   const { data: suggestedHashtags } = useSuggestHashtagsQuery(bodyValue, debouncedBody);
@@ -179,12 +184,23 @@ const CreatePost = () => {
     setValue("tags", [...words, tag].join(" "), { shouldValidate: true, shouldDirty: true });
   };
 
-  const disabled = titleValue.trim().length === 0 || tagsValue.trim().length === 0;
+  const isOpportunity = postType === "opportunity";
+  const opportunityFieldsValid =
+    !isOpportunity ||
+    (!!opportunityType &&
+      !!workplaceType &&
+      companyNameValue.trim().length >= 2 &&
+      isValidApplyUrl(applyUrlValue));
+
+  const disabled =
+    titleValue.trim().length < 2 || tagsValue.trim().length === 0 || !opportunityFieldsValid;
   const hasContent =
     titleValue.trim().length > 0 ||
     bodyValue.trim().length > 0 ||
     locationValue.trim().length > 0 ||
     tagsValue.trim().length > 0 ||
+    companyNameValue.trim().length > 0 ||
+    applyUrlValue.trim().length > 0 ||
     images.length > 0;
 
   const handleCancel = () => {
@@ -207,9 +223,23 @@ const CreatePost = () => {
           name: image.fileName ?? "photo.jpg",
           type: image.mimeType ?? "image/jpeg",
         })),
+        ...(isOpportunity
+          ? {
+              type: "opportunity" as const,
+              opportunityType,
+              workplaceType,
+              companyName: data.companyName.trim(),
+              applyUrl: data.applyUrl.trim(),
+              deadlineAt: deadline?.toISOString(),
+            }
+          : {}),
       });
       reset();
       setImages([]);
+      setPostType("standard");
+      setOpportunityType(undefined);
+      setWorkplaceType(undefined);
+      setDeadline(undefined);
       router.navigate("/home");
     } catch {
       Alert.alert("Couldn't post", "Something went wrong. Please try again.");
@@ -241,6 +271,10 @@ const CreatePost = () => {
             </View>
 
             <View className="gap-section px-gutter">
+              {canPublishOpportunity ? (
+                <PostTypeToggle value={postType} onChange={setPostType} />
+              ) : null}
+
               <View className="gap-stack">
                 <Controller
                   control={control}
@@ -294,6 +328,19 @@ const CreatePost = () => {
                   )}
                 />
               </View>
+
+              {isOpportunity ? (
+                <OpportunityFields
+                  control={control}
+                  errors={errors}
+                  opportunityType={opportunityType}
+                  onOpportunityTypeChange={setOpportunityType}
+                  workplaceType={workplaceType}
+                  onWorkplaceTypeChange={setWorkplaceType}
+                  deadline={deadline}
+                  onDeadlineChange={setDeadline}
+                />
+              ) : null}
 
               <View className="gap-2">
                 <ExpandingSection

@@ -46,6 +46,19 @@ const DashboardLayout = () => {
           }}
         />
         <Tabs.Screen
+          name="opportunities"
+          options={{
+            title: "Opportunities",
+            tabBarIcon: ({ focused }) => (
+              <Ionicons
+                name={focused ? "briefcase" : "briefcase-outline"}
+                size={24}
+                color={focused ? theme.tabIconColourFocused : theme.tabIconColour}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="profile"
           options={{
             title: "Profile",
