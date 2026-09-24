@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import type { EventSummary } from "@universe/shared";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 import { useDebounce } from "@hooks/useDebounce";
+import { useHideTabBarOnScroll } from "@hooks/useHideTabBarOnScroll";
 import { Colors } from "@constants/colors";
 import { IconSizes } from "@constants/iconSizes";
 import ThemedView from "@components/ThemedView";
@@ -35,6 +36,7 @@ const TABS: { key: EventsTab; label: string }[] = [
 // EventsPage.tsx, adapted to mobile's chip-row tab convention (SelectChip)
 // instead of a shadcn Tabs strip.
 const EventsScreen = () => {
+  const handleTabBarScroll = useHideTabBarOnScroll();
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const [activeTab, setActiveTab] = useState<EventsTab>("discover");
@@ -181,6 +183,8 @@ const EventsScreen = () => {
           if (activeQuery.hasNextPage && !activeQuery.isFetchingNextPage) activeQuery.fetchNextPage();
         }}
         onEndReachedThreshold={0.5}
+        onScroll={handleTabBarScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
       />
     </ThemedView>

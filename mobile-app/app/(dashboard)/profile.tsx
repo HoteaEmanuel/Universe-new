@@ -18,10 +18,12 @@ import ProfilePostGrid from "@components/profile/ProfilePostGrid";
 import FollowListSheet, { type FollowListSheetHandle } from "@components/profile/FollowListSheet";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 import { usePostDragSelect } from "@hooks/usePostDragSelect";
+import { useHideTabBarOnScroll } from "@hooks/useHideTabBarOnScroll";
 
 type ProfileTab = "posts" | "saved";
 
 const Profile = () => {
+  const handleTabBarScroll = useHideTabBarOnScroll();
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const insets = useSafeAreaInsets();

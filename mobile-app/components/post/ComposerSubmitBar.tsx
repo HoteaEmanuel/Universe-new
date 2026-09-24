@@ -23,6 +23,8 @@ type ComposerSubmitBarProps = {
   submitLabel?: string;
   disabled?: boolean;
   loading?: boolean;
+
+  extraBottomInset?: number;
 };
 
 // Pins to the bottom of the compose screen so Cancel/Post stay thumb-reachable
@@ -33,6 +35,7 @@ const ComposerSubmitBar = ({
   submitLabel = "Post",
   disabled,
   loading,
+  extraBottomInset = 0,
 }: ComposerSubmitBarProps) => {
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
@@ -45,11 +48,7 @@ const ComposerSubmitBar = ({
         backgroundColor: theme.background,
         borderTopWidth: 1,
         borderTopColor: theme.borderColor,
-        // The screens that render this bar zero out ThemedView's own
-        // bottom safe-area padding (full-bleed scroll content), so this
-        // bar has to add it back itself — otherwise Cancel/Post sits flush
-        // against the gesture-nav bar on notchless-home-indicator phones.
-        paddingBottom: Math.max(insets.bottom, 16),
+        paddingBottom: insets.bottom + 20 + extraBottomInset,
       }}
     >
       <PressableScale onPress={onCancel} className="px-2 py-2.5" enabled={!loading}>

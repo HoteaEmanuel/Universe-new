@@ -32,6 +32,7 @@ import { useCreatePostMutation } from "@queryAndMutation/mutations/post-mutation
 import type { CreatePostFile } from "@queryAndMutation/mutations/post-mutation";
 import { Colors } from "@constants/colors";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
+import { useTabBarClearance } from "@hooks/useTabBarClearance";
 import type { ComposerImage } from "@components/post/ComposerImagePicker";
 
 // A small fanned stack of post cards, topped with a "+" badge — the
@@ -106,6 +107,7 @@ const isLocalImage = (image: ComposerImage): image is Exclude<ComposerImage, str
   typeof image !== "string";
 
 const CreatePost = () => {
+  const tabBarClearance = useTabBarClearance();
   const { mutateAsync: createPost, isPending } = useCreatePostMutation();
 
   const handleCancel = () => router.navigate("/home");
@@ -150,6 +152,7 @@ const CreatePost = () => {
       isSubmitting={isPending}
       onSubmit={onSubmit}
       onCancel={handleCancel}
+      submitBarExtraBottomInset={tabBarClearance}
     />
   );
 };

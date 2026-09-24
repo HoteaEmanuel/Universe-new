@@ -4,8 +4,10 @@ import ThemedText from "../../components/ThemedText";
 import { useGetPostsInfiniteQuery } from "../../queryAndMutation/queries/post-queries";
 import PostCard from "../../components/post/PostCard";
 import { Colors } from "../../constants/colors";
+import { useHideTabBarOnScroll } from "@hooks/useHideTabBarOnScroll";
 
 const Home = () => {
+  const handleTabBarScroll = useHideTabBarOnScroll();
   const {
     data,
     isLoading,
@@ -34,6 +36,8 @@ const Home = () => {
           if (hasNextPage && !isFetchingNextPage) fetchNextPage();
         }}
         onEndReachedThreshold={0.5}
+        onScroll={handleTabBarScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{ gap: 12, padding: 16 }}
         renderItem={({ item }) => <PostCard post={item} />}
         refreshControl={

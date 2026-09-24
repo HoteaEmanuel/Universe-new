@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import type { Post } from "@universe/shared";
 import { useDebounce } from "@hooks/useDebounce";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
+import { useHideTabBarOnScroll } from "@hooks/useHideTabBarOnScroll";
 import { Colors } from "@constants/colors";
 import { IconSizes } from "@constants/iconSizes";
 import ThemedView from "@components/ThemedView";
@@ -31,6 +32,7 @@ const countActiveFilters = (filters: OpportunitiesFilterState) => {
 };
 
 const OpportunitiesScreen = () => {
+  const handleTabBarScroll = useHideTabBarOnScroll();
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const sheetRef = useRef<FiltersSheetHandle>(null);
@@ -160,6 +162,8 @@ const OpportunitiesScreen = () => {
           if (query.hasNextPage && !query.isFetchingNextPage) query.fetchNextPage();
         }}
         onEndReachedThreshold={0.5}
+        onScroll={handleTabBarScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
       />
 

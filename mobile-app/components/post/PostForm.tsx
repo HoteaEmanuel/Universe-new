@@ -74,6 +74,10 @@ type PostFormProps = {
   discardMessage?: string;
   onSubmit: (data: PostFormSubmitData) => void;
   onCancel: () => void;
+  // Passed by create-post.tsx (a dashboard tab, rendered under GlassTabBar's
+  // floating bar) via useTabBarClearance. Left undefined by the edit-post
+  // screen, which is a pushed stack screen with no tab bar to clear.
+  submitBarExtraBottomInset?: number;
 };
 
 // Shared by create-post.tsx and the edit-post screen — the two only differ
@@ -91,6 +95,7 @@ const PostForm = ({
   discardMessage,
   onSubmit,
   onCancel,
+  submitBarExtraBottomInset,
 }: PostFormProps) => {
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
@@ -413,6 +418,7 @@ const PostForm = ({
         submitLabel={submitLabel}
         disabled={disabled}
         loading={isSubmitting}
+        extraBottomInset={submitBarExtraBottomInset}
       />
     </ThemedView>
   );

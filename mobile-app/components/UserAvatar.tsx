@@ -1,7 +1,7 @@
 import { Image, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-type AvatarUser = {
+export type AvatarUser = {
   profilePicture?: string | null;
 };
 

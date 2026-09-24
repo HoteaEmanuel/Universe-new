@@ -12,10 +12,12 @@ import SearchInput from "@components/SearchInput";
 import ConversationRow from "@components/chat/ConversationRow";
 import ChatRowSkeleton from "@components/chat/ChatRowSkeleton";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
+import { useHideTabBarOnScroll } from "@hooks/useHideTabBarOnScroll";
 
 const SKELETON_ROWS = 6;
 
 const ChatScreen = () => {
+  const handleTabBarScroll = useHideTabBarOnScroll();
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const currentUserId = useAuthStore((state) => state.user?.id);
@@ -82,6 +84,8 @@ const ChatScreen = () => {
           if (hasMore && !isFetchingNextPage) fetchNextPage();
         }}
         onEndReachedThreshold={0.5}
+        onScroll={handleTabBarScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
       />
     </ThemedView>
