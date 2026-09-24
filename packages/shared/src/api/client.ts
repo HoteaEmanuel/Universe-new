@@ -27,7 +27,7 @@ export type HttpClient = {
   get<T>(path: string, params?: QueryParams): Promise<T>;
   post<T>(path: string, body?: unknown): Promise<T>;
   patch<T>(path: string, body?: unknown): Promise<T>;
-  delete<T>(path: string): Promise<T>;
+  delete<T>(path: string, body?: unknown): Promise<T>;
   createForm(): FormDataLike;
   postForm<T>(path: string, form: FormDataLike): Promise<T>;
   patchForm<T>(path: string, form: FormDataLike): Promise<T>;

@@ -393,6 +393,21 @@ export const deletePost = async (data: { postId: string }) => {
   }
 };
 
+// Scoped to `userId` here (rather than a per-id requirePostOwner middleware
+// pass, which only works against a single :id route param) so ids the
+// caller doesn't own are silently skipped instead of failing the whole
+// batch - mirrors deletePostsByName's existing scoping. Reuses deletePost's
+// per-post cleanup (likes + storage images) instead of duplicating it.
+export const deletePosts = async (data: { postIds: string[]; userId: string }) => {
+  const { postIds, userId } = data;
+  const owned = await prisma.post.findMany({
+    where: { id: { in: postIds }, userId },
+    select: { id: true },
+  });
+  await Promise.all(owned.map((post) => deletePost({ postId: post.id })));
+  return owned.map((post) => post.id);
+};
+
 export const getSearchedPosts = async (text: string) => {
   const posts = await findPostsByText(text);
   return posts.map(toPostDTO);

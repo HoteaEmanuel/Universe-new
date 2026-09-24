@@ -143,6 +143,14 @@ export const deletePostsByNameSchema = z.object({
 });
 export type DeletePostsByNameInput = z.infer<typeof deletePostsByNameSchema>;
 
+export const deletePostsSchema = z.object({
+  ids: z
+    .array(z.string().uuid("ids must be valid ids"))
+    .min(1, "Select at least one post")
+    .max(100, "You can delete at most 100 posts at once"),
+});
+export type DeletePostsInput = z.infer<typeof deletePostsSchema>;
+
 export const feedQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(10),

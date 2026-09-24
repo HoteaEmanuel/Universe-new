@@ -68,9 +68,12 @@ export const httpClient: HttpClient = {
       return unwrap(error, "Request failed");
     }
   },
-  async delete(path) {
+  async delete(path, body) {
     try {
-      const { data } = await axios.delete(`${API_URL}${path}`);
+      const { data } = await axios.delete(
+        `${API_URL}${path}`,
+        body !== undefined ? { data: body } : undefined,
+      );
       return data;
     } catch (error) {
       return unwrap(error, "Request failed");

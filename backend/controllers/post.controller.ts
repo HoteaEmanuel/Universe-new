@@ -9,10 +9,11 @@ import {
   getShareRecipientGroups,
 } from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
-import type { UsersWhoLikedQueryInput, SharePostInput, OpportunitiesQueryInput } from "@universe/shared/schemas/post.schema.js";
+import type { UsersWhoLikedQueryInput, SharePostInput, OpportunitiesQueryInput, DeletePostsInput } from "@universe/shared/schemas/post.schema.js";
 import {
   createNewPost,
   deletePost,
+  deletePosts,
   getPosts,
   getPostsByTag,
   getSavedPosts,
@@ -374,6 +375,16 @@ export const deletePostController = async (req: Request, res: Response) => {
     return res.status(204).json({ message: "Post deleted successfully" });
   } catch (error) {
     return res.status(404).json({ message: "Deleting failed", error: errorMessage(error) });
+  }
+};
+
+export const deletePostsController = async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body as DeletePostsInput;
+    const deletedIds = await deletePosts({ postIds: ids, userId: req.userId as string });
+    return res.status(200).json({ message: "Posts deleted", deletedIds });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 

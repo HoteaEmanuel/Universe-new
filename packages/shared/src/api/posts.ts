@@ -112,4 +112,7 @@ export const createPostsApi = (client: HttpClient) => ({
   },
 
   remove: (id: string) => client.delete<void>(`/posts/${id}`),
+
+  removeMany: (ids: string[]) =>
+    client.delete<{ deletedIds: string[] }>("/posts", { ids }),
 });

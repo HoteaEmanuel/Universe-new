@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View, Text, Pressable, FlatList, ActivityIndicator } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -5,6 +6,7 @@ import { KeyboardStickyView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { formatDateDetailed, formatCount, type PostComment } from "@universe/shared";
 import { useAuthStore } from "@store/authStore";
+import { useConfirmDialogStore } from "@store/confirmDialogStore";
 import {
   useGetPostQuery,
   usePostUserQuery,
@@ -16,7 +18,11 @@ import {
   useGetPostCommentsInfinite,
   useGetPostCommentsCount,
 } from "@queryAndMutation/queries/comments-queries";
-import { useLikeMutation, useUnlikeMutation } from "@queryAndMutation/mutations/post-mutation";
+import {
+  useLikeMutation,
+  useUnlikeMutation,
+  useDeletePostMutation,
+} from "@queryAndMutation/mutations/post-mutation";
 import { useIsFollowingQuery } from "@queryAndMutation/queries/user-queries";
 import { useFollowMutation, useUnfollowMutation } from "@queryAndMutation/mutations/user-mutation";
 import { Colors } from "@constants/colors";
@@ -29,6 +35,7 @@ import AnimatedLikeButton from "@components/post/AnimatedLikeButton";
 import OpportunitySummary from "@components/opportunities/OpportunitySummary";
 import Comment from "@components/comments/Comment";
 import CommentInput from "@components/comments/CommentInput";
+import ActionSheetModal from "@components/ActionSheetModal";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
 const PostDetails = () => {
@@ -57,6 +64,8 @@ const PostDetails = () => {
   const unlikeMutation = useUnlikeMutation(id);
   const followMutation = useFollowMutation(post?.userId, currentUserId);
   const unfollowMutation = useUnfollowMutation(post?.userId, currentUserId);
+  const deletePostMutation = useDeletePostMutation(id, currentUserId);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const isPending =
     postPending ||
@@ -69,6 +78,19 @@ const PostDetails = () => {
   const handleLike = () => {
     if (liked) unlikeMutation.mutate();
     else likeMutation.mutate();
+  };
+
+  const handleDelete = () => {
+    useConfirmDialogStore.getState().open({
+      title: "Delete this post?",
+      message: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      destructive: true,
+      onConfirm: () => {
+        deletePostMutation.mutate();
+        router.back();
+      },
+    });
   };
 
   if (isPending) {
@@ -107,6 +129,11 @@ const PostDetails = () => {
         <PressableScale onPress={() => router.back()} hitSlop={8}>
           <Ionicons name="chevron-back" size={IconSizes.xl} color={theme.iconMuted} />
         </PressableScale>
+        {isOwnPost ? (
+          <PressableScale onPress={() => setMenuVisible(true)} hitSlop={8}>
+            <Ionicons name="ellipsis-horizontal" size={IconSizes.xl} color={theme.iconMuted} />
+          </PressableScale>
+        ) : null}
       </View>
 
       <View className="flex-row items-center gap-3 px-4 py-3">
@@ -275,6 +302,28 @@ const PostDetails = () => {
           <CommentInput postId={id} />
         </View>
       </KeyboardStickyView>
+
+      {isOwnPost ? (
+        <ActionSheetModal
+          visible={menuVisible}
+          onClose={() => setMenuVisible(false)}
+          items={[
+            {
+              key: "edit",
+              label: "Edit post",
+              icon: "create-outline",
+              onPress: () => router.push(`/edit-post/${id}`),
+            },
+            {
+              key: "delete",
+              label: "Delete post",
+              icon: "trash-outline",
+              destructive: true,
+              onPress: handleDelete,
+            },
+          ]}
+        />
+      ) : null}
     </ThemedView>
   );
 };

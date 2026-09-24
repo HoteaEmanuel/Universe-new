@@ -16,6 +16,21 @@ export const useCreatePostMutation = () => {
   return useMutation(createPostMutations(postsApi, queryClient).create<CreatePostFile>());
 };
 
+export const useUpdatePostMutation = (userId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation(createPostMutations(postsApi, queryClient).update<CreatePostFile>(userId));
+};
+
+export const useDeletePostMutation = (postId: string, userId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation(createPostMutations(postsApi, queryClient).remove(postId, userId));
+};
+
+export const useBulkDeletePostsMutation = (userId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation(createPostMutations(postsApi, queryClient).removeMany(userId));
+};
+
 type LikeSnapshot = { liked?: boolean; likes?: number };
 
 // The shared like/unlike mutations (packages/shared/src/mutations/posts.ts)

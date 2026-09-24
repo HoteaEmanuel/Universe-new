@@ -39,6 +39,15 @@ export const createPostMutations = (api: PostsApi, queryClient: QueryClient) => 
       },
     }),
 
+  removeMany: (userId?: string) =>
+    mutationOptions({
+      mutationFn: (postIds: string[]) => api.removeMany(postIds),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: postKeys.all });
+        queryClient.invalidateQueries({ queryKey: postKeys.byUser(userId ?? "") });
+      },
+    }),
+
   // The original invalidated `["posts", postId]`, a key no query in this
   // codebase actually uses (the detail query key is singular `["post", id]`)
   // — under TanStack's prefix matching that invalidation never matched

@@ -102,6 +102,7 @@ const RootLayout = () => {
                 <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
                 <Stack.Screen name="(dashboard)" options={{ headerShown: false }} />
                 <Stack.Screen name="(post)/post-details/[id]" options={{ headerShown: false }} />
+                <Stack.Screen name="(post)/edit-post/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="(event)/event-details/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="(event)/edit-event/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="(event)/create-event/index" options={{ headerShown: false }} />

@@ -1,4 +1,6 @@
-import { View, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, ActivityIndicator } from "react-native";
+import { GestureDetector } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import ThemedView from "@components/ThemedView";
@@ -9,13 +11,16 @@ import { IconSizes } from "@constants/iconSizes";
 import { PressableScale } from "@lib/styled";
 import { useGetFollowersQuery, useGetFollowingQuery } from "@queryAndMutation/queries/user-queries";
 import { useGetUserPostsQuery } from "@queryAndMutation/queries/post-queries";
+import { useBulkDeletePostsMutation } from "@queryAndMutation/mutations/post-mutation";
 import ProfileHeader, { type ProfileHeaderUser } from "@components/profile/ProfileHeader";
 import ProfilePostGrid from "@components/profile/ProfilePostGrid";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
+import { usePostDragSelect } from "@hooks/usePostDragSelect";
 
 const Profile = () => {
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
+  const insets = useSafeAreaInsets();
   const { user, logOut } = useAuthStore();
 
   const handleLogout = () => {
@@ -36,6 +41,37 @@ const Profile = () => {
   const { data: followingData, isLoading: followingLoading } = useGetFollowingQuery(user?.id);
   const { data: userPostsData, isLoading: userPostsLoading } = useGetUserPostsQuery(user?.id);
 
+  const {
+    selectMode,
+    selectedIds,
+    scrollEnabled,
+    gesture,
+    scrollViewRef,
+    handleScroll,
+    handleScrollViewLayout,
+    handleGridLayout,
+    enterSelectMode,
+    toggleSelect,
+    selectAll,
+    exitSelectMode,
+  } = usePostDragSelect(userPostsData ?? []);
+
+  const bulkDeleteMutation = useBulkDeletePostsMutation(user?.id);
+
+  const handleDeleteSelected = () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    useConfirmDialogStore.getState().open({
+      title: `Delete ${ids.length} post${ids.length === 1 ? "" : "s"}?`,
+      message: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      destructive: true,
+      onConfirm: () => {
+        bulkDeleteMutation.mutate(ids, { onSuccess: exitSelectMode });
+      },
+    });
+  };
+
   if (followersLoading || followingLoading || userPostsLoading) {
     return (
       <ThemedView safe className="flex-1 items-center justify-center">
@@ -45,31 +81,102 @@ const Profile = () => {
   }
 
   return (
-    <ThemedView safe fullHeight>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-        <View className="flex-row items-center justify-end gap-4 px-4 pt-2">
-          <PressableScale onPress={() => router.push("/settings")} hitSlop={8}>
-            <Ionicons name="settings-outline" size={IconSizes.xl} color={theme.iconMuted} />
+    <ThemedView safe fullHeight style={{ paddingBottom: 0 }}>
+      <GestureDetector gesture={gesture}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={{ flex: 1 }}
+          scrollEnabled={scrollEnabled}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          onLayout={handleScrollViewLayout}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 24 }}
+        >
+          {selectMode ? (
+            <View className="flex-row items-center justify-between px-4 pt-2">
+              <Text className="text-sm font-semibold" style={{ color: theme.title }}>
+                {selectedIds.size} selected
+              </Text>
+              <PressableScale onPress={selectAll} hitSlop={8}>
+                <Text className="text-sm font-semibold" style={{ color: Colors.primary }}>
+                  Select all
+                </Text>
+              </PressableScale>
+            </View>
+          ) : (
+            <View className="flex-row items-center justify-end gap-4 px-4 pt-2">
+              <PressableScale onPress={() => router.push("/settings")} hitSlop={8}>
+                <Ionicons name="settings-outline" size={IconSizes.xl} color={theme.iconMuted} />
+              </PressableScale>
+              <PressableScale onPress={handleLogout} hitSlop={8}>
+                <Ionicons name="log-out-outline" size={IconSizes.xl} color={theme.iconMuted} />
+              </PressableScale>
+            </View>
+          )}
+
+          <ProfileHeader
+            user={(user as ProfileHeaderUser | null) ?? {}}
+            isOwnProfile
+            postsCount={userPostsData?.length ?? 0}
+            followersCount={followersData?.length ?? 0}
+            followingCount={followingData?.length ?? 0}
+          />
+
+          <ProfilePostGrid
+            posts={userPostsData}
+            emptyTitle={
+              <>
+                Give this space some{" "}
+                <Text className="italic" style={{ color: "#f59e0b", fontWeight: "800" }}>
+                  life
+                </Text>
+              </>
+            }
+            emptyDescription="You don't need the perfect post — just something real."
+            emptyIllustration="student-life"
+            showCreateCta
+            selectable
+            selectMode={selectMode}
+            selectedIds={selectedIds}
+            onLongPressTile={enterSelectMode}
+            onToggleSelect={toggleSelect}
+            onLayout={handleGridLayout}
+          />
+        </ScrollView>
+      </GestureDetector>
+
+      {selectMode ? (
+        <View
+          className="flex-row items-center justify-between px-gutter pt-3"
+          style={{
+            backgroundColor: theme.background,
+            borderTopWidth: 1,
+            borderTopColor: theme.borderColor,
+            paddingBottom: Math.max(insets.bottom, 16),
+          }}
+        >
+          <PressableScale onPress={exitSelectMode} className="px-2 py-2.5">
+            <Text className="text-sm font-semibold" style={{ color: theme.text }}>
+              Cancel
+            </Text>
           </PressableScale>
-          <PressableScale onPress={handleLogout} hitSlop={8}>
-            <Ionicons name="log-out-outline" size={IconSizes.xl} color={theme.iconMuted} />
+          <PressableScale
+            onPress={handleDeleteSelected}
+            enabled={selectedIds.size > 0 && !bulkDeleteMutation.isPending}
+            className="flex-row items-center gap-2 rounded-full px-5 py-2.5"
+            style={{
+              backgroundColor: Colors.warning,
+              opacity: selectedIds.size > 0 ? 1 : 0.5,
+            }}
+          >
+            <Ionicons name="trash-outline" size={IconSizes.sm} color="#ffffff" />
+            <Text className="text-sm font-semibold" style={{ color: "#ffffff" }}>
+              Delete
+            </Text>
           </PressableScale>
         </View>
-
-        <ProfileHeader
-          user={(user as ProfileHeaderUser | null) ?? {}}
-          isOwnProfile
-          postsCount={userPostsData?.length ?? 0}
-          followersCount={followersData?.length ?? 0}
-          followingCount={followingData?.length ?? 0}
-        />
-
-        <ProfilePostGrid
-          posts={userPostsData}
-          emptyTitle="No posts yet"
-          emptyDescription="Share something with your friends."
-        />
-      </ScrollView>
+      ) : null}
     </ThemedView>
   );
 };

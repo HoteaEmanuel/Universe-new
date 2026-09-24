@@ -71,8 +71,9 @@ const UserProfile = () => {
 
         <ProfilePostGrid
           posts={userPosts}
-          emptyTitle="No posts yet"
+          emptyTitle="Still connecting the dots"
           emptyDescription="Nothing has been shared here yet."
+          emptyIllustration="constellation"
         />
       </ScrollView>
     </ThemedView>

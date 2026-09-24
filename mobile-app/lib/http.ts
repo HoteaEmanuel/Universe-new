@@ -52,9 +52,9 @@ export const httpClient: HttpClient = {
       return unwrap(error, "Request failed");
     }
   },
-  async delete(path) {
+  async delete(path, body) {
     try {
-      const { data } = await api.delete(path);
+      const { data } = await api.delete(path, body !== undefined ? { data: body } : undefined);
       return data;
     } catch (error) {
       return unwrap(error, "Request failed");

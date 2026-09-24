@@ -11,6 +11,7 @@ import {
   getPost,
   updatePostController,
   deletePostController,
+  deletePostsController,
   checkSaved,
   getRelatedPosts,
   getUsersWhoLikedPost,
@@ -35,6 +36,7 @@ import {
   updatePostSchema,
   postIdSchema,
   deletePostsByNameSchema,
+  deletePostsSchema,
   feedQuerySchema,
   usersWhoLikedQuerySchema,
   sharePostSchema,
@@ -108,6 +110,11 @@ router.patch(
   updatePostController,
 );
 router.delete("/posts/:id", requirePostOwner, deletePostController);
+router.delete(
+  "/posts",
+  validate({ body: deletePostsSchema }),
+  deletePostsController,
+);
 router.get("/posts-by-name/:name", getSearchedPostsController);
 
 router.post(

@@ -6,9 +6,17 @@ import { IconSizes } from "@constants/iconSizes";
 import { MAX_IMAGES } from "@constants/postForm";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
+// A picked local asset (create, or newly-added on edit) or an existing
+// remote URL string to keep (edit only) — mirrors UpdatePostPayload's
+// `images: (TFile | string)[]`, so the form can hand this straight to the
+// update mutation without re-splitting it.
+export type ComposerImage = ImagePicker.ImagePickerAsset | string;
+
+const imageUri = (image: ComposerImage) => (typeof image === "string" ? image : image.uri);
+
 type ComposerImagePickerProps = {
-  images: ImagePicker.ImagePickerAsset[];
-  onChange: (images: ImagePicker.ImagePickerAsset[]) => void;
+  images: ComposerImage[];
+  onChange: (images: ComposerImage[]) => void;
 };
 
 const TILE_CLASS = "aspect-square w-[31%] overflow-hidden rounded-lg";
@@ -33,17 +41,17 @@ const ComposerImagePicker = ({ images, onChange }: ComposerImagePickerProps) => 
   };
 
   const handleRemove = (uri: string) => {
-    onChange(images.filter((image) => image.uri !== uri));
+    onChange(images.filter((image) => imageUri(image) !== uri));
   };
 
   return (
     <View className="gap-2">
       <View className="flex-row flex-wrap gap-2">
         {images.map((image) => (
-          <View key={image.uri} className={TILE_CLASS}>
-            <Image source={{ uri: image.uri }} className="h-full w-full" />
+          <View key={imageUri(image)} className={TILE_CLASS}>
+            <Image source={{ uri: imageUri(image) }} className="h-full w-full" />
             <Pressable
-              onPress={() => handleRemove(image.uri)}
+              onPress={() => handleRemove(imageUri(image))}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Remove image"
