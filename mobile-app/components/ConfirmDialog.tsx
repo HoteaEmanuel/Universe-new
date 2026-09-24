@@ -2,20 +2,16 @@ import { Modal, Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@constants/colors";
 import { IconSizes } from "@constants/iconSizes";
-import { PressableScale } from "@lib/styled";
 import { useConfirmDialogStore } from "@store/confirmDialogStore";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
-// Themed stand-in for Alert.alert's confirm/cancel shape — same rounded-2xl
-// card + violet accent language as PostCard/ComposerSubmitBar, since the
-// native OS alert can't be restyled in place. Mounted once in app/_layout.jsx
-// and driven by useConfirmDialogStore so call sites (e.g.
-// utils/confirmDiscardChanges.ts) stay a plain function call.
+
 const ConfirmDialog = () => {
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
-  const { visible, title, message, confirmLabel, cancelLabel, destructive, onConfirm, close } =
+  const { visible, title, message, confirmLabel, cancelLabel, destructive, icon, onConfirm, close } =
     useConfirmDialogStore();
+  const resolvedIcon = icon ?? (destructive ? "trash-outline" : "help-circle-outline");
 
   const handleConfirm = () => {
     close();
@@ -39,7 +35,7 @@ const ConfirmDialog = () => {
             style={{ backgroundColor: destructive ? "rgba(204, 71, 90, 0.15)" : "rgba(104, 73, 167, 0.15)" }}
           >
             <Ionicons
-              name={destructive ? "trash-outline" : "help-circle-outline"}
+              name={resolvedIcon}
               size={IconSizes.xl}
               color={destructive ? Colors.warning : Colors.primary}
             />
@@ -55,24 +51,31 @@ const ConfirmDialog = () => {
           </View>
 
           <View className="flex-row gap-3 pt-1">
-            <PressableScale
+            <Pressable
               onPress={close}
               className="flex-1 items-center justify-center rounded-full py-3"
-              style={{ borderWidth: 1, borderColor: theme.borderColor }}
+              style={({ pressed }) => ({
+                borderWidth: 1,
+                borderColor: theme.borderColor,
+                opacity: pressed ? 0.6 : 1,
+              })}
             >
               <Text className="text-sm font-semibold" style={{ color: theme.text }}>
                 {cancelLabel}
               </Text>
-            </PressableScale>
-            <PressableScale
+            </Pressable>
+            <Pressable
               onPress={handleConfirm}
               className="flex-1 items-center justify-center rounded-full py-3"
-              style={{ backgroundColor: destructive ? Colors.warning : Colors.primary }}
+              style={({ pressed }) => ({
+                backgroundColor: destructive ? Colors.warning : Colors.primary,
+                opacity: pressed ? 0.85 : 1,
+              })}
             >
               <Text className="text-sm font-semibold" style={{ color: "#ffffff" }}>
                 {confirmLabel}
               </Text>
-            </PressableScale>
+            </Pressable>
           </View>
         </Pressable>
       </Pressable>

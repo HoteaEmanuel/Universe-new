@@ -3,6 +3,8 @@ import type {
   ChatMessagePage,
   DirectConversation,
   DirectConversationsPage,
+  MessageContext,
+  MessageSearchPage,
   NewFilesMessagePayload,
   NewMessagePayload,
   NewVoiceMessagePayload,
@@ -29,6 +31,18 @@ export const createConversationsApi = (client: HttpClient) => ({
     }>(`/conversations/${id}/messages`, cursor ? { cursor } : undefined);
     return response satisfies ChatMessagePage;
   },
+
+  searchMessages: async (id: string, query: string, cursor?: string) => {
+    const response = await client.get<{
+      messages: ChatMessage[];
+      nextCursor: string | null;
+      hasMore: boolean;
+    }>(`/conversations/${id}/messages/search`, { q: query, ...(cursor ? { cursor } : {}) });
+    return response satisfies MessageSearchPage;
+  },
+
+  getMessageContext: (id: string, messageId: string) =>
+    client.get<MessageContext>(`/conversations/${id}/messages/context/${messageId}`),
 
   markRead: (id: string) => client.post<unknown>(`/conversations/${id}/read`),
 

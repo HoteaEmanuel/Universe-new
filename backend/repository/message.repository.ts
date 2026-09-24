@@ -230,6 +230,94 @@ export const getConversationMessagesPage = async (
   return toMessagePage(rows, limit);
 };
 
+// Plain `contains` rather than a trigram/tsvector index (unlike User/Post/
+// Group's search-vector columns) — this is always scoped to one
+// conversation via the existing @@index([conversationId]), so Postgres
+// narrows to that conversation's rows first; a full-text index only pays
+// for itself on an unscoped, whole-table scan like the global search does.
+export const searchConversationMessages = async (
+  conversationId: string,
+  query: string,
+  cursor?: string,
+  limit = 30,
+  sinceClearedAt?: Date | null,
+) => {
+  const rows = await prisma.message.findMany({
+    where: {
+      conversationId,
+      deleted: false,
+      content: { contains: query, mode: "insensitive" },
+      ...(sinceClearedAt ? { createdAt: { gt: sinceClearedAt } } : {}),
+    },
+    take: limit + 1,
+    orderBy: MESSAGE_ORDER_BY,
+    include: {
+      reactions: { select: { id: true, emoji: true, userId: true } },
+      ...MESSAGE_INCLUDE,
+    },
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+  return toMessagePage(rows, limit);
+};
+
+// Returns a window of messages centered on `messageId` — `before`/`after`
+// each reuse the same Prisma `cursor: { id }, skip: 1` idiom as the normal
+// paginated listing above (Prisma resolves the cursor's position in the
+// given `orderBy`, then skips past it), just run once in each direction
+// instead of only backward. This is what lets a client "jump to" an
+// arbitrary older message found via search — the normal listing endpoint
+// can only ever page backward from the most recent message, with no way to
+// land on a message deep in history without walking every page in between.
+export const getConversationMessageContext = async (
+  conversationId: string,
+  messageId: string,
+  before = 20,
+  after = 15,
+) => {
+  const target = await prisma.message.findFirst({
+    where: { id: messageId, conversationId },
+    include: {
+      reactions: { select: { id: true, emoji: true, userId: true } },
+      ...MESSAGE_INCLUDE,
+    },
+  });
+  if (!target) return null;
+
+  const [olderRows, newerRows] = await Promise.all([
+    prisma.message.findMany({
+      where: { conversationId },
+      orderBy: MESSAGE_ORDER_BY,
+      cursor: { id: messageId },
+      skip: 1,
+      take: before + 1,
+      include: {
+        reactions: { select: { id: true, emoji: true, userId: true } },
+        ...MESSAGE_INCLUDE,
+      },
+    }),
+    prisma.message.findMany({
+      where: { conversationId },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      cursor: { id: messageId },
+      skip: 1,
+      take: after,
+      include: {
+        reactions: { select: { id: true, emoji: true, userId: true } },
+        ...MESSAGE_INCLUDE,
+      },
+    }),
+  ]);
+
+  const hasOlder = olderRows.length > before;
+  const olderChrono = (hasOlder ? olderRows.slice(0, before) : olderRows).slice().reverse();
+
+  return {
+    messages: [...olderChrono, target, ...newerRows],
+    hasOlder,
+    olderCursor: hasOlder ? olderChrono[0].id : null,
+  };
+};
+
 export const countUnreadMessages = async (
   conversationId: string,
   userId: string,
@@ -261,6 +349,84 @@ export const getGroupMessagesPage = async (
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
   return toMessagePage(rows, limit);
+};
+
+// See searchConversationMessages above for why this is a plain `contains`
+// rather than a full-text index — same reasoning, scoped via the existing
+// @@index([groupId]).
+export const searchGroupMessages = async (
+  groupId: string,
+  query: string,
+  cursor?: string,
+  limit = 30,
+) => {
+  const rows = await prisma.groupMessage.findMany({
+    where: {
+      groupId,
+      deleted: false,
+      content: { contains: query, mode: "insensitive" },
+    },
+    take: limit + 1,
+    orderBy: GROUP_MESSAGE_ORDER_BY,
+    include: {
+      reactions: { select: { id: true, emoji: true, userId: true } },
+      ...GROUP_MESSAGE_INCLUDE,
+    },
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  });
+  return toMessagePage(rows, limit);
+};
+
+// See getConversationMessageContext above — same anchored before/after
+// cursor idiom, group-scoped.
+export const getGroupMessageContext = async (
+  groupId: string,
+  messageId: string,
+  before = 20,
+  after = 15,
+) => {
+  const target = await prisma.groupMessage.findFirst({
+    where: { id: messageId, groupId },
+    include: {
+      reactions: { select: { id: true, emoji: true, userId: true } },
+      ...GROUP_MESSAGE_INCLUDE,
+    },
+  });
+  if (!target) return null;
+
+  const [olderRows, newerRows] = await Promise.all([
+    prisma.groupMessage.findMany({
+      where: { groupId },
+      orderBy: GROUP_MESSAGE_ORDER_BY,
+      cursor: { id: messageId },
+      skip: 1,
+      take: before + 1,
+      include: {
+        reactions: { select: { id: true, emoji: true, userId: true } },
+        ...GROUP_MESSAGE_INCLUDE,
+      },
+    }),
+    prisma.groupMessage.findMany({
+      where: { groupId },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      cursor: { id: messageId },
+      skip: 1,
+      take: after,
+      include: {
+        reactions: { select: { id: true, emoji: true, userId: true } },
+        ...GROUP_MESSAGE_INCLUDE,
+      },
+    }),
+  ]);
+
+  const hasOlder = olderRows.length > before;
+  const olderChrono = (hasOlder ? olderRows.slice(0, before) : olderRows).slice().reverse();
+
+  return {
+    messages: [...olderChrono, target, ...newerRows],
+    hasOlder,
+    olderCursor: hasOlder ? olderChrono[0].id : null,
+  };
 };
 
 export interface MediaPageItem {

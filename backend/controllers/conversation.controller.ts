@@ -10,6 +10,8 @@ import {
   getConversationFilesPage,
   getConversationMediaPage,
   getConversationMessagesPage,
+  searchConversationMessages,
+  getConversationMessageContext,
 } from "../repository/message.repository.js";
 import { findBlockEitherDirection } from "../repository/block.repository.js";
 import type { ConversationsListQueryInput } from "@universe/shared/schemas/conversation.schema.js";
@@ -184,6 +186,45 @@ export const getMessages = async (req: Request, res: Response) => {
     });
   } catch (error) {
     return res.status(400).json({ error });
+  }
+};
+
+export const searchConvoMessagesController = async (req: Request, res: Response) => {
+  try {
+    const convoId = req.params.id as string;
+    const userId = req.userId as string;
+    const query = req.query.q as string;
+    const cursor = req.query.cursor as string | undefined;
+    const limit = req.query.limit as unknown as number;
+
+    const archiveState = await findConversationArchiveState(convoId);
+    const isParticipantOne = archiveState?.participantOneId === userId;
+    const myClearedAt = archiveState
+      ? isParticipantOne
+        ? archiveState.clearedAtParticipantOne
+        : archiveState.clearedAtParticipantTwo
+      : null;
+
+    const page = await searchConversationMessages(convoId, query, cursor, limit, myClearedAt);
+    return res.status(200).json({ message: "Searched messages successfully", ...page });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: error instanceof Error ? error.message : "" });
+  }
+};
+
+export const getConvoMessageContextController = async (req: Request, res: Response) => {
+  try {
+    const convoId = req.params.id as string;
+    const messageId = req.params.messageId as string;
+    const context = await getConversationMessageContext(convoId, messageId);
+    if (!context) return res.status(404).json({ message: "Message not found" });
+    return res.status(200).json({ message: "Fetched message context", ...context });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: error instanceof Error ? error.message : "" });
   }
 };
 

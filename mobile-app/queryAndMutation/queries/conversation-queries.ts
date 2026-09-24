@@ -5,5 +5,8 @@ export const {
   useGetUserConversationsInfinite,
   useGetUserByConvoId,
   useGetConvoMessagesInfinite,
+  useSearchConvoMessages,
+  useGetConvoMessageContext,
+  useGetConvoResourcesInfinite,
   useGetConversationByUsersIdsQuery,
 } = createConversationQueryHooks(httpClient);

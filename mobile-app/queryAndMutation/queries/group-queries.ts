@@ -5,4 +5,9 @@ export const {
   useGetUserGroupsInfinite,
   useGetGroupById,
   useGetGroupMessagesInfinite,
+  useSearchGroupMessages,
+  useGetGroupMessageContext,
+  useGetGroupResourcesInfinite,
+  useGetGroupMembersInfiniteQuery,
+  useGetGroupMemberById,
 } = createGroupQueryHooks(httpClient);

@@ -67,6 +67,8 @@ export const groupKeys = {
     ["discoverable-public-groups", courseTag, universityOnly, limit] as const,
   courseCatalog: (groupId?: string) => ["course-catalog", groupId] as const,
   messages: (id: string) => ["group-messages", id] as const,
+  messageSearch: (id: string, query: string) => ["group-message-search", id, query] as const,
+  messageContext: (id: string, messageId: string) => ["group-message-context", id, messageId] as const,
   resources: (type: string, id: string) => ["group-resources", type, id] as const,
   members: (groupId: string) => ["group-members", groupId] as const,
   membersPage: (groupId: string, search?: string) => ["group-members-page", groupId, search] as const,
@@ -130,6 +132,9 @@ export const conversationKeys = {
   archivedAll: () => ["archived-conversations"] as const,
   archived: (search: string) => ["archived-conversations", search] as const,
   messages: (id: string) => ["conversation_messages", id] as const,
+  messageSearch: (id: string, query: string) => ["conversation-message-search", id, query] as const,
+  messageContext: (id: string, messageId: string) =>
+    ["conversation-message-context", id, messageId] as const,
   resources: (type: string, id: string) => ["conversation-resources", type, id] as const,
   byUsersIds: (id: string) => ["conversations", id] as const,
   convoUsers: () => ["convo-users"] as const,

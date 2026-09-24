@@ -50,6 +50,23 @@ export const createConversationQueries = (api: ConversationsApi) => ({
       enabled: !!id,
     }),
 
+  // Single page, not infinite - result lists stay small enough (up to the
+  // 50-item schema cap) that paginating a search-as-you-type box would be
+  // over-engineering; see current-feature.md's message-search notes.
+  messageSearch: (id: string | undefined, query: string) =>
+    queryOptions({
+      queryKey: conversationKeys.messageSearch(id ?? "", query),
+      queryFn: () => api.searchMessages(id as string, query),
+      enabled: !!id && query.trim().length >= 2,
+    }),
+
+  messageContext: (id: string | undefined, messageId: string | undefined) =>
+    queryOptions({
+      queryKey: conversationKeys.messageContext(id ?? "", messageId ?? ""),
+      queryFn: () => api.getMessageContext(id as string, messageId as string),
+      enabled: !!id && !!messageId,
+    }),
+
   resources: <T>(type: ResourceType, id?: string) =>
     infiniteQueryOptions({
       queryKey: conversationKeys.resources(type, id ?? ""),
@@ -86,6 +103,10 @@ export const createConversationQueryHooks = (httpClient: HttpClient) => {
     useGetArchivedConversationsInfinite: (search: string, enabled = true) =>
       useInfiniteQuery(queries.archivedConversations(search, enabled)),
     useGetConvoMessagesInfinite: (id?: string) => useInfiniteQuery(queries.messages(id)),
+    useSearchConvoMessages: (id: string | undefined, query: string) =>
+      useQuery(queries.messageSearch(id, query)),
+    useGetConvoMessageContext: (id: string | undefined, messageId: string | undefined) =>
+      useQuery(queries.messageContext(id, messageId)),
     useGetConvoResourcesInfinite: <T,>(type: ResourceType, id?: string) =>
       useInfiniteQuery(queries.resources<T>(type, id)),
     useGetConversationByUsersIdsQuery: (id?: string) => useQuery(queries.byUsersIds(id)),

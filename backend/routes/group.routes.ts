@@ -10,6 +10,8 @@ import {
   getGroupById,
   searchGroupMentionUsersController,
   getGroupMessages,
+  searchGroupMessagesController,
+  getGroupMessageContextController,
   getGroupMediaController,
   sendMessageToGroupController,
   sendFilesMessageToGroupController,
@@ -62,6 +64,7 @@ import {
   sendGroupVoiceMessageSchema,
   editGroupMessageSchema,
   groupMessagesQuerySchema,
+  groupMessagesSearchQuerySchema,
   groupMentionSearchQuerySchema,
   groupMediaQuerySchema,
   reactToGroupMessageSchema,
@@ -127,6 +130,17 @@ router.get(
   requireGroupMembership,
   validate({ query: groupMessagesQuerySchema }),
   getGroupMessages,
+);
+router.get(
+  "/:id/messages/search",
+  requireGroupMembership,
+  validate({ query: groupMessagesSearchQuerySchema }),
+  searchGroupMessagesController,
+);
+router.get(
+  "/:id/messages/context/:messageId",
+  requireGroupMembership,
+  getGroupMessageContextController,
 );
 router.get(
   "/:id/media",

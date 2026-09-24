@@ -31,6 +31,8 @@ import {
   getGroupFilesPage,
   getGroupMediaPage,
   getGroupMessagesPage,
+  searchGroupMessages,
+  getGroupMessageContext,
 } from "../repository/message.repository.js";
 import { getActiveConversationUsers } from "../lib/socket.js";
 import type {
@@ -205,6 +207,41 @@ export const getGroupMessages = async (req: Request, res: Response) => {
       groupMessages: messages.map(withGroupMessagePollDTO),
       nextCursor,
       hasMore,
+    });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const searchGroupMessagesController = async (req: Request, res: Response) => {
+  try {
+    const groupId = req.params.id as string;
+    const query = req.query.q as string;
+    const cursor = req.query.cursor as string | undefined;
+    const limit = req.query.limit as unknown as number;
+    const page = await searchGroupMessages(groupId, query, cursor, limit);
+    return res.status(200).json({
+      message: "Searched messages successfully",
+      groupMessages: page.messages.map(withGroupMessagePollDTO),
+      nextCursor: page.nextCursor,
+      hasMore: page.hasMore,
+    });
+  } catch (error) {
+    return res.status(400).json({ message: errorMessage(error) });
+  }
+};
+
+export const getGroupMessageContextController = async (req: Request, res: Response) => {
+  try {
+    const groupId = req.params.id as string;
+    const messageId = req.params.messageId as string;
+    const context = await getGroupMessageContext(groupId, messageId);
+    if (!context) return res.status(404).json({ message: "Message not found" });
+    return res.status(200).json({
+      message: "Fetched message context",
+      messages: context.messages.map(withGroupMessagePollDTO),
+      hasOlder: context.hasOlder,
+      olderCursor: context.olderCursor,
     });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });

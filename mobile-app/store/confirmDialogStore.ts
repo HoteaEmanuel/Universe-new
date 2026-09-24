@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { Ionicons } from "@expo/vector-icons";
 
 type ConfirmDialogOptions = {
   title: string;
@@ -6,6 +7,7 @@ type ConfirmDialogOptions = {
   confirmLabel: string;
   cancelLabel: string;
   destructive: boolean;
+  icon?: keyof typeof Ionicons.glyphMap;
   onConfirm: () => void;
 };
 
@@ -25,9 +27,10 @@ export const useConfirmDialogStore = create<ConfirmDialogState>((set) => ({
   confirmLabel: "Confirm",
   cancelLabel: "Cancel",
   destructive: false,
+  icon: undefined,
   onConfirm: () => {},
 
-  open: ({ title, message, confirmLabel, cancelLabel, destructive, onConfirm }) =>
+  open: ({ title, message, confirmLabel, cancelLabel, destructive, icon, onConfirm }) =>
     set({
       visible: true,
       title: title ?? "",
@@ -35,6 +38,7 @@ export const useConfirmDialogStore = create<ConfirmDialogState>((set) => ({
       confirmLabel: confirmLabel ?? "Confirm",
       cancelLabel: cancelLabel ?? "Cancel",
       destructive: destructive ?? false,
+      icon,
       onConfirm,
     }),
   close: () => set({ visible: false }),

@@ -104,6 +104,9 @@ const RootLayout = () => {
               <Stack.Screen name="(comments)/comments/[id]" options={{ headerShown: false }} />
               <Stack.Screen name="(chat)/conversation/[id]" options={{ headerShown: false }} />
               <Stack.Screen name="(chat)/new-conversation/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="(chat)/details/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="(chat)/media/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="(chat)/members/[id]" options={{ headerShown: false }} />
               <Stack.Screen name="(settings)/settings/index" options={{ headerShown: false }} />
               <Stack.Screen name="(settings)/settings/edit-profile" options={{ headerShown: false }} />
               <Stack.Screen name="(settings)/settings/change-password" options={{ headerShown: false }} />

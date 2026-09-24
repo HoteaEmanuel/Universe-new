@@ -1,5 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, Pressable } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 import { router } from "expo-router";
 import { getFullName, type ChatMessage } from "@universe/shared";
 import { Colors } from "@constants/colors";
@@ -17,19 +23,33 @@ type MessageBubbleProps = {
   isOwn: boolean;
   variant: "direct" | "group";
   showSender: boolean;
+  highlighted?: boolean;
 };
 
 
-const MessageBubble = ({ message, isOwn, variant, showSender }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwn, variant, showSender, highlighted }: MessageBubbleProps) => {
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const isGroupOther = variant === "group" && !isOwn;
   const [showDetail, setShowDetail] = useState(false);
 
+  // Brief flash so a message jumped to via search stands out from the rest
+  // of the thread, then fades back to normal on its own.
+  const flash = useSharedValue(0);
+  useEffect(() => {
+    if (highlighted) {
+      flash.value = 1;
+      flash.value = withDelay(300, withTiming(0, { duration: 900 }));
+    }
+  }, [highlighted, flash]);
+  const highlightStyle = useAnimatedStyle(() => ({
+    backgroundColor: `rgba(104, 73, 167, ${flash.value * 0.22})`,
+  }));
+
   return (
-    <View
+    <Animated.View
       className={`flex-row px-4 py-0.5 ${isOwn ? "justify-end" : "justify-start"}`}
-      style={{ alignItems: "flex-start" }}
+      style={[{ alignItems: "flex-start" }, highlightStyle]}
     >
       {isGroupOther ? (
         // The username label sits above the bubble as its own line — the
@@ -114,7 +134,7 @@ const MessageBubble = ({ message, isOwn, variant, showSender }: MessageBubblePro
           {showDetail ? formatMessageDetail(message.createdAt) : formatMessageTime(message.createdAt)}
         </Text>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 

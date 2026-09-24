@@ -53,6 +53,22 @@ export const createGroupQueries = (api: GroupsApi) => ({
       enabled: !!id,
     }),
 
+  // Single page, not infinite - see the identical note on
+  // createConversationQueries.messageSearch in ./conversations.ts.
+  messageSearch: (id: string | undefined, query: string) =>
+    queryOptions({
+      queryKey: groupKeys.messageSearch(id ?? "", query),
+      queryFn: () => api.searchMessages(id as string, query),
+      enabled: !!id && query.trim().length >= 2,
+    }),
+
+  messageContext: (id: string | undefined, messageId: string | undefined) =>
+    queryOptions({
+      queryKey: groupKeys.messageContext(id ?? "", messageId ?? ""),
+      queryFn: () => api.getMessageContext(id as string, messageId as string),
+      enabled: !!id && !!messageId,
+    }),
+
   resources: <T>(type: ResourceType, id?: string) =>
     infiniteQueryOptions({
       queryKey: groupKeys.resources(type, id ?? ""),
@@ -149,6 +165,10 @@ export const createGroupQueryHooks = (httpClient: HttpClient) => {
       useQuery(queries.courseCatalog(enabled, groupId)),
     useGetGroupById: (id?: string) => useQuery(queries.detail(id)),
     useGetGroupMessagesInfinite: (id?: string) => useInfiniteQuery(queries.messages(id)),
+    useSearchGroupMessages: (id: string | undefined, query: string) =>
+      useQuery(queries.messageSearch(id, query)),
+    useGetGroupMessageContext: (id: string | undefined, messageId: string | undefined) =>
+      useQuery(queries.messageContext(id, messageId)),
     useGetGroupResourcesInfinite: <T,>(type: ResourceType, id?: string) =>
       useInfiniteQuery(queries.resources<T>(type, id)),
     useGetGroupMembers: (groupId?: string) => useQuery(queries.members(groupId)),

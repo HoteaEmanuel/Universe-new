@@ -19,6 +19,8 @@ import {
   archiveConversationController,
   unarchiveConversationController,
   deleteConversationForMeController,
+  searchConvoMessagesController,
+  getConvoMessageContextController,
 } from "../controllers/conversation.controller.js";
 import { imageUpload } from "../lib/imageUpload.js";
 import { audioUpload } from "../lib/audioUpload.js";
@@ -37,6 +39,7 @@ import {
   sendVoiceMessageSchema,
   editMessageSchema,
   messagesQuerySchema,
+  messagesSearchQuerySchema,
   mediaQuerySchema,
   reactToMessageSchema,
   conversationsListQuerySchema,
@@ -66,6 +69,17 @@ router.get(
   requireConversationParticipant,
   validate({ query: messagesQuerySchema }),
   getMessages,
+);
+router.get(
+  "/:id/messages/search",
+  requireConversationParticipant,
+  validate({ query: messagesSearchQuerySchema }),
+  searchConvoMessagesController,
+);
+router.get(
+  "/:id/messages/context/:messageId",
+  requireConversationParticipant,
+  getConvoMessageContextController,
 );
 router.get(
   "/:id/media",

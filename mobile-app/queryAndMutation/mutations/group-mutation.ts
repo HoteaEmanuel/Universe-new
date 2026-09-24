@@ -9,6 +9,25 @@ import { httpClient } from "../../lib/http";
 
 const groupsApi = createGroupsApi(httpClient);
 
+export const useLeaveGroupMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(createGroupMutations(groupsApi, queryClient).leave());
+};
+
+export const useDeleteGroupMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(createGroupMutations(groupsApi, queryClient).delete());
+};
+
+export const usePromoteToAdminMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation(createGroupMutations(groupsApi, queryClient).promoteToAdmin(groupId));
+};
+
+export const useBanGroupMemberMutation = (groupId?: string) => {
+  const queryClient = useQueryClient();
+  return useMutation(createGroupMutations(groupsApi, queryClient).banMember(groupId));
+};
 
 export const useSendMessageToGroupMutation = (groupId?: string) => {
   const queryClient = useQueryClient();

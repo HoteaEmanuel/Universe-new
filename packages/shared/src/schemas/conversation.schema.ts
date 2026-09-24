@@ -35,6 +35,13 @@ export const messagesQuerySchema = z.object({
 });
 export type MessagesQueryInput = z.infer<typeof messagesQuerySchema>;
 
+export const messagesSearchQuerySchema = z.object({
+  q: z.string().trim().min(2, "Search must be at least 2 characters").max(200),
+  cursor: z.string().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(30),
+});
+export type MessagesSearchQueryInput = z.infer<typeof messagesSearchQuerySchema>;
+
 export const conversationsListQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
   search: z.string().max(200).optional(),

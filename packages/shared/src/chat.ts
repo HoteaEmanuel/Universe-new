@@ -111,6 +111,19 @@ export type ChatMessagePage = NamedCursorPage<"messages", ChatMessage> & {
   viewerBlockedOther?: boolean;
 };
 
+export type MessageSearchPage = NamedCursorPage<"messages", ChatMessage>;
+
+// A window of messages centered on one target message, for jumping straight
+// to an arbitrary search result instead of paginating back through history.
+// `hasOlder`/`olderCursor` only ever cover the direction beyond the window's
+// older edge — the caller is expected to be anchored to this window (not the
+// live bottom) while paginating further with them.
+export type MessageContext = {
+  messages: ChatMessage[];
+  hasOlder: boolean;
+  olderCursor: string | null;
+};
+
 export type BlockedUser = {
   id: string;
   createdAt: string;

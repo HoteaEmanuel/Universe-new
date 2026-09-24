@@ -8,6 +8,8 @@ import type {
   GroupConversationsPage,
   GroupMember,
   GroupMemberPage,
+  MessageContext,
+  MessageSearchPage,
   NewCourseResourcePayload,
   NewFilesMessagePayload,
   NewMessagePayload,
@@ -81,6 +83,22 @@ export const createGroupsApi = (client: HttpClient) => ({
   listResources: <T>(id: string, type: ResourceType, before?: string) =>
     client.get<CursorPage<T>>(`/groups/${id}/media`, { type, ...(before ? { before } : {}) }),
 
+  searchMessages: async (id: string, query: string, cursor?: string) => {
+    const response = await client.get<{
+      groupMessages: ChatMessage[];
+      nextCursor: string | null;
+      hasMore: boolean;
+    }>(`/groups/${id}/messages/search`, { q: query, ...(cursor ? { cursor } : {}) });
+    return {
+      messages: response.groupMessages,
+      nextCursor: response.nextCursor,
+      hasMore: response.hasMore,
+    } satisfies MessageSearchPage;
+  },
+
+  getMessageContext: (id: string, messageId: string) =>
+    client.get<MessageContext>(`/groups/${id}/messages/context/${messageId}`),
+
   // The original code set a `multipart/form-data` header while posting a
   // plain object as the body (no real `FormData`) - the backend route
   // (`imageUpload.any()`) requires an actually-encoded multipart body to
@@ -149,6 +167,9 @@ export const createGroupsApi = (client: HttpClient) => ({
 
   leave: async (groupId: string) =>
     (await client.post<{ message: string }>(`/groups/${groupId}/leave-group`)).message,
+
+  delete: async (groupId: string) =>
+    (await client.delete<{ message: string }>(`/groups/${groupId}`)).message,
 
   makeAdmin: (groupId: string, userId: string) =>
     client.post<unknown>(`/groups/${groupId}/make-admin/${userId}`),

@@ -211,6 +211,20 @@ export const createGroupMutations = (api: GroupsApi, queryClient: QueryClient) =
       },
     }),
 
+  // `DELETE /groups/:id` (admin-only, `requireGroupAdmin`-gated server-side)
+  // hard-deletes the group and cascades its members/messages/bans/resources
+  // — unlike `leave`, there's no surviving `detail`/`members` cache to keep
+  // consistent, so both are dropped outright rather than invalidated.
+  delete: () =>
+    mutationOptions({
+      mutationFn: (groupId: string) => api.delete(groupId),
+      onSuccess: (_message, groupId) => {
+        queryClient.invalidateQueries({ queryKey: groupKeys.userGroupsAll() });
+        queryClient.removeQueries({ queryKey: groupKeys.detail(groupId) });
+        queryClient.removeQueries({ queryKey: groupKeys.members(groupId) });
+      },
+    }),
+
   promoteToAdmin: (groupId?: string) =>
     mutationOptions({
       mutationFn: (userId: string) => api.makeAdmin(groupId as string, userId),

@@ -75,6 +75,21 @@ export const useMarkConversationReadMutation = (conversationId?: string) => {
   );
 };
 
+export const useArchiveConversationMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(createConversationMutations(conversationsApi, queryClient).archive());
+};
+
+export const useUnarchiveConversationMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(createConversationMutations(conversationsApi, queryClient).unarchive());
+};
+
+export const useDeleteConversationMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation(createConversationMutations(conversationsApi, queryClient).deleteForMe());
+};
+
 
 export const useSendVoiceMessageMutation = (conversationId?: string) => {
   const queryClient = useQueryClient();
