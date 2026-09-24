@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { View, Text, ActivityIndicator } from "react-native";
 import { BottomSheetFlatList, type BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,9 +8,11 @@ import ThemedBottomSheet from "@components/BottomSheet";
 import SearchInput from "@components/SearchInput";
 import UserAvatar from "@components/UserAvatar";
 import {
+  useGetFollowingQuery,
   useGetRelevantFollowersInfiniteQuery,
   useGetRelevantFollowingInfiniteQuery,
 } from "@queryAndMutation/queries/user-queries";
+import { useFollowMutation } from "@queryAndMutation/mutations/user-mutation";
 import { useAuthStore } from "@store/authStore";
 import { Colors } from "@constants/colors";
 import { PressableScale } from "@lib/styled";
@@ -26,23 +28,42 @@ type FollowListSheetProps = { userId?: string };
 const FollowListRow = ({
   user,
   isSelf,
+  showFollowBack,
+  viewerId,
   onPress,
 }: {
   user: FollowUser;
   isSelf: boolean;
+  showFollowBack: boolean;
+  viewerId?: string;
   onPress: () => void;
 }) => {
   const colorScheme = useAppColorScheme();
   const theme = colorScheme === "light" ? Colors.light : Colors.dark;
   const name = isSelf ? "You" : getFullName(user);
+  const { mutate: followBack, isPending: isFollowingBack } = useFollowMutation(user.id, viewerId);
 
   return (
-    <PressableScale onPress={onPress} className="flex-row items-center gap-3 px-5 py-2.5">
-      <UserAvatar user={user} size={44} iconColor={theme.iconMuted} />
-      <Text className="flex-1 text-sm font-semibold" style={{ color: theme.title }} numberOfLines={1}>
-        {name}
-      </Text>
-    </PressableScale>
+    <View className="flex-row items-center gap-3 px-5 py-2.5">
+      <PressableScale onPress={onPress} className="flex-1 flex-row items-center gap-3">
+        <UserAvatar user={user} size={44} iconColor={theme.iconMuted} />
+        <Text className="flex-1 text-sm font-semibold" style={{ color: theme.title }} numberOfLines={1}>
+          {name}
+        </Text>
+      </PressableScale>
+      {showFollowBack ? (
+        <PressableScale
+          onPress={() => followBack()}
+          enabled={!isFollowingBack}
+          className="rounded-full px-3.5 py-1.5"
+          style={{ backgroundColor: Colors.primary, opacity: isFollowingBack ? 0.6 : 1 }}
+        >
+          <Text className="text-xs font-semibold" style={{ color: "#ffffff" }}>
+            Follow back
+          </Text>
+        </PressableScale>
+      ) : null}
+    </View>
   );
 };
 
@@ -74,6 +95,15 @@ const FollowListSheet = forwardRef<FollowListSheetHandle, FollowListSheetProps>(
     setTab(nextTab);
     setSearch("");
   };
+
+  // Full (unpaginated) following list for the viewer - same query the
+  // profile screens already fetch for their own follower/following counts -
+  // used only to know, per row, whether the viewer already follows them.
+  const { data: viewerFollowing } = useGetFollowingQuery(authUser?.id);
+  const viewerFollowingIds = useMemo(
+    () => new Set((viewerFollowing ?? []).map((followedUser) => followedUser.id)),
+    [viewerFollowing],
+  );
 
   // Both hooks are always called (rules of hooks) but only the active tab's
   // gets a real userId - the other stays dormant via the hook's own
@@ -148,13 +178,18 @@ const FollowListSheet = forwardRef<FollowListSheetHandle, FollowListSheetProps>(
         ListFooterComponent={
           isFetchingNextPage ? <ActivityIndicator className="py-4" color={Colors.primary} /> : null
         }
-        renderItem={({ item }) => (
-          <FollowListRow
-            user={item}
-            isSelf={item.id === authUser?.id}
-            onPress={() => handleRowPress(item.id)}
-          />
-        )}
+        renderItem={({ item }) => {
+          const isSelf = item.id === authUser?.id;
+          return (
+            <FollowListRow
+              user={item}
+              isSelf={isSelf}
+              showFollowBack={tab === "followers" && !isSelf && !viewerFollowingIds.has(item.id)}
+              viewerId={authUser?.id}
+              onPress={() => handleRowPress(item.id)}
+            />
+          );
+        }}
       />
     </ThemedBottomSheet>
   );
