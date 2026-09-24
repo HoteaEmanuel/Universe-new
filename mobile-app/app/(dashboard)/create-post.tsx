@@ -31,6 +31,7 @@ import PostForm, { type PostFormSubmitData } from "@components/post/PostForm";
 import { useCreatePostMutation } from "@queryAndMutation/mutations/post-mutation";
 import type { CreatePostFile } from "@queryAndMutation/mutations/post-mutation";
 import { Colors } from "@constants/colors";
+import { IconSizes } from "@constants/iconSizes";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 import { useTabBarClearance } from "@hooks/useTabBarClearance";
 import type { ComposerImage } from "@components/post/ComposerImagePicker";
@@ -78,6 +79,19 @@ const ComposeStackMark = () => {
         <View
           style={{ height: 4, width: "45%", borderRadius: 2, backgroundColor: theme.borderColor }}
         />
+        <View
+          style={{
+            flex: 1,
+            width: "100%",
+            marginTop: 2,
+            borderRadius: 6,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: theme.borderColor,
+          }}
+        >
+          <Ionicons name="image" size={IconSizes.xs} color={Colors.primary} style={{ opacity: 0.55 }} />
+        </View>
       </View>
       <View
         style={{

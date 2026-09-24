@@ -28,6 +28,7 @@ import { IconSizes } from "@constants/iconSizes";
 import { PressableScale } from "@lib/styled";
 import { httpClient } from "@lib/http";
 import ThemedView from "@components/ThemedView";
+import ConversationEmptyState from "@components/chat/ConversationEmptyState";
 import MessageBubble from "@components/chat/MessageBubble";
 import MessageInput from "@components/chat/MessageInput";
 import ConversationHeader, { type MessageJumpPayload } from "@components/chat/ConversationHeader";
@@ -381,12 +382,9 @@ const ConversationThread = () => {
                 ) : null
               }
               ListEmptyComponent={
-                <Text
-                  className="pt-10 text-center text-sm"
-                  style={{ color: theme.tabIconColour }}
-                >
-                  No messages yet. Say hi!
-                </Text>
+                <View className="pt-10">
+                  <ConversationEmptyState />
+                </View>
               }
               contentContainerStyle={{ paddingVertical: 12, flexGrow: 1 }}
               keyboardShouldPersistTaps="handled"

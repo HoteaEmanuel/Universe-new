@@ -11,6 +11,7 @@ import { Colors } from "@constants/colors";
 import { IconSizes } from "@constants/iconSizes";
 import { PressableScale } from "@lib/styled";
 import ThemedView from "@components/ThemedView";
+import ConversationEmptyState from "@components/chat/ConversationEmptyState";
 import { getAvatarColor, getInitials } from "@utils/chatAvatarColor";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 
@@ -105,9 +106,7 @@ const NewConversation = () => {
           {isPendingUser ? (
             <ActivityIndicator color={Colors.primary} />
           ) : (
-            <Text className="text-sm" style={{ color: theme.tabIconColour }}>
-              No messages yet. Say hi!
-            </Text>
+            <ConversationEmptyState />
           )}
         </View>
 
