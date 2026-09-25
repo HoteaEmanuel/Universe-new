@@ -11,16 +11,20 @@ const setAuthCookies = (
   accessToken: string,
   refreshToken: string,
 ) => {
+  // Kept in sync with generateTokenJwt.ts's sameSite choice - see the
+  // comment there for why this can't be "strict"/"lax" in production.
+  const sameSite = process.env.NODE_ENV === "production" ? "none" : "lax";
+
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite,
     maxAge: ACCESS_TOKEN_MAX_AGE,
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    sameSite,
     maxAge: REFRESH_TOKEN_MAX_AGE,
   });
 };
