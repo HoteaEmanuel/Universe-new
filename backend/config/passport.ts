@@ -2,8 +2,7 @@ import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import type OAuth2Strategy from "passport-oauth2";
 import { prisma } from "../database/prisma.js";
-import { universityEmailDomains } from "../utils/universityDomain.js";
-import { universityDomains } from "../utils/universityDomains.js";
+import { universityDomains, isAutoVerifiedDomain } from "../utils/universityDomains.js";
 import { createUserWithGeneratedUsername } from "../repository/user.repository.js";
 import { findUserAccountStatus } from "../repository/userAccountStatus.repository.js";
 import { googleOAuthStateStore } from "../lib/oauthState.js";
@@ -34,17 +33,14 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           });
 
           const email = profile.emails?.[0]?.value;
-          const domain = email?.split("@")[1];
-          const universityName = domain ? universityDomains[domain] : undefined;
-          const domainValid = universityEmailDomains.find(
-            (Unidomain) => Unidomain == domain,
-          );
-          if (!email || domainValid === undefined) {
+          if (!email) {
             return done(null, false, {
-              code: "INVALID_DOMAIN",
-              message: "Invalid email domain",
+              code: "GOOGLE_AUTH_FAILED",
+              message: "Google did not return an email address",
             });
           }
+          const domain = email.split("@")[1];
+          const universityName = domain ? universityDomains[domain] : undefined;
 
           if (!user) {
             user = await prisma.user.findUnique({ where: { email } });
@@ -70,6 +66,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                   university: universityName || "Unknown University",
                   profilePicture: profile.photos?.[0]?.value,
                   isVerified: true,
+                  identityVerified: isAutoVerifiedDomain(domain) ? "true" : "false",
                 },
                 [profile.name?.givenName, profile.name?.familyName]
                   .filter(Boolean)
@@ -82,6 +79,16 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             return done(null, false, {
               code: "EMAIL_NOT_VERIFIED",
               message: "Please verify your email before continuing",
+            });
+          }
+
+          // Same pending-review state a domain we don't auto-verify puts a
+          // normal-signup account into (see auth.service.ts) - block
+          // sign-in until an admin approves it here too.
+          if (user.identityVerified === "false" || user.identityVerified === "rejected") {
+            return done(null, false, {
+              code: "PENDING_REVIEW",
+              message: "Your account is awaiting manual verification",
             });
           }
 

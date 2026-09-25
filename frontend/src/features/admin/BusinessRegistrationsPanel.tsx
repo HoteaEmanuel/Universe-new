@@ -55,7 +55,7 @@ const BusinessRegistrationsPanel = () => {
   if (!businessRegistrations || businessRegistrations.length === 0) {
     return (
       <p className="py-10 text-center text-sm text-muted-foreground">
-        No business registrations found.
+        No pending registrations found.
       </p>
     );
   }
@@ -63,37 +63,48 @@ const BusinessRegistrationsPanel = () => {
   return (
     <>
     <ul className="flex flex-col divide-y divide-border">
-      {businessRegistrations.map((registration) => (
-        <li
-          key={registration.id}
-          className="flex flex-wrap items-center gap-4 py-3 first:pt-0 last:pb-0"
-        >
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-medium">{registration.name}</p>
-            <p className="truncate text-sm text-muted-foreground">{registration.email}</p>
-            <p className="text-sm text-muted-foreground">
-              Requested on {formatToLocalDate(new Date(registration.createdAt ?? ""))}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={() => setPendingAction({ id: registration.id, name: registration.name ?? "This business", kind: "accept" })}
-            >
-              <Check className="size-4" aria-hidden="true" />
-              Accept
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setPendingAction({ id: registration.id, name: registration.name ?? "This business", kind: "reject" })}
-            >
-              <X className="size-4" aria-hidden="true" />
-              Reject
-            </Button>
-          </div>
-        </li>
-      ))}
+      {businessRegistrations.map((registration) => {
+        const displayName =
+          registration.name ||
+          [registration.firstName, registration.lastName].filter(Boolean).join(" ") ||
+          "This account";
+        return (
+          <li
+            key={registration.id}
+            className="flex flex-wrap items-center gap-4 py-3 first:pt-0 last:pb-0"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className="truncate font-medium">{displayName}</p>
+                <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  {registration.accountType === "business" ? "Business" : "Unverified domain"}
+                </span>
+              </div>
+              <p className="truncate text-sm text-muted-foreground">{registration.email}</p>
+              <p className="text-sm text-muted-foreground">
+                Requested on {formatToLocalDate(new Date(registration.createdAt ?? ""))}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => setPendingAction({ id: registration.id, name: displayName, kind: "accept" })}
+              >
+                <Check className="size-4" aria-hidden="true" />
+                Accept
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setPendingAction({ id: registration.id, name: displayName, kind: "reject" })}
+              >
+                <X className="size-4" aria-hidden="true" />
+                Reject
+              </Button>
+            </div>
+          </li>
+        );
+      })}
     </ul>
     <AlertDialog open={!!pendingAction} onOpenChange={(open: boolean) => !open && !isMutating && setPendingAction(null)}>
       <AlertDialogContent>
@@ -101,7 +112,7 @@ const BusinessRegistrationsPanel = () => {
           <AlertDialogTitle>{pendingAction?.kind === "accept" ? "Accept" : "Reject"} this registration?</AlertDialogTitle>
           <AlertDialogDescription>
             {pendingAction?.kind === "accept"
-              ? `${pendingAction?.name} will receive business-account access.`
+              ? `${pendingAction?.name} will be able to log in.`
               : `${pendingAction?.name}'s request will be rejected. This action cannot be undone here.`}
           </AlertDialogDescription>
         </AlertDialogHeader>

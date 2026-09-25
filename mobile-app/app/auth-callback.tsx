@@ -12,7 +12,11 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuth = async () => {
       if (error) {
-        alert("Authentication failed");
+        alert(
+          error === "pending_review"
+            ? "Your account is awaiting manual verification. We'll email you once it's approved."
+            : "Authentication failed",
+        );
         router.replace("/login");
         return;
       }

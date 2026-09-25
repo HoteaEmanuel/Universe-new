@@ -56,9 +56,9 @@ router.post(
 // callback's `info` (set in config/passport.ts), so the specific reason can
 // be forwarded to the frontend as a distinct ?error= code.
 const GOOGLE_ERROR_CODE_TO_PARAM: Record<string, string> = {
-  INVALID_DOMAIN: "invalid_domain",
   EMAIL_NOT_VERIFIED: "email_not_verified",
   ACCOUNT_BLOCKED: "account_blocked",
+  PENDING_REVIEW: "pending_review",
 };
 
 router.get("/google/callback", (req, res, next) => {

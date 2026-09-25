@@ -113,7 +113,11 @@ export const findAdminStats = async () => {
     totalUsers,
     newUsersThisWeek,
     blockedUsers,
-    pendingBusinessRegistrations,
+    // Covers business accounts awaiting review and normal accounts signed
+    // up from a domain we don't auto-verify (see isAutoVerifiedDomain) -
+    // both share the identityVerified "false" pending state and the same
+    // admin queue (BusinessRegistrationsPanel).
+    pendingRegistrations,
     businessAccounts,
     totalPosts,
     totalGroups,
@@ -125,9 +129,7 @@ export const findAdminStats = async () => {
       where: { createdAt: { gte: new Date(Date.now() - ONE_WEEK_MS) } },
     }),
     prisma.userAccountStatus.count({ where: { status: "blocked" } }),
-    prisma.user.count({
-      where: { accountType: "business", identityVerified: "false" },
-    }),
+    prisma.user.count({ where: { identityVerified: "false" } }),
     prisma.user.count({ where: { accountType: "business" } }),
     prisma.post.count(),
     prisma.group.count(),
@@ -140,7 +142,7 @@ export const findAdminStats = async () => {
     newUsersThisWeek,
     blockedUsers,
     activeUsers: totalUsers - blockedUsers,
-    pendingBusinessRegistrations,
+    pendingBusinessRegistrations: pendingRegistrations,
     businessAccounts,
     totalPosts,
     totalGroups,

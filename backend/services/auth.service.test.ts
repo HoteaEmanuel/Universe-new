@@ -159,18 +159,27 @@ describe("auth.service", () => {
       ).rejects.toThrow("Registration failed");
     });
 
-    it("rejects a non-university email domain", async () => {
+    it("allows a non-university email domain to sign up, unverified and pending review", async () => {
+      const { createNormalAccount } = await import("../repository/user.repository.js");
       vi.mocked(findUserByEmail).mockResolvedValue(null);
+      vi.mocked(bcryptjs.genSalt).mockResolvedValue("salt" as never);
+      vi.mocked(bcryptjs.hash).mockResolvedValue("hashed" as never);
+      vi.mocked(createNormalAccount).mockResolvedValue({
+        id: "user-1",
+        email: "jane@not-a-university.com",
+      } as never);
 
-      await expect(
-        signUp({
-          email: "jane@not-a-university.com",
-          password: "secret123",
-          accountType: "normal",
-          firstName: "Jane",
-          lastName: "Doe",
-        }),
-      ).rejects.toThrow("Not a university email");
+      await signUp({
+        email: "jane@not-a-university.com",
+        password: "secret123",
+        accountType: "normal",
+        firstName: "Jane",
+        lastName: "Doe",
+      });
+
+      expect(createNormalAccount).toHaveBeenCalledWith(
+        expect.objectContaining({ identityVerified: "false", universityName: undefined }),
+      );
     });
 
     it("queues a verification email and returns the created user on success", async () => {

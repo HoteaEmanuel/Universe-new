@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Keyboard, TouchableWithoutFeedback, View, Text } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { router } from "expo-router";
@@ -7,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema, type SignupInput } from "@universe/shared/schemas/auth.schema.js";
 import { useAuthStore } from "../../store/authStore";
 import { useGoogleAuth } from "../../hooks/useGoogleAuth";
+import { parseNameFromEmail } from "../../utils/parseNameFromEmail";
 import AuthHeroHeader from "../../components/auth/AuthHeroHeader";
 import AuthCard from "../../components/auth/AuthCard";
 import AuthTextField from "../../components/auth/AuthTextField";
@@ -26,15 +28,50 @@ const SignUp = () => {
     control,
     handleSubmit,
     setError,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { accountType: "normal", email: "", password: "" },
+    defaultValues: {
+      accountType: "normal",
+      email: "",
+      password: "",
+      firstName: "",
+      lastName: "",
+    },
   });
 
-  const onSubmit = async ({ email, password, accountType }: SignupInput) => {
+  const emailValue = watch("email");
+  const domain = emailValue?.split("@")[1]?.toLowerCase();
+  // Mirrors the web signup form's preview/lock behavior (see
+  // frontend/src/auth/SignUpPage.tsx) - the backend derives the same name
+  // from the verified email for university domains, so typing it here would
+  // just be discarded (see backend/services/auth.service.ts).
+  const parsedName =
+    domain && domain !== "gmail.com" ? parseNameFromEmail(emailValue.split("@")[0]) : null;
+
+  useEffect(() => {
+    if (parsedName) {
+      setValue("firstName", parsedName.firstName);
+      setValue("lastName", parsedName.lastName);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsedName?.firstName, parsedName?.lastName]);
+
+
+  const normalErrors = errors as { firstName?: { message?: string }; lastName?: { message?: string } };
+
+  const onSubmit = async (data: SignupInput) => {
+    const { email, password, accountType } = data;
     try {
-      await signUp({ email, password, accountType });
+      await signUp({
+        email,
+        password,
+        accountType,
+        firstName: data.accountType === "normal" ? data.firstName : undefined,
+        lastName: data.accountType === "normal" ? data.lastName : undefined,
+      });
       router.replace("/home");
     } catch {
       setError("root", { message: "Sign up failed. Please try again." });
@@ -91,6 +128,47 @@ const SignUp = () => {
                 autoCapitalize="none"
                 autoComplete="email"
                 keyboardType="email-address"
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="firstName"
+            render={({ field }) => (
+              <AuthTextField
+                id="signup-first-name"
+                label="First name"
+                icon="person-outline"
+                placeholder="First name"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                error={normalErrors.firstName?.message}
+                editable={!parsedName}
+                autoCapitalize="words"
+                autoComplete="given-name"
+                hint={parsedName ? "Detected from your university email and can't be edited." : undefined}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="lastName"
+            render={({ field }) => (
+              <AuthTextField
+                id="signup-last-name"
+                label="Last name"
+                icon="person-outline"
+                placeholder="Last name"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                error={normalErrors.lastName?.message}
+                editable={!parsedName}
+                autoCapitalize="words"
+                autoComplete="family-name"
               />
             )}
           />

@@ -62,7 +62,7 @@ const Admin = () => {
             <Building2 className="size-5" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block font-semibold">Business registrations</span>
+            <span className="block font-semibold">Pending verifications</span>
             <span className="block text-sm text-muted-foreground">
               {pendingRegistrations === 0
                 ? "The review queue is clear."
@@ -106,7 +106,7 @@ const Admin = () => {
           <TabsList className="max-w-full overflow-x-auto">
             <TabsTrigger value="users">User management</TabsTrigger>
             <TabsTrigger value="registrations">
-              Business registrations
+              Pending verifications
               {pendingRegistrations > 0 && (
                 <span className="ml-2 rounded-full bg-primary px-1.5 py-0.5 text-xs tabular-nums text-primary-foreground">
                   {pendingRegistrations}

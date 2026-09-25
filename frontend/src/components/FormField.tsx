@@ -16,6 +16,7 @@ type FormFieldProps = {
   currentLength?: number;
   disabled?: boolean;
   autoFocus?: boolean;
+  required?: boolean;
 };
 
 const FormField = ({
@@ -31,6 +32,7 @@ const FormField = ({
   currentLength = 0,
   disabled = false,
   autoFocus = false,
+  required = false,
 }: FormFieldProps) => {
   const errorId = error ? `${id}-error` : undefined;
   const isMaxed = maxLength !== undefined && currentLength >= maxLength;
@@ -41,6 +43,12 @@ const FormField = ({
           {label && (
             <Label htmlFor={id} className="">
               {label}
+              {required && (
+                <span className="text-destructive" aria-hidden="true">
+                  {" "}
+                  *
+                </span>
+              )}
             </Label>
           )}
           {maxLength !== undefined && (

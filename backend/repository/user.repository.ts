@@ -153,6 +153,7 @@ interface CreateNormalAccountInput {
   universityName?: string;
   verificationCode: string;
   major?: string;
+  identityVerified: string;
 }
 
 export const createNormalAccount = async (body: CreateNormalAccountInput) => {
@@ -165,6 +166,7 @@ export const createNormalAccount = async (body: CreateNormalAccountInput) => {
     universityName,
     verificationCode,
     major,
+    identityVerified,
   } = body;
 
   return createUserWithGeneratedUsername(
@@ -176,7 +178,7 @@ export const createNormalAccount = async (body: CreateNormalAccountInput) => {
       university: universityName,
       major: major || "",
       verificationCode,
-      identityVerified: "true",
+      identityVerified,
       accountType,
       verificationCodeExpiresAt: new Date(Date.now() + 1000 * 60 * 15),
     },

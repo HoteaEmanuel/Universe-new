@@ -21,8 +21,7 @@ import {
 } from "../services/refreshToken.service.js";
 import { updateUser } from "../repository/user.repository.js";
 import { findUserAccountStatus } from "../repository/userAccountStatus.repository.js";
-import { universityEmailDomains } from "../utils/universityDomain.js";
-import { universityDomains } from "../utils/universityDomains.js";
+import { universityDomains, isAutoVerifiedDomain } from "../utils/universityDomains.js";
 import { errorMessage } from "../utils/errorMessage.js";
 
 import {
@@ -52,18 +51,22 @@ export const checkAuth = async (req: Request, res: Response) => {
   }
 };
 
-/** Gets the business registrations. Route requires verifyToken + requireAdmin. */
+// Covers both business-account registrations and normal accounts signed up
+// from a domain we don't auto-verify (see isAutoVerifiedDomain) - both
+// share the same identityVerified "false" pending state, so one admin
+// queue and one accept/reject pair handles both. Route requires
+// verifyToken + requireAdmin.
 export const businessRegistrations = async (req: Request, res: Response) => {
   try {
     const users = await prisma.user.findMany({
-      where: { accountType: "business", identityVerified: "false" },
+      where: { identityVerified: "false" },
       select: PUBLIC_USER_SELECT,
     });
     return res.status(200).json({ succes: true, businessRegistrations: users });
   } catch (error) {
     return res
       .status(400)
-      .json({ message: "Could not fetch business registrations" });
+      .json({ message: "Could not fetch pending registrations" });
   }
 };
 
@@ -79,13 +82,9 @@ export const acceptBusinessRegistration = async (req: Request, res: Response) =>
       where: { id },
       data: { identityVerified: "true" },
     });
-    return res
-      .status(200)
-      .json({ message: "Business account verified successfully" });
+    return res.status(200).json({ message: "Account verified successfully" });
   } catch (error) {
-    return res
-      .status(400)
-      .json({ message: "Could not verify business account" });
+    return res.status(400).json({ message: "Could not verify account" });
   }
 };
 
@@ -103,13 +102,9 @@ export const rejectBusinessRegistration = async (req: Request, res: Response) =>
       data: { identityVerified: "rejected" },
     });
 
-    return res
-      .status(200)
-      .json({ message: "Business account rejected and deleted successfully" });
+    return res.status(200).json({ message: "Account rejected successfully" });
   } catch (error) {
-    return res
-      .status(400)
-      .json({ message: "Could not reject business account" });
+    return res.status(400).json({ message: "Could not reject account" });
   }
 };
 
@@ -304,17 +299,15 @@ export const authWithGoogleMobile = async (req: Request, res: Response) => {
       return;
     }
 
+    if (!email) {
+      res.redirect("mobileapp://auth-callback?error=google_auth_failed");
+      return;
+    }
+
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      const domain = email?.split("@")[1];
-      const domainValid = universityEmailDomains.find(
-        (Unidomain) => Unidomain == domain,
-      );
-      if (!email || domainValid === undefined) {
-        res.redirect("mobileapp://auth-callback?error=invalid_domain");
-        return;
-      }
-      const universityName = universityDomains[domain];
+      const domain = email.split("@")[1];
+      const universityName = domain ? universityDomains[domain] : undefined;
 
       user = await createUserWithGeneratedUsername(
         {
@@ -324,6 +317,7 @@ export const authWithGoogleMobile = async (req: Request, res: Response) => {
           googleId,
           university: universityName,
           isVerified: true,
+          identityVerified: isAutoVerifiedDomain(domain) ? "true" : "false",
         },
         name,
       );
@@ -331,6 +325,15 @@ export const authWithGoogleMobile = async (req: Request, res: Response) => {
 
     if (!user.isVerified) {
       res.redirect("mobileapp://auth-callback?error=email_not_verified");
+      return;
+    }
+
+    // Same pending-review state a domain we don't auto-verify puts a
+    // normal-signup account into (see auth.service.ts) - block sign-in
+    // until an admin approves it here too, since this flow never goes
+    // through auth.service's login().
+    if (user.identityVerified === "false" || user.identityVerified === "rejected") {
+      res.redirect("mobileapp://auth-callback?error=pending_review");
       return;
     }
 

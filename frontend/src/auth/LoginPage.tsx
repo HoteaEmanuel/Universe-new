@@ -39,13 +39,12 @@ const LoginPage = () => {
     if (error === "Rate limit exceeded") toast.error("Too many requests");
   };
   const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
-    google_auth_failed:
-      "Google authentication failed. Provide a university email or try again.",
-    invalid_domain:
-      "Google authentication failed. Provide a university email or try again.",
+    google_auth_failed: "Google authentication failed. Try again.",
     email_not_verified: "Please verify your email before continuing.",
     account_blocked:
       "Your account has been blocked. Check your email for more details.",
+    pending_review:
+      "Your account is awaiting manual verification. We'll email you once it's approved.",
   };
   const [googleError, setGoogleError] = useState<string | null>(null);
   useEffect(() => {
@@ -76,6 +75,7 @@ const LoginPage = () => {
           autoComplete="email"
           error={errors.email?.message}
           registration={register("email")}
+          required
         />
 
         <PasswordField
@@ -84,6 +84,7 @@ const LoginPage = () => {
           autoComplete="current-password"
           error={errors.password?.message}
           registration={register("password")}
+          required
         />
 
         <SubmitButton isLoading={isLoading} loadingText="Logging in...">

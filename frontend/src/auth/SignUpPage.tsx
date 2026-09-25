@@ -138,6 +138,7 @@ const SignUpPage = () => {
           autoComplete="email"
           error={errors.email?.message}
           registration={register("email")}
+          required
         />
 
         {accountType === "normal" ? (
@@ -151,6 +152,7 @@ const SignUpPage = () => {
               error={errors["first-name"]?.message}
               registration={register("first-name")}
               disabled={!!parsedName}
+              required={!parsedName}
             />
             {parsedName && (
               <p className="text-xs text-muted-foreground">
@@ -167,6 +169,7 @@ const SignUpPage = () => {
             autoComplete="organization"
             error={errors.name?.message}
             registration={register("name")}
+            required
           />
         )}
 
@@ -180,6 +183,7 @@ const SignUpPage = () => {
             error={errors["last-name"]?.message}
             registration={register("last-name")}
             disabled={!!parsedName}
+            required={!parsedName}
           />
         )}
 
@@ -189,6 +193,7 @@ const SignUpPage = () => {
           autoComplete="new-password"
           error={errors.password?.message}
           registration={register("password")}
+          required
         />
 
         <PasswordField
@@ -198,6 +203,7 @@ const SignUpPage = () => {
           autoComplete="new-password"
           error={errors["confirm-password"]?.message}
           registration={register("confirm-password")}
+          required
         />
 
         <div className="flex flex-col gap-1.5">

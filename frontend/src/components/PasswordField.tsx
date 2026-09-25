@@ -12,6 +12,7 @@ type PasswordFieldProps = {
   registration: UseFormRegisterReturn;
   placeholder?: string;
   autoComplete?: string;
+  required?: boolean;
 };
 
 const PasswordField = ({
@@ -21,6 +22,7 @@ const PasswordField = ({
   registration,
   placeholder = "Password",
   autoComplete = "current-password",
+  required = false,
 }: PasswordFieldProps) => {
   const [visible, setVisible] = useState(false);
   const errorId = error ? `${id}-error` : undefined;
@@ -29,6 +31,12 @@ const PasswordField = ({
       {label && (
         <Label htmlFor={id} className="">
           {label}
+          {required && (
+            <span className="text-destructive" aria-hidden="true">
+              {" "}
+              *
+            </span>
+          )}
         </Label>
       )}
       {error && (

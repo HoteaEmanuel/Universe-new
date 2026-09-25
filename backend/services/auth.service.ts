@@ -9,8 +9,7 @@ import {
   updateUser,
   verifyUser,
 } from "../repository/user.repository.js";
-import { universityEmailDomains } from "../utils/universityDomain.js";
-import { universityDomains } from "../utils/universityDomains.js";
+import { universityDomains, isAutoVerifiedDomain } from "../utils/universityDomains.js";
 import { parseNameFromEmail } from "../utils/parseNameFromEmail.js";
 import { generateVerificationToken } from "../utils/generateVerificationCode.js";
 import {
@@ -31,13 +30,15 @@ export const login = async (body: LoginBody) => {
   const { email, password } = body;
   const userExists = await findUserByEmail(email);
 
+  // identityVerified starts "false" for business accounts and for normal
+  // accounts signed up from a domain we don't auto-verify (see
+  // isAutoVerifiedDomain) - both stay unable to log in until an admin
+  // approves them, same as an outright rejection.
   if (
     !userExists ||
     !userExists.isVerified ||
-    (userExists.accountType === "business" &&
-      userExists.identityVerified === "rejected") ||
-    (userExists.accountType === "business" &&
-      userExists.identityVerified == "false")
+    userExists.identityVerified === "rejected" ||
+    userExists.identityVerified === "false"
   ) {
     throw new Error("Authentication failed");
   }
@@ -85,13 +86,13 @@ export const signUp = async (body: SignUpBody) => {
   }
 
   const domain = email.split("@")[1];
-  const domainValid = universityEmailDomains.find(
-    (Unidomain) => Unidomain == domain,
-  );
-  if (domainValid === undefined) {
-    throw new Error("Not a university email");
-  }
-  const universityName = universityDomains[domain];
+  const universityName = domain ? universityDomains[domain] : undefined;
+  // Domains we recognize are auto-verified immediately; anything else can
+  // still sign up, but starts unverified and waits for an admin to approve
+  // it (see businessRegistrations in auth.controller.ts) instead of being
+  // rejected outright - so testing from a new school, or a legitimate org
+  // whose domain we haven't added yet, isn't blocked at signup.
+  const identityVerified = isAutoVerifiedDomain(domain) ? "true" : "false";
 
   const verificationCode = generateVerificationToken();
 
@@ -100,7 +101,7 @@ export const signUp = async (body: SignUpBody) => {
   let user;
 
   if (accountType === "normal") {
-    if (domain !== "gmail.com") {
+    if (domain && domain in universityDomains) {
       const parsed = parseNameFromEmail(email.split("@")[0]);
       if (parsed) {
         firstName = parsed.firstName;
@@ -120,6 +121,7 @@ export const signUp = async (body: SignUpBody) => {
       accountType,
       verificationCode,
       major,
+      identityVerified,
     });
   } else {
     user = await createUniversityAccount({
