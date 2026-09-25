@@ -13,7 +13,7 @@
     "dev": "tsx watch --env-file=backend/.env backend/app.ts",
     "prebuild": "prisma generate",
     "build": "tsc -p backend/tsconfig.json",
-    "start": "node backend/dist/app.js",
+    "start": "tsx backend/app.ts",
     "typecheck": "tsc -p backend/tsconfig.json --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
