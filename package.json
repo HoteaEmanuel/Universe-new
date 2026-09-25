@@ -9,7 +9,6 @@
     "mobile-app"
   ],
   "scripts": {
-    "postinstall": "prisma generate",
     "predev": "prisma generate",
     "dev": "tsx watch --env-file=backend/.env backend/app.ts",
     "prebuild": "prisma generate",
