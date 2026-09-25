@@ -3,6 +3,7 @@ import type {} from "multer";
 import { prisma } from "../database/prisma.js";
 import {
   createGroupService,
+  deleteGroupService,
   deleteMessage,
   editMessage,
   giveAdminRole,
@@ -35,6 +36,7 @@ import {
   getGroupMessageContext,
 } from "../repository/message.repository.js";
 import { getActiveConversationUsers } from "../lib/socket.js";
+import { errorMessage } from "../utils/errorMessage.js";
 import type {
   BanGroupMemberInput,
   DiscoverGroupsQueryInput,
@@ -42,9 +44,6 @@ import type {
   GroupMembersQueryInput,
   GroupsListQueryInput,
 } from "@universe/shared/schemas/group.schema.js";
-
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Something went wrong";
 
 const MEMBER_SELECT = {
   id: true,
@@ -142,7 +141,7 @@ export const getDiscoverableGroupsController = async (req: Request, res: Respons
 export const deleteGroup = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    await prisma.group.delete({ where: { id } });
+    await deleteGroupService(id);
     return res.status(200).json({ message: "Group deleted successfully" });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
@@ -417,7 +416,7 @@ export const getUsersFromSameUniversityNotInGroup = async (req: Request, res: Re
       users: usersFromSameUniversity,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 

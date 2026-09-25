@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { prisma } from "../database/prisma.js";
 import { getNotificationsPage } from "../repository/notification.repository.js";
 import type { NotificationQueryInput } from "@universe/shared/schemas/notification.schema.js";
+import { errorMessage } from "../utils/errorMessage.js";
 
 export const getUserNotifications = async (req: Request, res: Response) => {
   try {
@@ -21,7 +22,7 @@ export const getUserNotifications = async (req: Request, res: Response) => {
 
     return res.status(200).json({ notifications, nextCursor, hasMore });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -39,7 +40,7 @@ export const getUnreadMessageNotifications = async (req: Request, res: Response)
     });
     return res.status(200).json({ notifications });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -58,7 +59,7 @@ export const getUnreadNotifications = async (req: Request, res: Response) => {
 
     return res.status(200).json({ notifications });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -68,7 +69,7 @@ export const deleteNotifications = async (req: Request, res: Response) => {
     await prisma.notification.deleteMany({ where: { userId: id } });
     return res.status(200).json({ message: "Notifications deleted" });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -83,7 +84,7 @@ export const seeNotifications = async (req: Request, res: Response) => {
   } catch (error) {
     return res
       .status(400)
-      .json({ error: error instanceof Error ? error.message : "" });
+      .json({ message: errorMessage(error) });
   }
 };
 
@@ -98,6 +99,6 @@ export const seeNewConversationMessages = async (req: Request, res: Response) =>
   } catch (error) {
     return res
       .status(400)
-      .json({ error: error instanceof Error ? error.message : "" });
+      .json({ message: errorMessage(error) });
   }
 };

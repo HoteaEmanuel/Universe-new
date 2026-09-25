@@ -100,6 +100,7 @@ export const getGroupResourcesPage = async (data: {
 
 interface UpdateGroupResourceServiceInput {
   resourceId: string;
+  groupId: string;
   requesterId: string;
   isAdmin: boolean;
   title?: string;
@@ -118,47 +119,74 @@ const assertCanModify = (
   }
 };
 
+// The route middleware only confirms the requester belongs to (or admins)
+// the group named in the URL, not that :resourceId actually belongs to that
+// group - without this, a resource id from a different (possibly private)
+// group could be edited/deleted/pinned by anyone who admins their own
+// unrelated group.
+const assertBelongsToGroup = (
+  resource: { groupId: string },
+  groupId: string,
+) => {
+  if (resource.groupId !== groupId) {
+    throw new Error("Resource not found");
+  }
+};
+
 export const editGroupResource = async (
   data: UpdateGroupResourceServiceInput,
 ) => {
-  const { resourceId, requesterId, isAdmin, ...fields } = data;
+  const { resourceId, groupId, requesterId, isAdmin, ...fields } = data;
   const resource = await findGroupResourceById(resourceId);
   if (!resource) throw new Error("Resource not found");
+  assertBelongsToGroup(resource, groupId);
   assertCanModify(resource, requesterId, isAdmin);
   return updateGroupResource(resourceId, fields);
 };
 
 export const removeGroupResource = async (data: {
   resourceId: string;
+  groupId: string;
   requesterId: string;
   isAdmin: boolean;
 }) => {
-  const { resourceId, requesterId, isAdmin } = data;
+  const { resourceId, groupId, requesterId, isAdmin } = data;
   const resource = await findGroupResourceById(resourceId);
   if (!resource) throw new Error("Resource not found");
+  assertBelongsToGroup(resource, groupId);
   assertCanModify(resource, requesterId, isAdmin);
   await deleteGroupResource(resourceId);
   if (resource.fileKey) await deleteImages([resource.fileKey]);
 };
 
-export const toggleGroupResourcePin = async (resourceId: string) => {
+export const toggleGroupResourcePin = async (
+  resourceId: string,
+  groupId: string,
+) => {
   const resource = await findGroupResourceById(resourceId);
   if (!resource) throw new Error("Resource not found");
+  assertBelongsToGroup(resource, groupId);
   return setGroupResourcePinned(resourceId, !resource.pinned);
 };
 
-export const registerResourceDownload = async (resourceId: string) => {
+export const registerResourceDownload = async (
+  resourceId: string,
+  groupId: string,
+) => {
   const resource = await findGroupResourceById(resourceId);
   if (!resource) throw new Error("Resource not found");
+  assertBelongsToGroup(resource, groupId);
   await incrementResourceDownloadCount(resourceId);
   return resource.fileUrl ?? resource.linkUrl;
 };
 
 export const toggleGroupResourceHelpful = async (
   resourceId: string,
+  groupId: string,
   userId: string,
 ) => {
   const resource = await findGroupResourceById(resourceId);
   if (!resource) throw new Error("Resource not found");
+  assertBelongsToGroup(resource, groupId);
   return toggleResourceHelpfulVote(resourceId, userId);
 };

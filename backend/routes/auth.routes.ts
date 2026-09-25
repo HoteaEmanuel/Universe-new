@@ -32,6 +32,7 @@ import {
   googleMobileExchangeSchema,
   refreshMobileSchema,
 } from "@universe/shared/schemas/auth.schema.js";
+import { createOAuthState } from "../lib/oauthState.js";
 const router = express.Router();
 router.post("/check-auth", verifyToken, checkAuth);
 router.get(
@@ -105,6 +106,7 @@ router.post(
 router.get("/google/mobile-init", (req, res) => {
   const redirect_uri =
     process.env.BACKEND_URL_1 + "/auth/google/mobile-callback";
+  const state = createOAuthState();
   const googleAuthUrl =
     `https://accounts.google.com/o/oauth2/v2/auth?` +
     `client_id=${process.env.GOOGLE_CLIENT_ID}&` +
@@ -112,6 +114,7 @@ router.get("/google/mobile-init", (req, res) => {
     `response_type=code&` +
     `scope=openid%20profile%20email&` +
     `access_type=offline&` +
+    `state=${state}&` +
     `prompt=select_account`;
 
   res.redirect(googleAuthUrl);

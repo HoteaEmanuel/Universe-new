@@ -1,8 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../database/prisma.js";
-
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Something went wrong";
+import { errorMessage } from "../utils/errorMessage.js";
 
 export const getPublicPostController = async (req: Request, res: Response) => {
   try {

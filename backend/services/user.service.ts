@@ -9,11 +9,13 @@ import {
   findPostById,
   findSavedPostByIds,
 } from "../repository/post.repository.js";
-import { findUserById } from "../repository/user.repository.js";
+import { deleteUser, findUserById } from "../repository/user.repository.js";
 import {
   createNotification,
   emitNewNotification,
 } from "../repository/notification.repository.js";
+import { prisma } from "../database/prisma.js";
+import { deleteImages } from "../lib/storage.js";
 
 export const toggleSavePost = async (data: { postId: string; authUserId: string }) => {
   const { postId, authUserId } = data;
@@ -76,4 +78,70 @@ export const unfollow = async (data: {
     throw new Error("Not following");
   }
   await deleteFollow(data);
+};
+
+// prisma.user.delete cascades in the database to every Post, Message (as
+// sender OR receiver), GroupMessage, CourseResource and Event this user
+// owns/sent/participated in - none of which frees their R2 objects on its
+// own. Once the cascade runs, the keys are gone from the DB and
+// unrecoverable, so they're gathered here first.
+export const deleteAccountService = async (userId: string) => {
+  const [user, posts, messages, groupMessages, resources, events] =
+    await Promise.all([
+      findUserById(userId),
+      prisma.post.findMany({
+        where: { userId },
+        select: { imagesPublicIds: true },
+      }),
+      // Cascades on either party - a message this user only received still
+      // disappears (and its images/files with it) when this user is deleted.
+      prisma.message.findMany({
+        where: { OR: [{ senderId: userId }, { receiverId: userId }] },
+        select: {
+          imagePublicIds: true,
+          audioKey: true,
+          attachments: { select: { fileKey: true } },
+        },
+      }),
+      prisma.groupMessage.findMany({
+        where: { senderId: userId },
+        select: {
+          imagePublicIds: true,
+          audioKey: true,
+          attachments: { select: { fileKey: true } },
+        },
+      }),
+      prisma.courseResource.findMany({
+        where: { uploaderId: userId },
+        select: { fileKey: true },
+      }),
+      prisma.event.findMany({
+        where: { creatorId: userId },
+        select: { coverImageKey: true },
+      }),
+    ]);
+  if (!user) throw new Error("User not found");
+
+  const keysToDelete = [
+    ...(user.profilePictureKey ? [user.profilePictureKey] : []),
+    ...posts.flatMap((post) => post.imagesPublicIds),
+    ...[...messages, ...groupMessages].flatMap((message) => [
+      ...message.imagePublicIds,
+      ...(message.audioKey ? [message.audioKey] : []),
+      ...message.attachments.map((attachment) => attachment.fileKey),
+    ]),
+    ...resources.flatMap((resource) => (resource.fileKey ? [resource.fileKey] : [])),
+    ...events.flatMap((event) => (event.coverImageKey ? [event.coverImageKey] : [])),
+  ];
+
+  await deleteUser(userId);
+
+  // Awaited, same reasoning as deleteGroupService - still non-throwing, so
+  // a storage hiccup doesn't undo an account deletion the user already got
+  // confirmation of.
+  if (keysToDelete.length > 0) {
+    await deleteImages(keysToDelete).catch((error: unknown) => {
+      console.error(`Failed to delete storage objects for deleted account ${userId}:`, error);
+    });
+  }
 };

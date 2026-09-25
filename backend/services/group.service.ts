@@ -76,6 +76,56 @@ export const createGroupService = async (data: {
   return newGroup;
 };
 
+// prisma.group.delete cascades in the database to every GroupMessage,
+// Attachment, and CourseResource row this group has - none of which frees
+// their R2 objects on its own. Those keys have to be gathered here, before
+// the cascade wipes the rows that reference them, and cleaned up afterward.
+export const deleteGroupService = async (groupId: string) => {
+  const [group, messages, resources] = await Promise.all([
+    prisma.group.findUnique({
+      where: { id: groupId },
+      select: { coverImagePublicId: true },
+    }),
+    prisma.groupMessage.findMany({
+      where: { groupId },
+      select: {
+        imagePublicIds: true,
+        audioKey: true,
+        attachments: { select: { fileKey: true } },
+      },
+    }),
+    prisma.courseResource.findMany({
+      where: { groupId },
+      select: { fileKey: true },
+    }),
+  ]);
+  if (!group) throw new Error("Group not found");
+
+  const keysToDelete = [
+    ...(group.coverImagePublicId ? [group.coverImagePublicId] : []),
+    ...messages.flatMap((message) => [
+      ...message.imagePublicIds,
+      ...(message.audioKey ? [message.audioKey] : []),
+      ...message.attachments.map((attachment) => attachment.fileKey),
+    ]),
+    ...resources.flatMap((resource) => (resource.fileKey ? [resource.fileKey] : [])),
+  ];
+
+  await prisma.group.delete({ where: { id: groupId } });
+
+  // Awaited (unlike the single-message-delete cleanup elsewhere in this
+  // file): once the cascade above has run, these keys are gone from the DB
+  // and unrecoverable if this fails, so it's worth the extra latency to let
+  // a real (if rare) R2 failure surface here rather than in a detached,
+  // easy-to-lose background promise. Still non-throwing - a storage hiccup
+  // shouldn't undo a deletion the user already asked for and got back.
+  if (keysToDelete.length > 0) {
+    await deleteImages(keysToDelete).catch((error: unknown) => {
+      console.error(`Failed to delete storage objects for group ${groupId}:`, error);
+    });
+  }
+};
+
 export const setGroupCourseTagService = async (data: {
   groupId: string;
   courseTag: string | null;

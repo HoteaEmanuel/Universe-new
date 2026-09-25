@@ -29,7 +29,7 @@ import {
 import { imageUpload } from "../lib/imageUpload.js";
 import { verifyUploadedFiles } from "../lib/validateUpload.js";
 import { validate } from "../middleware/validate.js";
-import { requirePostOwner } from "../middleware/authorization.js";
+import { requirePostOwner, requireSelf } from "../middleware/authorization.js";
 import { messageRateLimiter } from "../middleware/messageRateLimiter.js";
 import {
   createPostSchema,
@@ -72,7 +72,7 @@ router.get(
 );
 router.get("/post-user/:id", getPostUser);
 router.get("/user-posts/:id", getUserPostsController);
-router.get("/saved-posts/:id", getSavedPostsController);
+router.get("/saved-posts/:id", requireSelf("id"), getSavedPostsController);
 router.get("/check-saved/:id", checkSaved);
 router.get("/related-posts/:tag", getRelatedPosts);
 router.get("/likes/:id", getLikes);

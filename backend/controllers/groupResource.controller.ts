@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import type {} from "multer";
 import { findGroupMember } from "../repository/group-members.repository.js";
+import { errorMessage } from "../utils/errorMessage.js";
 import {
   addGroupResource,
   editGroupResource,
@@ -15,9 +16,6 @@ import type {
   GroupResourcesQueryInput,
   UpdateGroupResourceInput,
 } from "@universe/shared/schemas/groupResource.schema.js";
-
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Something went wrong";
 
 export const getGroupResourcesController = async (
   req: Request,
@@ -77,6 +75,7 @@ export const updateGroupResourceController = async (
     const member = await findGroupMember(groupId, req.userId as string);
     const resource = await editGroupResource({
       resourceId,
+      groupId,
       requesterId: req.userId as string,
       isAdmin: member?.role === "admin",
       ...(req.body as UpdateGroupResourceInput),
@@ -97,6 +96,7 @@ export const deleteGroupResourceController = async (
     const member = await findGroupMember(groupId, req.userId as string);
     await removeGroupResource({
       resourceId,
+      groupId,
       requesterId: req.userId as string,
       isAdmin: member?.role === "admin",
     });
@@ -112,7 +112,8 @@ export const pinGroupResourceController = async (
 ) => {
   try {
     const { resourceId } = req.params as { resourceId: string };
-    const resource = await toggleGroupResourcePin(resourceId);
+    const groupId = req.params.id as string;
+    const resource = await toggleGroupResourcePin(resourceId, groupId);
     return res.status(200).json(resource);
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
@@ -125,7 +126,8 @@ export const downloadGroupResourceController = async (
 ) => {
   try {
     const { resourceId } = req.params as { resourceId: string };
-    const url = await registerResourceDownload(resourceId);
+    const groupId = req.params.id as string;
+    const url = await registerResourceDownload(resourceId, groupId);
     return res.status(200).json({ url });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
@@ -138,8 +140,10 @@ export const toggleGroupResourceHelpfulController = async (
 ) => {
   try {
     const { resourceId } = req.params as { resourceId: string };
+    const groupId = req.params.id as string;
     const result = await toggleGroupResourceHelpful(
       resourceId,
+      groupId,
       req.userId as string,
     );
     return res.status(200).json(result);

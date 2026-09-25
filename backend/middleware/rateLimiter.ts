@@ -7,13 +7,14 @@ interface RateLimiterOptions {
   message?: string;
 }
 
-const ipKey = (req: Request) =>
-  (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || "unknown";
+// req.ip (not the raw X-Forwarded-For header) - Express only trusts that
+// header's IP when `trust proxy` is configured for the real reverse proxy
+// hop count, so a client can't spoof it by sending its own X-Forwarded-For.
+const ipKey = (req: Request) => req.ip || req.socket.remoteAddress || "unknown";
 
 // Combines IP with the request's email/account identifier where the body has
-// one, so spoofing the IP alone (trivial via X-Forwarded-For, since this app
-// has no reverse proxy configured to strip it) doesn't fully bypass throttling
-// on auth routes like login/signup/forgot-password/verify-email.
+// one, so spoofing the IP alone doesn't fully bypass throttling on auth
+// routes like login/signup/forgot-password/verify-email.
 const authKey = (req: Request) => {
   const ip = ipKey(req);
   const email = req.body?.email;
@@ -29,6 +30,17 @@ export const createRateLimiter = ({
   message = "Too many requests. Please try again shortly.",
 }: RateLimiterOptions) => {
   const tracker = new Map<string, { count: number; expiresAt: number }>();
+
+  // Without this, every distinct key (IP, or IP+email on auth routes) this
+  // limiter has ever seen stays in memory forever, since a passing request
+  // never deletes its own entry - just leaves it to expire unread.
+  const sweepInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of tracker) {
+      if (entry.expiresAt < now) tracker.delete(key);
+    }
+  }, windowMs);
+  sweepInterval.unref();
 
   return (req: Request, res: Response, next: NextFunction) => {
     const key = keyFn(req);

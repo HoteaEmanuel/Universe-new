@@ -12,6 +12,7 @@ import {
   createMobileAuthExchangeCode,
   consumeMobileAuthExchangeCode,
 } from "../lib/oauthExchange.js";
+import { consumeOAuthState } from "../lib/oauthState.js";
 import { verifyAuthToken } from "../lib/authTokens.js";
 import { AccountBlockedError } from "../lib/accountBlockedError.js";
 import {
@@ -22,6 +23,7 @@ import { updateUser } from "../repository/user.repository.js";
 import { findUserAccountStatus } from "../repository/userAccountStatus.repository.js";
 import { universityEmailDomains } from "../utils/universityDomain.js";
 import { universityDomains } from "../utils/universityDomains.js";
+import { errorMessage } from "../utils/errorMessage.js";
 
 import {
   login,
@@ -31,9 +33,6 @@ import {
   forgotPassword,
   resetPassword,
 } from "../services/auth.service.js";
-
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Something went wrong";
 
 /**
  * Check if there is a user with a specific id, as parameter
@@ -152,7 +151,7 @@ export const verifyEmailController = async (req: Request, res: Response) => {
 export const loginWeb = async (req: Request, res: Response) => {
   try {
     const userExists = await login(req.body);
-    generateToken(res, userExists.id);
+    await generateToken(res, userExists.id);
     return res
       .status(200)
       .json({ message: "Logged in successfully", user: userExists });
@@ -254,12 +253,26 @@ export const authWithGoogle = async (req: Request, res: Response) => {
   if (!req.user?.id) {
     return res.status(400).json({ message: "Google authentication failed" });
   }
-  generateToken(res, req.user.id);
+  try {
+    // Was previously fire-and-forget - see the identical fix+comment in
+    // loginWeb above.
+    await generateToken(res, req.user.id);
+  } catch (error) {
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
+  }
   res.redirect(`${process.env.FRONTEND_URL}/`);
 };
 
 export const authWithGoogleMobile = async (req: Request, res: Response) => {
-  const { code } = req.query;
+  const { code, state } = req.query;
+
+  // Verifies this callback was actually reached via a /google/mobile-init
+  // redirect this server issued, not an authorization code an attacker
+  // captured from their own OAuth flow and tricked a victim into opening
+  // (login CSRF) - see lib/oauthState.ts.
+  if (!consumeOAuthState(typeof state === "string" ? state : undefined)) {
+    return res.redirect("mobileapp://auth-callback?error=invalid_state");
+  }
 
   try {
     const redirect_uri =
@@ -279,7 +292,17 @@ export const authWithGoogleMobile = async (req: Request, res: Response) => {
       { headers: { Authorization: `Bearer ${access_token}` } },
     );
 
-    const { email, name, picture, id: googleId } = userInfo.data;
+    const { email, name, picture, id: googleId, verified_email } = userInfo.data;
+
+    // A Workspace admin can create an account with an unverified email, and
+    // account linking below trusts `email` alone to match an existing user
+    // - without this check, that unverified address could collide with (and
+    // sign the requester into) an existing account that never proved it
+    // owns that address.
+    if (!verified_email) {
+      res.redirect("mobileapp://auth-callback?error=email_not_verified");
+      return;
+    }
 
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {

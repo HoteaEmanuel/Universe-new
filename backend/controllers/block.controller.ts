@@ -1,8 +1,6 @@
 import type { Request, Response } from "express";
 import { blockUser, unblockUser, getBlockedUsers } from "../services/block.service.js";
-
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Something went wrong";
+import { errorMessage } from "../utils/errorMessage.js";
 
 export const blockUserController = async (req: Request, res: Response) => {
   try {

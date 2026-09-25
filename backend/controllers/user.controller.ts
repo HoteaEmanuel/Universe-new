@@ -10,10 +10,14 @@ import {
   findUserById,
   findUserWithPasswordById,
   updateUser,
-  deleteUser,
   PUBLIC_PROFILE_SELECT,
 } from "../repository/user.repository.js";
-import { follow, toggleSavePost, unfollow } from "../services/user.service.js";
+import {
+  deleteAccountService,
+  follow,
+  toggleSavePost,
+  unfollow,
+} from "../services/user.service.js";
 import { getViewerRelevantUserIds } from "../repository/relevance.repository.js";
 import { getRelevantFirstPage } from "../lib/relevantFirstPage.js";
 import { userNameSearchClause } from "../lib/userSearchClause.js";
@@ -28,6 +32,7 @@ import {
   isUsernameUniqueConstraintError,
   usernameValidationMessage,
 } from "../utils/username.js";
+import { errorMessage } from "../utils/errorMessage.js";
 
 const PROFILE_CARD_SELECT = {
   id: true,
@@ -129,7 +134,7 @@ export const getUserByName = async (req: Request, res: Response) => {
     if (req.blockedIds?.has(userWithName.id)) throw new Error("User not found");
     return res.status(200).json({ message: "User found", user: userWithName });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -247,7 +252,7 @@ export const followController = async (req: Request, res: Response) => {
     await follow({ authUserId: userId, followerId });
     return res.status(200).json({ message: "Followed :)!" });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -258,7 +263,7 @@ export const unfollowController = async (req: Request, res: Response) => {
     await unfollow({ authUserId: userId, unfollowerId: unfollowId });
     return res.status(200).json({ message: "Unfollowed!" });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -288,7 +293,7 @@ export const getFollowers = async (req: Request, res: Response) => {
       followers: data,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -339,7 +344,7 @@ export const getFollowing = async (req: Request, res: Response) => {
       following: data,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -402,7 +407,7 @@ export const getRelevantFollowers = async (req: Request, res: Response) => {
       hasMore,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -458,7 +463,7 @@ export const getRelevantFollowing = async (req: Request, res: Response) => {
       hasMore,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -539,7 +544,7 @@ export const getUniversityPeople = async (req: Request, res: Response) => {
       hasMore,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -564,7 +569,7 @@ export const followsUser = async (req: Request, res: Response) => {
       .status(200)
       .json({ message: "Check if its following", isFollowing });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -593,7 +598,7 @@ export const getUsersFromSameUniversity = async (
       users: usersFromSameUniversity,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -606,7 +611,7 @@ export const updateBio = async (req: Request, res: Response) => {
     await updateUser(userId, { bio });
     return res.status(200).json({ message: "Bio updated successfully" });
   } catch (error) {
-    return res.status(400).json({ message: "Updating bio went wrong", error });
+    return res.status(400).json({ message: "Updating bio went wrong" });
   }
 };
 
@@ -618,7 +623,7 @@ export const completeOnboarding = async (req: Request, res: Response) => {
   } catch (error) {
     return res
       .status(400)
-      .json({ message: "Could not complete onboarding", error });
+      .json({ message: "Could not complete onboarding" });
   }
 };
 
@@ -630,7 +635,7 @@ export const markAppTourSeen = async (req: Request, res: Response) => {
   } catch (error) {
     return res
       .status(400)
-      .json({ message: "Could not mark app tour as seen", error });
+      .json({ message: "Could not mark app tour as seen" });
   }
 };
 
@@ -641,9 +646,7 @@ export const changePassword = async (req: Request, res: Response) => {
     const user = await findUserWithPasswordById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // A Google-only account has no password yet — this is a first-time
-    // "set password" rather than a "change password", so there's nothing to
-    // verify against. An account that already has one still requires it.
+   
     const isSettingPasswordForFirstTime = !user.password;
     if (!isSettingPasswordForFirstTime) {
       if (!currentPassword) {
@@ -676,7 +679,7 @@ export const changePassword = async (req: Request, res: Response) => {
         : "Password changed successfully",
     });
   } catch (error) {
-    return res.status(400).json({ message: "Could not change password", error });
+    return res.status(400).json({ message: "Could not change password" });
   }
 };
 
@@ -695,12 +698,12 @@ export const deleteAccount = async (req: Request, res: Response) => {
       }
     }
 
-    await deleteUser(userId);
+    await deleteAccountService(userId);
 
     res.clearCookie("refreshToken");
     res.clearCookie("accessToken");
     return res.status(200).json({ message: "Account deleted successfully" });
   } catch (error) {
-    return res.status(400).json({ message: "Could not delete account", error });
+    return res.status(400).json({ message: "Could not delete account" });
   }
 };

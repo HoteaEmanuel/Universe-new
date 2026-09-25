@@ -12,7 +12,7 @@ export const getPreferences = async (req: Request, res: Response) => {
   } catch (error) {
     return res
       .status(400)
-      .json({ message: "Fetching preferences went wrong", error });
+      .json({ message: "Fetching preferences went wrong" });
   }
 };
 
@@ -26,6 +26,6 @@ export const updatePreferences = async (req: Request, res: Response) => {
   } catch (error) {
     return res
       .status(400)
-      .json({ message: "Updating preferences went wrong", error });
+      .json({ message: "Updating preferences went wrong" });
   }
 };

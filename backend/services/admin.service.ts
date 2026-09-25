@@ -4,6 +4,7 @@ import {
 } from "../repository/admin.repository.js";
 import { findUserById } from "../repository/user.repository.js";
 import { sendUnblockedAccountEmail } from "../mail-service/sendMail.js";
+import { disconnectUserSockets } from "../lib/socket.js";
 
 export class UserNotFoundError extends Error {}
 export class SelfBlockError extends Error {}
@@ -28,6 +29,7 @@ export const blockUser = async ({ userId, blockedByUserId, reason }: BlockUserSe
   }
 
   await blockUserRepo({ userId, blockedByUserId, reason });
+  disconnectUserSockets(userId);
 };
 
 export const unblockUser = async (userId: string) => {

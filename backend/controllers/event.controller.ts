@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type {} from "multer";
+import { errorMessage } from "../utils/errorMessage.js";
 import {
   createEventService,
   getEventService,
@@ -28,9 +29,6 @@ import type {
   BanEventParticipantInput,
   EventBansQueryInput,
 } from "@universe/shared/schemas/event.schema.js";
-
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Something went wrong";
 
 export const createEventController = async (req: Request, res: Response) => {
   try {

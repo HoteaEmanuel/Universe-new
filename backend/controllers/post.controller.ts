@@ -28,9 +28,7 @@ import {
 } from "../services/post.service.js";
 import { sharePostToUsers } from "../services/conversation.service.js";
 import { sharePostToGroups } from "../services/group.service.js";
-
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Something went wrong";
+import { errorMessage } from "../utils/errorMessage.js";
 
 export const getPost = async (req: Request, res: Response) => {
   const id = req.params.id as string;
@@ -401,7 +399,15 @@ export const getSearchedPostsController = async (req: Request, res: Response) =>
 export const deletePostsByName = async (req: Request, res: Response) => {
   try {
     const { title } = req.body;
-    await prisma.post.deleteMany({ where: { title, userId: req.userId as string } });
+    const userId = req.userId as string;
+    // Was a raw prisma.post.deleteMany, which skipped deletePost's cleanup
+    // (likes rows + the post's R2 images) - matching posts' images stayed
+    // in storage, reachable by URL, forever.
+    const matching = await prisma.post.findMany({
+      where: { title, userId },
+      select: { id: true },
+    });
+    await deletePosts({ postIds: matching.map((post) => post.id), userId });
     return res.status(200).json({ message: "Posts deleted" });
   } catch (error) {
     return res.status(400).json({ error: errorMessage(error) });

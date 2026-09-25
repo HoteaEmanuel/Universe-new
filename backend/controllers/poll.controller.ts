@@ -1,9 +1,7 @@
 import type { Request, Response } from "express";
 import { voteOnPoll, closePoll, getMyPollVote } from "../services/poll.service.js";
 import type { VoteOnPollInput } from "@universe/shared/schemas/poll.schema.js";
-
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Something went wrong";
+import { errorMessage } from "../utils/errorMessage.js";
 
 export const voteOnPollController = async (req: Request, res: Response) => {
   try {

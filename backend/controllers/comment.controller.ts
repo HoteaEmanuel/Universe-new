@@ -12,6 +12,7 @@ import {
   getPostCommentsPage,
 } from "../repository/comment.repository.js";
 import type { CommentQueryInput } from "@universe/shared/schemas/comment.schema.js";
+import { errorMessage } from "../utils/errorMessage.js";
 
 const TOMBSTONE_TEXT = "This comment is unavailable.";
 const REMOVED_TEXT = "This comment was removed for violating community guidelines.";
@@ -79,7 +80,7 @@ export const getComments = async (req: Request, res: Response) => {
       hasMore,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -110,7 +111,7 @@ export const getCommentReplies = async (req: Request, res: Response) => {
       hasMore,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -120,7 +121,7 @@ export const likeCommentController = async (req: Request, res: Response) => {
     await likeComment({ commentId, userId: req.userId as string });
     return res.status(200).json({ message: "Comment liked successfully" });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -133,7 +134,7 @@ export const removeLikeCommentController = async (req: Request, res: Response) =
       .status(200)
       .json({ message: "Comment like removed successfully" });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -143,7 +144,7 @@ export const getCommentsCount = async (req: Request, res: Response) => {
     const commentsCount = await prisma.comment.count({ where: { postId: id } });
     return res.status(200).json({ message: "Success", commentsCount });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -155,7 +156,7 @@ export const sendCommentController = async (req: Request, res: Response) => {
     await createComment({ id, userId, commentText, parentId });
     return res.status(201).json({ message: "Succes" });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -167,6 +168,6 @@ export const deleteComment = async (req: Request, res: Response) => {
       .status(200)
       .json({ message: "Deleted the comment successfully" });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };

@@ -1,10 +1,12 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import type OAuth2Strategy from "passport-oauth2";
 import { prisma } from "../database/prisma.js";
 import { universityEmailDomains } from "../utils/universityDomain.js";
 import { universityDomains } from "../utils/universityDomains.js";
 import { createUserWithGeneratedUsername } from "../repository/user.repository.js";
 import { findUserAccountStatus } from "../repository/userAccountStatus.repository.js";
+import { googleOAuthStateStore } from "../lib/oauthState.js";
 
 // passport-google-oauth20's Strategy constructor throws synchronously if
 // clientID/clientSecret are missing, which would otherwise crash the whole
@@ -18,6 +20,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: "/api/auth/google/callback",
+        // Verifies the redirect back from Google was started by this same
+        // browser (CSRF protection) - a custom in-memory store instead of
+        // passport's default session-backed one, since this app has no
+        // express-session (auth is stateless JWT cookies).
+      
+        store: googleOAuthStateStore as OAuth2Strategy.StateStore,
       },
       async (_accessToken, _refreshToken, profile, done) => {
         try {

@@ -138,7 +138,19 @@ export const signUp = async (body: SignUpBody) => {
     body: verificationCode,
   });
 
-  return user;
+  // Never return auth-sensitive fields to the client - the verification
+  // code and password hash have no legitimate use on the frontend, and
+  // returning the code let anyone verify an email they don't own.
+  const {
+    password: _password,
+    verificationCode: _verificationCode,
+    verificationCodeExpiresAt: _verificationCodeExpiresAt,
+    resetPasswordToken: _resetPasswordToken,
+    resetPasswordExpiresAt: _resetPasswordExpiresAt,
+    refreshToken: _refreshToken,
+    ...safeUser
+  } = user;
+  return safeUser;
 };
 
 const MAX_VERIFICATION_ATTEMPTS = 5;

@@ -9,20 +9,47 @@ import {
 } from "./emailTemplate.js";
 import dotenv from "dotenv";
 dotenv.config();
-import nodemailer from "nodemailer";
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: "emanuelhotea1@gmail.com",
-    pass: process.env.GOOGLE_APP_PASSWORD,
-  },
-});
+import axios from "axios";
+
+// HTTP API instead of SMTP: free hosting tiers (Render included) commonly
+// block outbound SMTP ports, which would silently break every email below
+// if we kept using nodemailer/Gmail SMTP. Brevo's free tier sends to any
+// recipient once the sender address is verified, unlike Resend's free tier,
+// which (without a verified domain) only delivers to the email address the
+// Resend account itself was signed up with.
+const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
+
+const sendViaBrevo = async ({ to, subject, html }) => {
+  if (!process.env.BREVO_API_KEY || !process.env.BREVO_SENDER_EMAIL) {
+    console.warn(
+      `BREVO_API_KEY/BREVO_SENDER_EMAIL not set - email to ${to} was not sent.`,
+    );
+    return;
+  }
+  await axios.post(
+    BREVO_API_URL,
+    {
+      sender: {
+        email: process.env.BREVO_SENDER_EMAIL,
+        name: process.env.BREVO_SENDER_NAME || "Universe",
+      },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    },
+    {
+      headers: {
+        "api-key": process.env.BREVO_API_KEY,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+    },
+  );
+};
+
 export const sendEmail = async (email, verificationCode) => {
-  console.log("EMAIL SIGN UP: " + email);
   try {
-    transporter.sendMail({
+    await sendViaBrevo({
       to: email,
       subject: "Verify your email",
       html: VERIFICATION_EMAIL.replace(
@@ -31,12 +58,12 @@ export const sendEmail = async (email, verificationCode) => {
       ),
     });
   } catch (error) {
-    console.log("Email was not sent:( ");
+    console.log("Email was not sent:( ", error?.response?.data || error);
   }
 };
 export const sendWelcomeEmail = async (user) => {
   try {
-    transporter.sendMail({
+    await sendViaBrevo({
       to: user.email,
       subject: "Welcome to Universe",
       html: WELCOME_EMAIL.replace("{{USER_NAME}}", user.name)
@@ -44,20 +71,20 @@ export const sendWelcomeEmail = async (user) => {
         .replace("{{APP_URL}}", `${process.env.CLIENT_URL}/login`),
     });
   } catch (error) {
-    console.log("Email was not sent:( ");
+    console.log("Email was not sent:( ", error?.response?.data || error);
   }
 };
 export const sendPasswordResetEmail = async (data) => {
   const encodedToken = encodeURIComponent(data.token);
   const url = `${process.env.CLIENT_URL}/reset-password/${encodedToken}`;
   try {
-    transporter.sendMail({
+    await sendViaBrevo({
       to: data.email,
       subject: "Reset password",
       html: RESET_PASSWORD_EMAIL.replace("{{URL}}", url),
     });
   } catch (error) {
-    console.log("Could not sent reset email");
+    console.log("Could not sent reset email", error?.response?.data || error);
   }
 };
 // Called directly from the change-password controller rather than through
@@ -67,7 +94,7 @@ export const sendPasswordResetEmail = async (data) => {
 // unless this comment is updated too.
 export const sendPasswordChangedEmail = async (user) => {
   try {
-    transporter.sendMail({
+    await sendViaBrevo({
       to: user.email,
       subject: "Your Universe password was changed",
       html: PASSWORD_CHANGED_EMAIL.replace(
@@ -76,12 +103,12 @@ export const sendPasswordChangedEmail = async (user) => {
       ),
     });
   } catch (error) {
-    console.log("Could not send password-changed email");
+    console.log("Could not send password-changed email", error?.response?.data || error);
   }
 };
 export const sendPasswordSetEmail = async (user) => {
   try {
-    transporter.sendMail({
+    await sendViaBrevo({
       to: user.email,
       subject: "A password was set for your Universe account",
       html: PASSWORD_SET_EMAIL.replace(
@@ -90,7 +117,7 @@ export const sendPasswordSetEmail = async (user) => {
       ),
     });
   } catch (error) {
-    console.log("Could not send password-set email");
+    console.log("Could not send password-set email", error?.response?.data || error);
   }
 };
 // Called directly from the admin block controller rather than through
@@ -100,7 +127,7 @@ export const sendPasswordSetEmail = async (user) => {
 // unless this comment is updated too.
 export const sendBlockedAccountEmail = async (user, reason) => {
   try {
-    transporter.sendMail({
+    await sendViaBrevo({
       to: user.email,
       subject: "Your Universe account has been blocked",
       html: BLOCKED_ACCOUNT_EMAIL.replace(
@@ -109,7 +136,7 @@ export const sendBlockedAccountEmail = async (user, reason) => {
       ).replace("{{REASON}}", reason || "No reason was provided"),
     });
   } catch (error) {
-    console.log("Could not send blocked-account email");
+    console.log("Could not send blocked-account email", error?.response?.data || error);
   }
 };
 // Called directly from the admin unblock controller rather than through
@@ -119,7 +146,7 @@ export const sendBlockedAccountEmail = async (user, reason) => {
 // unless this comment is updated too.
 export const sendUnblockedAccountEmail = async (user) => {
   try {
-    transporter.sendMail({
+    await sendViaBrevo({
       to: user.email,
       subject: "Your Universe account has been unblocked",
       html: UNBLOCKED_ACCOUNT_EMAIL.replace(
@@ -128,6 +155,6 @@ export const sendUnblockedAccountEmail = async (user) => {
       ).replace("{{APP_URL}}", `${process.env.CLIENT_URL}/login`),
     });
   } catch (error) {
-    console.log("Could not send unblocked-account email");
+    console.log("Could not send unblocked-account email", error?.response?.data || error);
   }
 };

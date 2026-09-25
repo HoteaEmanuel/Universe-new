@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import helmet from "helmet";
 import { connectToDatabase } from "./database/connectDb.js";
 import authRouter from "./routes/auth.routes.js";
 import postRouter from "./routes/post.routes.js";
@@ -29,8 +30,24 @@ import reportRouter from "./routes/report.routes.js";
 dotenv.config();
 import passport from "passport";
 import "./config/passport.js";
+// Only trust the X-Forwarded-For header when actually deployed behind a
+// real reverse proxy (Render) - trusting it on a direct connection would let
+// a client set its own header and defeat the rate limiter's IP key.
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+// Same origin list lib/socket.ts's Socket.IO CORS uses - kept in sync so
+// the REST API and the realtime connection agree on which origins the web
+// client is allowed to call from.
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.CLIENT_URL,
+  process.env.NODE_ENV !== "production" ? "http://localhost:5173" : undefined,
+].filter((origin): origin is string => Boolean(origin));
+
+app.use(helmet());
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
 app.use("/api/auth", rateLimiter, authRouter);

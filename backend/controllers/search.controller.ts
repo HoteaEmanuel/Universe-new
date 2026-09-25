@@ -1,13 +1,11 @@
 import type { Request, Response } from "express";
+import { errorMessage } from "../utils/errorMessage.js";
 import {
   getSearchOverview,
   getSearchedGroups,
   getSearchedPosts,
   getSearchedUsers,
 } from "../services/search.service.js";
-
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Something went wrong";
 
 const MIN_QUERY_LENGTH = 2;
 

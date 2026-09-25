@@ -15,6 +15,7 @@ import {
 } from "../repository/message.repository.js";
 import { findBlockEitherDirection } from "../repository/block.repository.js";
 import type { ConversationsListQueryInput } from "@universe/shared/schemas/conversation.schema.js";
+import { errorMessage } from "../utils/errorMessage.js";
 
 import {
   deleteMessage,
@@ -62,7 +63,7 @@ export const getConvoById = async (req: Request, res: Response) => {
       conversation: convo,
     });
   } catch (error) {
-    return res.status(200).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -100,7 +101,7 @@ export const getConversationsController = async (req: Request, res: Response) =>
       hasMore,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -121,7 +122,7 @@ export const getConvoUsers = async (req: Request, res: Response) => {
       .status(200)
       .json({ message: "Fetched the conversation users", users: convoUsers });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -136,7 +137,7 @@ export const getConversationByUserIds = async (req: Request, res: Response) => {
       conversation,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -185,7 +186,7 @@ export const getMessages = async (req: Request, res: Response) => {
       viewerBlockedOther: block !== null && block.blockerId === userId,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -210,7 +211,7 @@ export const searchConvoMessagesController = async (req: Request, res: Response)
   } catch (error) {
     return res
       .status(400)
-      .json({ error: error instanceof Error ? error.message : "" });
+      .json({ message: errorMessage(error) });
   }
 };
 
@@ -224,7 +225,7 @@ export const getConvoMessageContextController = async (req: Request, res: Respon
   } catch (error) {
     return res
       .status(400)
-      .json({ error: error instanceof Error ? error.message : "" });
+      .json({ message: errorMessage(error) });
   }
 };
 
@@ -237,7 +238,7 @@ export const markConversationReadController = async (req: Request, res: Response
   } catch (error) {
     return res
       .status(400)
-      .json({ error: error instanceof Error ? error.message : "" });
+      .json({ message: errorMessage(error) });
   }
 };
 
@@ -257,7 +258,7 @@ export const getArchivedConversationsController = async (req: Request, res: Resp
       hasMore,
     });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -270,7 +271,7 @@ export const archiveConversationController = async (req: Request, res: Response)
   } catch (error) {
     return res
       .status(400)
-      .json({ error: error instanceof Error ? error.message : "" });
+      .json({ message: errorMessage(error) });
   }
 };
 
@@ -283,7 +284,7 @@ export const unarchiveConversationController = async (req: Request, res: Respons
   } catch (error) {
     return res
       .status(400)
-      .json({ error: error instanceof Error ? error.message : "" });
+      .json({ message: errorMessage(error) });
   }
 };
 
@@ -296,7 +297,7 @@ export const deleteConversationForMeController = async (req: Request, res: Respo
   } catch (error) {
     return res
       .status(400)
-      .json({ error: error instanceof Error ? error.message : "" });
+      .json({ message: errorMessage(error) });
   }
 };
 
@@ -311,7 +312,7 @@ export const getConvoMediaController = async (req: Request, res: Response) => {
         : await getConversationMediaPage(convoId, before);
     return res.status(200).json({ message: "Fetched the conversation media", ...page });
   } catch (error) {
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -330,7 +331,7 @@ export const startConversationController = async (req: Request, res: Response) =
     if (error instanceof MessageNotAllowedError) {
       return res.status(403).json(MESSAGE_NOT_ALLOWED_RESPONSE);
     }
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -347,7 +348,7 @@ export const sendMessageController = async (req: Request, res: Response) => {
     if (error instanceof MessageNotAllowedError) {
       return res.status(403).json(MESSAGE_NOT_ALLOWED_RESPONSE);
     }
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -365,7 +366,7 @@ export const sendFilesMessageController = async (req: Request, res: Response) =>
     if (error instanceof MessageNotAllowedError) {
       return res.status(403).json(MESSAGE_NOT_ALLOWED_RESPONSE);
     }
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -383,7 +384,7 @@ export const sendVoiceMessageController = async (req: Request, res: Response) =>
     if (error instanceof MessageNotAllowedError) {
       return res.status(403).json(MESSAGE_NOT_ALLOWED_RESPONSE);
     }
-    return res.status(400).json({ error });
+    return res.status(400).json({ message: errorMessage(error) });
   }
 };
 
@@ -395,7 +396,7 @@ export const deleteMessageController = async (req: Request, res: Response) => {
   } catch (error) {
     return res
       .status(400)
-      .json({ error: error instanceof Error ? error.message : "" });
+      .json({ message: errorMessage(error) });
   }
 };
 
@@ -408,7 +409,7 @@ export const editMessageController = async (req: Request, res: Response) => {
   } catch (error) {
     return res
       .status(400)
-      .json({ error: error instanceof Error ? error.message : "" });
+      .json({ message: errorMessage(error) });
   }
 };
 
@@ -422,6 +423,6 @@ export const reactToMessageController = async (req: Request, res: Response) => {
   } catch (error) {
     return res
       .status(400)
-      .json({ error: error instanceof Error ? error.message : "" });
+      .json({ message: errorMessage(error) });
   }
 };
