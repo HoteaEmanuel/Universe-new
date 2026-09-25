@@ -3,8 +3,8 @@ import axios from "axios";
 import { io, type Socket } from "socket.io-client";
 import type { AccountType, User } from "../queryAndMutation/types";
 
-const BASE_URL = "http://localhost:5000";
-const API_URL = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:5000/api";
+const BASE_URL = API_URL.replace(/\/api\/?$/, "");
 axios.defaults.withCredentials = true;
 
 type SignUpPayload = {
@@ -313,13 +313,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   connectSocket: () => {
     const { user } = get();
     if (!user || get().socket?.connected) return;
-    // The socket only checks the access-token cookie at handshake time
-    // (socket.ts) and has no knowledge of the refresh flow, so once that
-    // cookie expires or the connection drops (sleep, WiFi blip, server
-    // restart), automatic reconnection would keep presenting a stale/missing
-    // token and fail forever. We manage reconnection ourselves: on failure,
-    // hit an authenticated HTTP endpoint first (that request transparently
-    // rotates the cookies via verifyToken.ts), then retry the handshake.
+   
     const socket = io(BASE_URL, {
       withCredentials: true,
       reconnection: false,
