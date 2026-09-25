@@ -1,6 +1,6 @@
 export default {
   expo: {
-    name: "mobile-app",
+    name: "Universe",
     slug: "mobile-app",
     version: "1.0.0",
     orientation: "portrait",
@@ -8,11 +8,6 @@ export default {
     userInterfaceStyle: "dark",
     scheme: "mobileapp",
     newArchEnabled: true,
-    splash: {
-      image: "./assets/splash-icon.png",
-      resizeMode: "contain",
-      backgroundColor: "#ffffff",
-    },
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.mobileapp",
@@ -20,7 +15,7 @@ export default {
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff",
+        backgroundColor: "#faf9fc",
       },
       package: "com.mobileapp",
       edgeToEdgeEnabled: true,
@@ -54,6 +49,15 @@ export default {
         },
       ],
       "@react-native-community/datetimepicker",
+      [
+        "expo-splash-screen",
+        {
+          image: "./assets/splash-icon.png",
+          imageWidth: 200,
+          resizeMode: "contain",
+          backgroundColor: "#faf9fc",
+        },
+      ],
     ],
     extra: {
       googleAndroidClientId:

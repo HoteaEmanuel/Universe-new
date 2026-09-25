@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
   KaushanScript_400Regular,
@@ -25,6 +26,7 @@ import { useThemeStore } from "@store/themeStore";
 import { useAppColorScheme } from "@hooks/useAppColorScheme";
 import { useGetPreferencesQuery } from "@queryAndMutation/queries/preferences-queries";
 import ConfirmDialog from "@components/ConfirmDialog";
+import AppSplashScreen from "@components/AppSplashScreen";
 
 // Mounted inside QueryClientProvider (useQuery needs that context) purely to
 // fire the preferences fetch once at app boot - its onSuccess side effect
@@ -33,6 +35,13 @@ const PreferencesSync = () => {
   useGetPreferencesQuery();
   return null;
 };
+
+// Keep the native splash up past its default auto-hide (which fires once
+// the root view mounts) until fonts, theme, and the checkAuth() call below
+// have all resolved - otherwise it's replaced by a blank frame while those
+// are still pending, and logged-in users see the onboarding screen flash
+// before the auth check redirects them.
+SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,9 +83,24 @@ const RootLayout = () => {
   }, [systemColorScheme, setSystemColorScheme]);
 
   const theme = Colors[colorScheme] || Colors.light;
+  const isReady = fontsLoaded && !isCheckingAuth && themeHydrated;
 
-  if (!fontsLoaded || isCheckingAuth || !themeHydrated) {
+  // The native splash is a static image - it can't render the Kaushan
+  // Script wordmark, since custom fonts aren't loaded at that stage. So it
+  // only needs to stay up until fonts are ready; from there, this JS splash
+  // (which can use the now-loaded font) covers the remaining auth/theme
+  // wait instead of a blank frame.
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
     return null;
+  }
+  if (!isReady) {
+    return <AppSplashScreen />;
   }
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

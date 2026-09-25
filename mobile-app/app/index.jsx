@@ -1,16 +1,18 @@
-import { View, Text, Pressable } from "react-native";
-import React from "react";
-import { Link } from "expo-router";
+import { View, Image } from "react-native";
+import { Redirect, router } from "expo-router";
 import ThemedView from "../components/ThemedView";
 import ThemedText from "../components/ThemedText";
-import { useRef } from "react";
-import { useLocalSearchParams, router } from "expo-router";
-import * as SecureStore from "expo-secure-store";
-import { Image } from "react-native";
 import Logo1 from "../assets/logo_1.png";
 import Spacer from "../components/Spacer";
 import { PressableScale } from "../lib/styled";
-const index = () => {
+import { useAuthStore } from "../store/authStore";
+
+const WelcomeScreen = () => {
+  const userId = useAuthStore((state) => state.user?.id);
+  if (userId != null) {
+    return <Redirect href="/(dashboard)/home" />;
+  }
+
   return (
     <ThemedView className="items-center gap-10 h-full" safe={true}>
       {/* <View id="stars" />
@@ -49,4 +51,4 @@ const index = () => {
   );
 };
 
-export default index;
+export default WelcomeScreen;
