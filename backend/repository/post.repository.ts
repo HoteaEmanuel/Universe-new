@@ -2,6 +2,7 @@ import { prisma } from "../database/prisma.js";
 import type { Prisma } from "../generated/prisma/client.js";
 import { EVENT_INCLUDE } from "./event.repository.js";
 import { POLL_INCLUDE } from "./poll.repository.js";
+import { feedCache } from "../lib/caches.js";
 
 const POST_INCLUDE = {
   event: { include: EVENT_INCLUDE },
@@ -54,17 +55,20 @@ export const findAllPosts = async (
   limit = 10,
   excludeUserIds: string[] = [],
 ) => {
-  const posts = await prisma.post.findMany({
-    where: {
-      removedAt: null,
-      ...(excludeUserIds.length ? { userId: { notIn: excludeUserIds } } : {}),
-    },
-    take: limit + 1,
-    orderBy: FEED_ORDER_BY,
-    include: POST_INCLUDE,
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  const key = `global:${cursor ?? ""}:${limit}:${[...excludeUserIds].sort().join(",")}`;
+  return feedCache.getOrSet(key, async () => {
+    const posts = await prisma.post.findMany({
+      where: {
+        removedAt: null,
+        ...(excludeUserIds.length ? { userId: { notIn: excludeUserIds } } : {}),
+      },
+      take: limit + 1,
+      orderBy: FEED_ORDER_BY,
+      include: POST_INCLUDE,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+    return toFeedPage(posts, limit);
   });
-  return toFeedPage(posts, limit);
 };
 
 export const findFollowingPosts = async (
@@ -73,17 +77,20 @@ export const findFollowingPosts = async (
   limit = 10,
   excludeUserIds: string[] = [],
 ) => {
-  const posts = await prisma.post.findMany({
-    where: {
-      removedAt: null,
-      userId: { in: followingIds, ...(excludeUserIds.length ? { notIn: excludeUserIds } : {}) },
-    },
-    take: limit + 1,
-    orderBy: FEED_ORDER_BY,
-    include: POST_INCLUDE,
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  const key = `following:${[...followingIds].sort().join(",")}:${cursor ?? ""}:${limit}:${[...excludeUserIds].sort().join(",")}`;
+  return feedCache.getOrSet(key, async () => {
+    const posts = await prisma.post.findMany({
+      where: {
+        removedAt: null,
+        userId: { in: followingIds, ...(excludeUserIds.length ? { notIn: excludeUserIds } : {}) },
+      },
+      take: limit + 1,
+      orderBy: FEED_ORDER_BY,
+      include: POST_INCLUDE,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+    return toFeedPage(posts, limit);
   });
-  return toFeedPage(posts, limit);
 };
 
 export const findUniversityPosts = async (
@@ -92,18 +99,21 @@ export const findUniversityPosts = async (
   limit = 10,
   excludeUserIds: string[] = [],
 ) => {
-  const posts = await prisma.post.findMany({
-    where: {
-      removedAt: null,
-      user: { university },
-      ...(excludeUserIds.length ? { userId: { notIn: excludeUserIds } } : {}),
-    },
-    take: limit + 1,
-    orderBy: FEED_ORDER_BY,
-    include: POST_INCLUDE,
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+  const key = `university:${university ?? ""}:${cursor ?? ""}:${limit}:${[...excludeUserIds].sort().join(",")}`;
+  return feedCache.getOrSet(key, async () => {
+    const posts = await prisma.post.findMany({
+      where: {
+        removedAt: null,
+        user: { university },
+        ...(excludeUserIds.length ? { userId: { notIn: excludeUserIds } } : {}),
+      },
+      take: limit + 1,
+      orderBy: FEED_ORDER_BY,
+      include: POST_INCLUDE,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+    return toFeedPage(posts, limit);
   });
-  return toFeedPage(posts, limit);
 };
 
 export const findUserPosts = async (userId: string) => {

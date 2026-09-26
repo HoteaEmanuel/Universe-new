@@ -4,8 +4,7 @@ import bcryptjs from "bcryptjs";
 import { uploadImage, deleteImages } from "../lib/storage.js";
 import { sendPasswordChangedEmail, sendPasswordSetEmail } from "../mail-service/sendMail.js";
 import { prisma } from "../database/prisma.js";
-// Redis disabled for dev (avoid burning Upstash quota) — see lib/redis.js
-// import { redis } from "../lib/redis.js";
+import { profileCache } from "../lib/caches.js";
 import {
   findUserById,
   findUserWithPasswordById,
@@ -94,10 +93,9 @@ export const mentionSearchUsers = async (req: Request, res: Response) => {
 export const getUserById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    const user = await prisma.user.findUnique({
-      where: { id },
-      select: PUBLIC_PROFILE_SELECT,
-    });
+    const user = await profileCache.getOrSet(`id:${id}`, () =>
+      prisma.user.findUnique({ where: { id }, select: PUBLIC_PROFILE_SELECT }),
+    );
     if (!user) throw new Error("User not found");
     if (req.blockedIds?.has(user.id)) {
       return res.status(404).json({ message: "User not found" });
@@ -141,10 +139,9 @@ export const getUserByName = async (req: Request, res: Response) => {
 export const getUserByUsername = async (req: Request, res: Response) => {
   try {
     const username = canonicalizeUsername(req.params.username as string);
-    const user = await prisma.user.findUnique({
-      where: { username },
-      select: PUBLIC_PROFILE_SELECT,
-    });
+    const user = await profileCache.getOrSet(`username:${username}`, () =>
+      prisma.user.findUnique({ where: { username }, select: PUBLIC_PROFILE_SELECT }),
+    );
     if (!user) return res.status(404).json({ message: "User not found" });
     if (req.blockedIds?.has(user.id)) {
       return res.status(404).json({ message: "User not found" });
@@ -183,6 +180,8 @@ export const updateUsername = async (req: Request, res: Response) => {
 
   try {
     const user = await updateUser(req.userId as string, { username });
+    profileCache.invalidate(`id:${user.id}`);
+    profileCache.invalidate(`username:${user.username}`);
     return res.status(200).json({
       message: "Username updated successfully",
       user: { id: user.id, username: user.username },
@@ -214,6 +213,8 @@ export const updateUserImage = async (req: Request, res: Response) => {
       profilePicture: uploaded.url,
       profilePictureKey: uploaded.key,
     });
+    profileCache.invalidate(`id:${user.id}`);
+    profileCache.invalidate(`username:${user.username}`);
 
     if (user.profilePictureKey) {
       deleteImages([user.profilePictureKey]).catch((error: unknown) => {
@@ -609,6 +610,8 @@ export const updateBio = async (req: Request, res: Response) => {
     const user = await findUserById(userId);
     if (!user) throw new Error("User not found");
     await updateUser(userId, { bio });
+    profileCache.invalidate(`id:${userId}`);
+    profileCache.invalidate(`username:${user.username}`);
     return res.status(200).json({ message: "Bio updated successfully" });
   } catch (error) {
     return res.status(400).json({ message: "Updating bio went wrong" });
