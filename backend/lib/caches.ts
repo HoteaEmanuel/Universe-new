@@ -5,3 +5,7 @@ export const profileCache = new MemoryCache();
 // Matches the TTL blockCache.ts was already using before its Redis path got
 // disabled - kept as-is rather than switched to the 3min default.
 export const blockedIdsCache = new MemoryCache(5 * 60 * 1000);
+// News articles don't change second-to-second, and the GNews API this backs
+// is quota-limited - matches the TTL news.controller.ts's disabled Redis
+// path was already using.
+export const newsCache = new MemoryCache(10 * 60 * 1000);
