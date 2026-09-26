@@ -45,6 +45,8 @@ const LoginPage = () => {
       "Your account has been blocked. Check your email for more details.",
     pending_review:
       "Your account is awaiting manual verification. We'll email you once it's approved.",
+    not_university_email:
+      "Sign up with your university email address to create an account with Google.",
   };
   const [googleError, setGoogleError] = useState<string | null>(null);
   useEffect(() => {

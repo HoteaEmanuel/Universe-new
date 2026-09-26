@@ -57,6 +57,17 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                 data: { googleId: profile.id },
               });
             } else {
+              // Unlike normal email/password signup, Google sign-up for a
+              // brand new account is all-or-nothing: an unrecognized domain
+              // doesn't get created pending review, it's rejected outright,
+              // so non-university emails can't get into the "pending
+              // forever" queue via the one-click path.
+              if (!isAutoVerifiedDomain(domain)) {
+                return done(null, false, {
+                  code: "NOT_UNIVERSITY_EMAIL",
+                  message: "Sign up with your university email address",
+                });
+              }
               user = await createUserWithGeneratedUsername(
                 {
                   googleId: profile.id,
@@ -66,7 +77,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                   university: universityName || "Unknown University",
                   profilePicture: profile.photos?.[0]?.value,
                   isVerified: true,
-                  identityVerified: isAutoVerifiedDomain(domain) ? "true" : "false",
+                  identityVerified: "true",
                 },
                 [profile.name?.givenName, profile.name?.familyName]
                   .filter(Boolean)

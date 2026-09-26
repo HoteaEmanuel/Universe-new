@@ -59,6 +59,7 @@ const GOOGLE_ERROR_CODE_TO_PARAM: Record<string, string> = {
   EMAIL_NOT_VERIFIED: "email_not_verified",
   ACCOUNT_BLOCKED: "account_blocked",
   PENDING_REVIEW: "pending_review",
+  NOT_UNIVERSITY_EMAIL: "not_university_email",
 };
 
 router.get("/google/callback", (req, res, next) => {
