@@ -36,34 +36,30 @@ import {
 /**
  * Check if there is a user with a specific id, as parameter
  */
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Right after Google/email signup, the redirect into the app can outrace the
+// just-committed user row becoming visible to a fresh read (confirmed via
+// prod logging: prisma.user.count() returned 0 then 1 a few seconds later
+// for the same freshly-created id, same Neon host - a read-after-write lag,
+// not a bad token or a wrong DB). A few short retries absorb that without
+// affecting the normal case, where the user is always found on the first try.
+const RETRY_DELAYS_MS = [150, 300, 600, 1200];
+
+const findUserWithRetry = async (userId: string) => {
+  let user = await prisma.user.findUnique({ where: { id: userId } });
+  for (const delay of RETRY_DELAYS_MS) {
+    if (user) break;
+    await sleep(delay);
+    user = await prisma.user.findUnique({ where: { id: userId } });
+  }
+  return user;
+};
+
 export const checkAuth = async (req: Request, res: Response) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!user) {
-      // TEMPORARY DIAGNOSTICS - remove once the "User not found" bug is root-caused.
-      // Logged server-side only (never in the response) since it includes DB
-      // host/row-count info that shouldn't be exposed to API callers.
-      const [totalUsers, byFindFirst] = await Promise.all([
-        prisma.user.count(),
-        prisma.user.findFirst({ where: { id: req.userId }, select: { id: true } }),
-      ]);
-      console.log("[checkAuth debug] user not found", {
-        rawUserId: req.userId,
-        userIdType: typeof req.userId,
-        userIdLength: req.userId?.length,
-        userIdJson: JSON.stringify(req.userId),
-        totalUsers,
-        foundViaFindFirst: byFindFirst,
-        dbHost: (() => {
-          try {
-            return new URL(process.env.DATABASE_URL ?? "").host;
-          } catch {
-            return "unparsable";
-          }
-        })(),
-      });
-      return res.status(401).json({ message: "User not found" });
-    }
+    const user = await findUserWithRetry(req.userId as string);
+    if (!user) return res.status(401).json({ message: "User not found" });
     const { password, resetPasswordExpiresAt, resetPasswordToken, ...safeUser } = user;
     return res.status(200).json({
       succes: "true",
@@ -71,11 +67,6 @@ export const checkAuth = async (req: Request, res: Response) => {
       user: { ...safeUser, hasPassword: !!password },
     });
   } catch (error) {
-    // TEMPORARY DIAGNOSTICS - remove once the "User not found" bug is root-caused.
-    console.log(
-      "[checkAuth debug] threw",
-      error instanceof Error ? error.message : String(error),
-    );
     return res.status(401).json({ message: "Unauth" });
   }
 };
