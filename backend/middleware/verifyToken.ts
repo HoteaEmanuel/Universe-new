@@ -2,32 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { verifyAuthToken } from "../lib/authTokens.js";
 import { AccountBlockedError } from "../lib/accountBlockedError.js";
 import { rotateRefreshToken } from "../services/refreshToken.service.js";
-
-const ACCESS_TOKEN_MAX_AGE = 1000 * 60 * 15; // 15 minutes
-const REFRESH_TOKEN_MAX_AGE = 1000 * 60 * 60 * 24 * 30; // 30 days
-
-const setAuthCookies = (
-  res: Response,
-  accessToken: string,
-  refreshToken: string,
-) => {
-  // Kept in sync with generateTokenJwt.ts's sameSite choice - see the
-  // comment there for why this can't be "strict"/"lax" in production.
-  const sameSite = process.env.NODE_ENV === "production" ? "none" : "lax";
-
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite,
-    maxAge: ACCESS_TOKEN_MAX_AGE,
-  });
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite,
-    maxAge: REFRESH_TOKEN_MAX_AGE,
-  });
-};
+import { clearAuthCookies, setAuthCookies } from "../lib/authCookies.js";
 
 export const verifyToken = async (
   req: Request,
@@ -54,8 +29,7 @@ export const verifyToken = async (
       req.userId = rotated.userId;
       return next();
     } catch (error) {
-      res.clearCookie("accessToken");
-      res.clearCookie("refreshToken");
+      clearAuthCookies(res);
       if (error instanceof AccountBlockedError) {
         return res
           .status(403)

@@ -7,6 +7,7 @@ import {
   findUserWithPasswordById,
 } from "../repository/user.repository.js";
 import { generateToken } from "../utils/generateTokenJwt.js";
+import { clearAuthCookies } from "../lib/authCookies.js";
 import { generateJwtMobile } from "../utils/generateJwtMobile.js";
 import {
   createMobileAuthExchangeCode,
@@ -238,8 +239,7 @@ export const logout = async (req: Request, res: Response) => {
     }
   }
 
-  res.clearCookie("refreshToken");
-  res.clearCookie("accessToken");
+  clearAuthCookies(res);
   res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 

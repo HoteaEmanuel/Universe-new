@@ -5,6 +5,7 @@ import { uploadImage, deleteImages } from "../lib/storage.js";
 import { sendPasswordChangedEmail, sendPasswordSetEmail } from "../mail-service/sendMail.js";
 import { prisma } from "../database/prisma.js";
 import { profileCache } from "../lib/caches.js";
+import { clearAuthCookies } from "../lib/authCookies.js";
 import {
   findUserById,
   findUserWithPasswordById,
@@ -703,8 +704,7 @@ export const deleteAccount = async (req: Request, res: Response) => {
 
     await deleteAccountService(userId);
 
-    res.clearCookie("refreshToken");
-    res.clearCookie("accessToken");
+    clearAuthCookies(res);
     return res.status(200).json({ message: "Account deleted successfully" });
   } catch (error) {
     return res.status(400).json({ message: "Could not delete account" });
