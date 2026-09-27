@@ -18,7 +18,16 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: "/api/auth/google/callback",
+        // Absolute, and pointed at the frontend's own domain rather than
+        // this server's - the frontend proxies /api/* to us (see its
+        // rewrite rules) precisely so the cookies this flow sets land on
+        // the frontend's origin, where the browser will actually attach
+        // them to later requests. A relative callbackURL would resolve
+        // against whatever Host this request arrives with, which is this
+        // server's own domain even when reached through the proxy - so
+        // Google would redirect back here directly, bypassing the proxy on
+        // the one request that matters most.
+        callbackURL: `${process.env.FRONTEND_URL}/api/auth/google/callback`,
         // Verifies the redirect back from Google was started by this same
         // browser (CSRF protection) - a custom in-memory store instead of
         // passport's default session-backed one, since this app has no
