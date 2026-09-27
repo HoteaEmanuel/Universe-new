@@ -39,7 +39,31 @@ import {
 export const checkAuth = async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.userId } });
-    if (!user) return res.status(401).json({ message: "User not found" });
+    if (!user) {
+      // TEMPORARY DIAGNOSTICS - remove once the "User not found" bug is root-caused.
+      // Logged server-side only (never in the response) since it includes DB
+      // host/row-count info that shouldn't be exposed to API callers.
+      const [totalUsers, byFindFirst] = await Promise.all([
+        prisma.user.count(),
+        prisma.user.findFirst({ where: { id: req.userId }, select: { id: true } }),
+      ]);
+      console.log("[checkAuth debug] user not found", {
+        rawUserId: req.userId,
+        userIdType: typeof req.userId,
+        userIdLength: req.userId?.length,
+        userIdJson: JSON.stringify(req.userId),
+        totalUsers,
+        foundViaFindFirst: byFindFirst,
+        dbHost: (() => {
+          try {
+            return new URL(process.env.DATABASE_URL ?? "").host;
+          } catch {
+            return "unparsable";
+          }
+        })(),
+      });
+      return res.status(401).json({ message: "User not found" });
+    }
     const { password, resetPasswordExpiresAt, resetPasswordToken, ...safeUser } = user;
     return res.status(200).json({
       succes: "true",
@@ -47,6 +71,11 @@ export const checkAuth = async (req: Request, res: Response) => {
       user: { ...safeUser, hasPassword: !!password },
     });
   } catch (error) {
+    // TEMPORARY DIAGNOSTICS - remove once the "User not found" bug is root-caused.
+    console.log(
+      "[checkAuth debug] threw",
+      error instanceof Error ? error.message : String(error),
+    );
     return res.status(401).json({ message: "Unauth" });
   }
 };
