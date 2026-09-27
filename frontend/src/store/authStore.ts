@@ -4,7 +4,14 @@ import { io, type Socket } from "socket.io-client";
 import type { AccountType, User } from "../queryAndMutation/types";
 
 const API_URL = import.meta.env.VITE_REACT_APP_API_URL || "http://localhost:5000/api";
-const BASE_URL = API_URL.replace(/\/api\/?$/, "");
+// In production API_URL is relative ("/api", proxied same-origin through
+// the static site's rewrite rules so the auth cookie stays first-party), so
+// stripping "/api" off it would leave an empty string that socket.io-client
+// can't connect with. window.location.origin gives the same same-origin
+// target directly. Local dev keeps using the absolute localhost URL as before.
+const BASE_URL = API_URL.startsWith("/")
+  ? window.location.origin
+  : API_URL.replace(/\/api\/?$/, "");
 axios.defaults.withCredentials = true;
 
 type SignUpPayload = {
