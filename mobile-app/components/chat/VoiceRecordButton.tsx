@@ -99,13 +99,6 @@ const VoiceRecordButton = ({ onSend, disabled }: VoiceRecordButtonProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recorderState.isRecording, atMaxDuration]);
 
-  // The mic PressableScale below must stay the same mounted element across
-  // both idle and recording states — it's the one holding the touch
-  // responder for the whole press-and-hold gesture. Swapping it out for a
-  // different element when `isRecording` flips (as an earlier version did)
-  // drops the responder mid-gesture, so releasing your finger never fires
-  // `onPressOut` and the recording can never be stopped. The Cancel button
-  // and timer render as siblings instead of replacing it.
   return (
     <View className="flex-row items-center gap-2">
       {recorderState.isRecording && (

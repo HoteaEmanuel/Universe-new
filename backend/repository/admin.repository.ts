@@ -113,10 +113,6 @@ export const findAdminStats = async () => {
     totalUsers,
     newUsersThisWeek,
     blockedUsers,
-    // Covers business accounts awaiting review and normal accounts signed
-    // up from a domain we don't auto-verify (see isAutoVerifiedDomain) -
-    // both share the identityVerified "false" pending state and the same
-    // admin queue (BusinessRegistrationsPanel).
     pendingRegistrations,
     businessAccounts,
     totalPosts,

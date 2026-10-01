@@ -15,9 +15,6 @@ const WelcomeScreen = () => {
 
   return (
     <ThemedView className="items-center gap-10 h-full" safe={true}>
-      {/* <View id="stars" />
-        <View id="stars2" />
-        <View id="stars3" /> */}
       <View className="items-center w-full ">
         <View className="w-60 h-40">
           <Image source={Logo1} className="w-full h-full" />

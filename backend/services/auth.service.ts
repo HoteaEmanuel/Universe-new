@@ -9,7 +9,10 @@ import {
   updateUser,
   verifyUser,
 } from "../repository/user.repository.js";
-import { universityDomains, isAutoVerifiedDomain } from "../utils/universityDomains.js";
+import {
+  universityDomains,
+  isAutoVerifiedDomain,
+} from "../utils/universityDomains.js";
 import { parseNameFromEmail } from "../utils/parseNameFromEmail.js";
 import { generateVerificationToken } from "../utils/generateVerificationCode.js";
 import {
@@ -46,6 +49,7 @@ export const login = async (body: LoginBody) => {
   const hashedPassword = userExists.password;
   const passwordsMatch =
     !!hashedPassword && (await bcryptjs.compare(password, hashedPassword));
+
   if (!passwordsMatch) {
     throw new Error("Authentication failed");
   }
@@ -230,7 +234,10 @@ export const forgotPassword = async (email: string) => {
   // nothing and, unlike SHA-256, can't be looked up by a plain equality
   // query. Only the hash is ever stored; the raw token is what gets emailed
   // and is never persisted anywhere.
-  const hashedToken = crypto.createHash("sha256").update(resetPassToken).digest("hex");
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(resetPassToken)
+    .digest("hex");
 
   await updateUser(user.id, {
     resetPasswordToken: hashedToken,
@@ -250,10 +257,7 @@ export const resetPassword = async (password: string, token: string) => {
   if (!user) {
     throw new Error("Something went wrong");
   }
-  if (
-    user.resetPasswordExpiresAt &&
-    user.resetPasswordExpiresAt < new Date()
-  ) {
+  if (user.resetPasswordExpiresAt && user.resetPasswordExpiresAt < new Date()) {
     throw new Error("Reset link has expired, please request a new one");
   }
 
