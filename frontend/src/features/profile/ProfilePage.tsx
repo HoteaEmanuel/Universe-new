@@ -93,7 +93,7 @@ const ProfilePage = () => {
     isOwnProfile && tab === "saved" ? (savedPosts ?? []) : (posts ?? []);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 pb-20 md:pb-0">
       <ProfileHeader
         user={profileUser}
         isOwnProfile={isOwnProfile}

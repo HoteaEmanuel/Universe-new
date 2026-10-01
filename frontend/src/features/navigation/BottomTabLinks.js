@@ -32,4 +32,8 @@ export const BottomTabLinks = [
     text: "Create post",
     element:IoAddCircleSharp
   },
+  {
+    link: "/profile",
+    text: "Profile",
+  },
 ];

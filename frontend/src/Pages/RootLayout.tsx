@@ -8,11 +8,11 @@ import { useGetPreferencesQuery } from "../queryAndMutation/queries/preferences-
 const RootLayout = () => {
   useGetPreferencesQuery();
   return (
-    <div className=" block md:flex w-full max-h-screen">
+    <div className="flex h-screen w-full flex-col md:flex-row">
       <NotificationSocketListener />
       <TopBar />
       <SideSection />
-      <section className="flex flex-col flex-1 md:w-2/3 w-screen h-screen overflow-y-auto pb-16 md:pb-0">
+      <section className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto pb-16 md:w-2/3 md:pb-0">
         <Outlet />
       </section>
 

@@ -89,7 +89,7 @@ function ImageSlider({ images }: ImageSliderProps) {
           alt="slider image"
           className="aspect-square w-full self-center object-cover select-none pointer-events-none"
         />
-        <div className="glass-effect absolute top-2 right-2 px-2 py-1 text-xs text-white">
+        <div className="glass-effect absolute top-2 left-2 px-2 py-1 text-xs text-white">
           {index} / {images.length}
         </div>
         <ChevronLeft
@@ -110,8 +110,8 @@ function ImageSlider({ images }: ImageSliderProps) {
               onClick={(e) => handleDotClick(e, i)}
             >
               <span
-                className={`block size-1.5 rounded-full transition-colors ${
-                  i === index - 1 ? "bg-white" : "bg-white/40"
+                className={`block h-1.5 rounded-full transition-all duration-200 ${
+                  i === index - 1 ? "w-4 bg-white" : "w-1.5 bg-white/40"
                 }`}
               />
             </button>

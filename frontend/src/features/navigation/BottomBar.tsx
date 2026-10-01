@@ -1,14 +1,18 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { BottomTabLinks } from "./BottomTabLinks";
+import { useAuthStore } from "@/store/authStore";
+import UserAvatar from "@/components/UserAvatar";
 
 const BottomBar = () => {
   const { pathname } = useLocation();
+  const { user } = useAuthStore();
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 flex h-16 items-center justify-around gap-1 border-t border-border bg-card px-2 shadow-(--shadow-overlay) md:hidden">
       {BottomTabLinks.map((item) => {
         const isActive = pathname === item.link;
         const Icon = item.element;
+        const isProfile = item.text === "Profile";
 
         return (
           <NavLink
@@ -20,7 +24,14 @@ const BottomBar = () => {
                 : "flex-1 gap-0 px-0 text-gray-400 hover:text-violet-500 dark:text-gray-600"
             }`}
           >
-            <Icon className="size-5 shrink-0" />
+            {isProfile ? (
+              <UserAvatar
+                user={user}
+                className={`size-5 shrink-0 ${isActive ? "ring-2 ring-primary" : ""}`}
+              />
+            ) : (
+              Icon && <Icon className="size-5 shrink-0" />
+            )}
             {isActive && (
               <span className="truncate text-xs font-semibold">
                 {item.text}
