@@ -21,11 +21,10 @@ export const universityDomains: Record<string, string> = {
 // Domains here skip manual review outside production, so local/dev signups
 // (e.g. a personal gmail.com) don't sit pending forever - never applied in
 // prod, where an unrecognized domain always falls back to manual review
-// instead of being silently trusted. Configurable via env because the
-// domain someone wants to test with varies by machine.
-const DEV_AUTO_VERIFY_DOMAINS = (
-  process.env.DEV_AUTO_VERIFY_DOMAINS?.split(",") ?? ["gmail.com"]
-)
+// instead of being silently trusted. Opt-in only, with no default: an
+// environment that forgets to set NODE_ENV must not thereby start trusting
+// a consumer email domain it was never told to trust.
+const DEV_AUTO_VERIFY_DOMAINS = (process.env.DEV_AUTO_VERIFY_DOMAINS?.split(",") ?? [])
   .map((domain) => domain.trim().toLowerCase())
   .filter(Boolean);
 

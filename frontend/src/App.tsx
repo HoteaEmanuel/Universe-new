@@ -90,10 +90,6 @@ function App() {
   const location = useLocation();
   const backgroundLocation = location.state?.backgroundLocation;
   useEffect(() => {
-    const cachedTheme = localStorage.getItem("theme") || "light";
-    document.documentElement.setAttribute("data-theme", cachedTheme);
-  }, []);
-  useEffect(() => {
     checkAuth();
   }, [checkAuth]);
   return (

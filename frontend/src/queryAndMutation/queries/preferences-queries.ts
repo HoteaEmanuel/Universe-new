@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createPreferencesApi } from "@universe/shared/api";
 import { createPreferenceQueries } from "@universe/shared/queries";
 import { useAuthStore } from "../../store/authStore";
-import { applyTheme, useGlobalStore } from "../../store/globalStore";
+import { useGlobalStore } from "../../store/globalStore";
 import { httpClient } from "@/lib/api";
 
 const preferencesApi = createPreferencesApi(httpClient);
@@ -22,7 +22,6 @@ export const useGetPreferencesQuery = () => {
 
   useEffect(() => {
     if (!query.data) return;
-    applyTheme(query.data.theme);
     setPreferences({ theme: query.data.theme, notificationsOn: query.data.notificationsEnabled });
   }, [query.data, setPreferences]);
 

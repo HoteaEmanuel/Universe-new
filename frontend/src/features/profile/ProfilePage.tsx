@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Grid3x3, Bookmark, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -9,25 +9,56 @@ import {
   useGetSavedPostsQuery,
   useGetUserPostsQuery,
 } from "../../queryAndMutation/queries/post-queries";
-import { useGetUserByUsernameQuery } from "../../queryAndMutation/queries/user-queries";
+import {
+  useGetUserByIdQuery,
+  useGetUserByUsernameQuery,
+} from "../../queryAndMutation/queries/user-queries";
 import { getFullName } from "../../utils/fullName";
 import ProfileHeader from "./ProfileHeader";
 import ProfilePostGrid from "./ProfilePostGrid";
 import ProfileSkeleton from "./ProfileSkeleton";
 import type { ProfileUser } from "./types";
 
+// User ids are UUIDs, which can never match USERNAME_PATTERN
+// (/^[a-z0-9_]{3,30}$/ - no hyphens) - so the two can't collide and the
+// route param's shape alone safely tells us which lookup to use.
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const ProfilePage = () => {
-  const { username } = useParams();
+  const navigate = useNavigate();
+  const { username: routeParam } = useParams();
   const { user: authUser } = useAuthStore() as { user?: ProfileUser };
   const [tab, setTab] = useState<"posts" | "saved">("posts");
 
-  const {
-    data: otherUser,
-    isPending: isPendingOtherUser,
-    isError: isOtherUserError,
-  } = useGetUserByUsernameQuery(username);
+  // Search results don't always carry a username (see search.repository.ts's
+  // raw-SQL select), so Explore links to a profile by id instead - that id
+  // arrives here in the same route param a username would.
+  const isIdParam = !!routeParam && UUID_PATTERN.test(routeParam);
 
-  const profileUser: ProfileUser | undefined = username ? otherUser : authUser;
+  const {
+    data: userByUsername,
+    isPending: isPendingByUsername,
+    isError: isUsernameError,
+  } = useGetUserByUsernameQuery(isIdParam ? undefined : routeParam);
+  const {
+    data: userById,
+    isPending: isPendingById,
+    isError: isIdError,
+  } = useGetUserByIdQuery(isIdParam ? routeParam : undefined);
+
+  const otherUser = isIdParam ? userById : userByUsername;
+  const isPendingOtherUser = isIdParam ? isPendingById : isPendingByUsername;
+  const isOtherUserError = isIdParam ? isIdError : isUsernameError;
+
+  // Once an id-based lookup resolves, swap the address bar to the canonical
+  // /u/<username> url so the profile stays shareable/bookmarkable.
+  useEffect(() => {
+    if (isIdParam && userById?.username) {
+      navigate(`/u/${userById.username}`, { replace: true });
+    }
+  }, [isIdParam, userById, navigate]);
+
+  const profileUser: ProfileUser | undefined = routeParam ? otherUser : authUser;
   const isOwnProfile = !!profileUser && profileUser.id === authUser?.id;
 
   useEffect(() => {
@@ -40,7 +71,7 @@ const ProfilePage = () => {
   const { data: savedPosts, isPending: isPendingSaved } =
     useGetSavedPostsQuery(authUser?.id ?? "");
 
-  if (username && !isPendingOtherUser && isOtherUserError) {
+  if (routeParam && !isPendingOtherUser && isOtherUserError) {
     return (
       <NotFoundState
         icon={UserX}

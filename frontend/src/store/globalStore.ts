@@ -2,26 +2,54 @@ import { create } from "zustand";
 
 export type Theme = "light" | "dark";
 
-// DOM side effect kept app-local (packages/shared must stay DOM-free) -
-// called from the preferences query/mutation hooks whenever fetched or
-// updated preferences data includes a theme.
-export const applyTheme = (theme: Theme) => {
+const THEME_STORAGE_KEY = "theme";
+
+const getSystemTheme = (): Theme =>
+  window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+const applyThemeToDom = (theme: Theme) => {
   document.documentElement.setAttribute("data-theme", theme);
   document.getElementById("root")?.setAttribute("data-theme", theme);
-  localStorage.setItem("theme", theme);
 };
 
 type GlobalStore = {
   theme: Theme;
+ 
+  themeIsExplicit: boolean;
   notificationsOn: boolean;
   preferencesLoaded: boolean;
-  setPreferences: (data: { theme: Theme; notificationsOn: boolean }) => void;
+  
+  setPreferences: (data: { theme: Theme | null; notificationsOn: boolean }) => void;
 };
 
+const cachedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+const initialTheme = cachedTheme ?? getSystemTheme();
+applyThemeToDom(initialTheme);
+
 export const useGlobalStore = create<GlobalStore>((set) => ({
-  theme: (localStorage.getItem("theme") as Theme | null) || "light",
+  theme: initialTheme,
+  themeIsExplicit: cachedTheme !== null,
   notificationsOn: true,
   preferencesLoaded: false,
-  setPreferences: ({ theme, notificationsOn }) =>
-    set({ theme, notificationsOn, preferencesLoaded: true }),
+  setPreferences: ({ theme, notificationsOn }) => {
+    if (theme) {
+      applyThemeToDom(theme);
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+      set({ theme, themeIsExplicit: true, notificationsOn, preferencesLoaded: true });
+    } else {
+      set({ notificationsOn, preferencesLoaded: true });
+    }
+  },
 }));
+
+
+if (typeof window !== "undefined" && window.matchMedia) {
+  window
+    .matchMedia("(prefers-color-scheme: dark)")
+    .addEventListener("change", (event) => {
+      if (useGlobalStore.getState().themeIsExplicit) return;
+      const theme: Theme = event.matches ? "dark" : "light";
+      applyThemeToDom(theme);
+      useGlobalStore.setState({ theme });
+    });
+}

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "../../../store/authStore";
 import { getAvatarColorClass, getInitials } from "../../chat/utils/avatarColor";
 import { getFullName } from "../../../utils/fullName";
-import { urlPathName } from "../../../utils/urlPathFromName";
 import type { ChatUser } from "../../chat/types";
 
 const SearchUserRow = ({ user }: { user: ChatUser }) => {
@@ -12,8 +11,11 @@ const SearchUserRow = ({ user }: { user: ChatUser }) => {
   const isSelf = user.id === authUser!.id;
   const displayName = isSelf ? "You" : getFullName(user);
 
-  const goToProfile = () =>
-    isSelf ? navigate("/profile") : navigate(`/u/${urlPathName(user)}`);
+  // Search results don't carry a username (see search.repository.ts's raw
+  // SQL), so a name-derived slug here could 404 or land on the wrong
+  // profile for duplicate names - the id always resolves correctly.
+  // ProfilePage swaps the url to the canonical /u/<username> once it loads.
+  const goToProfile = () => (isSelf ? navigate("/profile") : navigate(`/u/${user.id}`));
 
   return (
     <li>

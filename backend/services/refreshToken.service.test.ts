@@ -71,6 +71,34 @@ describe("rotateRefreshToken", () => {
     });
   });
 
+  it.each(["false", "rejected"])(
+    "revokes the session when identityVerified is %s",
+    async (identityVerified) => {
+      const refreshToken = signRefreshToken("user-1");
+      vi.mocked(findUserById).mockResolvedValue({
+        id: "user-1",
+        refreshToken: hashRefreshToken(refreshToken),
+        identityVerified,
+      } as never);
+
+      await expect(rotateRefreshToken(refreshToken)).rejects.toThrow(RefreshTokenReuseError);
+      expect(updateUser).toHaveBeenCalledWith("user-1", { refreshToken: null });
+    },
+  );
+
+  it("rotates normally for an identity-verified account", async () => {
+    const refreshToken = signRefreshToken("user-1");
+    vi.mocked(findUserById).mockResolvedValue({
+      id: "user-1",
+      refreshToken: hashRefreshToken(refreshToken),
+      identityVerified: "true",
+    } as never);
+
+    await expect(rotateRefreshToken(refreshToken)).resolves.toMatchObject({
+      userId: "user-1",
+    });
+  });
+
   it("throws AccountBlockedError and revokes the session when the user is blocked", async () => {
     const refreshToken = signRefreshToken("user-1");
     vi.mocked(findUserById).mockResolvedValue({

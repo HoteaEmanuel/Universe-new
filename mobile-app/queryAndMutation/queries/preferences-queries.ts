@@ -19,7 +19,10 @@ export const useGetPreferencesQuery = () => {
   const query = useQuery(preferenceQueries.detail(userId));
 
   useEffect(() => {
-    if (!query.data) return;
+    // theme is null when the user has never explicitly chosen one (see
+    // Preferences in packages/shared) - leave the current OS-derived scheme
+    // alone instead of forcing an override.
+    if (!query.data?.theme) return;
     setPreferenceColorScheme(query.data.theme);
   }, [query.data, setPreferenceColorScheme]);
 

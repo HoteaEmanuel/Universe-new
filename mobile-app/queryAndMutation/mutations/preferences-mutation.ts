@@ -19,7 +19,7 @@ export const useUpdatePreferencesMutation = () => {
       // Only re-applies the theme override when the update actually touched
       // it, matching frontend's mutation (avoids a pointless SecureStore
       // write when only notification settings changed).
-      if (variables.theme) setPreferenceColorScheme(data.theme);
+      if (data.theme) setPreferenceColorScheme(data.theme);
     },
   });
 };

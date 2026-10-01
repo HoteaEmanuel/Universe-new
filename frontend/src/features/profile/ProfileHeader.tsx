@@ -9,6 +9,7 @@ import {
   MessageCircle,
   Link2,
   MoreVertical,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -232,6 +233,19 @@ const ProfileHeader = ({
             </TooltipTrigger>
             <TooltipContent>Share profile</TooltipContent>
           </Tooltip>
+          {isOwnProfile && (
+            // The sidebar's Settings link is hidden below md, so this is the
+            // only way to reach /settings on mobile web without editing the URL.
+            <Button
+              variant="outline"
+              size="icon-sm"
+              aria-label="Settings"
+              className="md:hidden"
+              onClick={() => navigate("/settings")}
+            >
+              <Settings />
+            </Button>
+          )}
           {!isOwnProfile && (
             <DropdownMenu>
               <Tooltip>

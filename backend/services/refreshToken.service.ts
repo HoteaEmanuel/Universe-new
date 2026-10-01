@@ -35,6 +35,17 @@ const performRotation = async (
     throw new RefreshTokenReuseError("Session expired, please log in again");
   }
 
+  // Re-checked on every rotation, not just at login: an admin rejecting a
+  // pending account would otherwise never end its live session, since the
+  // blocked flag below is the only standing the rotation used to consult.
+  if (
+    user.identityVerified === "rejected" ||
+    user.identityVerified === "false"
+  ) {
+    await updateUser(user.id, { refreshToken: null });
+    throw new RefreshTokenReuseError("Session expired, please log in again");
+  }
+
   const accountStatus = await findUserAccountStatus(user.id);
   if (accountStatus?.status === "blocked") {
     await updateUser(user.id, { refreshToken: null });

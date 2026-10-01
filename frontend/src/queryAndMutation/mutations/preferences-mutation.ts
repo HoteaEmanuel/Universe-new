@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createPreferencesApi } from "@universe/shared/api";
 import { createPreferenceMutations } from "@universe/shared/mutations";
 import { useAuthStore } from "../../store/authStore";
-import { applyTheme, useGlobalStore } from "../../store/globalStore";
+import { useGlobalStore } from "../../store/globalStore";
 import { httpClient } from "@/lib/api";
 
 const preferencesApi = createPreferencesApi(httpClient);
@@ -16,10 +16,9 @@ export const useUpdatePreferencesMutation = () => {
     ...shared,
     onSuccess: (data, variables, onMutateResult, context) => {
       shared.onSuccess?.(data, variables, onMutateResult, context);
-      // Only re-applies the DOM theme when the update actually touched it,
-      // same as the original store-based mutation - avoids an unnecessary
-      // localStorage write when only notification settings changed.
-      if (variables.theme) applyTheme(data.theme);
+      // setPreferences applies the DOM theme + localStorage write itself
+      // whenever theme is non-null, which it always is here since this is
+      // the user explicitly choosing one.
       setPreferences({ theme: data.theme, notificationsOn: data.notificationsEnabled });
     },
   });

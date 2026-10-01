@@ -202,7 +202,9 @@ model UserPreferences {
   id                   String   @id @default(uuid())
   userId               String   @unique
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  theme                String   @default("light")
+  // Null means the user has never explicitly chosen a theme - clients then
+  // fall back to the OS preference instead of forcing light on everyone.
+  theme                String?
   notificationsEnabled Boolean  @default(true)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
