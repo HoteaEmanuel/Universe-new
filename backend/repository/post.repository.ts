@@ -18,6 +18,20 @@ const POST_INCLUDE = {
       profilePicture: true,
     },
   },
+  // Embedded so every post-listing endpoint returns a render-ready post in
+  // one request - PostCard used to fire separate per-post requests for the
+  // author, like count, and comment count (see toPostDTO's withCounts).
+  user: {
+    select: {
+      id: true,
+      username: true,
+      firstName: true,
+      lastName: true,
+      name: true,
+      profilePicture: true,
+    },
+  },
+  _count: { select: { likes: true, comments: true } },
 } satisfies Prisma.PostInclude;
 
 export { POST_INCLUDE };

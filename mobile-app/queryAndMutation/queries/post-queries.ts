@@ -5,10 +5,7 @@ export const {
   useGetPostQuery,
   useGetUserPostsQuery,
   useGetSavedPostsQuery,
-  usePostUserQuery,
-  useGetLikesQuery,
   useGetRelevantLikerQuery,
-  usePostLikedQuery,
   useGetPostsInfiniteQuery,
   useOpportunitiesInfiniteQuery,
 } = createPostQueryHooks(httpClient);

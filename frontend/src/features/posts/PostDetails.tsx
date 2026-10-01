@@ -1,17 +1,12 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Heart, MessageCircle, Bookmark, BookmarkCheck, ImageOff, Loader2, Flag, MoreVertical } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import NotFoundState from "@/components/NotFoundState";
 import { useAuthStore } from "@/store/authStore";
 import {
-  useGetLikesQuery,
   useGetPostQuery,
   useGetRelevantLikerQuery,
-  usePostLikedQuery,
-  usePostUserQuery,
 } from "@/queryAndMutation/queries/post-queries";
-import { postKeys } from "@universe/shared/queries";
 import { useIsFollowingQuery } from "@/queryAndMutation/queries/user-queries";
 import {
   useFollowMutation,
@@ -25,7 +20,6 @@ import {
 import CommentsContainer from "@/features/comments/components/CommentsContainer";
 import CommentInput from "@/features/comments/components/CommentInput";
 import MentionText from "@/components/MentionText";
-import { useGetPostCommentsCount } from "@/queryAndMutation/queries/comments-queries";
 import LikesModal from "./components/LikesModal";
 import PollBlock from "@/features/polls/components/PollBlock";
 import { formatDateDetailed } from "@/utils/formatDate";
@@ -59,7 +53,6 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
   const user = authUser!;
   const { id: postId } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const {
     data: post,
@@ -95,17 +88,13 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
     };
   }, [socket, postId]);
 
-  const { data: creator, isPending: isPendingPostUser } = usePostUserQuery(userId ?? "");
-  const { data: liked, isPending: isPendingCheckLiked } = usePostLikedQuery(
-    postId ?? "",
-  );
+  const creator = post?.user;
+  const liked = post?.isLikedByViewer;
+  const likes = post?.likesCount;
+  const commentsCount = post?.commentsCount;
   const { data: isFollowing, isPending: isPendingIsFollowing } =
     useIsFollowingQuery(userId);
-  const { data: likes, isPending: isPendingLikes } = useGetLikesQuery(
-    postId ?? "",
-  );
   const { data: relevantLiker } = useGetRelevantLikerQuery(postId ?? "");
-  const { data: commentsCount } = useGetPostCommentsCount(postId);
 
   const likeMutation = useLikeMutation(postId ?? "");
   const unlikeMutation = useUnlikeMutation(postId ?? "");
@@ -117,31 +106,12 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
   const unfollowMutation = useUnfollowMutation(userId, user.id);
 
   const handleLike = () => {
-    const prevLikes =
-      queryClient.getQueryData<number>(postKeys.likesCount(postId ?? "")) ?? likes ?? 0;
-    const prevLiked =
-      queryClient.getQueryData<boolean>(postKeys.liked(postId ?? "")) ?? !!liked;
-
-    queryClient.setQueryData(
-      postKeys.likesCount(postId ?? ""),
-      prevLikes + (prevLiked ? -1 : 1),
-    );
-    queryClient.setQueryData(postKeys.liked(postId ?? ""), !prevLiked);
-
-    if (!prevLiked) {
+    if (!liked) {
       setLikePop(true);
       setShowHeartBurst(true);
-    }
-
-    const rollback = () => {
-      queryClient.setQueryData(postKeys.likesCount(postId ?? ""), prevLikes);
-      queryClient.setQueryData(postKeys.liked(postId ?? ""), prevLiked);
-    };
-
-    if (!prevLiked) {
-      likeMutation.mutate(undefined, { onError: rollback });
+      likeMutation.mutate();
     } else {
-      unlikeMutation.mutate(undefined, { onError: rollback });
+      unlikeMutation.mutate();
     }
   };
 
@@ -179,11 +149,7 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
 
   if (isPostError || !post) return postNotFound;
 
-  const isLoadingPostDetails =
-    isPendingCheckLiked ||
-    isPendingIsFollowing ||
-    isPendingPostUser ||
-    isPendingLikes;
+  const isLoadingPostDetails = isPendingIsFollowing;
 
   if (isLoadingPostDetails) return spinner;
 

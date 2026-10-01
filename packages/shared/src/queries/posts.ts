@@ -27,16 +27,6 @@ export const createPostQueries = (api: PostsApi) => ({
       retry: false,
     }),
 
-  // Keyed by author id rather than the original per-post `["creator", postId]`
-  // key, so posts by the same author share one cache entry instead of each
-  // post refetching the author independently.
-  author: (id?: string) =>
-    queryOptions({
-      queryKey: postKeys.author(id ?? ""),
-      queryFn: () => api.getAuthor(id as string),
-      enabled: !!id,
-    }),
-
   byUser: (id?: string) =>
     queryOptions({
       queryKey: postKeys.byUser(id ?? ""),
@@ -56,17 +46,11 @@ export const createPostQueries = (api: PostsApi) => ({
   byName: (name: string) =>
     queryOptions({ queryKey: postKeys.byName(name), queryFn: () => api.searchByName(name) }),
 
-  likesCount: (postId: string) =>
-    queryOptions({ queryKey: postKeys.likesCount(postId), queryFn: () => api.getLikesCount(postId) }),
-
   relevantLiker: (postId: string) =>
     queryOptions({
       queryKey: postKeys.relevantLiker(postId),
       queryFn: () => api.getRelevantLiker(postId),
     }),
-
-  liked: (postId: string) =>
-    queryOptions({ queryKey: postKeys.liked(postId), queryFn: () => api.hasLiked(postId) }),
 
   shareRecipients: (enabled: boolean) =>
     queryOptions({
@@ -106,15 +90,12 @@ export const createPostQueryHooks = (httpClient: HttpClient) => {
   return {
     useGetPostQuery: (id?: string) => useQuery(queries.detail(id)),
     useGetPublicPostQuery: (id?: string) => useQuery(queries.public(id)),
-    usePostUserQuery: (id?: string) => useQuery(queries.author(id)),
     useGetUserPostsQuery: (id?: string) => useQuery(queries.byUser(id)),
     useGetSavedPostsQuery: (id: string) => useQuery(queries.saved(id)),
     useCheckPostIsSaved: (id: string) => useQuery(queries.savedStatus(id)),
     useGetRelatedPostsQuery: (tag: string) => useQuery(queries.related(tag)),
     useGetPostsByNameQuery: (name: string) => useQuery(queries.byName(name)),
-    useGetLikesQuery: (postId: string) => useQuery(queries.likesCount(postId)),
     useGetRelevantLikerQuery: (postId: string) => useQuery(queries.relevantLiker(postId)),
-    usePostLikedQuery: (postId: string) => useQuery(queries.liked(postId)),
     useGetShareRecipientsQuery: (enabled: boolean) => useQuery(queries.shareRecipients(enabled)),
     useGetPostsInfiniteQuery: (feedSelector: string) => useInfiniteQuery(queries.feed(feedSelector)),
     useGetUsersWhoLikedInfiniteQuery: (postId: string) => useInfiniteQuery(queries.whoLiked(postId)),

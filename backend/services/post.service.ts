@@ -37,6 +37,45 @@ const withIsSaved = <T extends { id: string }>(
   savedPostIds: Set<string>,
 ) => ({ ...post, isSaved: savedPostIds.has(post.id) });
 
+const withIsLikedByViewer = <T extends { id: string }>(
+  post: T,
+  likedPostIds: Set<string>,
+) => ({ ...post, isLikedByViewer: likedPostIds.has(post.id) });
+
+// Both likes and saves are checked in one round trip per page rather than
+// per post - the two queries this replaces (per-post `/likes/:id` and
+// `/user-liked/:id` calls) were the actual N+1 cost PostCard used to pay.
+const getViewerPostState = async (viewerId: string, postIds: string[]) => {
+  if (postIds.length === 0) {
+    return { likedIds: new Set<string>(), savedIds: new Set<string>() };
+  }
+  const [likes, saved] = await Promise.all([
+    prisma.like.findMany({
+      where: { userId: viewerId, postId: { in: postIds } },
+      select: { postId: true },
+    }),
+    prisma.savedPost.findMany({
+      where: { userId: viewerId, postId: { in: postIds } },
+      select: { postId: true },
+    }),
+  ]);
+  return {
+    likedIds: new Set(likes.map((like) => like.postId)),
+    savedIds: new Set(saved.map((savedPost) => savedPost.postId)),
+  };
+};
+
+const annotateForViewer = async <T extends { id: string }>(
+  posts: T[],
+  viewerId: string,
+) => {
+  const { likedIds, savedIds } = await getViewerPostState(
+    viewerId,
+    posts.map((post) => post.id),
+  );
+  return posts.map((post) => withIsLikedByViewer(withIsSaved(post, savedIds), likedIds));
+};
+
 const withEventDTO = <T extends { event?: Parameters<typeof toEventDTO>[0] | null }>(
   post: T,
 ) => (post.event ? { ...post, event: toEventDTO(post.event) } : post);
@@ -48,6 +87,16 @@ const withPollDTO = <T extends { poll?: Parameters<typeof toPollDTO>[0] | null }
 const withTagNames = <T extends { tags?: { name: string }[] }>(post: T) =>
   post.tags ? { ...post, tags: post.tags.map((tag) => tag.name) } : post;
 
+// Flattens Prisma's `_count` shape into the flat likesCount/commentsCount
+// fields the client expects - viewer-independent, so (unlike isSaved/
+// isLikedByViewer) this is safe to compute before the feedCache layer.
+const withCounts = <T extends { _count?: { likes: number; comments: number } }>(
+  post: T,
+) => {
+  const { _count, ...rest } = post;
+  return { ...rest, likesCount: _count?.likes ?? 0, commentsCount: _count?.comments ?? 0 };
+};
+
 export const toPostDTO = <T extends {
   event?: Parameters<typeof toEventDTO>[0] | null;
   poll?: Parameters<typeof toPollDTO>[0] | null;
@@ -56,8 +105,9 @@ export const toPostDTO = <T extends {
   deadlineAt?: Date | null;
   expiresAt?: Date | null;
   opportunityClosedAt?: Date | null;
+  _count?: { likes: number; comments: number };
 }>(post: T) =>
-  withOpportunityStatus(withTagNames(withPollDTO(withEventDTO(post))));
+  withOpportunityStatus(withTagNames(withPollDTO(withEventDTO(withCounts(post)))));
 
 const withOpportunityStatus = <T extends {
   type?: string;
@@ -73,18 +123,23 @@ const withOpportunityStatus = <T extends {
   };
 };
 
-export const getUserPosts = async (userId: string) => {
+export const getUserPosts = async (userId: string, viewerId: string) => {
   const user = await findUserById(userId);
   if (!user) throw new Error("User does not exist");
   const posts = await findUserPosts(userId);
-  return posts.map(toPostDTO);
+  const annotated = await annotateForViewer(posts, viewerId);
+  return annotated.map(toPostDTO);
 };
 
 export const getSavedPosts = async (id: string) => {
   const user = await findUserById(id);
   if (!user) throw new Error("User doesnt exist");
   const data = await findUserSavedPosts(id);
-  return data.map((sp) => toPostDTO(sp.post));
+  const annotated = await annotateForViewer(
+    data.map((sp) => sp.post),
+    id,
+  );
+  return annotated.map(toPostDTO);
 };
 
 interface GetPostsInput {
@@ -100,9 +155,6 @@ export const getPosts = async (data: GetPostsInput) => {
   const user = await findUserById(userId);
   if (!user) throw new Error("User not found");
 
-  const savedPosts = await findUserSavedPosts(userId);
-  const savedPostIds = new Set(savedPosts.map((sp) => sp.postId));
-
   let page;
   if (feed === "Global" || feed === "") {
     page = await findAllPosts(cursor, limit, blockedIds);
@@ -115,12 +167,14 @@ export const getPosts = async (data: GetPostsInput) => {
     page = await findUniversityPosts(user.university, cursor, limit, blockedIds);
   }
 
-  return {
-    ...page,
-    posts: page.posts.map((post) =>
-      toPostDTO(withIsSaved(post, savedPostIds)),
-    ),
-  };
+  // Scoped to just this page's post ids rather than the viewer's entire
+  // saved/liked history - findAllPosts/findFollowingPosts/findUniversityPosts
+  // are cached by feed+cursor, not by viewer, so isSaved/isLikedByViewer
+  // can't be embedded in that cached payload without leaking one viewer's
+  // state into another's identical cache hit; this runs after the cache
+  // lookup instead.
+  const annotated = await annotateForViewer(page.posts, userId);
+  return { ...page, posts: annotated.map(toPostDTO) };
 };
 
 interface CreatePostInput {
@@ -359,12 +413,8 @@ export const updatePost = async (data: UpdatePostInput) => {
 
 export const getOpportunities = async (filters: OpportunityFilters) => {
   const page = await findOpportunities(filters);
-  const saved = await prisma.savedPost.findMany({
-    where: { userId: filters.viewerId, postId: { in: page.posts.map((post) => post.id) } },
-    select: { postId: true },
-  });
-  const savedIds = new Set(saved.map((item) => item.postId));
-  return { ...page, posts: page.posts.map((post) => toPostDTO(withIsSaved(post, savedIds))) };
+  const annotated = await annotateForViewer(page.posts, filters.viewerId);
+  return { ...page, posts: annotated.map(toPostDTO) };
 };
 
 export const closeOpportunity = async (postId: string, closed: boolean) => {
@@ -413,7 +463,8 @@ export const getSearchedPosts = async (text: string) => {
   return posts.map(toPostDTO);
 };
 
-export const getPostsByTag = async (tag: string) => {
+export const getPostsByTag = async (tag: string, viewerId: string) => {
   const posts = await findPostsByTag(tag);
-  return posts.map(toPostDTO);
+  const annotated = await annotateForViewer(posts, viewerId);
+  return annotated.map(toPostDTO);
 };

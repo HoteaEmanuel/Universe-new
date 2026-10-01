@@ -4,13 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { formatDateDetailed, formatCount, type Post } from "@universe/shared";
 import { useAuthStore } from "@store/authStore";
-import {
-  usePostUserQuery,
-  useGetLikesQuery,
-  usePostLikedQuery,
-  useGetRelevantLikerQuery,
-} from "@queryAndMutation/queries/post-queries";
-import { useGetPostCommentsCount } from "@queryAndMutation/queries/comments-queries";
+import { useGetRelevantLikerQuery } from "@queryAndMutation/queries/post-queries";
 import {
   useLikeMutation,
   useUnlikeMutation,
@@ -54,17 +48,14 @@ const PostCard = ({ post }: PostCardProps) => {
   const [isTruncated, setIsTruncated] = useState(false);
   const [isSaved, setIsSaved] = useState(post.isSaved);
 
-  const { data: creator, isPending: creatorPending } = usePostUserQuery(
-    post.userId,
-  );
-  const { data: liked, isPending: likedPending } = usePostLikedQuery(post.id);
+  const creator = post.user;
+  const liked = post.isLikedByViewer;
+  const likes = post.likesCount;
+  const commentsCount = post.commentsCount;
   const { data: isFollowing, isPending: followingPending } =
     useIsFollowingQuery(post.userId);
-  const { data: likes, isPending: likesPending } = useGetLikesQuery(post.id);
   const { data: relevantLiker, isPending: relevantLikerPending } =
     useGetRelevantLikerQuery(post.id);
-  const { data: commentsCount, isPending: commentsPending } =
-    useGetPostCommentsCount(post.id);
 
   const likeMutation = useLikeMutation(post.id);
   const unlikeMutation = useUnlikeMutation(post.id);
@@ -75,13 +66,7 @@ const PostCard = ({ post }: PostCardProps) => {
     currentUserId,
   );
 
-  const isPending =
-    creatorPending ||
-    likedPending ||
-    followingPending ||
-    likesPending ||
-    relevantLikerPending ||
-    commentsPending;
+  const isPending = followingPending || relevantLikerPending;
 
   const handleLike = () => {
     if (liked) unlikeMutation.mutate();

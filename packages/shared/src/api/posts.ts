@@ -11,7 +11,6 @@ import type {
   UpdatePostPayload,
   UsersWhoLikedPage,
 } from "../post.js";
-import type { PostAuthor } from "../user.js";
 
 // Field-building logic for create/update, shared once instead of
 // duplicated per platform — this is exactly the kind of thing that drifted
@@ -42,9 +41,6 @@ export const createPostsApi = (client: HttpClient) => ({
   getPublic: async (id: string) =>
     (await client.get<{ post: PublicPost }>(`/public/post/${id}`)).post,
 
-  getAuthor: async (id: string) =>
-    (await client.get<{ user: PostAuthor }>(`/post-user/${id}`)).user,
-
   listByUser: async (id: string) =>
     (await client.get<{ posts: Post[] }>(`/user-posts/${id}`)).posts,
 
@@ -72,15 +68,9 @@ export const createPostsApi = (client: HttpClient) => ({
   setOpportunityClosed: (id: string, closed: boolean) =>
     client.patch<void>(`/posts/${id}/opportunity-status`, { closed }),
 
-  getLikesCount: async (postId: string) =>
-    (await client.get<{ likes: number }>(`/likes/${postId}`)).likes,
-
   getRelevantLiker: async (postId: string) =>
     (await client.get<{ relevantLiker: RelevantLiker }>(`/relevant-liker/${postId}`))
       .relevantLiker,
-
-  hasLiked: async (postId: string) =>
-    (await client.get<{ hasLiked: boolean }>(`/user-liked/${postId}`)).hasLiked,
 
   listWhoLiked: (postId: string, cursor?: string) =>
     client.get<UsersWhoLikedPage>(`/users-who-liked/${postId}`, cursor ? { cursor } : undefined),

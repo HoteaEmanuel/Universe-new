@@ -21,6 +21,7 @@ vi.mock("../database/prisma.js", () => ({
     follow: { findMany: vi.fn() },
     post: { update: vi.fn(), delete: vi.fn() },
     savedPost: { findMany: vi.fn() },
+    like: { findMany: vi.fn() },
   },
 }));
 vi.mock("../lib/storage.js", () => ({
@@ -80,21 +81,38 @@ describe("post.service", () => {
     vi.clearAllMocks();
     vi.mocked(resolveMentionedUsers).mockResolvedValue([]);
     vi.mocked(deleteImages).mockResolvedValue(undefined as never);
+    vi.mocked(prisma.like.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.savedPost.findMany).mockResolvedValue([]);
   });
 
   describe("getUserPosts", () => {
     it("rejects for an unknown user", async () => {
       vi.mocked(findUserById).mockResolvedValue(null);
-      await expect(getUserPosts("user-1")).rejects.toThrow("User does not exist");
+      await expect(getUserPosts("user-1", "viewer-1")).rejects.toThrow(
+        "User does not exist",
+      );
     });
 
-    it("returns the user's posts through toPostDTO", async () => {
+    it("returns the user's posts through toPostDTO, annotated for the viewer", async () => {
       vi.mocked(findUserById).mockResolvedValue({ id: "user-1" } as never);
       vi.mocked(findUserPosts).mockResolvedValue([{ id: "post-1", tags: [{ name: "campus" }] }] as never);
+      vi.mocked(prisma.like.findMany).mockResolvedValue([{ postId: "post-1" }] as never);
 
-      const posts = await getUserPosts("user-1");
+      const posts = await getUserPosts("user-1", "viewer-1");
 
-      expect(posts).toEqual([{ id: "post-1", tags: ["campus"] }]);
+      expect(posts).toEqual([
+        {
+          id: "post-1",
+          tags: ["campus"],
+          isSaved: false,
+          isLikedByViewer: true,
+          likesCount: 0,
+          commentsCount: 0,
+        },
+      ]);
+      expect(prisma.like.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { userId: "viewer-1", postId: { in: ["post-1"] } } }),
+      );
     });
   });
 
@@ -104,22 +122,25 @@ describe("post.service", () => {
       await expect(getSavedPosts("user-1")).rejects.toThrow("User doesnt exist");
     });
 
-    it("unwraps the saved-post rows to their posts", async () => {
+    it("unwraps the saved-post rows to their posts, marked saved for their owner", async () => {
       vi.mocked(findUserById).mockResolvedValue({ id: "user-1" } as never);
       vi.mocked(findUserSavedPosts).mockResolvedValue([
         { post: { id: "post-1" } },
       ] as never);
+      vi.mocked(prisma.savedPost.findMany).mockResolvedValue([{ postId: "post-1" }] as never);
 
       const posts = await getSavedPosts("user-1");
 
-      expect(posts).toEqual([{ id: "post-1" }]);
+      expect(posts).toEqual([
+        { id: "post-1", isSaved: true, isLikedByViewer: false, likesCount: 0, commentsCount: 0 },
+      ]);
     });
   });
 
   describe("getPosts", () => {
     beforeEach(() => {
       vi.mocked(findUserById).mockResolvedValue({ id: "user-1", university: "MIT" } as never);
-      vi.mocked(findUserSavedPosts).mockResolvedValue([{ postId: "post-2" }] as never);
+      vi.mocked(prisma.savedPost.findMany).mockResolvedValue([{ postId: "post-2" }] as never);
     });
 
     it("rejects for an unknown user", async () => {
@@ -138,19 +159,25 @@ describe("post.service", () => {
       expect(findFollowingPosts).not.toHaveBeenCalled();
     });
 
-    it("marks previously saved posts as isSaved", async () => {
+    it("marks previously saved and liked posts for this page only", async () => {
       vi.mocked(findAllPosts).mockResolvedValue({
         posts: [{ id: "post-1" }, { id: "post-2" }],
         nextCursor: null,
         hasMore: false,
       } as never);
+      vi.mocked(prisma.like.findMany).mockResolvedValue([{ postId: "post-1" }] as never);
 
       const result = await getPosts({ userId: "user-1", feed: "Global" });
 
       expect(result.posts).toEqual([
-        { id: "post-1", isSaved: false },
-        { id: "post-2", isSaved: true },
+        { id: "post-1", isSaved: false, isLikedByViewer: true, likesCount: 0, commentsCount: 0 },
+        { id: "post-2", isSaved: true, isLikedByViewer: false, likesCount: 0, commentsCount: 0 },
       ]);
+      // Scoped to the page's own post ids, not the viewer's entire history -
+      // findUserSavedPosts (unscoped) is what this replaced.
+      expect(prisma.savedPost.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { userId: "user-1", postId: { in: ["post-1", "post-2"] } } }),
+      );
     });
 
     it("resolves following ids and delegates to findFollowingPosts for the Following feed", async () => {

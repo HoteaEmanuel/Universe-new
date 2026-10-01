@@ -3,7 +3,6 @@ import {
   deleteComment,
   getComments,
   getCommentReplies,
-  getCommentsCount,
   likeCommentController,
   removeLikeCommentController,
   sendCommentController,
@@ -34,7 +33,6 @@ router.get(
   validate({ params: replyParamsSchema, query: commentQuerySchema }),
   getCommentReplies,
 );
-router.get("/posts/:id/comments-count", getCommentsCount);
 router.post(
   "/posts/:id/send-comment",
   commentRateLimiter,

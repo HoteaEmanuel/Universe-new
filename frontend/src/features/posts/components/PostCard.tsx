@@ -1,4 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import {
   Heart,
@@ -11,20 +10,13 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  useGetLikesQuery,
-  useGetRelevantLikerQuery,
-  usePostLikedQuery,
-  usePostUserQuery,
-} from "@/queryAndMutation/queries/post-queries";
-import { postKeys } from "@universe/shared/queries";
+import { useGetRelevantLikerQuery } from "@/queryAndMutation/queries/post-queries";
 import { useIsFollowingQuery } from "@/queryAndMutation/queries/user-queries";
 import {
   useFollowMutation,
   useToggleSavePostMutation,
   useUnfollowMutation,
 } from "@/queryAndMutation/mutations/user-mutation";
-import { useGetPostCommentsCount } from "@/queryAndMutation/queries/comments-queries";
 import {
   useLikeMutation,
   useUnlikeMutation,
@@ -59,7 +51,6 @@ type PostCardProps = {
 const PostCard = ({ post }: PostCardProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const user_ = user!;
   const { userId } = post;
@@ -83,18 +74,15 @@ const PostCard = ({ post }: PostCardProps) => {
     }
   }, []);
 
-  const { data: creator, isPending: isPendingPostUser } = usePostUserQuery(userId);
-
-  const { data: liked, isPending: isPendingCheckLiked } =
-    usePostLikedQuery(postId);
+  const creator = post.user;
+  const liked = post.isLikedByViewer;
+  const likes = post.likesCount;
+  const commentsCount = post.commentsCount;
 
   const { data: isFollowing, isPending: isPendingIsFollowing } =
     useIsFollowingQuery(userId);
-  const { data: likes, isPending: isPendingLikes } = useGetLikesQuery(postId);
   const { data: relevantLiker, isPending: isPendingRelevantLiker } =
     useGetRelevantLikerQuery(postId);
-  const { data: commentsCount, isPending: isPendingCommentsCount } =
-    useGetPostCommentsCount(postId);
   const likeMutation = useLikeMutation(postId);
   const unlikeMutation = useUnlikeMutation(postId);
   const { mutate: toggleSavePostMutation } = useToggleSavePostMutation(postId, user_.id);
@@ -107,32 +95,13 @@ const PostCard = ({ post }: PostCardProps) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const prevLikes =
-      queryClient.getQueryData<number>(postKeys.likesCount(postId)) ?? likes ?? 0;
-    const prevLiked =
-      queryClient.getQueryData<boolean>(postKeys.liked(postId)) ?? !!liked;
-
-    queryClient.setQueryData<number>(
-      postKeys.likesCount(postId),
-      (old) => (old ?? prevLikes) + (prevLiked ? -1 : 1),
-    );
-    queryClient.setQueryData(postKeys.liked(postId), !prevLiked);
-
-    if (!prevLiked) {
+    if (!liked) {
       setLikePop(true);
       setShowCelebrate(true);
       setShowHeartBurst(true);
-    }
-
-    const rollback = () => {
-      queryClient.setQueryData(postKeys.likesCount(postId), prevLikes);
-      queryClient.setQueryData(postKeys.liked(postId), prevLiked);
-    };
-
-    if (!prevLiked) {
-      likeMutation.mutate(undefined, { onError: rollback });
+      likeMutation.mutate();
     } else {
-      unlikeMutation.mutate(undefined, { onError: rollback });
+      unlikeMutation.mutate();
     }
   };
   const fullName = urlPathName(creator);
@@ -190,15 +159,7 @@ const PostCard = ({ post }: PostCardProps) => {
     e.stopPropagation();
     setShowShareModal(true);
   };
-  if (
-    isPendingCheckLiked ||
-    isPendingIsFollowing ||
-    isPendingPostUser ||
-    isPendingLikes ||
-    isPendingRelevantLiker ||
-    isPendingCommentsCount
-  )
-    return <PostSkeleton />;
+  if (isPendingIsFollowing || isPendingRelevantLiker) return <PostSkeleton />;
   if (!creator) return null;
   const { firstName, name, lastName } = creator;
   const hasImages = !!post.imagesUrls?.length;

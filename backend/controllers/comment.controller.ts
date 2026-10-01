@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-import { prisma } from "../database/prisma.js";
 import {
   createComment,
   deleteComment as deleteCommentService,
@@ -133,16 +132,6 @@ export const removeLikeCommentController = async (req: Request, res: Response) =
     return res
       .status(200)
       .json({ message: "Comment like removed successfully" });
-  } catch (error) {
-    return res.status(400).json({ message: errorMessage(error) });
-  }
-};
-
-export const getCommentsCount = async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id as string;
-    const commentsCount = await prisma.comment.count({ where: { postId: id } });
-    return res.status(200).json({ message: "Success", commentsCount });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }

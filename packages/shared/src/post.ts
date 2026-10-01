@@ -7,12 +7,16 @@ import type { NamedCursorPage } from "./pagination.js";
 export type Post = {
   id: string;
   userId: string;
+  user: PostAuthor;
   title: string;
   body: string;
   location?: string;
   tags: string[];
   imagesUrls: string[];
   isSaved?: boolean;
+  isLikedByViewer: boolean;
+  likesCount: number;
+  commentsCount: number;
   createdAt: string;
   event?: EventSummary | null;
   poll?: Poll | null;

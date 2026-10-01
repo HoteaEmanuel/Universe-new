@@ -4,10 +4,7 @@ import {
   getUserPostsController,
   getSavedPostsController,
   getSearchedPostsController,
-  getPostUser,
-  getLikes,
   getRelevantLiker,
-  userHasLiked,
   getPost,
   updatePostController,
   deletePostController,
@@ -70,12 +67,10 @@ router.get(
   validate({ query: feedQuerySchema }),
   getPostsController,
 );
-router.get("/post-user/:id", getPostUser);
 router.get("/user-posts/:id", getUserPostsController);
 router.get("/saved-posts/:id", requireSelf("id"), getSavedPostsController);
 router.get("/check-saved/:id", checkSaved);
 router.get("/related-posts/:tag", getRelatedPosts);
-router.get("/likes/:id", getLikes);
 router.get("/relevant-liker/:id", getRelevantLiker);
 router.get(
   "/users-who-liked/:id",
@@ -93,7 +88,6 @@ router.post(
   validate({ body: postIdSchema }),
   unlikePostController,
 );
-router.get("/user-liked/:id", userHasLiked);
 router.post(
   "/posts",
   imageUpload.array("images"),

@@ -2,7 +2,6 @@ import type { MouseEvent, ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Heart, Images, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useGetLikesQuery } from "../../queryAndMutation/queries/post-queries";
 import type { Post } from "../../queryAndMutation/types";
 import incompleteConstellationIllustration from "@/assets/profile-empty-state/incomplete-constellation-color.webp";
 import studentLifeIllustration from "@/assets/profile-empty-state/student-life-documentary-photos.webp";
@@ -125,7 +124,6 @@ const ProfilePostTile = ({
   onEdit,
 }: ProfilePostTileProps) => {
   const hasImage = post.imagesUrls?.length > 0;
-  const { data: likes } = useGetLikesQuery(post.id);
 
   return (
     <li className="group/tile relative aspect-square">
@@ -159,7 +157,7 @@ const ProfilePostTile = ({
 
         <div className="absolute inset-0 hidden items-center justify-center gap-1.5 bg-black/40 text-sm font-semibold text-white group-hover/tile:flex">
           <Heart className="size-4" fill="currentColor" />
-          {likes ?? 0}
+          {post.likesCount}
         </div>
       </Link>
 

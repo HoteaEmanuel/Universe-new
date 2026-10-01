@@ -11,10 +11,6 @@ export const createCommentsApi = (client: HttpClient) => ({
       limit,
     }),
 
-  getCount: async (postId: string) =>
-    (await client.get<{ commentsCount: number }>(`/posts/${postId}/comments-count`))
-      .commentsCount,
-
   send: (postId: string, comment: string, parentId?: string) =>
     client.post<{ message: string }>(`/posts/${postId}/send-comment`, { comment, parentId }),
 

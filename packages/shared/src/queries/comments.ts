@@ -1,4 +1,4 @@
-import { infiniteQueryOptions, queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query";
 import { createCommentsApi } from "../api/comments.js";
 import type { HttpClient } from "../api/client.js";
 import { commentKeys } from "./keys.js";
@@ -23,12 +23,6 @@ export const createCommentQueries = (api: CommentsApi) => ({
       enabled: !!postId && !!parentId,
     }),
 
-  count: (postId?: string) =>
-    queryOptions({
-      queryKey: commentKeys.count(postId ?? ""),
-      queryFn: () => api.getCount(postId as string),
-      enabled: !!postId,
-    }),
 });
 
 // Ready-to-use hooks for every read-only, side-effect-free comment query —
@@ -41,6 +35,5 @@ export const createCommentQueryHooks = (httpClient: HttpClient) => {
     useGetPostCommentsInfinite: (postId?: string) => useInfiniteQuery(queries.list(postId)),
     useGetCommentRepliesInfinite: (postId?: string, parentId?: string) =>
       useInfiniteQuery(queries.replies(postId, parentId)),
-    useGetPostCommentsCount: (postId?: string) => useQuery(queries.count(postId)),
   };
 };

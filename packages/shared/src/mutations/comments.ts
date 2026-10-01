@@ -2,6 +2,13 @@ import { mutationOptions, type InfiniteData, type QueryClient } from "@tanstack/
 import type { createCommentsApi } from "../api/comments.js";
 import type { PostComment, PostCommentsPage } from "../post.js";
 import { commentKeys } from "../queries/keys.js";
+import { patchPostInCaches } from "./posts.js";
+
+const bumpCommentsCount = (queryClient: QueryClient, postId: string, delta: number) =>
+  patchPostInCaches(queryClient, postId, (post) => ({
+    ...post,
+    commentsCount: Math.max(0, post.commentsCount + delta),
+  }));
 
 type CommentsApi = ReturnType<typeof createCommentsApi>;
 type CommentsCache = InfiniteData<PostCommentsPage>;
@@ -58,20 +65,17 @@ export const createCommentMutations = (api: CommentsApi, queryClient: QueryClien
         queryClient.setQueryData<CommentsCache>(queryKey, (old) =>
           prependOptimisticComment(old, optimisticComment),
         );
-        queryClient.setQueryData<number>(commentKeys.count(postId ?? ""), (old) => (old ?? 0) + 1);
+        bumpCommentsCount(queryClient, postId ?? "", 1);
         return { previousComments };
       },
       onError: (_err, _comment, context) => {
         if (context?.previousComments) {
           queryClient.setQueryData(commentKeys.list(postId ?? ""), context.previousComments);
         }
-        queryClient.setQueryData<number>(commentKeys.count(postId ?? ""), (old) =>
-          Math.max(0, (old ?? 1) - 1),
-        );
+        bumpCommentsCount(queryClient, postId ?? "", -1);
       },
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey: commentKeys.list(postId ?? "") });
-        queryClient.invalidateQueries({ queryKey: commentKeys.count(postId ?? "") });
       },
     }),
 
@@ -96,7 +100,7 @@ export const createCommentMutations = (api: CommentsApi, queryClient: QueryClien
         queryClient.setQueryData<CommentsCache>(queryKey, (old) =>
           prependOptimisticComment(old, optimisticReply),
         );
-        queryClient.setQueryData<number>(commentKeys.count(postId ?? ""), (old) => (old ?? 0) + 1);
+        bumpCommentsCount(queryClient, postId ?? "", 1);
         return { previousReplies };
       },
       onError: (_err, _comment, context) => {
@@ -104,15 +108,12 @@ export const createCommentMutations = (api: CommentsApi, queryClient: QueryClien
         if (context?.previousReplies) {
           queryClient.setQueryData(queryKey, context.previousReplies);
         }
-        queryClient.setQueryData<number>(commentKeys.count(postId ?? ""), (old) =>
-          Math.max(0, (old ?? 1) - 1),
-        );
+        bumpCommentsCount(queryClient, postId ?? "", -1);
       },
       onSettled: () => {
         queryClient.invalidateQueries({
           queryKey: commentKeys.replies(postId ?? "", parentId ?? ""),
         });
-        queryClient.invalidateQueries({ queryKey: commentKeys.count(postId ?? "") });
       },
     }),
 
@@ -128,20 +129,17 @@ export const createCommentMutations = (api: CommentsApi, queryClient: QueryClien
         queryClient.setQueryData<CommentsCache>(queryKey, (old) =>
           removeCommentFromPages(old, commentId),
         );
-        queryClient.setQueryData<number>(commentKeys.count(postId ?? ""), (old) =>
-          Math.max(0, (old ?? 1) - 1),
-        );
+        bumpCommentsCount(queryClient, postId ?? "", -1);
         return { previousComments };
       },
       onError: (_err, _commentId, context) => {
         if (context?.previousComments) {
           queryClient.setQueryData(queryKey, context.previousComments);
         }
-        queryClient.setQueryData<number>(commentKeys.count(postId ?? ""), (old) => (old ?? 0) + 1);
+        bumpCommentsCount(queryClient, postId ?? "", 1);
       },
       onSettled: () => {
         queryClient.invalidateQueries({ queryKey });
-        queryClient.invalidateQueries({ queryKey: commentKeys.count(postId ?? "") });
       },
     });
   },

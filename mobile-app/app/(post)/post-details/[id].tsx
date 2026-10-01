@@ -9,15 +9,9 @@ import { useAuthStore } from "@store/authStore";
 import { useConfirmDialogStore } from "@store/confirmDialogStore";
 import {
   useGetPostQuery,
-  usePostUserQuery,
-  useGetLikesQuery,
-  usePostLikedQuery,
   useGetRelevantLikerQuery,
 } from "@queryAndMutation/queries/post-queries";
-import {
-  useGetPostCommentsInfinite,
-  useGetPostCommentsCount,
-} from "@queryAndMutation/queries/comments-queries";
+import { useGetPostCommentsInfinite } from "@queryAndMutation/queries/comments-queries";
 import {
   useLikeMutation,
   useUnlikeMutation,
@@ -46,11 +40,11 @@ const PostDetails = () => {
   const currentUserId = useAuthStore((state) => state.user?.id);
 
   const { data: post, isPending: postPending } = useGetPostQuery(id);
-  const { data: creator, isPending: creatorPending } = usePostUserQuery(post?.userId ?? "");
-  const { data: liked, isPending: likedPending } = usePostLikedQuery(id);
-  const { data: likes, isPending: likesPending } = useGetLikesQuery(id);
+  const creator = post?.user;
+  const liked = post?.isLikedByViewer;
+  const likes = post?.likesCount;
+  const commentsCount = post?.commentsCount;
   const { data: relevantLiker, isPending: relevantLikerPending } = useGetRelevantLikerQuery(id);
-  const { data: commentsCount } = useGetPostCommentsCount(id);
   const { data: isFollowing, isPending: followingPending } = useIsFollowingQuery(post?.userId);
   const {
     data: commentsData,
@@ -67,13 +61,7 @@ const PostDetails = () => {
   const deletePostMutation = useDeletePostMutation(id, currentUserId);
   const [menuVisible, setMenuVisible] = useState(false);
 
-  const isPending =
-    postPending ||
-    creatorPending ||
-    likedPending ||
-    likesPending ||
-    relevantLikerPending ||
-    followingPending;
+  const isPending = postPending || relevantLikerPending || followingPending;
 
   const handleLike = () => {
     if (liked) unlikeMutation.mutate();

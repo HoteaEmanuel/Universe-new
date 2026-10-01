@@ -42,14 +42,21 @@ export const getPost = async (req: Request, res: Response) => {
     if (!post) throw new Error("Post not found");
     if (post.removedAt) throw new Error("Post not found");
     if (req.blockedIds?.has(post.userId)) throw new Error("Post not found");
-    const savedPost = await prisma.savedPost.findUnique({
-      where: { userId_postId: { userId: req.userId as string, postId: id } },
-    });
+    const viewerId = req.userId as string;
+    const [savedPost, likedPost] = await Promise.all([
+      prisma.savedPost.findUnique({
+        where: { userId_postId: { userId: viewerId, postId: id } },
+      }),
+      prisma.like.findUnique({
+        where: { userId_postId: { userId: viewerId, postId: id } },
+      }),
+    ]);
     return res.status(200).json({
       message: "Succes",
       post: {
         ...toPostDTO(post),
         isSaved: !!savedPost,
+        isLikedByViewer: !!likedPost,
       },
     });
   } catch (error) {
@@ -60,7 +67,8 @@ export const getPost = async (req: Request, res: Response) => {
 export const getUserPostsController = async (req: Request, res: Response) => {
   try {
     const userId = req.params.id as string;
-    const userPosts = await getUserPosts(userId);
+    const viewerId = req.userId as string;
+    const userPosts = await getUserPosts(userId, viewerId);
     return res.status(200).json({ message: "Fetched posts", posts: userPosts });
   } catch (error) {
     return res.status(400).json({ message: "Failed", error: errorMessage(error) });
@@ -196,39 +204,14 @@ export const sharePostController = async (req: Request, res: Response) => {
   }
 };
 
-export const getPostUser = async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id as string;
-    const user = await prisma.user.findUnique({
-      where: { id },
-      select: { id: true, username: true, firstName: true, lastName: true, name: true, profilePicture: true },
-    });
-    return res.status(200).json({ user, message: "Fetched user succesfully" });
-  } catch (error) {
-    return res.status(400).json({ message: errorMessage(error) });
-  }
-};
-
 export const getRelatedPosts = async (req: Request, res: Response) => {
   try {
     const tag = req.params.tag as string;
-    const relatedPosts = await getPostsByTag(tag);
+    const relatedPosts = await getPostsByTag(tag, req.userId as string);
     return res.status(200).json({
       posts: relatedPosts,
       message: "Fetched related posts succesfully",
     });
-  } catch (error) {
-    return res.status(400).json({ message: errorMessage(error) });
-  }
-};
-
-export const getLikes = async (req: Request, res: Response) => {
-  const postId = req.params.id as string;
-  try {
-    const post = await prisma.post.findUnique({ where: { id: postId } });
-    if (!post) return res.status(400).json({ message: "Post not found" });
-    const likesNo = await prisma.like.count({ where: { postId } });
-    return res.status(200).json({ message: "Likes returned", likes: likesNo });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });
   }
@@ -309,23 +292,6 @@ export const getRelevantLiker = async (req: Request, res: Response) => {
     return res.status(200).json({
       message: "Relevant liker fetched",
       relevantLiker: like?.user ?? null,
-    });
-  } catch (error) {
-    return res.status(400).json({ message: errorMessage(error) });
-  }
-};
-
-export const userHasLiked = async (req: Request, res: Response) => {
-  const postId = req.params.id as string;
-  try {
-    const post = await prisma.post.findUnique({ where: { id: postId } });
-    if (!post) return res.status(400).json({ message: "Post not found" });
-    const like = await prisma.like.findUnique({
-      where: { userId_postId: { userId: req.userId as string, postId } },
-    });
-    return res.status(200).json({
-      message: "Checked liked status",
-      hasLiked: !!like,
     });
   } catch (error) {
     return res.status(400).json({ message: errorMessage(error) });

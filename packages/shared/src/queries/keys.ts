@@ -14,15 +14,12 @@ export const postKeys = {
   feed: (feedSelector: string) => ["posts", feedSelector] as const,
   detail: (id: string) => ["post", id] as const,
   public: (id: string) => ["publicPost", id] as const,
-  author: (id: string) => ["postAuthor", id] as const,
   byUser: (id: string) => ["userPosts", id] as const,
   saved: (id: string) => ["savedPosts", id] as const,
   savedStatus: (id: string) => ["postSavedStatus", id] as const,
   related: (tag: string) => ["relatedPosts", tag] as const,
   byName: (name: string) => ["postsByName", name] as const,
-  likesCount: (postId: string) => ["postLikes", postId] as const,
   relevantLiker: (postId: string) => ["postRelevantLiker", postId] as const,
-  liked: (postId: string) => ["postLiked", postId] as const,
   whoLiked: (postId: string) => ["postWhoLiked", postId] as const,
   shareRecipients: () => ["shareRecipients"] as const,
   opportunities: (filters: OpportunityFilters) => ["opportunities", filters] as const,
@@ -31,7 +28,6 @@ export const postKeys = {
 export const commentKeys = {
   list: (postId: string) => ["comments", postId] as const,
   replies: (postId: string, parentId: string) => ["comment-replies", postId, parentId] as const,
-  count: (postId: string) => ["comments-count", postId] as const,
 };
 
 export const userKeys = {
