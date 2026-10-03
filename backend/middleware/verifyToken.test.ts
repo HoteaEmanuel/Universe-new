@@ -125,10 +125,9 @@ describe("verifyToken middleware", () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  // A delete that omits the attributes the cookie was set with goes out as
-  // SameSite=Lax, which the browser rejects on a cross-site response - the
-  // real cookie survives and the session never actually ends.
-  it("clears cookies with the same cross-site attributes they were set with", async () => {
+  // A delete that omits the attributes the cookie was set with can be ignored
+  // by the browser - the real cookie survives and the session never ends.
+  it("clears cookies with the same attributes they were set with", async () => {
     const previousNodeEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = "production";
     vi.mocked(rotateRefreshToken).mockRejectedValue(
@@ -144,7 +143,7 @@ describe("verifyToken middleware", () => {
     for (const name of ["accessToken", "refreshToken"]) {
       expect(res.clearCookie).toHaveBeenCalledWith(
         name,
-        expect.objectContaining({ sameSite: "none", secure: true }),
+        expect.objectContaining({ sameSite: "lax", secure: true }),
       );
     }
   });

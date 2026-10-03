@@ -19,7 +19,7 @@ const LoginPage = () => {
     document.title = "Login";
   }, []);
   const url = useLocation();
-  const { logIn, error, isLoading, isVerified, clearError, isAuthenticated } =
+  const { logIn, error, isVerified, clearError, isAuthenticated } =
     useAuthStore();
   const navigate = useNavigate();
   useEffect(() => {
@@ -32,7 +32,7 @@ const LoginPage = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
   const onSubmit = async (data: LoginFormValues) => {
     await logIn(data.email, data.password);
@@ -89,7 +89,7 @@ const LoginPage = () => {
           required
         />
 
-        <SubmitButton isLoading={isLoading} loadingText="Logging in...">
+        <SubmitButton isLoading={isSubmitting} loadingText="Logging in...">
           Log in
         </SubmitButton>
 

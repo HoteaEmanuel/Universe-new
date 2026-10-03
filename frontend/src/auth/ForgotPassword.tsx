@@ -13,12 +13,12 @@ const ForgotPassword = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
   });
   const navigate = useNavigate();
-  const { forgotPassword, isLoading } = useAuthStore();
+  const { forgotPassword } = useAuthStore();
   const onSubmit = async (data: ForgotPasswordFormValues) => {
     try {
       await forgotPassword(data.email);
@@ -45,7 +45,7 @@ const ForgotPassword = () => {
           error={errors.email?.message}
           registration={register("email")}
         />
-        <SubmitButton isLoading={isLoading} loadingText="Sending...">
+        <SubmitButton isLoading={isSubmitting} loadingText="Sending...">
           Change password!
         </SubmitButton>
       </form>

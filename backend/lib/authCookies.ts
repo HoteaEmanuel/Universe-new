@@ -3,16 +3,15 @@ import type { CookieOptions, Response } from "express";
 export const ACCESS_TOKEN_MAX_AGE = 1000 * 60 * 15; // 15 minutes
 export const REFRESH_TOKEN_MAX_AGE = 1000 * 60 * 60 * 24 * 30; // 30 days
 
-// The frontend and backend live on different *.onrender.com subdomains,
-// which the browser treats as different sites (onrender.com is on the public
-// suffix list) - SameSite=Strict/Lax cookies never ride along on those
-// cross-site requests, so login would appear to succeed but every request
-// after it would show up unauthenticated. SameSite=None requires Secure,
-// which is already true whenever this runs in production.
+// The web client reaches the API through the frontend's own /api and
+// /socket.io rewrite rules, so these cookies are first-party. Lax (not None)
+// keeps browsers from attaching them to cross-site POSTs (CSRF); not Strict,
+// because the Google OAuth redirect back from accounts.google.com is a
+// cross-site top-level navigation that still needs the session.
 const authCookieAttributes = (): CookieOptions => ({
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  sameSite: "lax",
 });
 
 export const setAuthCookies = (

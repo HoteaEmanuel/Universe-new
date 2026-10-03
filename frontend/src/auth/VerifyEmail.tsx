@@ -15,12 +15,12 @@ import {
 const VerifyEmail = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoading, error } = useAuthStore();
+  const { error } = useAuthStore();
   const [email, setEmail] = useState(
     (location.state as { email?: string } | null)?.email ?? "",
   );
   const [code, setCode] = useState("");
-  const { mutateAsync: verifyEmail, isError } = useVerifyEmailMutation();
+  const { mutateAsync: verifyEmail, isError, isPending } = useVerifyEmailMutation();
   const [submitError, setSubmitError] = useState<string | undefined>(
     undefined,
   );
@@ -76,7 +76,7 @@ const VerifyEmail = () => {
           </InputOTPGroup>
         </InputOTP>
 
-        <SubmitButton isLoading={isLoading} loadingText="Verifying...">
+        <SubmitButton isLoading={isPending} loadingText="Verifying...">
           Verify Email
         </SubmitButton>
       </form>

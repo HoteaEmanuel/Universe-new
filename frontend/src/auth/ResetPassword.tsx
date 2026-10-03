@@ -8,12 +8,12 @@ import SubmitButton from "../components/SubmitButton";
 import { resetPasswordSchema, type ResetPasswordFormValues } from "./schemas";
 
 const ResetPassword = () => {
-  const { resetPassword, isLoading } = useAuthStore();
+  const { resetPassword } = useAuthStore();
   const navigate = useNavigate();
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
   });
@@ -39,7 +39,7 @@ const ResetPassword = () => {
           error={errors.password?.message}
           registration={register("password")}
         />
-        <SubmitButton isLoading={isLoading} loadingText="Resetting...">
+        <SubmitButton isLoading={isSubmitting} loadingText="Resetting...">
           Reset Password
         </SubmitButton>
       </form>

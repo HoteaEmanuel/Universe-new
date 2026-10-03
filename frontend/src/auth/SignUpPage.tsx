@@ -45,14 +45,14 @@ const SignUpPage = () => {
     watch,
     setValue,
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<SignupFormValues>({
     resolver: zodResolver(
       accountType === "normal" ? normalSignupSchema : businessSignupSchema,
     ) as unknown as Resolver<SignupFormValues>,
     defaultValues: { agreeToTerms: false },
   });
-  const { signUp, isLoading, error } = useAuthStore();
+  const { signUp, error } = useAuthStore();
 
   const emailValue = watch("email");
   const domain = emailValue?.split("@")[1]?.toLowerCase();
@@ -247,7 +247,7 @@ const SignUpPage = () => {
           )}
         </div>
 
-        <SubmitButton isLoading={isLoading} loadingText="Signing up...">
+        <SubmitButton isLoading={isSubmitting} loadingText="Signing up...">
           Sign Up
         </SubmitButton>
 

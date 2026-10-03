@@ -24,6 +24,7 @@ import { rateLimiter } from "./middleware/rateLimiter.js";
 import { verifyToken } from "./middleware/verifyToken.js";
 import { loadBlockedIds } from "./middleware/loadBlockedIds.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { rejectCrossSiteRequests } from "./middleware/rejectCrossSiteRequests.js";
 import { startBlockedAccountEmailSweep } from "./jobs/blockedAccountEmailSweep.js";
 import adminRouter from "./routes/admin.routes.js";
 import reportRouter from "./routes/report.routes.js";
@@ -48,6 +49,7 @@ const allowedOrigins = [
 app.use(helmet());
 app.use(express.json());
 app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(rejectCrossSiteRequests(allowedOrigins));
 app.use(cookieParser());
 app.use(passport.initialize());
 app.use("/api/auth", rateLimiter, authRouter);

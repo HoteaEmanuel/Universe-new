@@ -26,7 +26,6 @@ type SignUpPayload = {
 
 type AuthStore = {
   user: User | null;
-  isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
   isCheckingAuth: boolean;
@@ -55,7 +54,6 @@ type AuthStore = {
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   user: null,
-  isLoading: false,
   isAuthenticated: false,
   error: null,
   isCheckingAuth: true,
@@ -71,7 +69,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     password,
     accountType,
   }) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       const response = await axios.post(`${API_URL}/auth/signup`, {
         firstName,
@@ -89,12 +87,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const error = eroare as { response?: { data?: { message?: string } } };
       set({ error: error?.response?.data?.message || "Sign up failed" });
       throw eroare;
-    } finally {
-      set({ isLoading: false });
     }
   },
   changeProfilePicture: async (image) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       // const formdata = new FormData();
       // formdata.append("image", image);
@@ -113,8 +109,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const err = error as { response?: { data?: { message?: string } } };
       set({ error: err?.response?.data?.message || "Could not update profile picture" });
       throw new Error(err?.response?.data?.message);
-    } finally {
-      set({ isLoading: false });
     }
   },
   updateCurrentUser: (updates) =>
@@ -130,8 +124,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } } };
       set({ error: err?.response?.data?.message || "Login failed" });
-    } finally {
-      set({ isLoading: false });
     }
   },
   acceptBusinessRegistration: async (id) => {
@@ -143,8 +135,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } } };
       set({ error: err?.response?.data?.message || "Login failed" });
-    } finally {
-      set({ isLoading: false });
     }
   },
   rejectBusinessRegistration: async (id) => {
@@ -156,12 +146,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } } };
       set({ error: err?.response?.data?.message || "Login failed" });
-    } finally {
-      set({ isLoading: false });
     }
   },
   logIn: async (email, password) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       const response = await axios.post(`${API_URL}/auth/login`, {
         email,
@@ -182,66 +170,55 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           ? `Your account has been blocked${data.reason ? `: ${data.reason}` : ""}. Check your email for more details.`
           : data?.message || "Login failed";
       set({ error: message });
-    } finally {
-      set({ isLoading: false });
     }
   },
   forgotPassword: async (email) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       await axios.post(`${API_URL}/auth/forgot-password`, { email });
     } catch (error) {
       const err = error as { response: { data: { message?: string } } };
       set({ error: err.response.data.message || "Request failed" });
       throw error;
-    } finally {
-      set({ isLoading: false });
     }
   },
   resetPassword: async (token, password) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       await axios.post(`${API_URL}/auth/reset-password/${token}`, { password });
     } catch (eroare) {
       const err = eroare as { response: { data: { message?: string } } };
       set({ error: err.response.data.message || "Request failed" });
       throw eroare;
-    } finally {
-      set({ isLoading: false });
     }
   },
   sendVerificationEmail: async (email) => {
-    set({ isLoading: true, isAuthenticated: false, error: null });
+    set({ isAuthenticated: false, error: null });
     try {
       await axios.post(`${API_URL}/auth/resend-verify-email`, { email });
     } catch (error) {
       const err = error as { response: { data: { message?: string } } };
       set({
-        isLoading: false,
         error: err.response.data.message || "Could not find email",
       });
       throw error;
-    } finally {
-      set({ isLoading: false });
     }
   },
   verifyEmail: async (email, verificationCode) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       await axios.post(`${API_URL}/auth/verify-email`, { email, verificationCode });
-      set({ isVerified: true, isLoading: false });
+      set({ isVerified: true });
     } catch (eroare) {
       const err = eroare as { response: { data: { message?: string } } };
       set({
         error: err.response.data.message || "Verification failed",
       });
       throw eroare;
-    } finally {
-      set({ isLoading: false });
     }
   },
   changePassword: async (currentPassword, newPassword) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       await axios.post(`${API_URL}/change-password`, {
         currentPassword,
@@ -251,12 +228,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const err = eroare as { response?: { data?: { message?: string } } };
       set({ error: err?.response?.data?.message || "Could not change password" });
       throw eroare;
-    } finally {
-      set({ isLoading: false });
     }
   },
   deleteAccount: async (password) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       await axios.post(`${API_URL}/delete-account`, { password });
       get().disconnectSocket();
@@ -265,12 +240,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const err = eroare as { response?: { data?: { message?: string } } };
       set({ error: err?.response?.data?.message || "Could not delete account" });
       throw eroare;
-    } finally {
-      set({ isLoading: false });
     }
   },
   logOut: async () => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       await axios.post(`${API_URL}/auth/logout`);
       get().disconnectSocket();
@@ -278,13 +251,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } catch (error) {
       const err = error as { response: { data: { message?: string } } };
       set({ error: err.response.data.message || "Log out failed" });
-    } finally {
-      set({ isLoading: false });
     }
   },
   checkAuth: async () => {
     set({
-      isLoading: true,
       error: null,
       isCheckingAuth: true,
     });
@@ -314,7 +284,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         isCheckingAuth: false,
       });
     } finally {
-      set({ isLoading: false, isCheckingAuth: false });
+      set({ isCheckingAuth: false });
     }
   },
   connectSocket: () => {

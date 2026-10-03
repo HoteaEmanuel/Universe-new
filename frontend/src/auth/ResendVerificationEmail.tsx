@@ -18,11 +18,11 @@ const ResendVerificationEmail = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ResendVerificationFormValues>({
     resolver: zodResolver(resendVerificationSchema),
   });
-  const { sendVerificationEmail, isLoading, error } = useAuthStore();
+  const { sendVerificationEmail, error } = useAuthStore();
 
   const onSubmit = async (data: ResendVerificationFormValues) => {
     try {
@@ -58,7 +58,7 @@ const ResendVerificationEmail = () => {
           registration={register("email")}
         />
 
-        <SubmitButton isLoading={isLoading} loadingText="Sending...">
+        <SubmitButton isLoading={isSubmitting} loadingText="Sending...">
           Send Verification Email
         </SubmitButton>
 

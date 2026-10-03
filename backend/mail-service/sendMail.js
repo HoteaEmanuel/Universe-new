@@ -19,7 +19,7 @@ import axios from "axios";
 // Resend account itself was signed up with.
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
-const sendViaBrevo = async ({ to, subject, html }) => {
+const   sendViaBrevo = async ({ to, subject, html }) => {
   if (!process.env.BREVO_API_KEY || !process.env.BREVO_SENDER_EMAIL) {
     console.warn(
       `BREVO_API_KEY/BREVO_SENDER_EMAIL not set - email to ${to} was not sent.`,
