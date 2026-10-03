@@ -7,6 +7,7 @@ import {
   Send,
   Flag,
   MoreVertical,
+  Pencil,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -241,27 +242,32 @@ const PostCard = ({ post }: PostCardProps) => {
             ))}
         </div>
 
-        {userId !== user_.id && (
-          <div
-            onClick={(e: MouseEvent) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="icon-hover-btn shrink-0"
-                    aria-label="Post options"
-                  />
-                }
-              >
-                <MoreVertical className="size-5 text-foreground/80" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+        <div
+          onClick={(e: MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="icon-hover-btn shrink-0"
+                  aria-label="Post options"
+                />
+              }
+            >
+              <MoreVertical className="size-5 text-foreground/80" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {userId === user_.id ? (
+                <DropdownMenuItem onClick={() => navigate(`/edit-post/${postId}`)}>
+                  <Pencil />
+                  Edit post
+                </DropdownMenuItem>
+              ) : (
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={() => setShowReportDialog(true)}
@@ -269,10 +275,10 @@ const PostCard = ({ post }: PostCardProps) => {
                   <Flag />
                   Report post
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {post.type === "opportunity" && (

@@ -177,7 +177,7 @@ const CreatePost = () => {
           <FormField
             id="post-title"
             label="Title"
-            
+            required
             placeholder="Give your post a title"
             maxLength={TITLE_MAX_LENGTH}
             currentLength={watchedValues.title?.length ?? 0}
@@ -403,6 +403,7 @@ const CreatePost = () => {
             <FormField
               id="tags"
               label="Tags"
+              required
               placeholder="Event Learn Explore"
               maxLength={TAGS_MAX_LENGTH}
               currentLength={tagsValue.length}

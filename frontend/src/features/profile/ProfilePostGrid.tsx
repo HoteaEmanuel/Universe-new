@@ -167,7 +167,7 @@ const ProfilePostTile = ({
           variant="secondary"
           size="icon-sm"
           aria-label="Edit post"
-          className="absolute top-2 left-2 opacity-0 shadow-sm transition-opacity group-hover/tile:opacity-100"
+          className="absolute top-2 left-2 opacity-0 shadow-sm transition-opacity group-hover/tile:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
           onClick={(e: MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();

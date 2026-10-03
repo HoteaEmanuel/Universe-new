@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Heart, MessageCircle, Bookmark, BookmarkCheck, ImageOff, Loader2, Flag, MoreVertical } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, BookmarkCheck, ImageOff, Loader2, Flag, MoreVertical, Pencil } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import NotFoundState from "@/components/NotFoundState";
 import { useAuthStore } from "@/store/authStore";
@@ -230,21 +230,26 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
               ))}
           </div>
 
-          {userId !== user.id && (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="icon-hover-btn shrink-0"
-                    aria-label="Post options"
-                  />
-                }
-              >
-                <MoreVertical className="size-5 text-foreground/80" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="icon-hover-btn shrink-0"
+                  aria-label="Post options"
+                />
+              }
+            >
+              <MoreVertical className="size-5 text-foreground/80" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {userId === user.id ? (
+                <DropdownMenuItem onClick={() => navigate(`/edit-post/${postId}`)}>
+                  <Pencil />
+                  Edit post
+                </DropdownMenuItem>
+              ) : (
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={() => setShowReportDialog(true)}
@@ -252,9 +257,9 @@ const PostDetails = ({ inModal = false }: PostDetailsProps) => {
                   <Flag />
                   Report post
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
