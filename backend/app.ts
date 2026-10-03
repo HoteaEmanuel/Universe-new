@@ -1,5 +1,8 @@
+// Must stay the first import: ES module imports are evaluated before this
+// file's body, so a dotenv.config() call here would run after modules like
+// lib/storage.ts have already read process.env at load time.
+import "dotenv/config";
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 import { connectToDatabase } from "./database/connectDb.js";
@@ -28,7 +31,6 @@ import { rejectCrossSiteRequests } from "./middleware/rejectCrossSiteRequests.js
 import { startBlockedAccountEmailSweep } from "./jobs/blockedAccountEmailSweep.js";
 import adminRouter from "./routes/admin.routes.js";
 import reportRouter from "./routes/report.routes.js";
-dotenv.config();
 import passport from "passport";
 import "./config/passport.js";
 // Only trust the X-Forwarded-For header when actually deployed behind a
