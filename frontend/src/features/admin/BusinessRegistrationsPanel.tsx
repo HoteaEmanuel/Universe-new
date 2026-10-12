@@ -77,7 +77,7 @@ const BusinessRegistrationsPanel = () => {
               <div className="flex items-center gap-2">
                 <p className="truncate font-medium">{displayName}</p>
                 <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                  {registration.accountType === "business" ? "Business" : "Unverified domain"}
+                  {registration.accountType === "business" ? "Official account" : "Unverified domain"}
                 </span>
               </div>
               <p className="truncate text-sm text-muted-foreground">{registration.email}</p>

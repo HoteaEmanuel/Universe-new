@@ -42,7 +42,7 @@ export type NormalSignupFormValues = z.infer<typeof normalSignupSchema>;
 
 export const businessSignupSchema = z
   .object({
-    name: z.string().min(1, "Enter your university or organization name"),
+    name: z.string().min(1, "Enter the name of your university, faculty or organization"),
     ...signupShared,
   })
   .refine((data) => data.password === data["confirm-password"], {

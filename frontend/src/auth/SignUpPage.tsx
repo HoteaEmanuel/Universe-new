@@ -107,7 +107,7 @@ const SignUpPage = () => {
             }`}
             onClick={() => setAccountType("normal")}
           >
-            Normal Account
+            Personal Account
           </Button>
           <Button
             type="button"
@@ -119,20 +119,24 @@ const SignUpPage = () => {
             }`}
             onClick={() => setAccountType("business")}
           >
-            University Account
+            Official Account
           </Button>
         </div>
-        {accountType === "business" && (
-          <p className="-mt-1 text-center text-xs text-muted-foreground">
-            Official accounts are manually reviewed before they're verified.
-          </p>
-        )}
+        <p className="-mt-1 text-center text-xs text-muted-foreground">
+          {accountType === "normal"
+            ? "For students and staff. Sign up with your university email."
+            : "For a university, faculty or organization, not an individual. Reviewed manually, so you won't be able to sign in until it's approved."}
+        </p>
 
         <ErrorBanner>{error}</ErrorBanner>
 
         <FormField
           id="email"
-          label="University Email Address"
+          label={
+            accountType === "normal"
+              ? "University Email Address"
+              : "Official Email Address"
+          }
           icon={MdEmail}
           placeholder="Email"
           autoComplete="email"
@@ -163,9 +167,9 @@ const SignUpPage = () => {
         ) : (
           <FormField
             id="name"
-            label="University or Organization Name"
+            label="University, Faculty or Organization Name"
             icon={FaUser}
-            placeholder="University or Organization Name"
+            placeholder="University, Faculty or Organization Name"
             autoComplete="organization"
             error={errors.name?.message}
             registration={register("name")}

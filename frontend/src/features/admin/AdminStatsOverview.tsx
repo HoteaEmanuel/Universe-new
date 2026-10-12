@@ -75,7 +75,7 @@ const AdminStatsOverview = () => {
           <CommunityMetric label="Total posts" value={stats.totalPosts} icon={FileText} />
           <CommunityMetric label="Groups" value={stats.totalGroups} icon={UsersRound} />
           <CommunityMetric label="Events" value={stats.totalEvents} icon={CalendarDays} />
-          <CommunityMetric label="Business accounts" value={stats.businessAccounts} icon={Building2} />
+          <CommunityMetric label="Official accounts" value={stats.businessAccounts} icon={Building2} />
         </div>
       </section>
       <p className="text-sm text-muted-foreground">
